@@ -1,0 +1,73 @@
+{
+  "title": "You Already Know",
+  "artist": "Tyler James Drake",
+  "key": "E Major",
+  "bpm": "135",
+  "arrangement_notes": "",
+  "sections": [
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Emaj7 -> E5 | Asus | C#7(no3) | B5 | Asus2", "lyrics": "I got this feeling that's alright" },
+        { "chords": "Asus", "lyrics": "Let's go out see the stars tonight" },
+        { "chords": "C#7(no3) | B5 | Asus2", "lyrics": "The sky is painted in gold for you" },
+        { "chords": "Emaj7 -> E5 | Asus | C#7(no3) | B5 | Asus2", "lyrics": "Your pretty face in the moonlight" },
+        { "chords": "Asus", "lyrics": "My heart lifts up like a bird in flight" },
+        { "chords": "C#7(no3) | B5 | Asus2", "lyrics": "You hold on to me like I'm already gone." }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "annotation": "Open hi-hats on quarters,Crash accents on bar downbeats, Four-on-the-floor kick - more driving and anthemic, Ride bell, Floor tom pulse on the 1",
+      "lines": [
+        { "chords": "E | B5 | Asus2", "lyrics": "You already know" },
+        { "chords": "E | B5 | Asus2", "lyrics": "I won't let you go" },
+        { "chords": "E | B5 | Asus2", "lyrics": "Our hearts dance so slow" },
+        { "chords": "E | B5 | Asus2", "lyrics": "I won't let you go" }
+      ]
+    },
+    {
+      "name": "Instrumental",
+      "lines": [
+        { "chords": "Emaj7 -> E5 | Asus | C#7(no3) | B5 | Asus2"}
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Emaj7 -> E5 | Asus | C#7(no3) | B5 | Asus2", "lyrics": "When your lonely feeling lonely" },
+        { "chords": "Asus", "lyrics": "Trust you're my one and only" },
+        { "chords": "C#7(no3) | B5 | Asus2", "lyrics": "I fell your love soft like the velvety sound" },
+        { "chords": "C#7(no3) | B5 | Asus2", "lyrics": "I fell your love doll but you already know " }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "E | B5 | Asus2", "lyrics": "You already know" },
+        { "chords": "E | B5 | Asus2", "lyrics": "I won't let you go" },
+        { "chords": "E | B5 | Asus2", "lyrics": "Our hearts dance so slow" },
+        { "chords": "E | B5 | Asus2", "lyrics": "I won't let you go" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "annotation": "Half-time snare, Sparse kick, Rim clicks, Cymbal swells, Tom builds, Subtle shaker, China accent",
+      "lines": [
+        { "chords": "C#m | A | C#m | B5 ", "lyrics": "No matter the walls we face we won't let down" },
+        { "chords": "C#m | A | C#m | B5 ", "lyrics": "Your voice like angel sweeping through the crowd" },
+        { "chords": "C#m | A | C#m | B5 ", "lyrics": "Echoes in chambers and halls they go grow so loud" },
+        { "chords": "C#m | A | C#m | B5 ", "lyrics": "Touch from a tender flame can you feel her now?" }
+      ]
+    },
+    {
+      "name": "Chorus ... ending",
+      "lines": [
+        { "chords": "E | B5 | Asus2", "lyrics": "You already know" },
+        { "chords": "E | B5 | Asus2", "lyrics": "I won't let you go" },
+        { "chords": "E | B5 | Asus2", "lyrics": "Our hearts dance so slow" },
+        { "chords": "E | B5 | Asus2", "lyrics": "I won't let you go" }
+      ]
+    }
+  ]
+}

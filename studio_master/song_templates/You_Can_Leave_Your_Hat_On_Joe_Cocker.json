@@ -1,0 +1,98 @@
+{
+  "title": "You Can Leave Your Hat On",
+  "artist": "Joe Cocker",
+  "original_artist": "Randy Newman",
+  "key": "C",
+  "bpm": "87",
+  "notes": "Blues-rock classic with sultry groove",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "Eb | Bb | C7", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "C7", "lyrics": "Baby take off your coat  ·  Real slow" },
+        { "chords": "", "lyrics": "And take off your shoes  ·  I'll take off your shoes" },
+        { "chords": "", "lyrics": "Baby take off your dress  ·  Yes yes yes" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "C", "lyrics": "You can leave your hat on" },
+        { "chords": "C/E | F", "lyrics": "You can leave your hat on" },
+        { "chords": "G7 | C7", "lyrics": "You can leave your hat on" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "C7", "lyrics": "Go on over there  ·  Turn on the light" },
+        { "chords": "", "lyrics": "No all the lights  ·  Come over here" },
+        { "chords": "", "lyrics": "Stand on this chair  ·  That's right" },
+        { "chords": "", "lyrics": "Raise your arms up into the air  ·  Now shake 'em" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "C", "lyrics": "You give me a reason to live" },
+        { "chords": "C/E", "lyrics": "You give me a reason to live" },
+        { "chords": "F", "lyrics": "You give me a reason to live" },
+        { "chords": "G7", "lyrics": "You give me a reason to live" },
+        { "chords": "C7 | Bb", "lyrics": "Sweet darling" }
+      ]
+    },
+    {
+      "name": "Post-Chorus",
+      "lines": [
+        { "chords": "F | C7 | Bb", "lyrics": "You can leave your hat on" },
+        { "chords": "F", "lyrics": "Feeling" },
+        { "chords": "C7 | Bb", "lyrics": "You can leave your hat on" },
+        { "chords": "F | C7 | Bb", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Solo Sax",
+      "lines": [
+        { "chords": "Bb | F | C7", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "C7", "lyrics": "Suspicious minds a talkin'  ·  Try'n' to tear us apart" },
+        { "chords": "", "lyrics": "They don't believe  ·  In this love of mine" },
+        { "chords": "", "lyrics": "They don't know I love you" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "C7", "lyrics": "They don't know what love is" },
+        { "chords": "Eb | C7", "lyrics": "They don't know what love is" },
+        { "chords": "Eb | F | Eb", "lyrics": "They don't know what love is" },
+        { "chords": "G7 | C7", "lyrics": "I know what love is" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "Bb", "lyrics": "" },
+        { "chords": "F | C7 | Bb", "lyrics": "You can leave your hat on  ·  Feeling" },
+        { "chords": "F | C7 | Bb", "lyrics": "You can leave your hat on" }
+      ]
+    },
+    {
+      "name": "Fade Out",
+      "fade_out": true,
+      "lines": [
+        { "chords": "F | C7 | Bb | F", "lyrics": "You can leave your hat on" }
+      ]
+    }
+  ]
+}

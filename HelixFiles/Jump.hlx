@@ -1,0 +1,65 @@
+{
+ "data": {
+  "device": 2162694,
+  "device_version": 57737216,
+  "meta": {
+   "application": "HX Edit",
+   "appversion": 57671680,
+   "build_sha": "v3.70-10-ge773a6f",
+   "modifieddate": 1716149667,
+   "name": "Van Halen Jump Lead"
+  },
+  "tone": {
+   "dsp0": {
+    "block0": {
+     "@enabled": true,
+     "@model": "HD2_AmpPlacaterDirty",
+     "Bass": 0.50,
+     "Mid": 0.60,
+     "Treble": 0.65,
+     "Presence": 0.55,
+     "Drive": 0.70,
+     "ChVol": 0.60,
+     "Master": 0.60
+    },
+    "block1": {
+     "@enabled": true,
+     "@model": "HD2_Cab4X12Greenback25",
+     "Mic": 0,
+     "HighCut": 7000.0,
+     "LowCut": 80.0
+    },
+    "block2": {
+     "@enabled": true,
+     "@model": "HD2_DistScream808",
+     "Gain": 0.35,
+     "Tone": 0.55,
+     "Level": 0.60
+    },
+    "block3": {
+     "@enabled": true,
+     "@model": "HD2_EQSimpleEQ",
+     "LowGain": 0.30,
+     "MidGain": 0.55,
+     "HighGain": 0.60
+    },
+    "block4": {
+     "@enabled": true,
+     "@model": "HD2_DelaySimpleDelay",
+     "Time": 300,
+     "Feedback": 0.25,
+     "Mix": 0.20
+    },
+    "block5": {
+     "@enabled": true,
+     "@model": "HD2_ReverbPlate",
+     "Decay": 4.5,
+     "Mix": 0.25
+    }
+   },
+   "dsp1": {}
+  },
+  "schema": "L6Preset",
+  "version": 6
+ }
+}

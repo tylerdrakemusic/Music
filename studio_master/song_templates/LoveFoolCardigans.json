@@ -1,0 +1,90 @@
+{
+  "title": "Lovefool",
+  "artist": "The Cardigans",
+  "key": "Am",
+  "bpm": "112",
+  "link_repeats": { "enabled": true, "threshold": 0.95, "same_name_only": true },
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        "Am"
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Am Dm7", "lyrics": "Dear, I fear we're facing a problem" },
+        { "chords": "G7 Cmaj7", "lyrics": "You love me no longer, I know and" },
+        { "chords": "Am Dm7 G7", "lyrics": "Maybe there is nothing that I can do" },
+        { "chords": "Cmaj7", "lyrics": "To make you do" },
+        { "chords": "Am Dm7", "lyrics": "Mama tells me I shouldn't bother" },
+        { "chords": "G7 Cmaj7 Am", "lyrics": "That I ought just stick to another man" },
+        { "chords": "Dm7", "lyrics": "A man that surely deserves me" },
+        { "chords": "G7", "lyrics": "But I think you do" },
+        { "chords": "Cmaj7 C#dim7 Dm Ebdim7 E7", "lyrics": "So I cry, and I pray, and I beg" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "A Dmaj7", "lyrics": "Love me, love me" },
+        { "chords": "Bm7 E13", "lyrics": "Say that you love me" },
+        { "chords": "A Dmaj7", "lyrics": "Fool me, fool me" },
+        { "chords": "Bm7 E13", "lyrics": "Go on and fool me" },
+        { "chords": "A Dmaj7", "lyrics": "Love me, love me" },
+        { "chords": "Bm7 E13", "lyrics": "Pretend that you love me" },
+        { "chords": "A Dmaj7 Bm7 E13", "lyrics": "Leave me, leave me Just say that you need me" },
+        { "chords": "F#m7 Bm7 E13 Amaj7", "lyrics": "So I cry and I beg for you to" },
+        { "chords": "A Dmaj7", "lyrics": "Love me, love me" },
+        { "chords": "Bm7 E13", "lyrics": "Say that you love me" },
+        { "chords": "A Dmaj7", "lyrics": "Leave me, leave me" },
+        { "chords": "Bm7 E13", "lyrics": "Just say that you need me" },
+        { "chords": "A Dm Eaddb13 Am", "lyrics": "I can't care about anything but you" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Am Dm7", "lyrics": "Lately I have desperately pondered" },
+        { "chords": "G7 Cmaj7", "lyrics": "Spent my nights awake and I wonder" },
+        { "chords": "Am Dm7", "lyrics": "What I could have done in another way" },
+        { "chords": "G7 Cmaj7", "lyrics": "To make you stay" },
+        { "chords": "Am Dm7", "lyrics": "Reason will not lead to solution" },
+        { "chords": "G7 Cmaj7", "lyrics": "I will end up lost in confusion" },
+        { "chords": "Am Dm7", "lyrics": "I don't care if you really care" },
+        { "chords": "G7 Cmaj7 C#dim7", "lyrics": "As long as you don't go" },
+        { "chords": "Dm Ebdim7 E7", "lyrics": "So I cry, and I pray, and I beg" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "A Dmaj7", "lyrics": "Love me, love me" },
+        { "chords": "Bm7 E13", "lyrics": "Say that you love me" },
+        { "chords": "A Dmaj7", "lyrics": "Fool me, fool me" },
+        { "chords": "Bm7 E13", "lyrics": "Go on and fool me" },
+        { "chords": "A Dmaj7", "lyrics": "Love me, love me" },
+        { "chords": "Bm7 E13", "lyrics": "Pretend that you love me" },
+        { "chords": "A Dmaj7", "lyrics": "Leave me, leave me" },
+        { "chords": "Bm7 E13", "lyrics": "Just say that you need me" },
+        { "chords": "F#m7 Bm7 E13 Amaj7", "lyrics": "So I cry and I beg for you to" },
+        { "chords": "A Dmaj7", "lyrics": "Love me, love me" },
+        { "chords": "Bm7 E13", "lyrics": "Say that you love me" },
+        { "chords": "A Dmaj7", "lyrics": "Leave me, leave me" },
+        { "chords": "Bm7 E13", "lyrics": "Just say that you need me" },
+        { "chords": "A Dm Eaddb13 A Dmaj7 Bm7", "lyrics": "I can't care about anything but you" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        "E13 A Dmaj7 Bm7 E13",
+        { "chords": "A Dmaj7 Bm7 E13", "lyrics": "Say that you love me" },
+        { "chords": "A Dmaj7 Bm7 E13", "lyrics": "Go on and fool me" },
+        { "chords": "A Dmaj7 Bm7 E13", "lyrics": "I know that you need me" },
+        { "chords": "A Dm Eaddb13 Am", "lyrics": "I can't care about anything but you" }
+      ]
+    }
+  ]
+}

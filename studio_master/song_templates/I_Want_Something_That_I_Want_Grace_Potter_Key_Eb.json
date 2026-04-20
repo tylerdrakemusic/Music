@@ -1,0 +1,71 @@
+{
+  "title": "I Want Something That I Want",
+  "artist": "Grace Potter",
+  "key": "Eb",
+  "bpm": "169",
+  "arrangement_notes": "MOX: N/A; DX7: 60's Organ",
+  "sections": [
+    {
+      "name": "Intro",
+      "annotation": "Organ Arpeggios",
+      "lines": [
+        { "chords": "Drums & Claps", "lyrics": "(4 bars)" },
+        { "chords": "Eb | Ab | Eb | Ab", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Eb Abadd9 Eb Abadd9 | Eb Abadd9 Eb Abadd9", "lyrics": "She's the girl with the best intentions, he's a man of his own invention" },
+        { "chords": "Eb Abadd9 Eb Abadd9 | Eb Abadd9 Eb", "lyrics": "She looked out the window, he walked out the door, and she followed him and he said what are you looking for" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Cm | Eb Abadd9 | Eb | Cm", "lyrics": "And I want something that I want, something I tell myself I need" },
+        { "chords": "Eb Abadd9 | Eb | Cm", "lyrics": "Something that I want, I need everything I see" },
+        { "chords": "Cm | Eb Abadd9 | Eb | Cm", "lyrics": "And I want something that I want, something I tell myself I need" },
+        { "chords": "Eb Abadd9 | Eb | Dm | Cm | Ab", "lyrics": "Something that I want, I need everything I see" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Eb Abadd9 Eb Abadd9 | Eb Abadd9 Eb Abadd9", "lyrics": "He's been living in a pure illusion, she's gonna come to her own conclusion" },
+        { "chords": "Eb Abadd9 Eb Abadd9 | Eb Abadd9 Eb", "lyrics": "Right when you think you know what to say, someone comes along and shows you a brand new way" }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "lines": [
+        { "chords": "Cm | Eb Abadd9 | Eb | Cm", "lyrics": "And I want something that I want, something I tell myself I need" },
+        { "chords": "Eb Abadd9 | Eb | Cm", "lyrics": "Something that I want, I need everything I see" },
+        { "chords": "Cm | Eb Abadd9 | Eb | Cm", "lyrics": "And I want something that I want, something I tell myself I need" },
+        { "chords": "Eb Abadd9 | Eb", "lyrics": "Something that I want, I need everything 'cause" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "Eb | Dm | Cm | Ab", "lyrics": "It's so easy to make believe, seems you're living in a dream" },
+        { "chords": "Eb | Dm | Cm | Ab", "lyrics": "Don't you see that what you need is standing in front of you" }
+      ]
+    },
+    {
+      "name": "Organ Interlude",
+      "lines": [
+        { "chords": "Cm | Eb | Ab | Eb", "lyrics": "(2X)" }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "lines": [
+        { "chords": "Cm | Eb Abadd9 | Eb | Cm", "lyrics": "And I want something that I want, something I tell myself I need" },
+        { "chords": "Eb Abadd9 | Eb | Cm", "lyrics": "Something that I want, I need everything I see" },
+        { "chords": "Cm | Eb Abadd9 | Eb | Cm", "lyrics": "And I want something that I want, something I tell myself I need" },
+        { "chords": "Eb Abadd9 | Eb | Cm", "lyrics": "Something that I want, I need everything I see" }
+      ]
+    }
+  ]
+}

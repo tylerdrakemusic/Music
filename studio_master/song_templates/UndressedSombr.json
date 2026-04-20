@@ -1,0 +1,101 @@
+{
+  "title": "Undressed",
+  "artist": "Sombr",
+  "key": "Bm",
+  "bpm": "116",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        "Bm A G D"
+      ],
+      "repeat": 4
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Bm A G D", "lyrics": "You had a dream, you wanted better" },
+        { "chords": "Bm A G D", "lyrics": "You were sick of all the holes in your sweater" },
+        { "chords": "Bm A G D", "lyrics": "You looked to me and wondered whether" },
+        { "chords": "Bm A G D", "lyrics": "I was the lamppost to which you were tethered" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "G A Bm D", "lyrics": "I'm lookin' at you, and you're lookin' at me" },
+        { "chords": "G A Bm D", "lyrics": "But the glimmer in your eyes is sayin' you wanna leave" },
+        { "chords": "G A Bm D", "lyrics": "You're sayin' to me what you're sayin' to me" },
+        { "chords": "G A Bm D", "lyrics": "But the glimmer in your eyes is telling me other things" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Bm A G D", "lyrics": "I don't wanna get undressеd" },
+        { "chords": "Bm A G D", "lyrics": "For a new person all over again" },
+        { "chords": "Bm A G D", "lyrics": "I don't wanna kiss somеone else's neck" },
+        { "chords": "Bm A G D", "lyrics": "And have to pretend it's yours instead" }
+      ]
+    },
+    {
+      "name": "Instrumental Break",
+      "lines": [
+        "Bm A G D"
+      ],
+      "repeat": 2
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Bm A G D", "lyrics": "I took the train to see my mother" },
+        { "chords": "Bm A G D", "lyrics": "I look across the track to see you with another" },
+        { "chords": "Bm A G D", "lyrics": "There's nothin' worse than seein' your lover" },
+        { "chords": "Bm A G D", "lyrics": "Moving on while you still suffer" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "G A Bm D", "lyrics": "I'm lookin' at you, and you're lookin' at me" },
+        { "chords": "G A Bm D", "lyrics": "But the glimmer in your eyes is sayin' you wanna leave" },
+        { "chords": "G A Bm D", "lyrics": "You're sayin' to me what you're sayin' to me" },
+        { "chords": "G A Bm D", "lyrics": "But the glimmer in your eyes is telling me other things" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Bm A G D", "lyrics": "I don't wanna get undressеd" },
+        { "chords": "Bm A G D", "lyrics": "For a new person all over again" },
+        { "chords": "Bm A G D", "lyrics": "I don't wanna kiss somеone else's neck" },
+        { "chords": "Bm A G D", "lyrics": "And have to pretend it's yours instead" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "Em F# Bm", "lyrics": "And I don't wanna learn another scent" },
+        { "chords": "A G D/F#", "lyrics": "I don't want the children of another man" },
+        { "chords": "Em F# Bm A G D/F# Em E", "lyrics": "To have the eyes of the girl that I won't forget" },
+        { "chords": "Bm A G D/F# Em", "lyrics": "I won't forget" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Bm A G D", "lyrics": "I don't wanna get undressеd" },
+        { "chords": "Bm A G D", "lyrics": "For a new person all over again" },
+        { "chords": "Bm A G D", "lyrics": "I don't wanna kiss somеone else's neck" },
+        { "chords": "Bm A G D", "lyrics": "And have to pretend it's yours instead" }
+      ]
+    },
+    {
+      "name": "Acapella",
+      "lines": [
+        { "lyrics": "I don't wanna get undressеd" },
+        { "lyrics": "For a new person all over again" }
+      ]
+    }
+  ]
+}

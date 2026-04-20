@@ -1,0 +1,91 @@
+{
+  "title": "Killing Me Softly",
+  "artist": "Fugees",
+  "original_artist": "Roberta Flack",
+  "key": "Em",
+  "bpm": "93",
+  "notes": "Hip-hop soul cover with rap verses",
+  "sections": [
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Em7 | Am7", "lyrics": "Strumming my pain with his fingers" },
+        { "chords": "D | G", "lyrics": "Singing my life with his words" },
+        { "chords": "Em7 | A/C#", "lyrics": "Killing me softly with his song" },
+        { "chords": "D | C", "lyrics": "Killing me softly with his song" },
+        { "chords": "G | C", "lyrics": "Telling my whole life with his words" },
+        { "chords": "Fmaj7 ", "lyrics": "Killing me softly" },
+        { "chords": "E", "lyrics": "With his song" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Am7 | D7sus2", "lyrics": "I heard he sang a good song" },
+        { "chords": "G | Cmaj7 | Am7", "lyrics": "I heard he had a style" },
+        { "chords": "D7sus2 | Em7", "lyrics": "And so I came to see him" },
+        { "chords": "Am7", "lyrics": "To listen for a while" },
+        { "chords": "D7", "lyrics": "And there he was" },
+        { "chords": "G", "lyrics": "This young boy" },
+        { "chords": "B7", "lyrics": "A stranger to my eyes" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Em7 | Am7", "lyrics": "Strumming my pain with his fingers" },
+        { "chords": "D | G", "lyrics": "Singing my life with his words" },
+        { "chords": "Em7 | A/C#", "lyrics": "Killing me softly with his song" },
+        { "chords": "D | C", "lyrics": "Killing me softly with his song" },
+        { "chords": "G | C", "lyrics": "Telling my whole life with his words" },
+        { "chords": "Fmaj7 ", "lyrics": "Killing me softly" },
+        { "chords": "E", "lyrics": "With his song" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Am7 | D7sus2", "lyrics": "I felt all flushed with fever" },
+        { "chords": "G | Cmaj7 | Am7", "lyrics": "Embarrassed by the crowd" },
+        { "chords": "D7sus2 | Em7", "lyrics": "I felt he'd found my letters.  And read each one out loud" },
+        { "chords": "Am7", "lyrics": "I prayed" },
+        { "chords": "D7", "lyrics": "that he would finish" },
+        { "chords": "G", "lyrics": "but he just kept" },
+        { "chords": "B7", "lyrics": "right on" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Em7 | Am7", "lyrics": "Strumming my pain with his fingers" },
+        { "chords": "D | G", "lyrics": "Singing my life with his words" },
+        { "chords": "Em7 | A/C#", "lyrics": "Killing me softly with his song" },
+        { "chords": "D | C", "lyrics": "Killing me softly with his song" },
+        { "chords": "G | C", "lyrics": "Telling my whole life with his words" },
+        { "chords": "Fmaj7 ", "lyrics": "Killing me softly" },
+        { "chords": "E", "lyrics": "With his song" }
+      ]
+    },
+    {
+      "name": "Interlude",
+      "lines": [
+        { "chords": "Em7 | Am7 | D | G", "lyrics": "Oooh" },
+        { "chords": "Em7", "lyrics": "La la la la la la" },
+        { "chords": "A/C#", "lyrics": "Oooh" },
+        { "chords": "D", "lyrics": "Laa" },
+        { "chords": "C", "lyrics": "Oooh" },
+        { "chords": "G", "lyrics": "Laa" },
+        { "chords": "C | Fmaj7", "lyrics": "Laaa" },
+        { "chords": "E", "lyrics": "Laa" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "Em7 | Am7 | D | G", "lyrics": "" },
+        { "chords": "Em7 | A/C# | D | C", "lyrics": "" },
+        { "chords": "G | C | Fmaj7 | E", "lyrics": "" }
+      ]
+    }
+  ]
+}

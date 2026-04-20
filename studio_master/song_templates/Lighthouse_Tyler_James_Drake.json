@@ -1,0 +1,76 @@
+{
+  "title": "Lighthouse",
+  "artist": "Tyler James Drake",
+  "original_artist": "",
+  "key": "Em",
+  "bpm": "133",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "Em | G | Bm | Cadd9", "lyrics": "" },
+        { "chords": "Em | G | Bm | Dsus2", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Em | G | Bm | Cadd9", "lyrics": "Riding the tide above the surface" },
+        { "chords": "Em | G | Bm | Cadd9", "lyrics": "Gasping for breath my heart is striving for" },
+        { "chords": "Em | G | Bm | Dsus2", "lyrics": "Been drowning, swimming in sadness" },
+        { "chords": "Em | G | Bm | Cadd9", "lyrics": "Am I strong enough to make it back to shore?" }
+      ]
+    },
+    {
+      "name": "Chorus 1",
+      "lines": [
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "There's a light it's always on" },
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "In the distance guiding me home" },
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "Shining bright shining just for me" },
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "There's a light that's gonna to set me free" }
+      ]
+    },
+    {
+      "name": "Intrumental",
+      "lines": [
+        { "chords": "Em | G | Bm | Cadd9", "lyrics": "" },
+        { "chords": "Em | G | Bm | Dsus2", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Em | G | Bm | Cadd9", "lyrics": "I'm standing tall upon the sandy coast" },
+        { "chords": "Em | G | Bm | Cadd9", "lyrics": "A light house flame like a gentle a host" },
+        { "chords": "Em | G | Bm | Dsus2", "lyrics": "Rising up reaching for the sky" },
+        { "chords": "Em | G | Bm | Cadd9", "lyrics": "A spark of hope shining way up high" }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "lines": [
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "There's a light it's always on" },
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "In the distance guiding me home" },
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "Shining bright shining just for me" },
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "There's a light that's gonna to set me free" }
+      ]
+    },
+    {
+      "name": "Bridge Option 1",
+      "lines": [
+        { "chords": "Am | Bm | Cadd9 | D", "lyrics": "Same old story, same old song and dance" },
+        { "chords": "Am | Bm | Cadd9 | D", "lyrics": "Take a risk, take another chance" }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "annotation": "repeat 2x",
+      "lines": [
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "There's a light it's always been on" },
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "In the distance guiding me back home" },
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "Shining bright shining just for me" },
+        { "chords": "Em | Cadd9 | D | Cadd9", "lyrics": "There's a light that's gonna to set me free" }
+      ]
+    }
+  ]
+}

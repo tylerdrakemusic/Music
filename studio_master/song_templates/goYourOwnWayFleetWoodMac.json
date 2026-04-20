@@ -1,0 +1,80 @@
+{
+  "title": "Go Your Own Way",
+  "artist": "Fleetwood Mac",
+  "key": "F",
+  "bpm": "138",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        "F"
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "F", "lyrics": "Loving you." },
+        { "lyrics": "Isn't the right thing to do?" },
+        { "chords": "C Bb", "lyrics": "How can I ever change things that I feel?" },
+        { "chords": "F Bb F", "lyrics": "If I could maybe I'd give you my world." },
+        { "chords": "C Bb F", "lyrics": "How can I, when you won't take it from me?" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Dm Bb C", "lyrics": "You can go your own way, go your own way." },
+        { "chords": "Dm Bb C", "lyrics": "You can call it another lonely day." },
+        { "chords": "Dm Bb C", "lyrics": "You can go your own way, go your own way." }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "F", "lyrics": "Tell me why, everything turned around." },
+        { "chords": "C Bb", "lyrics": "Packing up, shacking up s'all you wanna do." },
+        { "chords": "F", "lyrics": "If I could, baby I'd give you my world." },
+        { "chords": "C Bb Fsus4 F", "lyrics": "Open up, everything's waiting for you." }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Dm Bb C C", "lyrics": "You can go your own way, go your own way." },
+        { "chords": "Dm Bb C", "lyrics": "You can call it another lonely day." },
+        { "chords": "Dm Bb C", "lyrics": "You can go your own way, go your own way." }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        "F C F",
+        "F C F"
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Dm Bb C", "lyrics": "You can go your own way, go your own way." },
+        { "chords": "Dm Bb C", "lyrics": "You can call it another lonely day." },
+        { "chords": "Dm", "lyrics": "Another lonely day." },
+        { "chords": "Bb C Dm Bb C", "lyrics": "You can go your own way, go your own way." }
+      ]
+    },
+    {
+      "name": "Guitar Solo",
+      "annotation": "Repeat 5-6x Bleeds into the fade out",
+      "lines": [
+        "Dm Bb C"
+      ]
+    },
+    {
+      "name": "Outro",
+      "annotation": "Fade out.  Go your own way",
+      "lines": [
+        "Dm Bb C",
+        "Dm Bb C"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "title": "Genie in a Bottle",
+  "artist": "Christina Aguilera",
+  "key": "Fm",
+  "bpm": "88",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "Fm Eb Db Fm Eb Db C7", "lyrics": "Come on, come on, uh" },
+        { "chords": "Fm Eb Db C7", "lyrics": "Oh ooh, whoa, oh, oh, oh, uh" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Fm Eb", "lyrics": "I feel like I've been locked up tight" },
+        { "chords": "Db Eb", "lyrics": "For a century of lonely nights" },
+        { "chords": "Fm Eb Db C7", "lyrics": "Waiting for someone to release me" },
+        { "chords": "Fm Eb", "lyrics": "You're lickin' your lips and blowin' kisses my way" },
+        { "chords": "Db Eb", "lyrics": "But that don't mean I'm gonna give it away" },
+        { "chords": "Fm Eb Db C7", "lyrics": "Baby, baby, baby" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "Fm Eb Db", "lyrics": "Oh, oh, oh, oh, oh" },
+        { "chords": "Eb", "lyrics": "My body's sayin', \"Let's go\"" },
+        { "chords": "Fm Eb Db", "lyrics": "Oh, oh, oh, oh, oh" },
+        { "chords": "Eb", "lyrics": "But my heart is sayin', \"No, no\"" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Fm Eb Db", "lyrics": "If you wanna be with me" },
+        { "chords": "Eb Fm", "lyrics": "Baby, there's a price to pay" },
+        { "chords": "Eb Db", "lyrics": "I'm a genie in a bottle" },
+        { "chords": "C7 Fm", "lyrics": "You gotta rub me the right way" },
+        { "chords": "Eb Db", "lyrics": "If you wanna be with me" },
+        { "chords": "Eb Fm", "lyrics": "I can make your wish come true" },
+        { "chords": "Eb Db", "lyrics": "You gotta make a big impression" },
+        { "chords": "C7", "lyrics": "Gotta like what you do" }
+      ]
+    },
+    {
+      "name": "Post-Chorus",
+      "lines": [
+        { "chords": "Fm Eb", "lyrics": "I'm a genie in a bottle, baby" },
+        { "chords": "Db C7", "lyrics": "You gotta rub me the right way, honey" },
+        { "chords": "Fm Eb", "lyrics": "I'm a genie in a bottle, baby" },
+        { "chords": "Db C7", "lyrics": "Come, come, come on and let me out" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Fm Eb", "lyrics": "The music's bangin' and the lights down low" },
+        { "chords": "Db Eb", "lyrics": "Just one more dance and then we're good to go" },
+        { "chords": "Fm Eb Db C7", "lyrics": "Waiting for someone who needs me" },
+        { "chords": "Fm Eb", "lyrics": "Hormones racin' at the speed of light" },
+        { "chords": "Db Eb", "lyrics": "But that don't mean it's gotta be tonight" },
+        { "chords": "Fm Eb Db Eb", "lyrics": "Baby, baby, baby" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "Fm Eb Db", "lyrics": "Oh, oh, oh, oh, oh" },
+        { "chords": "Eb", "lyrics": "My body's sayin', \"Let's go\"" },
+        { "chords": "Fm Eb Db", "lyrics": "Oh, oh, oh, oh, oh" },
+        { "chords": "Eb", "lyrics": "But my heart is sayin', \"No, no\"" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Fm Eb Db", "lyrics": "If you wanna be with me" },
+        { "chords": "Eb Fm", "lyrics": "Baby, there's a price to pay" },
+        { "chords": "Eb Db", "lyrics": "I'm a genie in a bottle" },
+        { "chords": "C7 Fm", "lyrics": "You gotta rub me the right way" },
+        { "chords": "Eb Db", "lyrics": "If you wanna be with me" },
+        { "chords": "Eb Fm", "lyrics": "I can make your wish come true" },
+        { "chords": "Eb Db", "lyrics": "Just come and set me free, baby" },
+        { "chords": "C7", "lyrics": "And I'll be with you" }
+      ]
+    },
+    {
+      "name": "Post-Chorus",
+      "lines": [
+        { "chords": " Fm Eb", "lyrics": "I'm a genie in a bottle, baby" },
+        { "chords": "Db C7", "lyrics": "You gotta rub me the right way, honey" },
+        { "chords": "Fm Eb", "lyrics": "I'm a genie in a bottle, baby" },
+        { "chords": "Db C7", "lyrics": "Come, come, come on and let me out" }
+      ],
+      "repeat": 2
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "Fm Eb Db", "lyrics": "Oh, oh, oh, oh, oh" },
+        { "chords": "Eb", "lyrics": "My body's sayin', \"Let's go\"" },
+        { "chords": "Fm Eb Db", "lyrics": "Oh, oh, oh, oh, oh" },
+        { "chords": "Eb", "lyrics": "But my heart is sayin', \"No, no\"" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Fm Eb Db", "lyrics": "If you wanna be with me" },
+        { "chords": "Eb Fm", "lyrics": "Baby, there's a price to pay" },
+        { "chords": "Eb Db", "lyrics": "I'm a genie in a bottle" },
+        { "chords": "C7 Fm", "lyrics": "You gotta rub me the right way" },
+        { "chords": "Eb Db", "lyrics": "If you wanna be with me" },
+        { "chords": "Eb Fm", "lyrics": "I can make your wish come true" },
+        { "chords": "Eb Db", "lyrics": "You gotta make a big impression" },
+        { "chords": "C7 Fm", "lyrics": "Gotta like what you do" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "Eb Db", "lyrics": "If you wanna be with me" },
+        { "chords": "Eb Fm", "lyrics": "Baby, there's a price to pay" },
+        { "chords": "Eb Db", "lyrics": "I'm a genie in a bottle" },
+        { "chords": "C7 Fm", "lyrics": "You gotta rub me the right way" },
+        { "chords": "Eb Db", "lyrics": "If you wanna be with me" },
+        { "chords": "Eb Fm", "lyrics": "I can make your wish come true" },
+        { "chords": "Eb Db", "lyrics": "Just come and set me free,  baby" },
+        { "chords": "C7 Fm", "lyrics": "And I'll be with you" },
+        { "chords": "Eb", "lyrics": "I'm a genie in a bottle, baby" },
+        { "chords": "Db C7", "lyrics": "Come, come, come on and let me out" }
+      ]
+    }
+  ]
+}

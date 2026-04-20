@@ -1,0 +1,89 @@
+{
+  "title": "Love on the Brain",
+  "artist": "Rihanna",
+  "original_artist": "Rihanna",
+  "key": "G",
+  "bpm": "86",
+  "notes": "Soulful R&B ballad with doo-wop influences",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "G | Am", "lyrics": "" },
+        { "chords": "Em | D", "lyrics": "And you got me, let go" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "G |Am", "lyrics": "What you want from me?" },
+        { "chords": "Em | D", "lyrics": "And I tried to buy your pretty heart, but the price too high" },
+        { "chords": "G", "lyrics": "Baby you got me like oh" },
+        { "chords": "Am", "lyrics": "You love when I fall apart" },
+        { "chords": "Em", "lyrics": "So you can put me together" },
+        { "chords": "D", "lyrics": "And throw me against the wall" },
+        { "chords": "G | Am", "lyrics": "Baby you got me like ah, woo, ah" },
+        { "chords": "Em", "lyrics": "Don't you stop loving me  ·  Don't quit loving me" },
+        { "chords": "D", "lyrics": "Just start loving me" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "F | C", "lyrics": "Oh, and baby I'm fist fighting with fire" },
+        { "chords": "G", "lyrics": "Just to get close to you  ·  Can we burn something, babe?" },
+        { "chords": "F | C | D", "lyrics": "And I run for miles just to get a taste" },
+        { "chords": "", "lyrics": "Must be love on the brain" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "G | Am", "lyrics": "That's got me feeling this way" },
+        { "chords": "Em", "lyrics": "It beats me black and blue but it fucks me so good" },
+        { "chords": "D", "lyrics": "And I can't get enough" },
+        { "chords": "G", "lyrics": "Must be love on the brain" },
+        { "chords": "Am", "lyrics": "And it keeps cursing my name" },
+        { "chords": "Em", "lyrics": "No matter what I do, I'm no good without you" },
+        { "chords": "D", "lyrics": "And I can't get enough" },
+        { "chords": "", "lyrics": "Must be love on the brain" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "G |  Am", "lyrics": "Baby, keep loving me  ·  Just love me, yeah" },
+        { "chords": "Em", "lyrics": "Just love me" },
+        { "chords": "D", "lyrics": "All you need to do is love me, yeah" },
+        { "chords": "G", "lyrics": "Got me like ah-ah-ah-ow" },
+        { "chords": "Am", "lyrics": "I'm tired of being played like a violin" },
+        { "chords": "Em | D", "lyrics": "What do I gotta do to get in your motherfuckin' heart?" },
+        { "chords": "G | Am", "lyrics": "Baby like ah, woo, ah" },
+        { "chords": "Em", "lyrics": "Don't you stop loving me  ·  Don't quit loving me" },
+        { "chords": "D", "lyrics": "Just start loving me" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "F | C", "lyrics": "Oh, and baby I'm fist fighting with fire" },
+        { "chords": "G", "lyrics": "Just to get close to you  ·  Can we burn something, babe?" },
+        { "chords": "F | C | D", "lyrics": "And I run for miles just to get a taste" },
+        { "chords": "", "lyrics": "Must be love on the brain" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "G | Am", "lyrics": "That's got me feeling this way" },
+        { "chords": "Em", "lyrics": "It beats me black and blue but it fucks me so good" },
+        { "chords": "D", "lyrics": "And I can't get enough" },
+        { "chords": "G", "lyrics": "Must be love on the brain" },
+        { "chords": "Am", "lyrics": "And it keeps cursing my name" },
+        { "chords": "Em", "lyrics": "No matter what I do, I'm no good without you" },
+        { "chords": "D", "lyrics": "And I can't get enough" },
+        { "chords": "G", "lyrics": "Must be love on the brain" }
+      ]
+    }
+  ]
+}

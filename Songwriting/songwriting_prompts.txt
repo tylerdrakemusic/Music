@@ -1,0 +1,14 @@
+Title: Eternal Flame
+Theme: peace
+Musical Style: RockTitle: Shattered Glass
+Theme: anger
+Musical Style: Pop
+
+Title: Chasing Shadows
+Theme: love
+Musical Style: R&B
+
+Title: Velvet Sky
+Theme: sadness
+Musical Style: Rock
+

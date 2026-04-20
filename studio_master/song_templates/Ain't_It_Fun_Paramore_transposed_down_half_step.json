@@ -1,0 +1,90 @@
+{
+  "title": "Ain't It Fun",
+  "artist": "Paramore",
+  "original_artist": "Paramore",
+  "key": "C",
+  "bpm": "104",
+  "notes": "Transposed down 1/2 step from original",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "C | C", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Ab | Cm | Eb | Ab", "lyrics": "I don't mind, letting you down easy, but just give it time" },
+        { "chords": "Cm | Eb | Ab", "lyrics": "If it don't hurt now well just wait, just wait a while" },
+        { "chords": "Cm | Eb | Ab", "lyrics": "You're not the big fish in the pond no more" },
+        { "chords": "Cm | Eb | Ab | Cm | Ab | Cm", "lyrics": "You are what they are feeding on, So what are you gonna do, when the world don't orbit around you?" },
+        { "chords": "Ab | Cm | Ab | Cm", "lyrics": "So what are you gonna do, when the world don't orbit around you?" }
+      ]
+    },
+    {
+      "name": "Chorus 1",
+      "lines": [
+        { "chords": "Ab | Cm | Eb | Ab | Cm | Eb | Ab | Cm | Eb | Ab | Cm | Eb", "lyrics": "Ain't it fun? Living in the real world, Ain't it good? Being all alone" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Ab | Cm | Eb | Ab", "lyrics": "Where you're from, you might be the one who's running things" },
+        { "chords": "Cm | Eb | Ab", "lyrics": "Well you can ring anybody's bell and get what you want" },
+        { "chords": "Cm | Eb | Ab | Cm | Eb", "lyrics": "See it's easy to ignore trouble, when you're living in your bubble" },
+        { "chords": "Ab | Cm | Ab | Cm", "lyrics": "So what are you gonna do, when the world don't orbit around you?" },
+        { "chords": "Ab | Cm | Ab | Cm", "lyrics": "So what are you gonna do, when nobody wants to fool with you" }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "lines": [
+        { "chords": "Ab | Cm | Eb | Ab | Cm | Eb | Ab | Cm | Eb | Ab | Cm | Eb", "lyrics": "Ain't it fun? Living in the real world, Ain't it good? Being all alone" }
+      ]
+    },
+    {
+      "name": "Interlude",
+      "lines": [
+        { "chords": "Ab | Eb | Bb", "lyrics": "Ain't it good to be on your own? Ain't it fun you can't count on no one?" },
+        { "chords": "Ab | Eb | Bb", "lyrics": "Ain't it good to be on your own? Ain't it fun you can't count on no one?" },
+        { "chords": "Ab | Cm | Eb | Ab | Cm | Eb", "lyrics": "Ain't it fun? Living in the real world" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "Eb", "lyrics": "Don't go crying to your mama, cause you're on your own in the real world" },
+        { "chords": "Eb | Cm | Bb", "lyrics": "Don't go crying to your mama, cause you're on your own in the real world" },
+        { "chords": "Ab | Eb | Cm | Bb", "lyrics": "Don't go crying to your mama, cause you're on your own in the real world" },
+        { "chords": "Ab | Eb", "lyrics": "Don't go crying to your mama, cause you're on your own in the real world" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "annotation": "No chords",
+      "lines": [
+        { "chords": "N.C.", "lyrics": "Ain't it fun? Ain't it fun? Baby now you're one of us." },
+        { "chords": "N.C.", "lyrics": "Ain't it fun? Ain't it fun? Ain't it fun? Ain't it fun?" }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "lines": [
+        { "chords": "Ab | Cm | Eb | Ab | Cm | Eb | Ab | Cm | Eb | Ab | Cm | Eb", "lyrics": "Ain't it fun? Living in the real world, Ain't it good? Being all alone" },
+        { "chords": "Ab | Eb | Bb | Ab | Eb | Bb", "lyrics": "Ain't it fun? Living in the real world ('Cause the world don't orbit around you)" },
+        { "chords": "Ab | Cm | Eb | Ab | Cm | Eb", "lyrics": "Ain't it good? (Ain't it good?) Being all alone" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "Ab | Cm | Eb", "lyrics": "Don't go crying to your mama (run to your mama)" },
+        { "chords": "Ab | Cm | Eb", "lyrics": "'Cause you're on your own in the real world (don't go crying)" },
+        { "chords": "Ab | Cm | Eb", "lyrics": "Don't go crying to your mama (run to your mama)" },
+        { "chords": "Ab | Cm | Eb", "lyrics": "'Cause you're on your own in the real world (don't go crying)" }
+      ]
+    }
+  ]
+}

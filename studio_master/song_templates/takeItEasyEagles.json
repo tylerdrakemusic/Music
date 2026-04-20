@@ -1,0 +1,94 @@
+{
+  "title": "Take It Easy",
+  "artist": "Eagles",
+  "key": "G",
+  "bpm": "138",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        "G C D7sus4 G",
+        "C D7sus4 G"
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "G", "lyrics": "Well I'm a runnin' down the road try'n to loosen my load" },
+        { "chords": "D C", "lyrics": "I've got seven women on my mind" },
+        { "chords": "G D", "lyrics": "Four that want to own me, two that want to stone me" },
+        { "chords": "C G", "lyrics": "One says she's a friend of mine" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Em Em7 C G", "lyrics": "Take it easy, take it easy" },
+        { "chords": "Am C Em", "lyrics": "Don't let the sound of your own wheels drive you crazy" },
+        { "chords": "Em7 C G", "lyrics": "Lighten up while you still can" },
+        { "chords": "C G", "lyrics": "Don't even try to understand" },
+        { "chords": "Am C G", "lyrics": "Just find a place to make your stand, and take it easy" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "G", "lyrics": "Well, I'm a standin' on a corner in Winslow, Arizona" },
+        { "chords": "D C", "lyrics": "It's such a fine sight to see" },
+        { "chords": "G D", "lyrics": "It's a girl, my Lord, in a flatbed Ford" },
+        { "chords": "C G", "lyrics": "Slowin' down to take a look at me" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Em Em7 C G", "lyrics": "Come on, baby, don't say maybe" },
+        { "chords": "Am C Em", "lyrics": "I gotta know if your sweet love is gonna save me" },
+        { "chords": "Em7 C G C G", "lyrics": "We may lose and we may win, though we will never be here again" },
+        { "chords": "Am C G", "lyrics": "So open up I'm climbin' in, so take it easy" }
+      ]
+    },
+    {
+      "name": "Solo",
+      "annotation": "Guitar solo think verse patten",
+      "lines": [
+        "G D C G",
+        "D C G Em",
+        "D C G Am",
+        "C Em"
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "G", "lyrics": "Well, I'm a runnin' down the road tryin' to loosen my load" },
+        { "chords": "D C", "lyrics": "Got a world of trouble on my mind" },
+        { "chords": "G D C G", "lyrics": "Lookin' for a lover who won't blow my cover, she's so hard to find" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Em Em7 C G", "lyrics": "sy, take it ea_sy" },
+        { "chords": "Am C Em", "lyrics": "Don't let the sound of your own wheels make you crazy" },
+        { "chords": "Em7 C G G C G", "lyrics": "Come on baby, don't say maybe" },
+        { "chords": "Am C G", "lyrics": "I gotta know if you sweet love is gonna save me" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "C", "lyrics": "Ooh, ooh, ooh" },
+        { "chords": "G", "lyrics": "Ooh, ooh, ooh" },
+        { "chords": "C", "lyrics": "Ooh, ooh, ooh" },
+        { "chords": "G", "lyrics": "Ooh, ooh, ooh" },
+        { "chords": "C", "lyrics": "Ooh, ooh, ooh" },
+        { "chords": "G", "lyrics": "Ooh, ooh, ooh" },
+        { "chords": "C", "lyrics": "Ooh, ooh, ooh" },
+        { "chords": "G", "lyrics": "Ooh, ooh, ooh" },
+        { "chords": "G G7 C", "lyrics": "Oh we got it ea__sy" },
+        { "chords": "G G7 C Em", "lyrics": "We outghta take it ea__sy" }
+      ]
+    }
+  ]
+}

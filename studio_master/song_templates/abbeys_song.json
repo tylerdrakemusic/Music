@@ -1,0 +1,73 @@
+{
+  "title": "Abbey's Song",
+  "artist": "Tyler James Drake",
+  "key": "Bm",
+  "bpm": "95",
+  "arrangement_notes": "",
+  "sections": [
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Bm7 | Dsus2 | A | G", "lyrics": "If life was a novel, each day a page" },
+        { "chords": "Bm7 | Dsus2 | A | Em", "lyrics": "Long to be read, freed from its cage" },
+        { "chords": "Bm7 | Dsus2 | A | Em", "lyrics": "We'd get high with the highs and low with the lows" },
+        { "chords": "Bm7 | Dsus2 | A | G", "lyrics": "Can't set it down, where does the story go?" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Bm7 | Dsus2 | A | G", "lyrics": "Another day gone, another page turns" },
+        { "chords": "Bm7 | Dsus2 | A | G", "lyrics": "This day is blessed, vows will be heard" },
+        { "chords": "Bm7 | Dsus2 | A | Em", "lyrics": "She walks down the aisle, all heads are turned" },
+        { "chords": "Bm7 | Dsus2 | A | G", "lyrics": "A story of hearts, in witness confirmed" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "A | G | D", "lyrics": "Okay to be lost, born to be found!" },
+        { "chords": "A | G | D", "lyrics": "Someone who loves you, 2 hearts are bound" },
+        { "chords": "A | G | D", "lyrics": "She's falling into him, can't let it go" },
+        { "chords": "A | G | D", "lyrics": "Knowing she belongs, feels like home" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "Bm7 | Dsus2 | A | G", "lyrics": "Adoring each other, look in their eyes" },
+        { "chords": "Bm7 | Dsus2 | A | Em (G)", "lyrics": "Doves are set free, set to the skies" },
+        { "chords": "Bm7 | Dsus2 | A | Em", "lyrics": "Remember the music filling our home" },
+        { "chords": "Bm7 | Dsus2 | A | Em", "lyrics": "She found true love, never alone" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "A | G | D", "lyrics": "Okay to be lost, born to be found!" },
+        { "chords": "A | G | D", "lyrics": "Someone who loves you, 2 hearts are bound" },
+        { "chords": "A | G | D", "lyrics": "She's falling into him, can't let it go" },
+        { "chords": "A | G | D", "lyrics": "Knowing she belongs, feels like home" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "annotation": "Bm7 G progression",
+      "lines": [
+        { "chords": "Bm7 | G", "lyrics": "Climbing up 285, trying to chase the view" },
+        { "chords": "Bm7 | G", "lyrics": "Feeling my heart when I see that side of you" },
+        { "chords": "Bm7 | G", "lyrics": "Feeling the moment, our time on the river shore" },
+        { "chords": "Bm7 | G", "lyrics": "You and the sunset, no one could love you more!" }
+      ]
+    },
+    {
+      "name": "Chorus (2X)",
+      "lines": [
+        { "chords": "A | G | D", "lyrics": "Okay to be lost, born to be found!" },
+        { "chords": "A | G | D", "lyrics": "Someone who loves you, 2 hearts are bound" },
+        { "chords": "A | G | D", "lyrics": "She's falling into him, can't let it go" },
+        { "chords": "A | G | D", "lyrics": "Knowing she belongs, feels like home" }
+      ]
+    }
+  ]
+}

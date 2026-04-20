@@ -1,0 +1,101 @@
+{
+  "title": "Rise Up",
+  "artist": "Andra Day",
+  "key": "Db",
+  "bpm": "119",
+  "sections": [
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Db Ab", "lyrics": "You’re broken down and tired" },
+        { "chords": "Bbm Gb", "lyrics": "Of living life on a merry-go-round" },
+        { "chords": "Db Ab", "lyrics": "And you can’t find the fighter" },
+        { "chords": "Bbm Gb", "lyrics": "But I see it in you so we gonna walk it out" },
+        { "chords": "Db Ab Bbm Gb", "lyrics": "And moooooooooove mountains We gonna walk it out" },
+        { "chords": "Db Ab Bbm N.C.", "lyrics": "And moooooooooove mountains" }
+      ]
+    },
+    {
+      "name": "Chorus 1",
+      "lines": [
+        { "chords": "Db", "lyrics": "And I’ll rise up; I'll rise like the day" },
+        { "chords": "Ab", "lyrics": "I’ll rise up; I'll rise unafraid" },
+        { "chords": "Bbm", "lyrics": "I'll rise up" },
+        { "chords": "Gb", "lyrics": "And I’ll do it a thousand times again" },
+        { "chords": "Db", "lyrics": "And I’ll rise up; High like the waves" },
+        { "chords": "Ab", "lyrics": "I’ll rise up; In spite of the ache" },
+        { "chords": "Bbm", "lyrics": "I'll rise up" },
+        { "chords": "Gb", "lyrics": "And I’ll do it a thousand times again" },
+        { "chords": "Db", "lyrics": "For you" },
+        { "chords": "Ab", "lyrics": "For You" },
+        { "chords": "Bbm", "lyrics": "For You" },
+        { "chords": "Gb", "lyrics": "For You" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Db Ab", "lyrics": "When the silence isn’t quiet" },
+        { "chords": "Bbm Gb", "lyrics": "And it feels like it’s getting hard to breathe" },
+        { "chords": "Db Ab", "lyrics": "And I know you feel like dying" },
+        { "chords": "Bbm Gb", "lyrics": "But I promise we’ll take the world to its feet" },
+        { "chords": "Db Ab Bbm Gb", "lyrics": "And mooooooooooove mountains Bring it to its feet" },
+        { "chords": "Db Ab Bbm N.C.", "lyrics": "And moooooooooove mountains" }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "lines": [
+        { "chords": "Db", "lyrics": "And I’ll rise up; I'll rise like the day" },
+        { "chords": "Ab", "lyrics": "I’ll rise up; I'll rise unafraid" },
+        { "chords": "Bbm", "lyrics": "I'll rise up" },
+        { "chords": "Gb", "lyrics": "And I’ll do it a thousand times again" },
+        { "chords": "Db", "lyrics": "For you" },
+        { "chords": "Ab", "lyrics": "For you" },
+        { "chords": "Bbm", "lyrics": "For You" },
+        { "chords": "Gb", "lyrics": "For You" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "Db Ab", "lyrics": "All we need, all we need is hope" },
+        { "chords": "Bbm", "lyrics": "And for that we have each other" },
+        { "chords": "Gb", "lyrics": "And for that we have each other" },
+        { "chords": "Db", "lyrics": "We will rise" },
+        { "chords": "Ab", "lyrics": "We will rise" },
+        { "chords": "Bbm", "lyrics": "We’ll rise, ohh ohhh" },
+        { "chords": "Gb", "lyrics": "We’ll rise" }
+      ]
+    },
+    {
+      "name": "Slow Chorus",
+      "annotation" : "A more subdued, reflective take on the chorus almost acapella",
+      "lines": [
+        { "chords": "Db", "lyrics": "I’ll rise up; Rise like the day" },
+        { "chords": "Ab", "lyrics": "I’ll rise up; In spite of the ache" },
+        { "chords": "Bbm Gb", "lyrics": "I will rise a thousand times again" }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "lines": [
+        { "chords": "Db", "lyrics": "And we’ll rise up; High like the waves" },
+        { "chords": "Ab", "lyrics": "We’ll rise up; In spite of the ache" },
+        { "chords": "Bbm", "lyrics": "We’ll rise up" },
+        { "chords": "Gb", "lyrics": "And we'll do it a thousands times again" },
+        { "chords": "Db", "lyrics": "For You" },
+        { "chords": "Ab", "lyrics": "For You" },
+        { "chords": "Bbm", "lyrics": "For You" },
+        { "chords": "Gb", "lyrics": "For You" }
+      ]
+    },
+    {
+      "name": "Outro",
+  "annotation": "Piano only with harmonies",
+      "lines": [
+        { "chords": "Db Ab Bbm Gb", "lyrics": "Ooh, Ooh, Ahh, Ahh" }
+      ]
+    }
+  ]
+}

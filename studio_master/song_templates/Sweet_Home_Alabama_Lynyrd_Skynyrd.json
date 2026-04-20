@@ -1,0 +1,123 @@
+{
+  "title": "Sweet Home Alabama",
+  "artist": "Lynyrd Skynyrd",
+  "original_artist": "Lynyrd Skynyrd",
+  "key": "G",
+  "bpm": "100",
+  "notes": "Classic southern rock anthem",
+  "sections": [
+    {
+      "name": "Intro",
+      "repeat": 2,
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "Big wheels keep on turning" },
+        { "chords": "D | C | G", "lyrics": "Carry me home to see my kin" },
+        { "chords": "D | C | G", "lyrics": "Singing songs about the Southland" },
+        { "chords": "D | C | G", "lyrics": "I miss 'ol' 'bamy once again" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "D | C | G | D | C | G" , "lyrics": "" },
+        { "chords": "F/C | C", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "Well I heard Mister Young sing about her" },
+        { "chords": "D | C | G", "lyrics": "Well I heard ol' Neil put her down" },
+        { "chords": "D | C | G", "lyrics": "Well, I hope Neil Young will remember" },
+        { "chords": "D | C | G", "lyrics": "A southern man don't need him around anyhow" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "Sweet Home Alabama" },
+        { "chords": "D | C | G", "lyrics": "Where the skies are so blue" },
+        { "chords": "D | C | G", "lyrics": "Sweet Home Alabama" },
+        { "chords": "D | C | G | F C", "lyrics": "Lord I'm coming home to you" }
+      ]
+    },
+    {
+      "name": "Solo 1",
+      "repeat": 2,
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "D | C | G | F C", "lyrics": "In Birmingham they love the Gov'nor, " },
+        { "chords": "D | C | G", "lyrics": "Boo, hoo, hoo" },
+        { "chords": "D | C | G", "lyrics": "Now Watergate does not bother me" },
+        { "chords": "D | C | G", "lyrics": "Does your concience bother you, tell the truth" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "Sweet Home Alabama" },
+        { "chords": "D | C | G", "lyrics": "Where the skies are so blue" },
+        { "chords": "D | C | G", "lyrics": "Sweet Home Alabama" },
+        { "chords": "D | C | G | F C", "lyrics": "Lord I'm coming home to you" }
+      ]
+    },
+    {
+      "name": "Solo 2",
+      "repeat": 4,
+      "lines": [
+        { "chords": "D | C | G | D | C | G", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "D | C | G | D | C | G" , "lyrics": "" },
+        { "chords": "F/C | C", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 4",
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "Now Muscle Shooals has got the Swampers" },
+        { "chords": "D | C | G", "lyrics": "And they've been known to pick a song or two" },
+        { "chords": "D | C | G", "lyrics": "Lord they get me off so much" },
+        { "chords": "D | C | G", "lyrics": "They pick me up when I'm feeling blue, now how 'bout you?" }
+      ]
+    },
+    {
+      "name": "Chorus Final",
+      "repeat": 2,
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "Sweet Home Alabama" },
+        { "chords": "D | C | G", "lyrics": "Where the skies are so blue" },
+        { "chords": "D | C | G", "lyrics": "Sweet Home Alabama" },
+        { "chords": "D | C | G | F C", "lyrics": "Lord I'm coming home to you" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "repeat": 3,
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Fade Out",
+      "repeat": 6,
+      "lines": [
+        { "chords": "D | C | G", "lyrics": "", "fade_out": true }
+      ]
+    }
+  ]
+}

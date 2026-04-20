@@ -1,0 +1,131 @@
+{
+  "title": "Think",
+  "artist": "Aretha Franklin",
+  "key": "G",
+  "bpm": "110",
+  "sections": [
+    {
+      "name": "Intro",
+      "annotation": "Piano intro",
+      "lines": [
+        "G C G C G C G"
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "G", "lyrics": "You better think (Think)" },
+        { "chords": "C G", "lyrics": "Think about what you're trying to do to me" },
+        { "lyrics": "Think (Think, think)" },
+        { "chords": "C G", "lyrics": "Let your mind go, let yourself be free" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "G", "lyrics": "Let's go back, let's go back" },
+        { "chords": "C G", "lyrics": "Let's go way on to way back when" },
+        { "lyrics": "I didn't even know you" },
+        { "chords": "C G", "lyrics": "You couldn't have been too much more than ten (Just a child)" },
+        { "chords": "C G", "lyrics": "I ain't no psychiatrist, I ain't no doctor with degrees" },
+        { "chords": "C G", "lyrics": "But it don't take too much high IQ to see what you're doing to me" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "G", "lyrics": "You better think (Think)" },
+        { "chords": "C G", "lyrics": "Think about what you're trying to do to me" },
+        { "lyrics": "Think (Think, think)" },
+        { "chords": "C G", "lyrics": "Let your mind go, let yourself be free" }
+      ]
+    },
+    {
+      "name": "Refrain",
+      "lines": [
+        { "chords": "G", "lyrics": "'Cause freedom (Freedom)" },
+        { "chords": "Bb", "lyrics": "Stands for freedom (Freedom)" },
+        { "chords": "C", "lyrics": "Oh, freedom" },
+        { "chords": "G", "lyrics": "Yeah, freedom, right now" },
+        { "chords": "G", "lyrics": "Freedom (Freedom)" },
+        { "chords": "Bb", "lyrics": "Oh, freedom (Freedom)" },
+        { "chords": "C", "lyrics": "You need you some freedom" },
+        { "chords": "G", "lyrics": "Oh, freedom, oh, right now" }
+      ]
+    },
+    {
+      "name": "Key Change",
+      "annotation": "up half step to Ab",
+      "lines": []
+    },
+    {
+      "name": "Interlude",
+      "lines": [
+        { "chords": "Ab", "lyrics": "Yeah, think about it!" },
+        { "lyrics": "You, think about it!" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Ab", "lyrics": "There ain't nothing you could ask" },
+        { "chords": "Db Ab", "lyrics": "I could answer you but I won't (I won't)" },
+        { "lyrics": "But I was gonna change to \"I'm not\"" },
+        { "chords": "Db Ab", "lyrics": "If you keep doing things I don't" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Ab", "lyrics": "You better think (Think)" },
+        { "chords": "Db Ab", "lyrics": "Think about what you're trying to do to me" },
+        { "lyrics": "Oh oh-oh-oh think (What you're tryna to do to me) (Think)" },
+        { "chords": "Db Ab", "lyrics": "Let your mind go, let yourself be free" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "Ab", "lyrics": "People walk around everyday" },
+        { "chords": "Db Ab", "lyrics": "Playing games and taking scores" },
+        { "lyrics": "Trying to make other people lose their minds" },
+        { "chords": "Db Ab", "lyrics": "Well, be careful you don't lose yours" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Ab", "lyrics": "You better think (Think)" },
+        { "chords": "Db Ab", "lyrics": "Think about what you're trying to do to me" },
+        { "lyrics": "Oh oh-oh-oh think (What you're tryna to do to me) (Think)" },
+        { "chords": "Db Ab", "lyrics": "Let your mind go, let yourself be free" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "Db", "lyrics": "You need me (Need me)" },
+        { "chords": "Db", "lyrics": "And I need you (Don't you know?)" },
+        { "chords": "Db", "lyrics": "Without each other" },
+        { "chords": "Db", "lyrics": "There ain't nothing either can do" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "Ab", "lyrics": "Oh, yeah, think about it, baby" },
+        { "lyrics": "(What you're tryin' do to me)" },
+        { "lyrics": "To the bone" },
+        { "lyrics": ", baby" },
+        { "lyrics": "Think about it right now" },
+        { "lyrics": "Yeah, right now" },
+        { "lyrics": "(To the bone, for deepness) Oh, right now" },
+        { "lyrics": "(To the bone, for deepness) Yeah, right now" },
+        { "lyrics": "(To the bone, for deepness) You think about it, baby, baby, baby" },
+        { "lyrics": "(To the bone, for deepness) Oh, to the bone, baby" },
+        { "lyrics": "(To the bone, for deepness) Yeah, ooh" },
+        { "lyrics": "(To the bone, for deepness)" }
+      ]
+    }
+  ]
+}

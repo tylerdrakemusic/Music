@@ -1,0 +1,68 @@
+{
+    "title": "Creep",
+    "artist": "Alba Reche",
+    "original_artist": "Radiohead",
+  "key": "E",
+    "bpm": "58",
+    "sections": [
+      {
+        "name": "Intro",
+        "lines": [
+          { "chords": "E G# A Am"}
+        ]
+      },
+      {
+        "name": "Verse 1",
+        "lines": [
+          { "chords": "E", "lyrics": "When you were here before" },
+          { "chords": "G#", "lyrics": "Couldn't look you in the eye" },
+          { "chords": "A", "lyrics": "You're just like an angel" },
+          { "chords": "Am", "lyrics": "Skin makes me cry" },
+          { "chords": "E", "lyrics": "You float like a feather" },
+          { "chords": "G#", "lyrics": "In a beautiful world" },
+          { "chords": "A", "lyrics": "And I wish I was special" },
+          { "chords": "Am", "lyrics": "You're so fuckin' special" }
+        ]
+      },
+      {
+        "name": "Chorus 1",
+        "lines": [
+          { "chords": "E", "lyrics": "But I'm a creep," },
+          { "chords": "G#", "lyrics": "I'm a weirdo." },
+          { "chords": "A", "lyrics": "What the hell am I doing here?" },
+          { "chords": "Am", "lyrics": "I don't belong  here." },
+          { "chords": "E", "lyrics": "I don't care if it hurts" }
+        ]
+      },
+      {
+        "name": "Verse 2",
+        "lines": [
+          { "chords": "G#", "lyrics": "I want to have control" },
+          { "chords": "A", "lyrics": "I want a perfect body" },
+          { "chords": "Am", "lyrics": "I want a perfect soul" },
+          { "chords": "E", "lyrics": "I want you to notice" },
+          { "chords": "G#", "lyrics": "When I'm not around" },
+          { "chords": "A", "lyrics": "You're so fuckin' special" },
+          { "chords": "Am", "lyrics": "I wish I was special" }
+
+        ]
+      },
+      {
+        "name": "Chorus 2",
+        "lines": [
+          { "chords": "E", "lyrics": "But I'm a creep," },
+          { "chords": "G#", "lyrics": "I'm a weirdo." },
+          { "chords": "A", "lyrics": "What the hell am I doing here?" },
+          { "chords": "Am", "lyrics": "I don't belong  here." }
+        ]
+      },
+      {
+        "name": "Bridge",
+        "lines": [
+          { "chords": "E G#", "lyrics": "She's running out the door," },
+          { "chords": "A", "lyrics": "She's running out" },
+          { "chords": "AmAmAm BmBmBm CCC DDD E", "lyrics": "She's run run run run    run" }
+        ]
+      }
+    ]
+  }

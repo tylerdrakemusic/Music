@@ -1,0 +1,65 @@
+{
+    "data": {
+        "device": 2162694,
+        "device_version": 57737216,
+        "meta": {
+            "application": "HX Edit",
+            "appversion": 57671680,
+            "build_sha": "v3.70-10-ge773a6f",
+            "modifieddate": 1726615512,
+            "name": "More Than a Feeling Lead Tone"
+        },
+        "tone": {
+            "dsp0": {
+                "block0": {
+                    "@enabled": true,
+                    "@model": "HD2_AmpBritishBright",
+                    "Bass": 0.55,
+                    "Mid": 0.65,
+                    "Treble": 0.70,
+                    "Presence": 0.60,
+                    "Drive": 0.50,
+                    "ChVol": 0.70,
+                    "Master": 0.70
+                },
+                "block1": {
+                    "@enabled": true,
+                    "@model": "HD2_Cab4X12BritishGreenback25",
+                    "Mic": 0,
+                    "HighCut": 7500.0,
+                    "LowCut": 70.0
+                },
+                "block2": {
+                    "@enabled": true,
+                    "@model": "HD2_DistOverdrive",
+                    "Gain": 0.40,
+                    "Tone": 0.60,
+                    "Level": 0.75
+                },
+                "block3": {
+                    "@enabled": true,
+                    "@model": "HD2_EQSimpleEQ",
+                    "LowGain": 0.35,
+                    "MidGain": 0.60,
+                    "HighGain": 0.65
+                },
+                "block4": {
+                    "@enabled": true,
+                    "@model": "HD2_DelaySimpleDelay",
+                    "Time": 300,
+                    "Feedback": 0.30,
+                    "Mix": 0.25
+                },
+                "block5": {
+                    "@enabled": true,
+                    "@model": "HD2_ReverbPlate",
+                    "Decay": 4.0,
+                    "Mix": 0.30
+                }
+            },
+            "dsp1": {}
+        },
+        "schema": "L6Preset",
+        "version": 6
+    }
+}
