@@ -1,0 +1,61 @@
+{
+  "title": "Fly Away",
+  "artist": "Tyler James Drake",
+  "key": "C",
+  "bpm": "106",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "C | C | C | C | Dm | Dm | G7 | G7 |", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "C | C | C | C |", "lyrics": "Birds fly by riding the breeze" },
+        { "chords": "Dm | Dm | G7 | G7 |", "lyrics": "Like the way they talk among the leaves." },
+        { "chords": "C | C | C | C |", "lyrics": "Remember when I wrote you a song" },
+        { "chords": "Dm | Dm | G7 | A7 |", "lyrics": "Our world could never break our love so strong." }
+      ]
+    },
+    {
+      "name": "Pre-Chorus 1",
+      "lines": [
+        { "chords": "Dm | Dm | Am | Am | ", "lyrics": "Life’s a fight.  Love’s a long long flight.  See you tonight.  By the pull of the moon." },
+        { "chords": "F | G7 | Dm | Dm |", "lyrics": "Life’s a fight.  You are the brightest light.  I need you tonight.  Your love is alive." }
+      ]
+    },
+    {
+      "name": "Chorus 1",
+      "lines": [
+        { "chords": "F | Am | G | E7 | F | Am | G | E7 |", "lyrics": "Fly away by darling dove.  Your silhouette soars in skies above." },
+        { "chords": "F | Am | G | E7 | F | Am | G | G |", "lyrics": "Fly away by darling dove.  My heart beats with your wings my love." }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "C | C | C | C |", "lyrics": "Am I the one in between?  " },
+        { "chords": "Dm | Dm | G7 | G7 |", "lyrics": "Wanna be the one you always need." },
+        { "chords": "C | C | C | C |", "lyrics": "Am I the one who lives in your dreams?" },
+        { "chords": "Dm | Dm | G7 | A7 |", "lyrics": "Clearly written in your memory." }
+      ]
+    },
+    {
+      "name": "Pre-Chorus 2",
+      "lines": [
+        { "chords": "Dm | Dm | Am | Am | ", "lyrics": "Life’s a fight.  Love’s a long long flight.  See you tonight.  By the pull of the moon." },
+        { "chords": "F | G7 | Dm | Dm |", "lyrics": "Life’s a fight.  You are the brightest light.  I need you tonight.  Your love is alive." }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "annotation": "x2",
+      "lines": [
+        { "chords": "F | Am | G | E7 | F | Am | G | E7 |", "lyrics": "Fly away by darling dove.  Your silhouette soars in skies above." },
+        { "chords": "F | Am | G | E7 | F | Am | G | G |", "lyrics": "Fly away by darling dove.  My heart beats with your wings my love." }
+      ]
+    }
+  ]
+}

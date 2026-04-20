@@ -1,0 +1,80 @@
+{
+  "title": "Wicked Games",
+  "artist": "Chris Isaak",
+  "original_artist": "Chris Isaak",
+  "key": "Bm",
+  "bpm": "112",
+  "notes": "Haunting ballad with atmospheric guitar",
+  "sections": [
+    {
+      "name": "Intro",
+      "repeat": 4,
+      "lines": [
+        { "chords": "Bm | A | E", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Bm | A | E", "lyrics": "The world was on fire and no one could save me but you" },
+        { "chords": "Bm | A | E", "lyrics": "It's strange what desire will make foolish people do" },
+        { "chords": "Bm | A | E", "lyrics": "I never dreamed that I'd meet somebody like you" },
+        { "chords": "Bm | A | E", "lyrics": "I never dreamed that I'd lose somebody like you" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Bm | A | E", "lyrics": "No, I don't want to fall in love", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm | A | E", "lyrics": "No, I don't want to fall in love", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm | A | E", "lyrics": "With you" },
+        { "chords": "Bm | A | E", "lyrics": "With you", "backing_vocals": "This world is only gonna break your heart" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Bm | A | E", "lyrics": "What a wicked game you play, to make me feel this way" },
+        { "chords": "Bm | A | E", "lyrics": "What a wicked thing to do, to let me dream of you" },
+        { "chords": "Bm | A | E", "lyrics": "What a wicked thing to say, you never felt this way" },
+        { "chords": "Bm | A | E", "lyrics": "What a wicked thing to do, to make me dream of you" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Bm | A | E", "lyrics": "And, I don't want to fall in love", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm | A | E", "lyrics": "No, I don't want to fall in love", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm", "lyrics": "With you" }
+      ]
+    },
+    {
+      "name": "Instrumental",
+      "repeat": 4,
+      "lines": [
+        { "chords": "Bm | A | E", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "Bm | A | E", "lyrics": "The world was on fire and no one could save me but you" },
+        { "chords": "Bm | A | E", "lyrics": "It's strange what desire will make foolish people do" },
+        { "chords": "Bm | A | E", "lyrics": "I never dreamed that I'd love somebody like you" },
+        { "chords": "Bm | A | E", "lyrics": "I never dreamed that I'd lose somebody like you, no" }
+      ]
+    },
+    {
+      "name": "Chorus/Outro",
+      "lines": [
+        { "chords": "Bm | A | E", "lyrics": "No, I don't want to fall in love", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm | A | E", "lyrics": "No, I don't want to fall in love", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm | A | E", "lyrics": "With you", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm | A | E", "lyrics": "With you", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm | A | E", "lyrics": "No, I...", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm | A | E", "lyrics": "", "backing_vocals": "This world is only gonna break your heart" },
+        { "chords": "Bm | A | E", "lyrics": "Nobody loves no one" }
+      ]
+    }
+  ]
+}

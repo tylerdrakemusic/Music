@@ -1,0 +1,88 @@
+{
+  "title": "Imagine",
+  "artist": "Eva Cassidy",
+  "key": "F#",
+  "bpm": "129",
+  "link_repeats": { "enabled": true, "threshold": 0.90, "same_name_only": true },
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        "F# F#maj7 B F# F#maj7",
+        "B"
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "F# F#maj7 B", "lyrics": "Imagine there's no heaven" },
+        { "chords": "F# F#maj7 B", "lyrics": "It's easy if you try" },
+        { "chords": "F# F#maj7 B", "lyrics": "No hell below us" },
+        { "chords": "F# F#maj7 B", "lyrics": "Above us only sky" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "B D#m/A# B/F#", "lyrics": "Imagine all the people" },
+        { "chords": "C# C#7", "lyrics": "Living for today... Ahaah..." }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "F# F#maj7 B", "lyrics": "Imagine there's no countries" },
+        { "chords": "F# F#maj7 B", "lyrics": "It isn't hard to do" },
+        { "chords": "F# F#maj7 B", "lyrics": "Nothing to kill or die for" },
+        { "chords": "F# F#maj7 B", "lyrics": "And no religion, too" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "B D#m/A# B/F", "lyrics": "Imagine all the people" },
+        { "chords": "C# C#7", "lyrics": "Living life in peace... You..." }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "F# F#maj7 A# A#7", "lyrics": "You may say I'm a dreamer" },
+        { "chords": "B C# F# A# A#7 B", "lyrics": "But I'm not the only one" },
+        { "chords": "F# F#maj7 B F#maj7 C#7 A#7 B C#", "lyrics": "I hope someday you'll join us And the world will be as one" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "F# F#maj7 B", "lyrics": "Imagine no possessions" },
+        { "chords": "F# F#maj7 B", "lyrics": "I wonder if you can" },
+        { "chords": "F# F#maj7 B", "lyrics": "No need for greed or hunger" },
+        { "chords": "F# F#maj7 B", "lyrics": "A brotherhood of man" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "B D#m/A# B/F#", "lyrics": "Imagine all the people" },
+        { "chords": "C# C#7", "lyrics": "Sharing all the world... You..." }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "lines": [
+        { "chords": "F# F#maj7 A# A#7", "lyrics": "You may say I'm a dreamer" },
+        { "chords": "B C#", "lyrics": "But I'm not the only one" },
+        { "chords": "F# F#maj7 A# A#7", "lyrics": "I hope someday you'll join us And the world will live as one" },
+        { "chords": "B C# F# F#maj7 B C#" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "repeat": "x",
+      "lines": [
+        { "chords": "F# F#maj7 B"}
+      ]
+    }
+  ]
+}

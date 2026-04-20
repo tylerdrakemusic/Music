@@ -1,0 +1,75 @@
+{
+  "title": "Let It Fade",
+  "artist": "Ada Schmidt",
+  "key": "Bm",
+  "bpm": "70",
+  "notes": "Transposed down 1/2 step from original",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "Bm | G | D | A", "lyrics": "Mmmm mhmmm" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Bm | G | D | A", "lyrics": "I heald the weight of yesterday, like shadow I couldn't chase away" },
+        { "chords": "Bm | G | D | A", "lyrics": "Every smile was painted on trying to look strong when hope was gone" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "Em | G | Bm | A", "lyrics": "Tired of running in circles, tired of hiding the pain, it's time to stop pretending I'm not okay" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "D | A | Bm | G", "lyrics": "Let it fade, let it go, all the hurt I used to know, I've been breaking just to mend, learning where the healing ends" },
+        { "chords": "D | A | Bm | G", "lyrics": "Let it fade light the night, I walk forward toward the light, I'm not who I was before, I don't need to hurt anymore" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords" :"Bm"},
+        { "chords": "Bm | G | D | A", "lyrics": "I used to fear being alone, but silence help me find my own tone" },
+        { "chords": "Bm | G | D | A", "lyrics": "I whispered truth into the dark, and found the pieces of my heart" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "Em | G | Bm | G", "lyrics": "Now I'm done with the replay, done with all the blame, ready to forgive myself and drop the shame." }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "D | A | Bm | G", "lyrics": "Let it fade, let it go, all the hurt I used to know, I've been breaking just to mend, learning where the healing ends" },
+        { "chords": "D | A | Bm | G", "lyrics": "Let it fade light the night, I walk forward toward the light, I'm not who I was before, I don't need to hurt anymore" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "G | A | Bm | A | STOP", "lyrics": "It's not weakness when you cry, it's a step towards being free, every fear is just a sign of letting go of what used to be" }
+      ]
+    },
+    {
+      "name": "Chorus Alt Lyrics",
+      "lines": [
+        { "chords": "D | A | Bm | G", "lyrics": "Let it fade, let it go, watch me rise soft and slow, I'm still here still standing tall, learning how to love through it all" },
+        { "chords": "D | A | Bm | G", "lyrics": "Let it fade light the night, making room for morning light, I'm not broken just reborn, and I don't need to hurt anymore" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "Bm | G | D | A", "lyrics": "" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "title": "Parachute",
+  "artist": "Chris Stapleton",
+  "key": "D#m",
+  "bpm": "113",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        "D#m F# C#sus2 Badd9"
+      ],
+      "repeat": 2
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "D#m F#", "lyrics": "Street lights along the highway" },
+        { "chords": "C#sus2 Badd9", "lyrics": "Throwing shadows in the dark" },
+        { "chords": "D#m F#", "lyrics": "And the memories keep on turning" },
+        { "chords": "C#sus2 Badd9", "lyrics": "To the rhythm of a broken heart" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "D#m F#", "lyrics": "You only need a roof when it's raining" },
+        { "chords": "C#sus2 Badd9", "lyrics": "You only need a fire when it's cold" },
+        { "chords": "D#m F#", "lyrics": "You only need a drink when the whiskey" },
+        { "chords": "C#sus2 Badd9", "lyrics": "Is the only thing you have left to hold" },
+        { "chords": "D#m F#", "lyrics": "Sun comes up and goes back down" },
+        { "chords": "C#sus2 Badd9", "lyrics": "And falling feels like flying 'til you hit the ground" },
+        { "chords": "D#m F#", "lyrics": "Say the word and I'll be there for you" },
+        { "chords": "C#sus2 D#m", "lyrics": "Baby, I will be your parachute" }
+      ]
+    },
+    {
+      "name": "Main Theme",
+      "lines": [
+        "F# C#sus2 Badd9 D#m",
+        "F# C#sus2 Badd9"
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "D#m F#", "lyrics": "There's a song that I remember" },
+        { "chords": "C#sus2 Badd9", "lyrics": "I never learned to play" },
+        { "chords": "D#m F#", "lyrics": "And a lifetime of forgotten words" },
+        { "chords": "C#sus2 Badd9", "lyrics": "I never got to say" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "D#m F#", "lyrics": "You only need a roof when it's raining" },
+        { "chords": "C#sus2 Badd9", "lyrics": "You only need a fire when it's cold" },
+        { "chords": "D#m F#", "lyrics": "You only need a drink when the whiskey" },
+        { "chords": "C#sus2 Badd9", "lyrics": "Is the only thing you have left to hold" },
+        { "chords": "D#m F#", "lyrics": "Sun comes up and goes back down" },
+        { "chords": "C#sus2 Badd9", "lyrics": "And falling feels like flying 'til you hit the ground" },
+        { "chords": "D#m F#", "lyrics": "Say the word and I'll be there for you" },
+        { "chords": "C#sus2 D#m F# C#sus2", "lyrics": "Baby, I will be your parachute" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "D#m F# C#sus2", "lyrics": "Parachute" }
+      ]
+    },
+    {
+      "name": "Solo",
+      "lines": [
+        "D#m F# C#sus2 Badd9",
+        "D#m F# C#sus2 Badd9"
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "C#sus2 Badd9", "lyrics": "If you think you're going down" },
+        { "chords": "C#sus2 Badd9", "lyrics": "Just know I will be around" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "D#m F#", "lyrics": "You only need a roof when it's raining" },
+        { "chords": "C#sus2 Badd9", "lyrics": "You only need a fire when it's cold" },
+        { "chords": "D#m F#", "lyrics": "You only need a drink when the whiskey" },
+        { "chords": "C#sus2 Badd9", "lyrics": "Is the only thing you have left to hold" },
+        { "chords": "D#m F#", "lyrics": "Sun comes up and goes back down" },
+        { "chords": "C#sus2 Badd9", "lyrics": "And falling feels like flying 'til you hit the ground" },
+        { "chords": "D#m F#", "lyrics": "Say the word and I'll be there for you" },
+        { "chords": "C#sus2", "lyrics": "Baby, I will be your" },
+        { "lyrics": "Baby, I will be your" },
+        { "chords": "D#m", "lyrics": "Parachute" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "F# C#sus2 Badd9 D#m", "lyrics": "Parachute" },
+        "F# C#sus2 Badd9 D#m F# C#sus2",
+        "D#m"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "title": "You Already Know - Rough 1-19-2026",
+  "artist": "Tyler James Drake",
+  "key": "E Major",
+  "bpm": "135",
+  "arrangement_notes": "",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "Emaj7 -> E5 | Asus | C#7(no3) | B5 | Asus2"}
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Emaj7 -> E5", "lyrics": "When your feeling lonely" },
+        { "chords": "Asus", "lyrics": "Trust you're my one and only" },
+        { "chords": "C#7(no3) | B5 | Asus2", "lyrics": "I fell your love soft like the gentle snow" },
+        { "chords": "C#7(no3) | B5 | Asus2", "lyrics": "In the warmth of the fire we're already home" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "annotation": "Open hi-hats on quarters,Crash accents on bar downbeats, Four-on-the-floor kick - more driving and anthemic, Ride bell, Floor tom pulse on the 1",
+      "lines": [
+        { "chords": "E | B5 | Asus2", "lyrics": "You, You already know, Won't let you go" },
+        { "chords": "Asus2", "lyrics": "Don't fear just let it be, it's safe lean in to me" },
+        { "chords": "E | B5 | Asus2", "lyrics": "Love feeling it grow, taking it slow" },
+        { "chords": "Asus2", "lyrics": "No pressure take your time,I'm yours and you are mine" },
+        { "chords": "E | B5 | Asus2", "lyrics": "Please, don't be afraid we've got it made" },
+        { "chords": "Asus2", "lyrics": "We're good it's gonna last, stop living in the past" },
+        { "chords": "E | B5 | Asus2", "lyrics": "True, my heart is true.  I'm here for you." },
+        { "chords": "Asus2", "lyrics": "My heart is here to stay, trust I won't walk away" }
+      ]
+      },
+    {
+      "name": "Instrumental",
+      "lines": [
+        { "chords": "Emaj7 -> E5 | Asus | C#7(no3) | B5 | Asus2"}
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Emaj7 -> E5", "lyrics": "If you're feeling insecure" },
+        { "chords": "Asus", "lyrics": "Hold my vow, and know for sure" },
+        { "chords": "C#7(no3) | B5 | Asus2", "lyrics": "No need to question girl, we're in the flow." },
+        { "chords": "C#7(no3) | B5 | Asus2", "lyrics": "If I promised by heart, than you already know." }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "annotation": "Open hi-hats on quarters,Crash accents on bar downbeats, Four-on-the-floor kick - more driving and anthemic, Ride bell, Floor tom pulse on the 1",
+      "lines": [
+        { "chords": "E | B5 | Asus2", "lyrics": "You, You already know, Won't let you go" },
+        { "chords": "Asus2", "lyrics": "Don't fear just let it be, it's safe lean in to me" },
+        { "chords": "E | B5 | Asus2", "lyrics": "Love feeling it grow, taking it slow" },
+        { "chords": "Asus2", "lyrics": "No pressure take your time,I'm yours and you are mine" },
+        { "chords": "E | B5 | Asus2", "lyrics": "Please, don't be afraid we've got it made" },
+        { "chords": "Asus2", "lyrics": "We're good it's gonna last, stop living in the past" },
+        { "chords": "E | B5 | Asus2", "lyrics": "True, my heart is true.  I'm here for you." },
+        { "chords": "Asus2", "lyrics": "My heart is here to stay, trust I won't walk away" }
+      ]
+      },
+    {
+      "name": "Bridge",
+      "annotation": "Half-time snare, Sparse kick, Rim clicks, Cymbal swells, Tom builds, Subtle shaker, China accent",
+      "lines": [
+        { "chords": "C#m | A | C#m | B5 ", "lyrics": "Wishes they light up brighter than shooting stars" },
+        { "chords": "C#m | A | C#m | B5 ", "lyrics": "Believing in us, believing in who we are" },
+        { "chords": "C#m | A | C#m | B5 ", "lyrics": "It's more than a dream, wishes they do come true" },
+        { "chords": "C#m | A | C#m | B5 ", "lyrics": "Taking my chances babe, its me and you" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "annotation": "Open hi-hats on quarters,Crash accents on bar downbeats, Four-on-the-floor kick - more driving and anthemic, Ride bell, Floor tom pulse on the 1",
+      "lines": [
+        { "chords": "E | B5 | Asus2", "lyrics": "You, You already know, Won't let you go" },
+        { "chords": "Asus2", "lyrics": "Don't fear just let it be, it's safe lean in to me" },
+        { "chords": "E | B5 | Asus2", "lyrics": "Love feeling it grow, taking it slow" },
+        { "chords": "Asus2", "lyrics": "No pressure take your time,I'm yours and you are mine" },
+        { "chords": "E | B5 | Asus2", "lyrics": "Please, don't be afraid we've got it made" },
+        { "chords": "Asus2", "lyrics": "We're good it's gonna last, stop living in the past" },
+        { "chords": "E | B5 | Asus2", "lyrics": "True, my heart is true.  I'm here for you." },
+        { "chords": "Asus2", "lyrics": "My heart is here to stay, trust I won't walk away" }
+      ]
+      },
+        {
+      "name": "Instrumental",
+      "lines": [
+        { "chords": "Emaj7 -> E5 | Asus | C#7(no3) | B5 | Asus2"}
+      ]
+    }
+  ]
+}

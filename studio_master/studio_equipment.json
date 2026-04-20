@@ -1,0 +1,518 @@
+[
+  {
+    "owner": "Tyler Drake",
+    "studio_name": "Personal Studio",
+    "equipment": {
+      "microphone": {
+        "manufacturer": "Audio Technica",
+        "model_name": "P48 Cardioid Condenser",
+        "serial_number": "12345"
+      },
+      "audio_interface": {
+        "manufacturer": "Focusrite",
+        "model_name": "Scarlett 2i2",
+        "type": "USB Audio Interface",
+        "inputs": 2,
+        "outputs": 2,
+        "sample_rate": "up to 192kHz",
+        "bit_depth": "24-bit",
+        "preamps": "2x Focusrite preamps with 56dB gain",
+        "serial_number": "67890"
+      },
+      "studio_monitors": {
+        "manufacturer": "Yamaha",
+        "model_name": "HS8",
+        "type": "Active Powered Studio Monitor",
+        "woofer": "8-inch white polypropylene cone",
+        "tweeter": "1-inch dome tweeter",
+        "power": "120W total (75W LF + 45W HF)",
+        "frequency_response": "38Hz - 30kHz",
+        "crossover": "2kHz",
+        "serial_number": "11223"
+      },
+      "headphones_1": {
+        "manufacturer": "KnoxGear",
+        "model_name": "Headphones",
+        "serial_number": "44556"
+      },
+      "headphones_2": {
+        "manufacturer": "Beyerdynamic",
+        "model_name": "DT 770 Pro",
+        "type": "Closed-back over-ear studio headphones",
+        "description": "Closed-back studio mixing headphones for critical listening",
+        "impedance": "250 ohm",
+        "frequency_response": "5Hz - 35kHz",
+        "sensitivity": "96 dB",
+        "driver_size": "45mm",
+        "serial_number": "TBD"
+      },
+      "midi_controller": {
+        "manufacturer": "Akai",
+        "model_name": "MPK Mini",
+        "type": "USB MIDI Controller",
+        "keys": 25,
+        "key_type": "Mini synth-action",
+        "pads": 8,
+        "knobs": 8,
+        "power": "USB bus-powered",
+        "serial_number": "77889"
+      },
+      "guitar_1": {
+        "make_and_model": {
+          "manufacturer": "B.C. Rich",
+          "model_name": "Awesome AI inspired Shredzilla (Strat Style)",
+          "serial_number": "2021628"
+        },
+        "body_and_construction": {
+          "body_shape": "Gunslinger",
+          "construction": "Bolt-on",
+          "body_wood": "Alder",
+          "orientation": "Right Handed"
+        },
+        "neck": {
+          "neck_shape": "Shredzilla",
+          "neck_wood": "Maple with Ebony fingerboard",
+          "scale": 25.5,
+          "truss_rod": "Dual Action",
+          "headstock": "Straight 6-Inline"
+        },
+        "fretboard": {
+          "material": "Ebony",
+          "radius": 14,
+          "fret_size": "Extra Jumbo",
+          "number_of_frets": 22,
+          "nut": "Floyd Rose R3",
+          "nut_width": "1 11/16th"
+        },
+        "hardware": {
+          "bridge_type": "Floyd Rose Original Locking Tremolo",
+          "bridge_design": "Floyd Rose Original with Brass Block",
+          "tuning_machines": "Ships with Grover Locking Rotomatic 18:1 ratio or Graph Tech Ratio Electric Locking"
+        },
+        "pickups_and_electronics": {
+          "pickup_configuration": "Dual Humbucker",
+          "neck_pickup": "DiMarzio D Activator X ™ Black Bobbins, Made in USA - F-Spaced (51.05 mm)",
+          "bridge_pickup": "DiMarzio Super Distortion™ Black Bobbins, Made in USA - F-Spaced (51.05 mm)"
+        },
+        "other": {
+          "strings": "D'Addario NYXL0946",
+          "number_of_strings": 6,
+          "accessories": "Case included",
+          "country_of_origin": "United States of America"
+        }
+      },
+      "guitar_2": {
+        "manufacturer": "Fender",
+        "model_name": "Stratocaster",
+        "serial_number": "10112"
+      },
+      "guitar_3": {
+        "manufacturer": "Epiphone",
+        "model_name": "Les Paul",
+        "serial_number": "10101505837"
+      },
+      "electric_drumset": {
+        "manufacturer": "Roland",
+        "model_name": "TD-11",
+        "type": "Electronic Drum Module",
+        "drum_kits": 50,
+        "instruments": 190,
+        "coach_function": true,
+        "usb_midi": true,
+        "audio_inputs": "1 stereo aux in",
+        "serial_number": "51516"
+      },
+      "acoustic_guitar": {
+        "manufacturer": "Yamaha",
+        "model_name": "FG-04-LTD",
+        "type": "Acoustic Guitar (Limited Edition)",
+        "top_wood": "Solid Spruce",
+        "back_and_sides": "Nato",
+        "neck": "Nato",
+        "fingerboard": "Rosewood",
+        "body_style": "Traditional Western",
+        "serial_number": "17181"
+      },
+      "bass_guitar": {
+        "manufacturer": "Yamaha",
+        "model_name": "TRBX174EW",
+        "type": "4-String Electric Bass",
+        "body": "Mango wood top on Mahogany",
+        "neck": "Maple",
+        "fingerboard": "Rosewood",
+        "scale_length": "34 inches",
+        "pickups": "P/J passive pickup configuration",
+        "serial_number": "19202"
+      },
+      "amplifier_2": {
+        "manufacturer": "Vox",
+        "model_name": "DA 15",
+        "type": "Digital Modeling Amplifier",
+        "watts": 15,
+        "speaker": "8-inch",
+        "amp_models": 11,
+        "effects": "Built-in effects (chorus, flanger, tremolo, delay, reverb)",
+        "status": "Out of service",
+        "serial_number": "21222",
+        "replacement_consideration": [
+          {
+            "manufacturer": "Quilter Labs",
+            "model_name": "Aviator Cub",
+            "type": "Solid-State Combo Amplifier (Tube-like voicing)",
+            "watts": 50,
+            "speaker": "1x12-inch",
+            "weight_lbs": 24,
+            "di_output": "XLR balanced with cab simulation",
+            "effects_loop": true,
+            "reverb": "Built-in spring-style reverb",
+            "street_price_usd": "549-649",
+            "pros": [
+              "DI with cab sim - perfect for live gigs and silent recording",
+              "Very lightweight for a 1x12 combo (24 lbs)",
+              "Solid-state sounds remarkably tube-like",
+              "Takes pedals extremely well (great with HX Stomp)",
+              "Excellent clean headroom"
+            ],
+            "cons": [
+              "Solid-state (not real tubes)",
+              "50W may be overkill for bedroom practice (no power scaling)"
+            ],
+            "recommended_by": "Band mate",
+            "notes": "Good pairing with HX Stomp - can run Stomp into front or use Cub DI for FOH while monitoring through speaker"
+          },
+          {
+            "manufacturer": "Roland",
+            "model_name": "JC-22",
+            "type": "Solid-State Stereo Combo Amplifier",
+            "watts": 30,
+            "speaker": "2x6.5-inch stereo",
+            "weight_lbs": 15,
+            "di_output": false,
+            "effects_loop": false,
+            "chorus": "Built-in Roland Dimensional Chorus (legendary JC chorus)",
+            "vibrato": "Built-in vibrato effect",
+            "aux_in": true,
+            "headphone_out": true,
+            "street_price_usd": "399-449",
+            "pros": [
+              "Legendary pristine clean tones",
+              "Built-in stereo chorus (iconic JC sound)",
+              "Extremely lightweight (15 lbs)",
+              "Stereo speaker configuration",
+              "Perfect pedal platform",
+              "Great for home/studio use"
+            ],
+            "cons": [
+              "No DI output",
+              "No effects loop",
+              "30W may be underpowered for loud gigs without PA support",
+              "Clean-only (no built-in drive)"
+            ],
+            "notes": "The baby Jazz Chorus - same legendary clean tones and chorus in a compact package"
+          },
+          {
+            "manufacturer": "Supro",
+            "model_name": "Delta King 12",
+            "type": "All-Tube Combo Amplifier",
+            "watts": 15,
+            "power_tubes": "2x 6V6",
+            "preamp_tubes": "2x 12AX7",
+            "speaker": "1x12-inch Supro BD12 (Made in USA)",
+            "weight_lbs": 35,
+            "di_output": false,
+            "effects_loop": false,
+            "reverb": "Built-in tube-driven spring reverb",
+            "tremolo": "Built-in tube-driven tremolo",
+            "street_price_usd": "799-899",
+            "pros": [
+              "All-tube tone (real 6V6 power section)",
+              "Excellent touch-sensitive dynamics",
+              "Beautiful tube-driven spring reverb and tremolo",
+              "Classic American voiced cleans that break up nicely",
+              "Made in USA speaker",
+              "15W great for studio and small-medium gigs"
+            ],
+            "cons": [
+              "No DI output",
+              "No effects loop",
+              "Heavier than solid-state options (35 lbs)",
+              "Higher price point"
+            ],
+            "notes": "True tube amp with vintage Supro character - excellent for blues, rock, and roots tones"
+          }
+        ]
+      },
+      "keyboard": {
+        "manufacturer": "Yamaha",
+        "model_name": "PSR-E363",
+        "type": "Portable Keyboard",
+        "keys": 61,
+        "touch_sensitive": true,
+        "voices": 574,
+        "styles": 165,
+        "polyphony": 48,
+        "usb_to_host": true,
+        "serial_number": "23242"
+      },
+      "amplifier_1": {
+        "manufacturer": "Friedman",
+        "model_name": "Little Sister",
+        "type": "Tube Combo Amplifier",
+        "watts": 20,
+        "power_tubes": "2x EL84",
+        "preamp_tubes": "3x 12AX7",
+        "speaker": "1x 12-inch Creamback",
+        "channels": 1,
+        "effects_loop": true,
+        "serial_number": "3862403008"
+      },
+      "amplifier_0": {
+        "manufacturer": "Blackstar",
+        "model_name": "Fly 3",
+        "type": "Mini Practice Amplifier",
+        "watts": 3,
+        "speaker": "3-inch",
+        "channels": 2,
+        "delay_effect": true,
+        "power": "6x AA batteries or power supply",
+        "serial_number": "UZA200206181"
+      }
+    },
+    "guitar_pedals": {
+      "All In One": {
+        "manufacturer": "Line 6",
+        "model_name": "HX Stomp",
+        "type": "Multi-effects Processor / Amp Modeler",
+        "dsp_blocks": 6,
+        "amp_models": "300+ amps, cabs, and effects",
+        "ins_outs": "Stereo in/out, expression pedal, USB",
+        "ir_slots": 128,
+        "presets": 126,
+        "serial_number": "25252"
+      },
+      "PreAmp": {
+        "manufacturer": "Tech 21",
+        "model_name": "SansAmp California",
+        "type": "Analog Preamp / DI Pedal",
+        "character": "Mesa Boogie-style tones",
+        "outputs": "XLR DI and 1/4-inch",
+        "power": "9V DC or 9V battery",
+        "serial_number": "25252"
+      },
+      "Looper": {
+        "manufacturer": "BOSS",
+        "model_name": "RC-1 Loop Station",
+        "type": "Looper Pedal",
+        "loop_time": "12 minutes stereo",
+        "loop_indicator": "24-segment LED",
+        "undo_redo": true,
+        "serial_number": "TBD"
+      },
+      "Tuner": {
+        "manufacturer": "TC Electronic",
+        "model_name": "Polytune 3",
+        "type": "Polyphonic Tuner Pedal",
+        "tuning_modes": "Polyphonic, Chromatic, Strobe",
+        "accuracy": "+/- 0.02 cents (strobe mode)",
+        "buffer": "BonaFide Buffer (switchable)",
+        "true_bypass": true,
+        "serial_number": "27272"
+      },
+      "Fuzz": {
+        "manufacturer": "Voodoo Lab",
+        "model_name": "Superfuzz",
+        "type": "Octave Fuzz Pedal",
+        "serial_number": "28282"
+      },
+      "Distortion": {
+        "manufacturer": "Ibanez",
+        "model_name": "Tube Screamer",
+        "type": "Overdrive Pedal",
+        "circuit": "JRC4558D op-amp (classic models)",
+        "controls": "Overdrive, Tone, Level",
+        "serial_number": "29292"
+      },
+      "AutoWah": {
+        "manufacturer": "BOSS",
+        "model_name": "AW-3 Dynamic Wah",
+        "type": "Auto-Wah / Envelope Filter",
+        "modes": "Up, Down, Tempo, Humanizer",
+        "guitar_bass_switch": true,
+        "serial_number": "30303"
+      },
+      "Delay": {
+        "manufacturer": "BOSS",
+        "model_name": "DD-3T Digital Delay",
+        "type": "Digital Delay Pedal",
+        "delay_time": "12.5ms - 800ms",
+        "tap_tempo": true,
+        "modes": "Short, Medium, Long, Hold",
+        "serial_number": "31313"
+      },
+      "Reverb": {
+        "manufacturer": "Electro-Harmonix",
+        "model_name": "Holy Grail",
+        "type": "Reverb Pedal",
+        "reverb_types": "Spring, Hall, Flerb",
+        "controls": "Reverb level",
+        "serial_number": "32323"
+      }
+    }
+  },
+  {
+    "owner": "HyperThreat Studio",
+    "studio_name": "HyperThreat Recording Studio",
+    "project": "Bloom Album Production",
+    "equipment": {
+      "Pro_3500_Power_Center": {
+        "manufacturer": "Furman",
+        "model_name": "Pro 3500",
+        "description": "High-capacity power conditioning unit with surge protection",
+        "voltage_regulation": "Linear Filtering Technology (LiFT)",
+        "outlets": 12,
+        "count": 1
+      },
+      "Pro_Tools_MTRX_Studio": {
+        "manufacturer": "Avid",
+        "model_name": "MTRX Studio",
+        "description": "High-end Pro Tools interface for advanced routing and mixing",
+        "channels": "64 channels I/O via DigiLink",
+        "sample_rate": "up to 192kHz",
+        "converters": "Premium AD/DA conversion",
+        "count": 1
+      },
+      "5059_Satellite_16x2_2": {
+        "manufacturer": "Rupert Neve Designs",
+        "model_name": "5059 Satellite",
+        "description": "Summing mixer for analog warmth and stereo expansion",
+        "inputs": 16,
+        "outputs": 2,
+        "transformer": "Custom-wound transformers",
+        "count": 1
+      },
+      "Switchcraft_6425_Patchbay": {
+        "manufacturer": "Switchcraft",
+        "model_name": "6425",
+        "description": "Professional patchbay for signal routing and organization",
+        "jacks": 48,
+        "normalling": "Full, Half, or Non-normalled",
+        "count": 3
+      },
+      "Dangerous_Monitor_ST": {
+        "manufacturer": "Dangerous Music",
+        "model_name": "Monitor ST",
+        "description": "Studio monitor controller with multiple input and output sources",
+        "inputs": "6 stereo",
+        "outputs": "3 stereo speaker outputs + headphone",
+        "talkback": true,
+        "count": 1
+      },
+      "Furman_PL_86_SMP_EVS_LIFT": {
+        "manufacturer": "Furman",
+        "model_name": "PL-8 Series II E",
+        "description": "Power conditioner with advanced voltage regulation",
+        "outlets": 9,
+        "lights": "Dual retractable LED lights",
+        "count": 1
+      },
+      "Rack_Rider_RR_15": {
+        "manufacturer": "Furman",
+        "model_name": "RR-15",
+        "description": "Rack-mountable power distributor and conditioner",
+        "outlets": 15,
+        "rack_spaces": 1,
+        "count": 1
+      },
+      "API_Channel_Strip": {
+        "manufacturer": "API",
+        "model_name": "500 Series Channel Strip",
+        "description": "Channel strip featuring 512C Preamp, 527 Compressor, 550A EQ modules",
+        "modules": {
+          "preamp": "512C discrete Class A/B",
+          "compressor": "527 with adjustable knee",
+          "eq": "550A 3-band proportional Q"
+        },
+        "count": 2
+      },
+      "Rupert_Neve_5211_2_Channel_Mic_Preamp": {
+        "manufacturer": "Rupert Neve Designs",
+        "model_name": "5211",
+        "description": "Dual-channel mic preamp offering pristine, transparent sound",
+        "channels": 2,
+        "gain": "66dB",
+        "silk_texture": true,
+        "high_pass_filter": "20-250Hz variable",
+        "count": 1
+      },
+      "XLogic_Alpha_VHD_Pre_Amp": {
+        "manufacturer": "Solid State Logic (SSL)",
+        "model_name": "XLogic Alpha VHD Pre",
+        "description": "Solid-state preamp with variable harmonic drive for tonal flexibility",
+        "channels": 4,
+        "gain": "75dB",
+        "vhd": "Variable Harmonic Drive (odd/even harmonics)",
+        "count": 1
+      },
+      "Pro_2500_Power_Center": {
+        "manufacturer": "Furman",
+        "model_name": "Pro 2500",
+        "description": "Mid-range power center for stable power distribution",
+        "outlets": 8,
+        "count": 1
+      },
+      "Warm_Audio_WA_273_Preamp": {
+        "manufacturer": "Warm Audio",
+        "model_name": "WA-273",
+        "description": "Dual-channel mic preamp inspired by classic British designs",
+        "channels": 2,
+        "circuit": "Neve 1073-style",
+        "gain": "80dB",
+        "transformer": "Carnhill (UK) input and output transformers",
+        "count": 2
+      },
+      "Superanalogoue_X_Rack": {
+        "manufacturer": "Solid State Logic (SSL)",
+        "model_name": "X-Rack",
+        "description": "Modular analog processing rack for signal routing and summing",
+        "format": "500-series compatible modules",
+        "slots": 8,
+        "count": 1
+      },
+      "Vintech_Model_473_Class_A": {
+        "manufacturer": "Vintech Audio",
+        "model_name": "473",
+        "description": "Four-channel Class A mic preamp delivering vintage warmth",
+        "channels": 4,
+        "circuit": "Neve 1073-inspired Class A",
+        "transformers": "Carnhill",
+        "gain": "80dB",
+        "count": 1
+      },
+      "Roland_SuperNatural_Sound_Module": {
+        "manufacturer": "Roland",
+        "model_name": "SuperNATURAL Sound Module",
+        "description": "Roland sound module offering expressive SuperNATURAL tones",
+        "count": 1
+      },
+      "Integra_7": {
+        "manufacturer": "Roland",
+        "model_name": "Integra-7",
+        "description": "Roland Integra-7 flagship sound module with over 6000 built-in sounds",
+        "sounds": "6000+",
+        "parts": 16,
+        "engines": "SuperNATURAL Acoustic, SuperNATURAL Synth, PCM",
+        "effects": "MFX per part plus global chorus/reverb",
+        "usb_audio": true,
+        "count": 1
+      },
+      "Little_Labs_Redcloud": {
+        "manufacturer": "Little Labs",
+        "model_name": "Redcloud",
+        "description": "Balanced stereo attenuator for precision gain staging and output control",
+        "attenuation": "Up to -72dB in 0.5dB steps",
+        "balanced": true,
+        "count": 1
+      }
+    }
+  }
+]

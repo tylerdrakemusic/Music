@@ -1,0 +1,81 @@
+{
+  "title": "Beaches",
+  "artist": "Beabadoobee",
+  "key": "Em",
+  "bpm": "82",
+  "arrangement_notes": "MOX: Piano; DX7: (TBD)",
+  "sections": [
+    {
+      "name": "Intro",
+      "annotation": "Guitar Only",
+      "lines": [
+        { "chords": "Em A | D Gmaj7 | Em A | D Gmaj7 D/F#", "lyrics": "(2X)" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Em A | D Gmaj7 | Em A | D Gmaj7", "lyrics": "Spinning out on what to say or what to do, Finding reasons for my constant change in mood" },
+        { "chords": "Em A | D Gmaj7 | Em A", "lyrics": "Said I'll see it to believe it, but who knows the actual truth? 'Cause I'm sure now, I'm sure" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Em A | D Gmaj7", "lyrics": "'Cause days blend to one when I'm on the right beaches" },
+        { "chords": "Em A | D Gmaj7", "lyrics": "And the walls painted white, they tell me all the secrets" },
+        { "chords": "Em A | D Gmaj7 | Em A", "lyrics": "Don't wait for the tide just to dip both your feet in, 'Cause I'm sure now, I'm sure" }
+      ]
+    },
+    {
+      "name": "Interlude",
+      "lines": [
+        { "chords": "Em A | D Gmaj7 D/F# | Em A | D Gmaj7 D/F#", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Em A | D Gmaj7 D/F# | Em A | D Gmaj7", "lyrics": "Find it hard to say, I know that I'm alright, Took a while for me to finally realise" },
+        { "chords": "Em A | D Gmaj7 | Em A", "lyrics": "That when I see it, I'll believe it, giving me a peace of mind, I'm sure now, I'm sure" }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "lines": [
+        { "chords": "Em A | D Gmaj7", "lyrics": "'Cause days blend to one when I'm on the right beaches" },
+        { "chords": "Em A | D Gmaj7", "lyrics": "And the walls painted white, they tell me all the secrets" },
+        { "chords": "Em A | D Gmaj7 | Em A", "lyrics": "Don't wait for the tide just to dip both your feet in, 'Cause I'm sure now, I'm sure" }
+      ]
+    },
+    {
+      "name": "Guitar Solo",
+      "lines": [
+        { "chords": "Em A | D Gmaj7", "lyrics": "(3X)" },
+        { "chords": "Em | A", "lyrics": "'Cause some days" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "D A/C# Gmaj7 | D A/C# Gmaj7", "lyrics": "I'm afraid to fall down, But I understand the coming outcome," },
+        { "chords": "D A/C# Gmaj7 | E/G# | G", "lyrics": "Pick it up if I allow it, can't help it, can't help" }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "lines": [
+        { "chords": "Em A | D Gmaj7", "lyrics": "'Cause days blend to one when I'm on the right beaches" },
+        { "chords": "D/F# Em A | D Gmaj7", "lyrics": "And the walls painted white, they tell me all the secrets" },
+        { "chords": "Em A | D Gmaj7", "lyrics": "Don't wait for the tide just to dip both your feet in" },
+        { "chords": "Em A", "lyrics": "'Cause I'm sure now, I'm sure" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "Em A | D A/C# Gmaj7 D/F# | Em A | D A/C# Gmaj7 D/F# | Em A | D A/C# Gmaj7 D/F# | Em A | D A/C# Gmaj7 D/F# | Csus2", "lyrics": "" }
+      ]
+    }
+  ]
+}

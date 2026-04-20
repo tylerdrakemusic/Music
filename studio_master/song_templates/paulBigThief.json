@@ -1,0 +1,74 @@
+{
+  "title": "Paul",
+  "artist": "Big_Thief",
+  "original_artist": "",
+  "key": "B",
+  "bpm": "123",
+  "sections": [
+    {
+      "name": "Verse 1",
+      "annotation": "Vocal pick up, guitar starts on beat 1",
+      "lines": [
+        { "chords": "Gaug | F# | G#madd9 | E | F#7 | F#7", "lyrics": "Oh the last time I saw Paul I was horrible and almost let him in" },
+        { "chords": "Gaug | F# | G#madd9 | E | F#7 | B", "lyrics": "But my I stopped and caught the wall and my mouth got dry so all I did was take him for a spin " }
+      ]
+    },
+    {
+      "name": "Pre-Chorus 1",
+      "lines": [
+        { "chords": "B | D#7 | G#madd9 | E | F#7 | F#7", "lyrics": "Yeah we hopped inside my car and I drove in circles 'round the feight train yard" },
+        { "chords": "Gaug | F# | G#madd9 | E | F#7 | B", "lyrics": "He turned the headlights off, then he pulled the bottle out then he showed me what was love" }
+      ]
+    },
+    {
+      "name": "Chorus 1",
+      "annotation": "Male backing vox",
+      "lines": [
+        { "chords": "E", "lyrics": "I'll be the morning bright goodnight shadow machine" },
+        { "chords": "B", "lyrics": "I'll be the record player baby if you know that I mean" },
+       { "chords": "E", "lyrics": "I'll be the real tough cookie with the whiskey breath" },
+        { "chords": "B", "lyrics": "I'll be the killer and a thriller and the cause of our death" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Gaug | F# | G#madd9 | E | F#7 | F#7", "lyrics": "In the blossom of the months.  I was sure that I'd get driven off with thought." },
+        { "chords": "Gaug | F# | G#madd9 | E | F#7 | B | B", "lyrics": "So I swallowed all of it as I realized there was no one who could kiss away my shit." }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "annotation": "Male backing vox",
+      "lines": [
+        { "chords": "E", "lyrics": "I'll be the morning bright goodnight shadow machine" },
+        { "chords": "B", "lyrics": "I'll be the record player baby if you know that I mean" },
+       { "chords": "E", "lyrics": "I'll be the real tough cookie with the whiskey breath" },
+        { "chords": "B", "lyrics": "I'll be the killer and a thriller and the cause of our death" }
+      ]
+    },
+    {
+      "name": "Solo",
+      "lines": [
+        { "chords": "Gaug | F# | G#madd9 | E | F#7 | F#7 | B | F# | G#madd9 | E | F#7"}      
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "Gaug | F# | G#madd9 | E | F#7 | F#7", "lyrics": "Paul, I know you said that you'd take me anyway I cam or went" },
+        { "chords": "Gaug | F# | G#madd9 | E | F#7 | F#7 | B", "lyrics": "But I'll push you from my brain.  See, you're gentle baby.  I couldn't stay, I'd only bring you pain" }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "annotation": "Male backing vox",
+      "lines": [
+        { "chords": "E", "lyrics": "I'll be your starry-eyed lover and the one that you saw" },
+        { "chords": "B", "lyrics": "I was your hurricane rider and the woman you'd call" },
+       { "chords": "E", "lyrics": "We were just two moonshiners on the cusp of a breath" },
+        { "chords": "B", "lyrics": "And I've been burning for you baby since the minute I left" }
+      ]
+    }
+  ]
+}

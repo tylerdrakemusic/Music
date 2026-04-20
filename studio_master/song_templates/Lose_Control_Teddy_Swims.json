@@ -1,0 +1,79 @@
+{
+  "title": "Lose Control",
+  "artist": "Teddy Swims",
+  "key": "F#m",
+  "bpm": "160",
+  "notes": "Soul-pop ballad with emotional intensity",
+  "sections": [
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "F#m", "lyrics": "Something's got a hold of me lately" },
+        { "chords": "A", "lyrics": "No, I don't know myself anymore" },
+        { "chords": "D", "lyrics": "Feels like the walls are all closin' in" },
+        { "chords": "C#sus4 | C#", "lyrics": "And the devil's knockin' at my door, woah" },
+        { "chords": "F#m", "lyrics": "Out of my mind, how many times did I tell you" },
+        { "chords": "A", "lyrics": "I'm no good at bein' alone?" },
+        { "chords": "D", "lyrics": "Yeah, it's taken a toll on me, tryin' my best to keep" },
+        { "chords": "C#sus4 | C#", "lyrics": "From tearin' the skin off my bones, don't you know" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "F#m | A", "lyrics": "I lose control" },
+        { "chords": "D", "lyrics": "When you're not next to me" },
+        { "chords": "C#sus4 | C# | F#m", "lyrics": "I'm fallin' apart right in front of you, can't you see?" },
+        { "chords": "A", "lyrics": "I lose control" },
+        { "chords": "D", "lyrics": "When you're not next to me, mhm" },
+        { "chords": "C#sus4", "lyrics": "Yeah, you're breakin' my heart, baby" },
+        { "chords": "C# | F#m", "lyrics": "You make a mess of me" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "F#m", "lyrics": "Problematic" },
+        { "chords": "A", "lyrics": "Problem is I want your body like a fiend, like a bad habit" },
+        { "chords": "D", "lyrics": "Bad habits hard to break when I'm with you" },
+        { "chords": "C#sus4", "lyrics": "Yeah, I know I can do it on my own" },
+        { "chords": "C#", "lyrics": "But I want that real full moon black magic, but it takes two" },
+        { "chords": "F#m", "lyrics": "Problematic" },
+        { "chords": "A", "lyrics": "Problem is when I'm with you I'm an addict" },
+        { "chords": "D", "lyrics": "And I need some relief, my skin in your teeth" },
+        { "chords": "C#sus4", "lyrics": "Can't see the forest through the trees" },
+        { "chords": "C# | F#m", "lyrics": "Got me down on my knees, darlin', please, oh" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "A", "lyrics": "I lose control" },
+        { "chords": "D", "lyrics": "When you're not next to me" },
+        { "chords": "C#sus4 | C# | F#m", "lyrics": "I'm fallin' apart right in front of you, can't you see?" },
+        { "chords": "A", "lyrics": "I lose control" },
+        { "chords": "D", "lyrics": "When you're not next to me, mhm" },
+        { "chords": "C#sus4", "lyrics": "Yeah, you're breakin' my heart, baby" },
+        { "chords": "C# | F#m", "lyrics": "You make a mess of me yeah" }
+      ]
+    },
+    {
+      "name": "Guitar Solo",
+      "lines": [
+        { "chords": "A | D | C#sus4 | C#", "lyrics": "" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "F#m | A", "lyrics": "I lose control" },
+        { "chords": "D", "lyrics": "When you're not here with me hm" },
+        { "chords": "C#sus4 | C# | F#m", "lyrics": "I'm fallin' apart right in front of you, can't you see?" },
+        { "chords": "A", "lyrics": "I lose control" },
+        { "chords": "D", "lyrics": "When you're not here with me, mhm" },
+        { "chords": "C#sus4", "lyrics": "Yeah, you're breakin' my heart, baby" },
+        { "chords": "C# | F#m", "lyrics": "You make a mess of me" }
+      ]
+    }
+  ]
+}

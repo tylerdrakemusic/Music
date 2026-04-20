@@ -1,0 +1,28 @@
+{
+  "project": "❤Music",
+  "sigil": "❤",
+  "dashboards": [
+    {
+      "id": "music-tracks",
+      "title": "Music Dashboard",
+      "description": "Interactive track browser, album management, release signatures",
+      "type": "flask_app",
+      "generator": "src/analysis/music_dashboard.py",
+      "cli": "C:\\G\\python.exe src/analysis/music_dashboard.py --port 5050",
+      "url": "http://localhost:5050",
+      "category": "music",
+      "icon": "🎵"
+    },
+    {
+      "id": "tjd-radio",
+      "title": "TJD Radio",
+      "description": "Live continuous stream for Tyler James Drake catalog (crossfade + bumpers)",
+      "type": "flask_app",
+      "generator": "src/radio/tjd_radio.py",
+      "cli": "C:\\G\\python.exe src/radio/tjd_radio.py --port 8100 --bitrate 192 --crossfade 2 --bumper-dir catalog/bumpers --bumper-every 3",
+      "url": "http://localhost:8100",
+      "category": "music",
+      "icon": "📻"
+    }
+  ]
+}

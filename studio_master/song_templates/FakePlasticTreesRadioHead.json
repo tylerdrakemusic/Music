@@ -1,0 +1,65 @@
+{
+  "title": "Fake Plastic Trees",
+  "artist": "Radiohead",
+  "key": "A",
+  "bpm": "74",
+  "sections": [
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "A      Asus4 |     Dmaj9/F# E6 Dsus2", "lyrics": "Her green plastic watering can  For her fake Chinese rubber plant" },
+        { "chords": "A    Dsus2 |       A Asus4", "lyrics": "In the fake plastic earth  That she bought from a rubber man" },
+        { "chords": "Dmaj9/F# E6 Dsus2 | A Dsus2", "lyrics": "In a town full of rubber plans  To get rid of itself  It wears her out," }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Bm11     A | Bm11    A", "lyrics": "it wears her out  It wears her out, it wears her out" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "A      Asus4 |     Dmaj9/F# E6 Dsus2", "lyrics": "She lives with a broken man  A cracked polystyrene man" },
+        { "chords": "A    Dsus2 |       A Asus4", "lyrics": "Who just crumbles and burns  He used to do surgery" },
+        { "chords": "Dmaj9/F# E6 Dsus2 | A Dsus2", "lyrics": "For girls in the eighties  But gravity always wins  It wears him out," }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Bm11     A | Bm11    A", "lyrics": "it wears her out  It wears her out, it wears her out" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "A      Asus4 |     Dmaj9/F# E6 Dsus2", "lyrics": "She looks like the real thing  She tastes like the real thing" },
+        { "chords": "A    Dsus2 |       A Asus4", "lyrics": "My fake plastic love  But I can't help the feeling" },
+        { "chords": "Dmaj9/F# E6 Dsus2 | A Dsus2", "lyrics": "I could blow through the ceiling  If I just turn and run" },
+        { "lyrics": "It wears me out," }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Bm11     A | Bm11    A", "lyrics": "it wears me out  It wears me out, it wears me out" },
+        { "chords": "Amaj7    Bm11", "lyrics": "If I could be who you wanted" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "A    E6 |    Bm11 |    A", "lyrics": "If I could be who you wanted all  the time  All the time..." },
+        { "chords": "E6", "lyrics": "All the time..." }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        "Bm11     A     Bm11      A"
+      ]
+    }
+  ]
+}

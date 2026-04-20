@@ -1,0 +1,149 @@
+{
+  "title": "Diamonds",
+  "artist": "Sam Smith",
+  "original_artist": "",
+  "key": "Bbm",
+  "bpm": "104",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "Bbm", "lyrics": "Diamonds, diamonds, diamonds, diamonds" },
+        { "chords": "Bbm", "lyrics": "Diamonds, diamonds, diamonds, diamonds" },
+        { "chords": "Bbm", "lyrics": "Diamonds, diamonds, diamonds, diamonds" },
+        { "chords": "Bbm", "lyrics": "Diamonds, diamonds, diamonds, diamonds" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Bbm", "lyrics": "Have it all" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Rip our memories off the wall" },
+        { "chords": "F7", "lyrics": "All the special things I bought" },
+        { "chords": "Gb", "lyrics": "They mean nothing to me anymore" },
+        { "chords": "Bbm", "lyrics": "But to you" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "They were everything we were" },
+        { "chords": "F7", "lyrics": "They meant more than every word" },
+        { "chords": "Gb", "lyrics": "Now I know just what you love me for" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus 1",
+      "lines": [
+        { "chords": "Bbm", "lyrics": "Take all the money you want from me" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Hope you become what you want to be" },
+        { "chords": "F7", "lyrics": "Show me how little you care" },
+        { "chords": "Gb", "lyrics": "How little you care, how little you care" },
+        { "chords": "Bbm", "lyrics": "You dream of glitter and gold" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "My heart's already been sold" },
+        { "chords": "F7", "lyrics": "Show you how little I care" },
+        { "chords": "Gb", "lyrics": "How little I care, how little I care" }
+      ]
+    },
+    {
+      "name": "Chorus 1",
+      "lines": [
+        { "chords": "N.C Bbm", "lyrics": "My diamonds leave with you (Mhmm)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "You're never gonna hear my heart break (Mhmm)" },
+        { "chords": "F7", "lyrics": "Never gonna move in dark ways (Mhmm)" },
+        { "chords": "Gb", "lyrics": "Baby, you're so cruel" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Mhmm)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Material love won't fool me (Mhmm)" },
+        { "chords": "F7", "lyrics": "When you're not here I can breathe (Mhmm)" },
+        { "chords": "Gb", "lyrics": "Think I always knew" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Diamonds, diamonds, diamonds, diamonds)" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Bbm", "lyrics": "Shake it off" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Shake the fear of feeling lost" },
+        { "chords": "F7", "lyrics": "Always me that pays the cost" },
+        { "chords": "Gb", "lyrics": "I should never trust so easily" },
+        { "chords": "Bbm Dbmaj7/Ab", "lyrics": "You lied to me, lie-lied to me" },
+        { "chords": "F7 Gb", "lyrics": "Then left with my heart 'round your chest (Mhmm)" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus 2",
+      "lines": [
+        { "chords": "Bbm", "lyrics": "Take all the money you want from me" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Hope you become what you want to be" },
+        { "chords": "F7", "lyrics": "Show me how little you care" },
+        { "chords": "Gb", "lyrics": "How little you care, how little you care" },
+        { "chords": "Bbm", "lyrics": "You dream of glitter and gold" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "My heart's already been sold" },
+        { "chords": "F7", "lyrics": "Show you how little I care" },
+        { "chords": "Gb", "lyrics": "How little I care, how little I care" }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "lines": [
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Mhmm)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "You're never gonna hear my heart break (Mhmm)" },
+        { "chords": "F7", "lyrics": "Never gonna move in dark ways (Mhmm)" },
+        { "chords": "Gb", "lyrics": "Baby, you're so cruel" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Mhmm)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Material love won't fool me (Mhmm)" },
+        { "chords": "F7", "lyrics": "When you're not here I can breathe (Mhmm)" },
+        { "chords": "Gb", "lyrics": "Think I always knew" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Diamonds, diamonds, diamonds, diamonds)" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "Dbmaj7/Ab", "lyrics": "Woah-oh (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "F7", "lyrics": "Woah-oh (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "Gb", "lyrics": "Always knew" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Woah-oh (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "F7", "lyrics": "Woah-oh (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "Gb", "lyrics": "Always knew (Diamonds, diamonds, diamonds, diamonds)" }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "lines": [
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Mhmm)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "You're never gonna hear my heart break (Mhmm)" },
+        { "chords": "F7", "lyrics": "Never gonna move in dark ways (Mhmm)" },
+        { "chords": "Gb", "lyrics": "Baby, you're so cruel" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Mhmm)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Material love won't fool me (Mhmm)" },
+        { "chords": "F7", "lyrics": "When you're not here I can breathe (Mhmm)" },
+        { "chords": "Gb", "lyrics": "Think I always knew" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Diamonds, diamonds, diamonds, diamonds)" }
+      ]
+    },
+    {
+      "name": "Chorus 4",
+      "lines": [
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Mhmm)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "You're never gonna hear my heart break (Mhmm)" },
+        { "chords": "F7", "lyrics": "Never gonna move in dark ways (Mhmm)" },
+        { "chords": "Gb", "lyrics": "Baby, you're so cruel (So cruel)" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Mhmm)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Material love won't fool me (Mhmm)" },
+        { "chords": "F7", "lyrics": "When you're not here I can breathe (Mhmm)" },
+        { "chords": "Gb", "lyrics": "Think I always knew" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Diamonds, diamonds, diamonds, diamonds)" }
+      ]
+    },
+    {
+      "name": "Fade-Out",
+      "lines": [
+        { "chords": "Dbmaj7/Ab", "lyrics": "Woah-oh (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "F7", "lyrics": "Woah-oh (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "Gb", "lyrics": "Always knew (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "Dbmaj7/Ab", "lyrics": "Woah-oh (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "F7", "lyrics": "Woah-oh (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "Gb", "lyrics": "Always knew (Diamonds, diamonds, diamonds, diamonds)" },
+        { "chords": "Bbm", "lyrics": "My diamonds leave with you (Diamonds, diamonds, diamonds, diamonds)" }
+      ]
+    }
+  ]
+}

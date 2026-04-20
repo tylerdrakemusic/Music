@@ -1,0 +1,101 @@
+{
+  "title": "Missed Call",
+  "artist": "Treaty Oak Revival",
+  "original_artist": "",
+  "key": "Db",
+  "bpm": "152",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "Db Ebm Gbmaj7 (x6)" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Db Ebm | Gbmaj7", "lyrics": "Tried to call you on the telephone  I didn't make it past three rings" },
+        { "chords": "Db Ebm | Gbmaj7", "lyrics": "I tried to think of the perfect things to say  To you after the beep" },
+        { "chords": "Db | Ebm", "lyrics": "Well I'm sorry that I'm drunk  I'm sorry what I said" },
+        { "chords": "Gbmaj7 | Db", "lyrics": "I'm sorry for anything I ever did  But you ain't called back so" },
+        { "chords": "Ebm Gbmaj7", "lyrics": "I guess I'll get some sleep" }
+      ]
+    },
+    {
+      "name": "Chorus 1",
+      "lines": [
+        { "chords": "Db Ebm | Gbmaj7", "lyrics": "And I'm waiting patiently  But you're done and it's plain to see" },
+        { "chords": "Db | Ebm Gbmaj7", "lyrics": "That I messed up too much  I guess I'll cut my loss" },
+        { "chords": "Db Ebm", "lyrics": "And oh well, I'm drunk as hell" },
+        { "chords": "Gbmaj7", "lyrics": "Guess it's so long darling I wish you well" },
+        { "chords": "Db Ebm Gbmaj7", "lyrics": "And I'll take my goddamn phone and shut it off" },
+        { "chords": "Ebm Gbmaj7", "lyrics": "Well I'm just tired of being just another missed call" }
+      ]
+    },
+    {
+      "name": "Solo 1",
+      "lines": [
+        { "chords": "Db Ebm Gbmaj7" },
+        { "chords": "Db Ebm Gbmaj7" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Db Ebm", "lyrics": "Pretty glad you ain't called me back" },
+        { "chords": "Gbmaj7", "lyrics": "You would've only made things worse" },
+        { "chords": "Db Ebm", "lyrics": "I always try to get the last word in" },
+        { "chords": "Gbmaj7 | Db", "lyrics": "When you didn't even like the first  Now I'm begging baby please" },
+        { "chords": "Ebm | Gbmaj7", "lyrics": "You're begging me to leave  You don't want anything to do with me" },
+        { "chords": "Db Ebm Gbmaj7", "lyrics": "And I guess you finally hit me where it hurts" }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "lines": [
+        { "chords": "Db Ebm | Gbmaj7", "lyrics": "And I'm waiting patiently  But you're done and it's plain to see" },
+        { "chords": "Db | Ebm Gbmaj7", "lyrics": "That I messed up too much  I guess I'll cut my loss" },
+        { "chords": "Db Ebm", "lyrics": "And oh well, I'm drunk as hell" },
+        { "chords": "Gbmaj7", "lyrics": "Guess it's so long darling I wish you well" },
+        { "chords": "Db Ebm Gbmaj7", "lyrics": "And I'll take my goddamn phone and shut it off" },
+        { "chords": "Ebm Gbmaj7", "lyrics": "Well I'm just tired of being just another missed call" }
+      ]
+    },
+    {
+      "name": "Solo 2",
+      "lines": [
+        { "chords": "Db Ebm Gbmaj7" },
+        { "chords": "Db Ebm Gbmaj7", "lyrics": "Yeah, I'm just another missed call" },
+        { "chords": "Db Ebm Gbmaj7" },
+        { "chords": "Db Ebm Gbmaj7" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "Db Ebm | Gbmaj7", "lyrics": "Well I'm done and it's safe to say" },
+        { "chords": "Db Ebm | Gbmaj7", "lyrics": "I won't make it past three rings" },
+        { "chords": "Db | Ebm", "lyrics": "I'm pretty done finding words to say" },
+        { "chords": "Gbmaj7 | Db", "lyrics": "To you after the beep" }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "lines": [
+        { "chords": "Db Ebm | Gbmaj7", "lyrics": "And I've waited patiently  But you're done and it's plain to see" },
+        { "chords": "Db | Ebm Gbmaj7", "lyrics": "That I messed up too much  I guess I'll cut my loss" },
+        { "chords": "Db Ebm", "lyrics": "And oh well, I'm drunk as hell" },
+        { "chords": "Gbmaj7", "lyrics": "Guess it's so long darling I wish you well" },
+        { "chords": "Db Ebm Gbmaj7", "lyrics": "And I'll take my goddamn phone and shut it off" },
+        { "chords": "Ebm Gbmaj7", "lyrics": "Well I'm just tired of being just another missed call" }
+      ]
+    },
+    {
+      "name": "Solo (outro)",
+      "lines": [
+        { "chords": "Db Ebm Gbmaj7" },
+        { "chords": "Db Ebm Gbmaj7", "lyrics": "Yeah, I'm just another missed call" }
+      ]
+    }
+  ]
+}

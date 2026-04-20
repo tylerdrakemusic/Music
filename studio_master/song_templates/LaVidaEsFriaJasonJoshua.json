@@ -1,0 +1,53 @@
+{
+  "title": "La Vida Es Fria",
+  "artist": "Jason Joshua",
+  "key": "Fm",
+  "bpm": "85",
+  "sections": [
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Fm", "lyrics": "Fria" },
+        { "chords": "Cm", "lyrics": "The world can be so cold" },
+        { "chords": "Fm", "lyrics": "La vida es fria" },
+        { "chords": "Cm (Bm) Bbm", "lyrics": "Her heart is turned to stone", "annotation": "walkdown" },
+        { "chords": "Cm (Bm) Bbm", "lyrics": "Nobody wants to stay together" },
+        { "chords": "", "lyrics": "Nobody wants to make it better" },
+        { "chords": "Bbm Cm Bbm", "lyrics": "But we can work it out" },
+        { "chords": "Bbm", "lyrics": "If you know what I′m talking about" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Fm", "lyrics": "La vida es fria" },
+        { "chords": "Cm", "lyrics": "Why is it so cold?" },
+        { "chords": "Fm", "lyrics": "La vida es fria" },
+        { "chords": "Cm (Bm) Bbm", "lyrics": "Her heart is turned to stone" },
+        { "chords": "Cm (Bm) Bbm", "lyrics": "Nobody wants to stay together" },
+        { "chords": "", "lyrics": "Nobody wants to make it better" },
+        { "chords": "Bbm Cm Bbm", "lyrics": "But we can work it out" },
+        { "chords": "Bbm", "lyrics": "If you know what I′m talking about" }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        { "chords": "Fm", "lyrics": "La vida es fria" },
+        { "chords": "Cm", "lyrics": "Why is it so cold?" },
+        { "chords": "Fm", "lyrics": "My baby is fria" },
+        { "chords": "Cm (Bm) Bbm", "lyrics": "Her heart is turned to stone" },
+        { "chords": "Cm (Bm) Bbm", "lyrics": "Nobody wants to stay together" },
+        { "chords": "", "lyrics": "Nobody wants to make it better" },
+        { "chords": "Bbm Cm Bbm", "lyrics": "But we can work it out" },
+        { "chords": "Bbm", "lyrics": "If you know what I′m talking about" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "Fm Cm", "lyrics": "La vida es fria" }
+      ]
+    }
+  ]
+}

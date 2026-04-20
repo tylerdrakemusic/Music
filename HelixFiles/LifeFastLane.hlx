@@ -1,0 +1,143 @@
+{
+  "data": {
+    "device": 2162694,
+    "device_version": 57737216,
+    "meta": {
+      "application": "HX Edit",
+      "appversion": 57671680,
+      "build_sha": "v3.70-10-ge773a6f",
+      "modifieddate": 1716149667,
+      "name": "Life in the Fast Lane"
+    },
+    "tone": {
+      "dsp0": {
+        "block0": {
+          "@bypassvolume": 1.0,
+          "@enabled": true,
+          "@model": "US Deluxe Norm",
+          "@path": 0,
+          "@position": 0,
+          "@type": 3,
+          "Bass": 5.0,
+          "Treble": 5.5,
+          "Presence": 6.0,
+          "Drive": 4.5,
+          "ChVol": 7.0
+        },
+        "block1": {
+          "@enabled": true,
+          "@model": "Teemah!",
+          "@path": 0,
+          "@position": 1,
+          "@type": 0,
+          "Gain": 4.0,
+          "Tone": 5.0,
+          "Level": 6.0
+        },
+        "block2": {
+          "@enabled": true,
+          "@model": "Parametric EQ",
+          "@path": 0,
+          "@position": 2,
+          "@type": 0,
+          "LowCut": 80.0,
+          "HighCut": 5000.0,
+          "MidFreq": 800.0,
+          "MidGain": 3.0
+        },
+        "block3": {
+          "@enabled": true,
+          "@model": "70s Chorus",
+          "@path": 0,
+          "@position": 3,
+          "@type": 7,
+          "Rate": 0.8,
+          "Depth": 0.25,
+          "Mix": 0.30
+        },
+        "block4": {
+          "@enabled": true,
+          "@model": "Plateaux",
+          "@path": 0,
+          "@position": 4,
+          "@type": 7,
+          "Decay": 2.5,
+          "Mix": 0.20
+        },
+        "block5": {
+          "@enabled": true,
+          "@model": "Red Squeeze",
+          "@path": 0,
+          "@position": 5,
+          "@type": 0,
+          "Sensitivity": 5.0,
+          "Level": 5.0
+        }
+      },
+      "dsp1": {},
+      "footswitch": {
+        "dsp0": {
+          "block1": {
+            "@fs_enabled": true,
+            "@fs_index": 1,
+            "@fs_label": "Overdrive",
+            "@fs_ledcolor": 13676288,
+            "@fs_momentary": false,
+            "@fs_primary": true
+          },
+          "block3": {
+            "@fs_enabled": true,
+            "@fs_index": 2,
+            "@fs_label": "Chorus",
+            "@fs_ledcolor": 458496,
+            "@fs_momentary": false,
+            "@fs_primary": true
+          }
+        }
+      },
+      "global": {
+        "@DtSelect": 2,
+        "@PowercabMode": 0,
+        "@PowercabSelect": 2,
+        "@PowercabVoicing": 0,
+        "@current_snapshot": 0,
+        "@cursor_dsp": 0,
+        "@cursor_group": "block2",
+        "@cursor_path": 0,
+        "@cursor_position": 2,
+        "@guitarinputZ": 0,
+        "@guitarpad": 0,
+        "@model": "@global_params",
+        "@pedalstate": 2,
+        "@tempo": 120.0,
+        "@topology0": "A",
+        "@topology1": 0
+      },
+      "snapshot0": {
+        "@custom_name": false,
+        "@ledcolor": 0,
+        "@name": "SNAPSHOT 1",
+        "@pedalstate": 0,
+        "@tempo": 120.0,
+        "@valid": true,
+        "blocks": {
+          "dsp0": {
+            "block0": true,
+            "block1": true,
+            "block2": true,
+            "block3": true,
+            "block4": true,
+            "block5": true
+          }
+        }
+      }
+    }
+  },
+  "meta": {
+    "original": 0,
+    "pbn": 0,
+    "premium": 0
+  },
+  "schema": "L6Preset",
+  "version": 6
+}

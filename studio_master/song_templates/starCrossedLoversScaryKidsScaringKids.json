@@ -1,0 +1,83 @@
+{
+  "title": "Star Crossed",
+  "artist": "Scary Kids Scaring Kids",
+  "key": "G#m",
+  "bpm": "154",
+  "sections": [
+    { "name": "Intro", "lines": [ "G#m B E" ] },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "G#m B", "lyrics": "Star crossed lovers" },
+        { "chords": "E", "lyrics": "They say we're not meant to be" },
+        { "chords": "G#m B E", "lyrics": "'Cause the stars in the sky, and the fashion that they are aligned." },
+        { "chords": "G#m B E", "lyrics": "I say if the futures been drawn out there's no point in living." },
+        { "chords": "G#m B E", "lyrics": "I wont give up my love so that fate can have its way." }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "G#m B", "lyrics": "If the stars say that you couldn't love me," },
+        { "chords": "E F#", "lyrics": "Are you telling me that you would listen?" },
+        { "chords": "G#m B", "lyrics": "If the words make their way from your mouth," },
+        { "chords": "E", "lyrics": "Don't ask my permission," },
+        { "chords": "F#", "lyrics": "All is forgiven." }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "G#m B E", "lyrics": "Star crossed lovers, we do what we want to." },
+        { "chords": "G#m", "lyrics": "Some learn the hard way," },
+        { "chords": "B E", "lyrics": "We all learn through consequence." },
+        { "chords": "G#m B  E", "lyrics": "I say if the futures been drawn out then nobody's living." },
+        { "chords": "G#m B E", "lyrics": "I won't give you up love, so fate can have its way." },
+        { "chords": "F#", "lyrics": "Its way." }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "G#m B", "lyrics": "If the stars say that you couldn't love me," },
+        { "chords": "E F#", "lyrics": "Are you telling me that you would listen?" },
+        { "chords": "G#m B", "lyrics": "If the words make their way from your mouth," },
+        { "chords": "E", "lyrics": "Don't ask my permission," },
+        { "chords": "F#", "lyrics": "All is forgiven." }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "annotation": "broken G#m chord like intro",
+      "lines": [
+        { "chords": "G#m", "lyrics": "Is it over?" },
+        { "chords": "B E", "lyrics": "(The stars keep this fire from burning on)" },
+        { "chords": "G#m", "lyrics": "Is it over?" },
+        { "chords": "B E", "lyrics": "(Are you saying that you'd really listen?)" },
+        { "chords": "", "lyrics": "Is it over?" },
+        { "chords": "G#m", "lyrics": "(The stars keep this fire)" },
+        { "chords": "B E F#", "lyrics": "Is it over?" }
+      ]
+    },
+        { "name": "Instrumental", "lines": [ "G#m B E" ] },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "G#m B", "lyrics": "If the stars say that you couldn't love me," },
+        { "chords": "E F#", "lyrics": "Are you telling me that you would listen?" },
+        { "chords": "G#m B", "lyrics": "If the words make their way from your mouth," },
+        { "chords": "E", "lyrics": "Don't ask my permission," },
+        { "chords": "F#", "lyrics": "All is forgiven." },
+        { "chords": "G#m B", "lyrics": "If the stars say that you can not love..." },
+        { "chords": "E F#", "lyrics": "(The stars keep this fire from burning on)" },
+        { "chords": "G#m E", "lyrics": "If the stars say that you can not love me..." }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        { "chords": "G#m B E F# G#m"}
+      ]
+    }
+  ]
+}

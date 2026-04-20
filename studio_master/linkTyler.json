@@ -1,0 +1,441 @@
+{
+    "emails": [
+      "tdpixelated@icloud.com",
+      "tyler.james.dre@gmail.com",
+      "tyler.james.drakula@gmail.com",
+      "ty.drake.music@gmail.com",
+      "echo@tymusic.in"
+    ],
+    "social_media": {
+      "Facebook": [
+        "https://www.facebook.com/profile.php?id=61556394339851"
+      ],
+      "Instagram": [
+        "https://www.instagram.com/tylerjamesdrake/"
+      ],
+      "TikTok": [
+        "https://www.tiktok.com/@echoty84"
+      ],
+      "WhatsApp": [
+        "https://wa.me/3038150107"
+      ],
+      "X": [
+        "https://x.com/echo_ty_ty",
+        "https://x.com/DrakeJames54026"
+      ]
+    },
+    "payment" :{
+      "Venmo":[
+        "https://account.venmo.com/u/Tyler-Drake-10"
+      ],
+      "PayPal":[
+        "https://paypal.me/tylerjamesdrake"
+      ]
+    },
+    "distribution_platforms": {
+      "adaptr": {
+        "artist_links": [
+          "https://www.adaptr.com/artists/yourartistid1",
+          "https://www.adaptr.com/artists/yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.adaptr.com/songs/yourtrackid1",
+            "https://www.adaptr.com/songs/yourtrackid2"
+          ]
+        }
+      },
+      "amazon_music": {
+        "artist_links": [
+          "https://music.amazon.com/artists/B0CWYSSMTG/tyler-james-drake",
+          "https://music.amazon.com/artists/B0CWYRDNF9/echoty"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://music.amazon.com/albums/B0D4KHRDQQ?marketplaceId=ATVPDKIKX0DER&musicTerritory=US&ref=dm_sh_em61Lcf7G7PJeuXrx3zOrqH8x&trackAsin=B0D4KHR9BQ",
+            "<iframe id='AmazonMusicEmbedB0D4KHRDQQ' src='https://music.amazon.com/embed/B0D4KHRDQQ/?id=lGVOYrQdcy&marketplaceId=ATVPDKIKX0DER&musicTerritory=US' width='100%' height='352px' frameBorder='0' style='border-radius:20px;max-width:'></iframe>"
+          ],
+          "Get Out" : [
+            "https://music.amazon.com/albums/B0CWYS64G6?marketplaceId=ATVPDKIKX0DER&musicTerritory=US&ref=dm_sh_qodJbziaobhQ9CxDgCfi2qSnR",
+            "<iframe id='AmazonMusicEmbedB0CWYS64G6' src='https://music.amazon.com/embed/B0CWYS64G6/?id=xX0XjnyRV3&marketplaceId=ATVPDKIKX0DER&musicTerritory=US' width='100%' height='352px' frameBorder='0' style='border-radius:20px;max-width:'></iframe>"
+          ]
+        }
+      },
+      "anghami": {
+        "artist_links": [
+          "https://www.anghami.com/artist/yourartistid1",
+          "https://www.anghami.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://music.amazon.com/albums/B0D4KHRDQQ?marketplaceId=ATVPDKIKX0DER&musicTerritory=US&ref=dm_sh_em61Lcf7G7PJeuXrx3zOrqH8x&trackAsin=B0D4KHR9BQ",
+            "<iframe id='AmazonMusicEmbedB0D4KHRDQQ' src='https://music.amazon.com/embed/B0D4KHRDQQ/?id=lGVOYrQdcy&marketplaceId=ATVPDKIKX0DER&musicTerritory=US' width='100%' height='352px' frameBorder='0' style='border-radius:20px;max-width:'></iframe>"
+          ],
+          "Get Out" : [
+            "https://music.amazon.com/albums/B0CWYS64G6?marketplaceId=ATVPDKIKX0DER&musicTerritory=US&ref=dm_sh_qodJbziaobhQ9CxDgCfi2qSnR",
+            "<iframe id='AmazonMusicEmbedB0CWYS64G6' src='https://music.amazon.com/embed/B0CWYS64G6/?id=xX0XjnyRV3&marketplaceId=ATVPDKIKX0DER&musicTerritory=US' width='100%' height='352px' frameBorder='0' style='border-radius:20px;max-width:'></iframe>"
+          ]
+        }
+      },
+      "apple_music": {
+        "artist_links": [
+          "https://music.apple.com/us/artist/tyler-james-drake/1747192774",
+          "https://music.apple.com/us/artist/echoty/1734067005"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://music.amazon.com/albums/B0D4KHRDQQ?marketplaceId=ATVPDKIKX0DER&musicTerritory=US&ref=dm_sh_em61Lcf7G7PJeuXrx3zOrqH8x&trackAsin=B0D4KHR9BQ",
+            "<iframe id='AmazonMusicEmbedB0D4KHRDQQ' src='https://music.amazon.com/embed/B0D4KHRDQQ/?id=lGVOYrQdcy&marketplaceId=ATVPDKIKX0DER&musicTerritory=US' width='100%' height='352px' frameBorder='0' style='border-radius:20px;max-width:'></iframe>"
+          ],
+          "Get Out" : [
+            "https://music.apple.com/us/album/get-out/1734077328?i=1734077329",
+            "<iframe allow='autoplay *; encrypted-media *; fullscreen *; clipboard-write' frameborder='0' height='175' style='width:100%;max-width:660px;overflow:hidden;border-radius:10px;' sandbox='allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation' src='https://embed.music.apple.com/us/album/get-out/1734077328?i=1734077329'></iframe>"
+          ]
+        }
+      },
+      "audius": {
+        "artist_links": [
+          "https://audius.co/tylerjamesdrake"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://audius.co/TylerJamesDrake/what-i-do",
+            "<iframe src=https://audius.co/embed/track/qpwN4pb?flavor=card width=100% height=480 allow=encrypted-media style=border: none;></iframe>"
+          ],
+          "Get Out" : [
+            "https://audius.co/TylerJamesDrake/get-out",
+            "<iframe src=https://audius.co/embed/track/BN82PAx?flavor=card width=100% height=480 allow=encrypted-media style=border: none;></iframe>"
+          ],
+          "Marigolds" : [
+            "https://audius.co/TylerJamesDrake/marigolds",
+            "<iframe src=https://audius.co/embed/track/BN82PAx?flavor=card width=100% height=480 allow=encrypted-media style=border: none;></iframe>"
+          ]
+        }
+      },
+      "bandcamp": {
+        "artist_links": [
+          "https://tylerjamesdrake.bandcamp.com/",
+          "https://tylerjamesdrake.bandcamp.com/music",
+          "<iframe scrolling='no' style='border: 0;width: 100%;height: 33px;' src='https://bandcamp.com/band_follow_button_classic/2715527388'></iframe>"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://tylerjamesdrake.bandcamp.com/track/what-i-do",
+            "<iframe style='border: 0; width: 350px; height: 442px;' src='https://bandcamp.com/EmbeddedPlayer/track=1479325440/size=large/bgcol=ffffff/linkcol=63b2cc/tracklist=false/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/what-i-do'>What I Do by Tyler James Drake</a></iframe>"
+          ],
+          "Get Out" : [
+            "https://tylerjamesdrake.bandcamp.com/track/get-out",
+            "<iframe style='border: 0; width: 350px; height: 442px;' src='https://bandcamp.com/EmbeddedPlayer/track=1588413006/size=large/bgcol=333333/linkcol=e32c14/tracklist=false/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/get-out'>Get Out by Tyler James Drake</a></iframe>"
+          ],
+          "Marigolds" : [
+            "https://audius.co/TylerJamesDrake/marigolds",
+            "<iframe src=https://audius.co/embed/track/BN82PAx?flavor=card width=100% height=480 allow=encrypted-media style=border: none;></iframe>"
+          ],
+          "Same Thing" :[
+            "https://tylerjamesdrake.bandcamp.com/track/same-thing",
+            "<iframe style='border: 0; width: 350px; height: 442px;' src='https://bandcamp.com/EmbeddedPlayer/track=3758444418/size=large/bgcol=333333/linkcol=e32c14/tracklist=false/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/same-thing'>Same Thing by Tyler James Drake</a></iframe>"
+          ],
+          "Abbey's Song" : [
+            "https://tylerjamesdrake.bandcamp.com/track/abbeys-song",
+            "<iframe style='border: 0; width: 100%; height: 120px;' src='https://bandcamp.com/EmbeddedPlayer/track=2227442662/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/abbeys-song'>Abbey&#39;s Song by Tyler James Drake</a></iframe>",
+            "<iframe style='border: 0; width: 350px; height: 350px;' src='https://bandcamp.com/EmbeddedPlayer/track=2227442662/size=large/bgcol=ffffff/linkcol=0687f5/minimal=true/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/abbeys-song'>Abbey&#39;s Song by Tyler James Drake</a></iframe>",
+            "<iframe style='border: 0; width: 350px; height: 442px;' src='https://bandcamp.com/EmbeddedPlayer/track=2227442662/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/abbeys-song'>Abbey&#39;s Song by Tyler James Drake</a></iframe>",
+            "[bandcamp width=350 height=442 track=2227442662 size=large bgcol=ffffff linkcol=0687f5 tracklist=false]"
+          ],
+          "Is It Real" : [
+            "https://tylerjamesdrake.bandcamp.com/track/is-it-real",
+            "<iframe style='border: 0; width: 350px; height: 442px;' src='https://bandcamp.com/EmbeddedPlayer/track=1322860190/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/is-it-real'>Is It Real by Tyler James Drake</a></iframe>",
+            "<iframe style='border: 0; width: 350px; height: 350px;' src='https://bandcamp.com/EmbeddedPlayer/track=1322860190/size=large/bgcol=ffffff/linkcol=0687f5/minimal=true/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/is-it-real'>Is It Real by Tyler James Drake</a></iframe>",
+            "<iframe style='border: 0; width: 100%; height: 42px;' src='https://bandcamp.com/EmbeddedPlayer/track=1322860190/size=small/bgcol=ffffff/linkcol=0687f5/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/is-it-real'>Is It Real by Tyler James Drake</a></iframe>",
+            "[bandcamp width=100% height=42 track=1322860190 size=small bgcol=ffffff linkcol=0687f5]"
+          ],
+          "Bitten" : [
+            "https://tylerjamesdrake.bandcamp.com/track/bitten",
+            "<iframe style='border: 0; width: 350px; height: 442px;' src='https://bandcamp.com/EmbeddedPlayer/track=1234567890/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/bitten'>Bitten by Tyler James Drake</a></iframe>",
+            "<iframe style='border: 0; width: 350px; height: 350px;' src='https://bandcamp.com/EmbeddedPlayer/track=1234567890/size=large/bgcol=ffffff/linkcol=0687f5/minimal=true/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/bitten'>Bitten by Tyler James Drake</a></iframe>"
+          ],
+          "Fly Away": [
+            "https://tylerjamesdrake.bandcamp.com/track/fly-away",
+            "<iframe style='border: 0; width: 350px; height: 442px;' src='https://bandcamp.com/EmbeddedPlayer/track=0987654321/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/fly-away'>Fly Away by Tyler James Drake</a></iframe>",
+            "<iframe style='border: 0; width: 350px; height: 350px;' src='https://bandcamp.com/EmbeddedPlayer/track=0987654321/size=large/bgcol=ffffff/linkcol=0687f5/minimal=true/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/fly-away'>Fly Away by Tyler James Drake</a></iframe>"
+          ],
+          "Lighthouse": [
+            "https://tylerjamesdrake.bandcamp.com/track/lighthouse",
+            "<iframe style='border: 0; width: 350px; height: 442px;' src='https://bandcamp.com/EmbeddedPlayer/track=1782790337/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/lighthouse'>Lighthouse by Tyler James Drake</a></iframe>",
+            "<iframe style='border: 0; width: 100%; height: 42px;' src='https://bandcamp.com/EmbeddedPlayer/track=1782790337/size=small/bgcol=ffffff/linkcol=0687f5/transparent=true/' seamless><a href='https://tylerjamesdrake.bandcamp.com/track/lighthouse'>Lighthouse by Tyler James Drake</a></iframe>"
+          ]
+        }
+      },
+      "boomplay": {
+        "artist_links": [
+          "https://www.boomplay.com/artists/90787115",
+          "https://www.boomplay.com/artists/86134137"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://www.boomplay.com/songs/168161520?srModel=COPYLINK&srList=WEB",
+            "<iframe src=https://www.boomplay.com/embed/168161520/MUSIC?colType=5&colID=90787116 width=100% height=420 frameborder=0></iframe>"
+          ],
+          "Get Out" : [
+            "https://www.boomplay.com/songs/159113172?srModel=COPYLINK&srList=WEB",
+            "<iframe src=https://www.boomplay.com/embed/159113172/MUSIC?colType=2&colID=86134137 width=100% height=420 frameborder=0></iframe>"
+          ]
+        }
+      },
+      "Claro_Musica": {
+        "artist_links": [
+          "https://www.claromusica.com/artist/yourartistid1",
+          "https://www.claromusica.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.claromusica.com/song/yourtrackid1",
+            "https://www.claromusica.com/song/yourtrackid2"
+          ]
+        }
+      },
+      "deezer": {
+        "artist_links": [
+          "https://www.deezer.com/us/artist/256748002",
+          "https://www.deezer.com/us/artist/256747992"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://www.deezer.com/us/artist/256748002",
+            "<iframe title='deezer-widget' src='https://widget.deezer.com/widget/dark/album/589176162' width='100%' height='300' frameborder='0' allowtransparency='true' allow='encrypted-media; clipboard-write'></iframe>"
+          ],
+          "Get Out" : [
+            "https://www.deezer.com/us/artist/256747992",
+            "<iframe title='deezer-widget' src='https://widget.deezer.com/widget/dark/album/555326952' width='100%' height='300' frameborder='0' allowtransparency='true' allow='encrypted-media; clipboard-write'></iframe>"
+          ]
+        }
+      },
+      "Distrokid": {
+        "artist_links": [
+          "https://hyperfollow.com/tylerjamesdrake",
+          "https://distrokid.com/hyperfollow/tylerjamesdrake/what-i-do-feat-blxckace",
+          "https://hyperfollow.com/echoty",
+          "https://distrokid.com/hyperfollow/echoty/get-out"
+        ]
+    },
+      "flo": {
+        "artist_links": [
+          "https://www.musicflo.com/artist/yourartistid1",
+          "https://www.musicflo.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.musicflo.com/songs/yourtrackid1",
+            "https://www.musicflo.com/songs/yourtrackid2"
+          ]
+        }
+      },
+      "iHeartRadio": {
+        "artist_links": [
+          "https://www.iheart.com/artist/yourartistid1",
+          "https://www.iheart.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.iheart.com/song/yourtrackid1",
+            "https://www.iheart.com/song/yourtrackid2"
+          ]
+        }
+      },
+      "Instagram_Facebook": {
+        "artist_links": [
+          "https://www.instagram.com/tylerjamesdrake"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.facebook.com/songs/yourtrackid1",
+            "https://www.facebook.com/songs/yourtrackid2"
+          ]
+        }
+      },
+      "iTunes": {
+        "artist_links": [
+          "https://music.apple.com/us/artist/tyler-james-drake/1747192774",
+          "https://music.apple.com/us/artist/echoty/1734067005"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://music.apple.com/us/album/what-i-do-feat-blxckace/1748015155?i=1748015156",
+            "<iframe allow='autoplay *; encrypted-media *; fullscreen *; clipboard-write' frameborder='0' height='175' style='width:100%;max-width:660px;overflow:hidden;border-radius:10px;' sandbox='allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation' src='https://embed.music.apple.com/us/album/what-i-do-feat-blxckace/1748015155?i=1748015156'></iframe>"
+          ],
+          "Get Out" : [
+            "https://music.apple.com/us/album/get-out/1734077328?i=1734077329",
+            "<iframe allow='autoplay *; encrypted-media *; fullscreen *; clipboard-write' frameborder='0' height='175' style='width:100%;max-width:660px;overflow:hidden;border-radius:10px;' sandbox='allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation' src='https://embed.music.apple.com/us/album/get-out/1734077328?i=1734077329'></iframe>"
+          ]
+        }
+      },
+      "Joox": {
+        "artist_links": [
+          "https://www.joox.com/artist/yourartistid1",
+          "https://www.joox.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.joox.com/song/yourtrackid1",
+            "https://www.joox.com/song/yourtrackid2"
+          ]
+        }
+      },
+      "Kuack_Media": {
+        "artist_links": [
+          "https://www.kuackmedia.com/artist/yourartistid1",
+          "https://www.kuackmedia.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.kuackmedia.com/song/yourtrackid1",
+            "https://www.kuackmedia.com/song/yourtrackid2"
+          ]
+        }
+      },
+      "medianet": {
+        "artist_links": [
+          "https://www.medianet.com/artist/yourartistid1",
+          "https://www.medianet.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.medianet.com/song/yourtrackid1",
+            "https://www.medianet.com/song/yourtrackid2"
+          ]
+        }
+      },
+      "NetEase": {
+        "artist_links": [
+          "https://music.163.com/#/artist?id=yourartistid1",
+          "https://music.163.com/#/artist?id=yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://music.163.com/#/song?id=yourtrackid1",
+            "https://music.163.com/#/song?id=yourtrackid2"
+          ]
+        }
+      },
+      "Pandora": {
+        "artist_links": [
+          "https://www.pandora.com/artist/tyler-james-drake/ARwJVPjfV22cX6X",
+          "https://www.pandora.com/artist/echoty/ARjXtk9pkKmf77V"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://www.pandora.com/artist/tyler-james-drake/what-i-do-feat-blxckace/what-i-do-feat-blxckace/TRg2q3gm2d2lqKw?part=ug-desktop&corr=448724371"
+          ],
+          "Get Out":[
+            "https://www.pandora.com/artist/echoty/get-out/get-out/TRk6PrjJKXt466V?part=ug-desktop&corr=448724371"
+          ]
+        }
+      },
+      "Qobuz": {
+        "artist_links": [
+          "https://www.qobuz.com/artist/yourartistid1",
+          "https://www.qobuz.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.qobuz.com/song/yourtrackid1",
+            "https://www.qobuz.com/song/yourtrackid2"
+          ]
+        }
+      },
+      "Saavn": {
+        "artist_links": [
+          "https://www.jiosaavn.com/artist/yourartistid1",
+          "https://www.jiosaavn.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://www.jiosaavn.com/song/yourtrackid1",
+            "https://www.jiosaavn.com/song/yourtrackid2"
+          ]
+        }
+      },
+      "SoundCloud": {
+        "artist_links": [
+          "https://soundcloud.com/user-590922790-96911984",
+          "https://soundcloud.com/yourartistid2"
+        ],
+        "songs": {
+          "songs": [
+            "https://soundcloud.com/user-590922790-96911984/what-i-do",
+            "https://soundcloud.com/user-590922790-96911984/get-out",
+            "https://soundcloud.com/user-590922790-96911984/marigolds",
+            "https://soundcloud.com/user-590922790-96911984/abbeys-song",
+            "https://soundcloud.com/user-590922790-96911984/same-thing",
+            "https://soundcloud.com/user-590922790-96911984/is-it-real",
+            "https://soundcloud.com/user-590922790-96911984/bitten",
+            "https://soundcloud.com/user-590922790-96911984/fly-away",
+            "https://soundcloud.com/user-590922790-96911984/lighthouse"
+          ]
+        }
+      },
+      "Spotify": {
+        "artist_links": [
+          "https://open.spotify.com/artist/2PCvPDydZKbRUHb6lZMJXv",
+          "https://open.spotify.com/artist/yourartistid2"
+        ],
+        "songs": {
+          "song1": [
+            "https://open.spotify.com/track/yourtrackid1",
+            "https://open.spotify.com/track/yourtrackid2"
+          ]
+        }
+      },
+      "Tencent": {
+        "artist_links": [
+          "https://y.qq.com/n/ryqq/singer/yourartistid1",
+          "https://y.qq.com/n/ryqq/singer/yourartistid2"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://y.qq.com/n/ryqq/songDetail/yourtrackid1",
+            "https://y.qq.com/n/ryqq/songDetail/yourtrackid2"
+          ]
+        }
+      },
+      "Tidal": {
+        "artist_links": [
+          "https://listen.tidal.com/artist/47880609",
+          "https://listen.tidal.com/artist/46217927"
+        ],
+        "songs": {
+          "What_I_Do": [
+            "https://tidal.com/browse/album/364131164?u",
+            "<iframe style='border: 0; width: 350px; height: 442px;' src='<iframe src='https://embed.tidal.com/tracks/364131165' width='500' height='120' allow='encrypted-media' sandbox='allow-same-origin allow-scripts allow-forms allow-popups' title='TIDAL Embed Player' />"
+          ],
+          "Get Out":[
+            "https://tidal.com/browse/album/349475722?u"
+          ]
+        }
+      },
+      "Tiktok": {
+        "artist_links": [
+          "https://www.tiktok.com/@echoty84",
+          "https://www.tiktok.com/@yourprofile2"
+        ],
+        "songs": {
+          "song1": [
+            "https://www.tiktok.com/music/yourtrackid1",
+            "https://www.tiktok.com/music/yourtrackid2"
+          ]
+        }
+      },
+      "youtube_music": {
+        "artist_links": [
+          "https://music.youtube.com/channel/UCm1ZknVFV34a9QKR0LYoJoQ",
+          "https://music.youtube.com/channel/UCfEh8PYGIrQ590DVrOoholw"
+        ],
+        "songs": {
+          "song1": [
+            "https://music.youtube.com/watch?v=yourtrackid1",
+            "https://music.youtube.com/watch?v=yourtrackid2"
+          ]
+        }
+      }
+    }
+  }
