@@ -548,7 +548,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
       <div class="player-title" id="playerTitle">No master selected</div>
       <div class="player-subtitle" id="playerSubtitle">AI Suno and human masters will appear per track when available.</div>
     </div>
-    <audio id="masterPlayer" controls preload="none"></audio>
+    <audio id="masterPlayer" controls preload="metadata"></audio>
   </div>
   <div class="table-wrap">
     <table>
@@ -677,6 +677,21 @@ async function loadTracks() {
   albums = await aRes.json();
   audioIndex = await audioRes.json();
   render();
+  // Auto-populate master player with a QE-random track on load
+  const withAudio = tracks.filter(t => (audioIndex[String(t.id)] || []).length > 0);
+  if (withAudio.length > 0) {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    const pick = withAudio[buf[0] % withAudio.length];
+    const file = audioIndex[String(pick.id)][0];
+    currentAudioPath = file.path;
+    const player = document.getElementById('masterPlayer');
+    player.src = audioUrl(file.path);
+    player.load();
+    document.getElementById('playerTitle').textContent = pick.title || 'Untitled';
+    document.getElementById('playerSubtitle').textContent =
+      `${file.type === 'ai' ? 'AI master' : 'Human master'} · ${file.label} · ${(file.size_kb / 1024).toFixed(1)} MB`;
+  }
 }
 
 function audioUrl(path) {

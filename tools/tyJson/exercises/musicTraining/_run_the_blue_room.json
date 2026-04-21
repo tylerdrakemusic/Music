@@ -1,0 +1,16 @@
+{
+    "songPath": "G:\\Muzic\\The Blue Room - Guthrie Govan.mp3",
+    "title": "The Blue Room",
+    "artist": "Guthrie Govan",
+    "notes": "Lead guitar training \u2014 work through licks and runs in 5-10 second intervals. Adjust speed% before a live-tempo pass.",
+    "segments": [
+        {
+            "start": "0:00",
+            "end": "0:20",
+            "speed": 57,
+            "repetition": 2,
+            "label": "Intro lick"
+        }
+    ],
+    "gradient": 20
+}

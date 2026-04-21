@@ -1,4 +1,4 @@
-# ⚡ AGENT STARTUP DIRECTIVE — ❤Music
+﻿# ⚡ AGENT STARTUP DIRECTIVE — ❤Music
 
 **READ THIS FIRST.** Context bootstrap for any AI agent picking up work on the ❤Music project.
 
@@ -18,14 +18,14 @@
 
 | Resource | Path |
 |----------|------|
-| **Project Root** | `f:\executedcode\❤Music\` |
+| **Project Root** | `f:\❤Music\` |
 | **Workspace Root** | `f:\` |
 | **SQLite Database** | `src/data/heartmusic.db` |
 | **Python Executable** | `C:\G\python.exe` |
 | **Music Dashboard** | `src/analysis/music_dashboard.py` |
 | **TJD Radio Service** | `src/radio/tjd_radio.py` |
 | **Agent Definitions** | `f:\.github\agents\❤music-*.agent.md` |
-| **Artist Profile** | `f:\executedcode\❤Music\ARTIST_PROFILE.json` |
+| **Artist Profile** | `f:\❤Music\ARTIST_PROFILE.json` |
 
 ### ❤Music Agents
 
@@ -35,14 +35,15 @@
 | **❤music-catalog** | File indexing, duplicate detection, track linking, lyrics import |
 | **❤music-production** | Album production tracking — Bloom, track status, mixing pipeline |
 | **❤music-performance** | Gig logging, practice tracking, CopperCreek band management |
-| **❤music-hygiene** | Periodic cleanup — archiving completed tasks, pruning stale files, DB hygiene |
+| **❤music-signatures** | Binary signature analysis — audio file forensics, hash/entropy extraction, Suno/Pro Tools provenance, release_signatures table |
+| **⊕workspace-hygiene** | Unified workspace hygiene — archiving completed tasks, pruning stale files, DB hygiene, agent infrastructure audit |
 
 ## 3. Artist Summary
 
 - **Solo Artist:** Tyler James Drake
 - **Band:** CopperCreek
 - **Active Album:** *Bloom* at Hyperthreat Studios (in progress)
-- **Links:** `f:\executedcode\linkTyler.json`
+- **Links:** `f:\linkTyler.json`
 
 ### Source File Locations (READ ONLY — do not move/delete)
 
@@ -50,11 +51,11 @@
 |---------|------|
 | Masters | `f:\Masters\` — Album 1, EP, Ben's Lullaby, Bloom Album, EP Singles |
 | Rockstar backup | `G:\TylerJamesDrake\rockstar\` (subset of Masters) |
-| Recordings | `f:\executedcode\recordings\` |
-| Lyrics (raw ideas) | `f:\executedcode\lyrics\` |
-| **Transcendent songs** | `f:\executedcode\❤Music\docs\transcendent\` — hooks that arrived whole in a flash; elevated tier above raw lyrics |
-| Guitar | `f:\executedcode\Guitar\` |
-| Bands / CopperCreek | `f:\executedcode\bands\copperCreek\` |
+| Recordings | `f:\recordings\` |
+| Lyrics (raw ideas) | `f:\lyrics\` |
+| **Transcendent songs** | `f:\❤Music\docs\transcendent\` — hooks that arrived whole in a flash; elevated tier above raw lyrics |
+| Guitar | `f:\Guitar\` |
+| Bands / CopperCreek | `f:\bands\copperCreek\` |
 | Sheet Music | `C:\Users\tyler\Documents` |
 
 ## 4. Data Architecture
@@ -114,7 +115,7 @@ Check `TODO_AI.md` for the highest priority incomplete task and begin work.
 Use this when you need the full operational surface (tracks, release ops, and live radio) available in one session.
 
 ```powershell
-Set-Location "f:\executedcode\❤Music"
+Set-Location "f:\❤Music"
 
 # Terminal 1: start the live station
 C:\G\python.exe src/radio/tjd_radio.py --port 8100 --bitrate 192 --crossfade 2 --bumper-dir catalog/bumpers --bumper-every 3

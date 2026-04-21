@@ -14,11 +14,11 @@
 
 ## Phase 1: Foundation & Catalog Consolidation
 
-- [ ] Identify duplicate recordings across `f:\Masters`, `G:\TylerJamesDrake\rockstar`, and `f:\executedcode\recordings`
-- [ ] Import existing lyrics files from `f:\executedcode\lyrics` into the `lyrics` table with file path refs
-- [ ] Import CopperCreek metadata from `f:\executedcode\bands\copperCreek` into `artist_profiles` and related tables
+- [ ] Identify duplicate recordings across `f:\Masters`, `G:\TylerJamesDrake\rockstar`, and `f:\❤Music\recordings`
+- [ ] Import existing lyrics files from `f:\❤Music\lyrics` into the `lyrics` table with file path refs
+- [ ] Import CopperCreek metadata from `f:\❤Music\bands\copperCreek` into `artist_profiles` and related tables
 - [ ] Parse `linkTyler.json` and populate the solo artist profile links in `artist_profiles`
-- [ ] Review AI-generated recordings in `f:\executedcode\recordings` — flag quality per file
+- [ ] Review AI-generated recordings in `f:\❤Music\recordings` — flag quality per file
 - [ ] Research building a Spotify Web API MCP server for VS Code — evaluate scope, auth (OAuth PKCE), useful endpoints (track metadata, streaming analytics for EP releases, playlist management), and whether to house in ❤Music or as a standalone tool
 
 ## Phase 2: Production Tracking (Bloom Album)
@@ -61,4 +61,4 @@
 |----------|------|-----------|
 | Own SQLite DB (`heartmusic.db`) | 2026-04-06 | Music data is separate domain from health — clean separation |
 | Catalog by reference, not migration | 2026-04-06 | Tyler requested no deletion/migration of source files — catalog_index stores paths |
-| f:\executedcode\❤Music\ | 2026-04-06 | Stays inside the tracked git repo at f:\executedcode\ |
+| f:\❤Music\ | 2026-04-06 | Stays inside the tracked git repo at f:\ |
