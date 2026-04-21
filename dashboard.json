@@ -24,5 +24,17 @@
       "category": "music",
       "icon": "📻"
     }
+  ,
+    {
+      "id": "guitar-trainer",
+      "title": "Guitar Trainer",
+      "description": "Lead guitar interval training — loop segments, control speed, track practice sessions",
+      "type": "flask_app",
+      "generator": "src/training/musician_training_ui.py",
+      "cli": "C:\\G\\python.exe src/training/musician_training_ui.py --port 5055",
+      "url": "http://localhost:5055",
+      "category": "training",
+      "icon": "🎸"
+    }
   ]
 }

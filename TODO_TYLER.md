@@ -10,7 +10,7 @@
 
 - [ ] **🔴 URGENT: Write bridge for untitled 2026 original** — Melody + lyrics needed. Song template: `studio_master/song_templates/untitled_tyler_original_2026.json`. Key: Am, suspended voicings. Bridge should break the sus pattern for contrast/resolution. Hash out with producer at Hyperthreat Studios. Chorus lyrics also still open.
 - [ ] **CopperCreek status** — Is CopperCreek actively gigging? Who are the current members? Any active recordings?
-- [ ] **Link file** — Confirm `f:\executedcode\linkTyler.json` is the correct path for your streaming/social links.
+- [ ] **Link file** — Confirm `f:\❤Music\linkTyler.json` is the correct path for your streaming/social links.
 - [ ] **Sheet music location** — Confirm sheet music is in `C:\Users\tyler\Documents` and any specific subfolder structure.
 
 ## Studio / Production

@@ -1,0 +1,14 @@
+{
+    "songPath": "G:\\Muzic\\Gold On the Ceiling - The Black Keys.mp3",
+    "title": "Gold On the Ceiling",
+    "artist": "The Black Keys",
+    "segments": [
+        {
+            "start": "0:00",
+            "end": "0:20",
+            "speed": 75,
+            "repetition": 2
+        }
+    ],
+    "gradient": 2
+}
