@@ -1,0 +1,45 @@
+# ❤Music .gitignore
+# Purpose: keep binaries, DB files, and generated artifacts out of git.
+# Masters & renders live on disk at their current paths — just not tracked.
+
+# Audio
+*.wav
+*.mp3
+*.flac
+*.aif
+*.aiff
+*.m4a
+*.ogg
+
+# Video
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# Binaries / executables
+*.exe
+*.dll
+
+# Large image/raw formats (small PNG/JPG/JPEG still tracked)
+*.heic
+*.psd
+*.raw
+
+# Databases (growing — separate backup strategy)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Temp / cache / build
+*.download
+*.pyc
+__pycache__/
+*.log
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.env.local
