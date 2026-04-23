@@ -140,12 +140,81 @@ CREATE TABLE IF NOT EXISTS release_signatures (
     analyzed_at             TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- ── Catalog songs (covers, originals, any song the band performs) ──────────
+CREATE TABLE IF NOT EXISTS catalog_songs (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    title         TEXT NOT NULL,
+    artist        TEXT NOT NULL,
+    key_sig       TEXT,
+    bpm           INTEGER,
+    bpm_source    TEXT,          -- e.g. 'librosa', 'manual', 'unknown'
+    genre         TEXT,
+    tags          TEXT,          -- JSON array e.g. '["rock","cover"]'
+    notes         TEXT,
+    source_file   TEXT,          -- path to the reference audio in G:\Muzic
+    created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ── Setlists ─────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS setlists (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL,          -- e.g. 'Copper Creek Prost 5/2/26'
+    band        TEXT NOT NULL DEFAULT 'Copper Creek',
+    gig_date    TEXT,                   -- ISO date YYYY-MM-DD
+    venue       TEXT,
+    active      INTEGER NOT NULL DEFAULT 0,  -- 1 = current active gigging setlist
+    notes       TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ── Setlist songs (ordered junction) ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS setlist_songs (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    setlist_id      INTEGER NOT NULL REFERENCES setlists(id) ON DELETE CASCADE,
+    catalog_song_id INTEGER NOT NULL REFERENCES catalog_songs(id),
+    set_number      INTEGER NOT NULL,   -- 1, 2, 3...
+    position        INTEGER NOT NULL,   -- position within the set
+    key_override    TEXT,               -- band's key if different from catalog
+    bpm_override    INTEGER,
+    notes           TEXT,
+    UNIQUE(setlist_id, set_number, position)
+);
+
 CREATE INDEX IF NOT EXISTS idx_tracks_album ON tracks(album_id);
 CREATE INDEX IF NOT EXISTS idx_recordings_track ON recordings(track_id);
 CREATE INDEX IF NOT EXISTS idx_lyrics_track ON lyrics(track_id);
 CREATE INDEX IF NOT EXISTS idx_catalog_track ON catalog_index(track_id);
 CREATE INDEX IF NOT EXISTS idx_sigs_track ON release_signatures(track_id);
 CREATE INDEX IF NOT EXISTS idx_sigs_sha256 ON release_signatures(sha256);
+CREATE INDEX IF NOT EXISTS idx_catalog_songs_artist ON catalog_songs(artist);
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_setlist ON setlist_songs(setlist_id);
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_catalog ON setlist_songs(catalog_song_id);
+
+-- ── Bands ─────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS bands (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL UNIQUE,
+    genre      TEXT,
+    active     INTEGER NOT NULL DEFAULT 1,
+    notes      TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ── Per-band arrangement defaults for a song ─────────────────────────────
+CREATE TABLE IF NOT EXISTS band_song_arrangements (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    band_id         INTEGER NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
+    catalog_song_id INTEGER NOT NULL REFERENCES catalog_songs(id) ON DELETE CASCADE,
+    default_key     TEXT,
+    default_bpm     INTEGER,
+    notes           TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(band_id, catalog_song_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_arrangements_band ON band_song_arrangements(band_id);
+CREATE INDEX IF NOT EXISTS idx_arrangements_song ON band_song_arrangements(catalog_song_id);
 """
 
 _SEED_SQL = """

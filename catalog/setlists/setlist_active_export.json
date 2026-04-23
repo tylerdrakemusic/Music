@@ -1,0 +1,403 @@
+{
+  "exported_at": "2026-04-23T01:03:43.545274+00:00",
+  "setlist": {
+    "id": 1,
+    "name": "Copper Creek Prost 5/2/26",
+    "band": "Copper Creek",
+    "gig_date": "2026-05-02",
+    "venue": "Prost"
+  },
+  "count": 39,
+  "songs": [
+    {
+      "set": 1,
+      "order": 1,
+      "title": "Long Train Runnin",
+      "artist": "The Doobie Brothers",
+      "key": "Gm",
+      "bpm": 117,
+      "bpm_source": "librosa",
+      "catalog_id": 1
+    },
+    {
+      "set": 1,
+      "order": 2,
+      "title": "Too Much Time on My Hands",
+      "artist": "Styx",
+      "key": "A",
+      "bpm": 133,
+      "bpm_source": "librosa",
+      "catalog_id": 2
+    },
+    {
+      "set": 1,
+      "order": 3,
+      "title": "I'm Alright",
+      "artist": "Kenny Loggins",
+      "key": "D",
+      "bpm": null,
+      "bpm_source": "unknown",
+      "catalog_id": 3
+    },
+    {
+      "set": 1,
+      "order": 4,
+      "title": "Me and Bobby McGee",
+      "artist": "Janis Joplin",
+      "key": "G",
+      "bpm": 185,
+      "bpm_source": "librosa",
+      "catalog_id": 4
+    },
+    {
+      "set": 1,
+      "order": 5,
+      "title": "Rhiannon",
+      "artist": "Fleetwood Mac",
+      "key": "Am",
+      "bpm": 129,
+      "bpm_source": "librosa",
+      "catalog_id": 5
+    },
+    {
+      "set": 1,
+      "order": 6,
+      "title": "Gold on the Ceiling",
+      "artist": "The Black Keys",
+      "key": "G",
+      "bpm": 131,
+      "bpm_source": "librosa",
+      "catalog_id": 6
+    },
+    {
+      "set": 1,
+      "order": 7,
+      "title": "Call Me",
+      "artist": "Blondie",
+      "key": "B",
+      "bpm": 144,
+      "bpm_source": "librosa",
+      "catalog_id": 7
+    },
+    {
+      "set": 1,
+      "order": 8,
+      "title": "Shaded Jade",
+      "artist": "Tamala Cameron & Gene Ngo",
+      "key": "Bm",
+      "bpm": null,
+      "bpm_source": "unknown",
+      "catalog_id": 8
+    },
+    {
+      "set": 1,
+      "order": 9,
+      "title": "Reelin' in the Years",
+      "artist": "Steely Dan",
+      "key": "A",
+      "bpm": 136,
+      "bpm_source": "librosa",
+      "catalog_id": 9
+    },
+    {
+      "set": 1,
+      "order": 10,
+      "title": "I Will Survive",
+      "artist": "Gloria Gaynor",
+      "key": "Am",
+      "bpm": 117,
+      "bpm_source": "librosa",
+      "catalog_id": 10
+    },
+    {
+      "set": 1,
+      "order": 11,
+      "title": "Love Sneakin' Up on You",
+      "artist": "Bonnie Raitt",
+      "key": "D",
+      "bpm": 94,
+      "bpm_source": "librosa",
+      "catalog_id": 11
+    },
+    {
+      "set": 1,
+      "order": 12,
+      "title": "These Boots Are Made for Walkin'",
+      "artist": "Nancy Sinatra",
+      "key": "E",
+      "bpm": 83,
+      "bpm_source": "librosa",
+      "catalog_id": 12
+    },
+    {
+      "set": 1,
+      "order": 13,
+      "title": "I Can't Go for That",
+      "artist": "Hall & Oates",
+      "key": "F",
+      "bpm": 110,
+      "bpm_source": "librosa",
+      "catalog_id": 13
+    },
+    {
+      "set": 2,
+      "order": 1,
+      "title": "25 or 6 to 4",
+      "artist": "Chicago",
+      "key": "A",
+      "bpm": 148,
+      "bpm_source": "librosa",
+      "catalog_id": 14
+    },
+    {
+      "set": 2,
+      "order": 2,
+      "title": "What You Need",
+      "artist": "INXS",
+      "key": "F#",
+      "bpm": 115,
+      "bpm_source": "librosa",
+      "catalog_id": 15
+    },
+    {
+      "set": 2,
+      "order": 3,
+      "title": "Do It Again",
+      "artist": "Steely Dan",
+      "key": "Gm",
+      "bpm": 123,
+      "bpm_source": "librosa",
+      "catalog_id": 16
+    },
+    {
+      "set": 2,
+      "order": 4,
+      "title": "Baker Street",
+      "artist": "Gerry Rafferty",
+      "key": "D",
+      "bpm": 115,
+      "bpm_source": "librosa",
+      "catalog_id": 17
+    },
+    {
+      "set": 2,
+      "order": 5,
+      "title": "Celebrate",
+      "artist": "Kool & the Gang",
+      "key": "Ab",
+      "bpm": null,
+      "bpm_source": "unknown",
+      "catalog_id": 18
+    },
+    {
+      "set": 2,
+      "order": 6,
+      "title": "Disco Inferno",
+      "artist": "Tina Turner",
+      "key": "Ab",
+      "bpm": 131,
+      "bpm_source": "librosa",
+      "catalog_id": 19
+    },
+    {
+      "set": 2,
+      "order": 7,
+      "title": "Black Magic Woman",
+      "artist": "Santana",
+      "key": "Dm",
+      "bpm": 120,
+      "bpm_source": "librosa",
+      "catalog_id": 20
+    },
+    {
+      "set": 2,
+      "order": 8,
+      "title": "The Logical Song",
+      "artist": "Supertramp",
+      "key": "C",
+      "bpm": 117,
+      "bpm_source": "librosa",
+      "catalog_id": 21
+    },
+    {
+      "set": 2,
+      "order": 9,
+      "title": "Jacky",
+      "artist": "Jim Mann",
+      "key": "Gm",
+      "bpm": 126,
+      "bpm_source": "librosa",
+      "catalog_id": 22
+    },
+    {
+      "set": 2,
+      "order": 10,
+      "title": "Carnival",
+      "artist": "Natalie Merchant",
+      "key": "F#m",
+      "bpm": 94,
+      "bpm_source": "librosa",
+      "catalog_id": 23
+    },
+    {
+      "set": 2,
+      "order": 11,
+      "title": "I Feel the Earth Move",
+      "artist": "Carole King",
+      "key": "Cm",
+      "bpm": 120,
+      "bpm_source": "librosa",
+      "catalog_id": 24
+    },
+    {
+      "set": 2,
+      "order": 12,
+      "title": "Heart of Rock & Roll",
+      "artist": "Huey Lewis and the News",
+      "key": "C",
+      "bpm": 144,
+      "bpm_source": "librosa",
+      "catalog_id": 25
+    },
+    {
+      "set": 2,
+      "order": 13,
+      "title": "Heavy Chevy",
+      "artist": "Alabama Shakes",
+      "key": "C",
+      "bpm": 152,
+      "bpm_source": "librosa",
+      "catalog_id": 26
+    },
+    {
+      "set": 3,
+      "order": 1,
+      "title": "Pick Up the Pieces",
+      "artist": "Average White Band",
+      "key": "Fm",
+      "bpm": 108,
+      "bpm_source": "librosa",
+      "catalog_id": 27
+    },
+    {
+      "set": 3,
+      "order": 2,
+      "title": "Play That Funky Music",
+      "artist": "Wild Cherry",
+      "key": "Em",
+      "bpm": null,
+      "bpm_source": "unknown",
+      "catalog_id": 28
+    },
+    {
+      "set": 3,
+      "order": 3,
+      "title": "On the Dark Side",
+      "artist": "John Cafferty",
+      "key": "E",
+      "bpm": null,
+      "bpm_source": "unknown",
+      "catalog_id": 29
+    },
+    {
+      "set": 3,
+      "order": 4,
+      "title": "What I Like About You",
+      "artist": "The Romantics",
+      "key": "E",
+      "bpm": 161,
+      "bpm_source": "librosa",
+      "catalog_id": 30
+    },
+    {
+      "set": 3,
+      "order": 5,
+      "title": "Smooth Operator",
+      "artist": "Sade",
+      "key": "Dm",
+      "bpm": 120,
+      "bpm_source": "librosa",
+      "catalog_id": 31
+    },
+    {
+      "set": 3,
+      "order": 6,
+      "title": "Smooth",
+      "artist": "Santana feat. Rob Thomas",
+      "key": "Am",
+      "bpm": 115,
+      "bpm_source": "librosa",
+      "catalog_id": 32
+    },
+    {
+      "set": 3,
+      "order": 7,
+      "title": "What I Do",
+      "artist": "Tyler James Drake",
+      "key": "Bm",
+      "bpm": 167,
+      "bpm_source": "librosa",
+      "catalog_id": 33
+    },
+    {
+      "set": 3,
+      "order": 8,
+      "title": "Stop Draggin' My Heart Around",
+      "artist": "Stevie Nicks",
+      "key": "Em",
+      "bpm": 108,
+      "bpm_source": "librosa",
+      "catalog_id": 34
+    },
+    {
+      "set": 3,
+      "order": 9,
+      "title": "The Letter",
+      "artist": "Joe Cocker",
+      "key": "Bbm",
+      "bpm": 91,
+      "bpm_source": "librosa",
+      "catalog_id": 35
+    },
+    {
+      "set": 3,
+      "order": 10,
+      "title": "Blue on Black",
+      "artist": "Kenny Wayne Shepherd",
+      "key": "C",
+      "bpm": 157,
+      "bpm_source": "librosa",
+      "catalog_id": 36
+    },
+    {
+      "set": 3,
+      "order": 11,
+      "title": "Evil Ways",
+      "artist": "Santana",
+      "key": "Gm",
+      "bpm": 117,
+      "bpm_source": "librosa",
+      "catalog_id": 37
+    },
+    {
+      "set": 3,
+      "order": 12,
+      "title": "Peg",
+      "artist": "Steely Dan",
+      "key": "G",
+      "bpm": 117,
+      "bpm_source": "librosa",
+      "catalog_id": 38
+    },
+    {
+      "set": 3,
+      "order": 13,
+      "title": "Roll with the Changes",
+      "artist": "REO Speedwagon",
+      "key": "C",
+      "bpm": 126,
+      "bpm_source": "librosa",
+      "catalog_id": 39
+    }
+  ]
+}
