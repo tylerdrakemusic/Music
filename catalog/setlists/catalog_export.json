@@ -1,6 +1,6 @@
 {
-  "exported_at": "2026-04-23T01:03:43.545274+00:00",
-  "count": 39,
+  "exported_at": "2026-04-24T22:17:57.308524+00:00",
+  "count": 40,
   "songs": [
     {
       "id": 26,
@@ -191,6 +191,16 @@
       "key": "C",
       "bpm": 157,
       "bpm_source": "librosa",
+      "genre": null,
+      "sheet_music": []
+    },
+    {
+      "id": 83,
+      "title": "Talk Me Into It",
+      "artist": "Kevin Redmond",
+      "key": "G",
+      "bpm": null,
+      "bpm_source": null,
       "genre": null,
       "sheet_music": []
     },
