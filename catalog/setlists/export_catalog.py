@@ -111,7 +111,7 @@ def export_active_setlist_for_band(conn, band_id: int) -> tuple:
                   cs.title, cs.artist,
                   COALESCE(ss.key_override, bsa.default_key, cs.key_sig) AS key_sig,
                   COALESCE(ss.bpm_override, bsa.default_bpm, cs.bpm)     AS bpm,
-                  cs.bpm_source, cs.id
+                  cs.bpm_source, cs.id, ss.notes
            FROM setlist_songs ss
            JOIN catalog_songs cs    ON cs.id = ss.catalog_song_id
            LEFT JOIN band_song_arrangements bsa
@@ -120,11 +120,20 @@ def export_active_setlist_for_band(conn, band_id: int) -> tuple:
            ORDER BY ss.set_number, ss.position""",
         (band_id, sl[0]),
     ).fetchall()
-    songs = [
-        {"set": r[0], "order": r[1], "title": r[2], "artist": r[3],
-         "key": r[4], "bpm": r[5], "bpm_source": r[6], "catalog_id": r[7]}
-        for r in rows
-    ]
+    songs = []
+    for r in rows:
+        artist = r[3] or ""
+        entry = {
+            "set": r[0], "order": r[1], "title": r[2], "artist": artist,
+            "key": r[4], "bpm": r[5], "bpm_source": r[6], "catalog_id": r[7],
+            "notes": r[8] or None,
+        }
+        if artist.startswith("\u26a0"):  # ⚠ NOT IN CATALOG
+            entry["catalog_warning"] = True
+            entry["artist"] = ""
+        else:
+            entry["catalog_warning"] = False
+        songs.append(entry)
     return meta, songs
 
 
