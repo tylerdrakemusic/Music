@@ -215,6 +215,19 @@ CREATE TABLE IF NOT EXISTS band_song_arrangements (
 
 CREATE INDEX IF NOT EXISTS idx_arrangements_band ON band_song_arrangements(band_id);
 CREATE INDEX IF NOT EXISTS idx_arrangements_song ON band_song_arrangements(catalog_song_id);
+
+-- ── Setlist title aliases ─────────────────────────────────────────────────
+-- Maps shorthand / abbreviated titles used in setlist imports → canonical
+-- catalog_song_id. Allows sloppy input ("Bobby McGee", "Boots") to resolve
+-- without manual remapping every time.
+CREATE TABLE IF NOT EXISTS catalog_song_aliases (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    alias           TEXT NOT NULL UNIQUE,   -- normalized lower-case alias
+    catalog_song_id INTEGER NOT NULL REFERENCES catalog_songs(id) ON DELETE CASCADE,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_aliases_song ON catalog_song_aliases(catalog_song_id);
 """
 
 _SEED_SQL = """
