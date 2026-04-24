@@ -43,3 +43,51 @@ Thumbs.db
 # Env / secrets
 .env
 .env.local
+
+# FR-20260423-sibling-gitignore-parity
+*.pyo
+*.pyd
+.playwright-mcp/
+src/data/*.db
+src/data/*.db-journal
+src/data/*.db-wal
+src/data/*.db-shm
+src/data/backups/
+*.tmp
+.venv/
+
+# FR-20260423-sibling-gitignore-parity
+*.pyo
+*.pyd
+.playwright-mcp/
+src/data/*.db
+src/data/*.db-journal
+src/data/*.db-wal
+src/data/*.db-shm
+src/data/backups/
+*.tmp
+.venv/
+
+# FR-20260423-sibling-gitignore-parity
+*.pyo
+*.pyd
+.playwright-mcp/
+src/data/*.db
+src/data/*.db-journal
+src/data/*.db-wal
+src/data/*.db-shm
+src/data/backups/
+*.tmp
+.venv/
+
+# FR-20260423-sibling-gitignore-parity
+*.pyo
+*.pyd
+.playwright-mcp/
+src/data/*.db
+src/data/*.db-journal
+src/data/*.db-wal
+src/data/*.db-shm
+src/data/backups/
+*.tmp
+.venv/
