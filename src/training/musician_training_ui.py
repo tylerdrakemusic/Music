@@ -11,7 +11,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from flask import Flask, jsonify, render_template_string, request, Response
+from flask import Flask, jsonify, render_template_string, request, Response, abort
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 TRAINING_DIR = PROJECT_ROOT / "tools" / "tyJson" / "exercises" / "musicTraining"
@@ -21,6 +21,13 @@ TRAINING_SCRIPT = PROJECT_ROOT / "tools" / "focused_musician_training.py"
 
 MUZIC_DIR = Path(r"G:\Muzic")
 AUDIO_EXTS = {".mp3", ".m4a", ".wav", ".flac"}
+
+# Security: allowed roots for album-art path requests.
+# Any resolved path that does not start with one of these is rejected (403).
+_ART_ALLOWED_ROOTS: tuple[Path, ...] = (
+    MUZIC_DIR.resolve(),
+    PROJECT_ROOT.resolve(),
+)
 
 def _scan_muzic() -> list[dict]:
     """Return all audio files under G:\\Muzic as {name, path} sorted by name."""
@@ -378,6 +385,11 @@ def album_art():
     path_str = request.args.get("path", "")
     if not path_str:
         return Response(status=204)
+    # --- Security: path-traversal confinement (OWASP A01/A05) ---
+    resolved = Path(path_str).resolve()
+    if not any(str(resolved).startswith(str(root)) for root in _ART_ALLOWED_ROOTS):
+        abort(403)
+    # -------------------------------------------------------------
     try:
         from mutagen import File as MutagenFile  # lazy import
         audio = MutagenFile(path_str)
