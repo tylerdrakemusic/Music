@@ -1,0 +1,5 @@
+# ❤Music runtime dependencies (FR-20260425-ci-test-harness-gateway)
+# Minimal set required for the existing test suite to run on a fresh CI checkout.
+# Tests use Flask's test_client() and mock mutagen.File — no live server, no audio fixtures.
+flask>=3.0,<4.0
+mutagen>=1.47,<2.0
