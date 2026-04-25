@@ -133,5 +133,275 @@
             "end": "0:20",
             "repetition": 1
         }
+    },
+    {
+        "timestamp": "2026-04-25 10:51:11",
+        "songPath": "G:\\Muzic\\Carnival - Natalie Merchant.mp3",
+        "segment": {
+            "start": "0:00",
+            "end": "0:25",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 10:51:37",
+        "songPath": "G:\\Muzic\\Carnival - Natalie Merchant.mp3",
+        "segment": {
+            "start": "0:00",
+            "end": "0:25",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 10:52:03",
+        "songPath": "G:\\Muzic\\Carnival - Natalie Merchant.mp3",
+        "segment": {
+            "start": "0:00",
+            "end": "0:25",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 10:52:29",
+        "songPath": "G:\\Muzic\\Carnival - Natalie Merchant.mp3",
+        "segment": {
+            "start": "0:00",
+            "end": "0:25",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:00:38",
+        "songPath": "G:\\Muzic\\Carnival - Natalie Merchant.mp3",
+        "segment": {
+            "start": "0:00",
+            "end": "0:57",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:04:04",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "0:00",
+            "end": "0:57",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:05:26",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "0:00",
+            "end": "0:57",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:06:25",
+        "songPath": "G:\\Muzic\\The Blue Room - Guthrie Govan.mp3",
+        "segment": {
+            "start": "0:00",
+            "end": "0:20",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:06:52",
+        "songPath": "G:\\Muzic\\The Blue Room - Guthrie Govan.mp3",
+        "segment": {
+            "start": "0:00",
+            "end": "0:20",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:11:29",
+        "songPath": "G:\\Muzic\\Carnival - Natalie Merchant.mp3",
+        "segment": {
+            "start": "0:00",
+            "end": "0:57",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:12:10",
+        "songPath": "G:\\Muzic\\Carnival - Natalie Merchant.mp3",
+        "segment": {
+            "start": "3:22",
+            "end": "4:02",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:12:51",
+        "songPath": "G:\\Muzic\\Carnival - Natalie Merchant.mp3",
+        "segment": {
+            "start": "3:22",
+            "end": "4:02",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:13:32",
+        "songPath": "G:\\Muzic\\Carnival - Natalie Merchant.mp3",
+        "segment": {
+            "start": "3:22",
+            "end": "4:02",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:36:18",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "0:00",
+            "end": "0:15",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:36:26",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:39:00",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "0:00",
+            "end": "0:15",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:39:09",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:39:17",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:39:26",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:39:35",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:39:43",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:39:52",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:40:01",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:40:09",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:40:18",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:40:26",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "1:15",
+            "end": "1:23",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:42:51",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "0:00",
+            "end": "0:57",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:43:32",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "3:22",
+            "end": "4:02",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:44:12",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "3:22",
+            "end": "4:02",
+            "repetition": 1
+        }
+    },
+    {
+        "timestamp": "2026-04-25 11:44:53",
+        "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+        "segment": {
+            "start": "3:22",
+            "end": "4:02",
+            "repetition": 1
+        }
     }
 ]
