@@ -11,7 +11,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from flask import Flask, jsonify, render_template_string, request
+from flask import Flask, jsonify, render_template_string, request, Response
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 TRAINING_DIR = PROJECT_ROOT / "tools" / "tyJson" / "exercises" / "musicTraining"
@@ -96,6 +96,7 @@ HTML = r"""
   .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
   .card-header .meta h2{font-size:1rem;color:#fff;margin-bottom:2px}
   .card-header .meta .artist{font-size:.8rem;color:var(--muted)}
+  .album-art{width:200px;height:200px;object-fit:cover;border-radius:4px;display:block;margin-bottom:10px}
   .card-controls{display:flex;align-items:center;gap:6px;flex-shrink:0}
   .lock-label{font-size:.7rem;color:var(--muted);cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px}
   .lock-label input{cursor:pointer}
@@ -137,6 +138,9 @@ HTML = r"""
 <div class="grid" id="sessions-grid">
   {% for s in sessions %}
   <div class="card" id="card-{{ loop.index }}">
+    {% if s.song_path %}
+    <img class="album-art" src="/art?path={{ s.song_path | urlencode }}" onerror="this.style.display='none'" alt="">
+    {% endif %}
     <div class="card-header">
       <div class="meta"><h2>{{ s.title }}</h2><div class="artist">{{ s.artist }}</div></div>
       <div class="card-controls">
@@ -362,6 +366,54 @@ async function createSession() {
 </body>
 </html>
 """
+
+
+@app.route("/art")
+def album_art():
+    """Return embedded album art bytes for a given audio file path.
+
+    Returns 204 No Content when art is absent or the file cannot be read,
+    so the browser <img> onerror handler hides the element gracefully.
+    """
+    path_str = request.args.get("path", "")
+    if not path_str:
+        return Response(status=204)
+    try:
+        from mutagen import File as MutagenFile  # lazy import
+        audio = MutagenFile(path_str)
+        if audio is None:
+            return Response(status=204)
+        data: bytes | None = None
+        mime: str = "image/jpeg"
+        # MP3 — ID3 APIC
+        if hasattr(audio, "tags") and audio.tags is not None:
+            tags = audio.tags
+            # ID3 APIC
+            for key in list(tags.keys()):
+                if key.startswith("APIC"):
+                    apic = tags[key]
+                    data = apic.data
+                    mime = apic.mime or mime
+                    break
+        # FLAC — picture blocks
+        if data is None and hasattr(audio, "pictures"):
+            pics = audio.pictures
+            if pics:
+                data = pics[0].data
+                mime = pics[0].mime or mime
+        # MP4/M4A — covr
+        if data is None and hasattr(audio, "tags") and audio.tags is not None:
+            covr = audio.tags.get("covr")
+            if covr:
+                cover = covr[0]
+                data = bytes(cover)
+                from mutagen.mp4 import MP4Cover
+                mime = "image/png" if cover.imageformat == MP4Cover.FORMAT_PNG else "image/jpeg"
+        if not data:
+            return Response(status=204)
+        return Response(data, status=200, mimetype=mime)
+    except Exception:
+        return Response(status=204)
 
 
 @app.route("/catalog")
