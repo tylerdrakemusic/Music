@@ -5,9 +5,15 @@
     "segments": [
         {
             "start": "0:00",
-            "end": "0:15",
+            "end": "0:57",
             "speed": 100,
             "repetition": 1
+        },
+        {
+            "start": "3:22",
+            "end": "4:02",
+            "speed": 100,
+            "repetition": 3
         }
     ],
     "gradient": 0

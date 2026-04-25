@@ -1,0 +1,13 @@
+{
+    "songPath": "G:\\Muzic\\Too Much Time On My Hands - Styx.mp3",
+    "title": "Too Much Time On My Hands",
+    "artist": "Styx",
+    "segments": [
+        {
+            "start": "0:05",
+            "end": "0:15",
+            "speed": 75,
+            "repetition": 4
+        }
+    ]
+}
