@@ -287,6 +287,13 @@ async function saveSession(filename, idx) {
 }
 
 async function launchSession(filename, idx) {
+  // Flush current DOM state to disk before launching so that edits not yet
+  // persisted by the autosave timer are included in the session. Without this,
+  // changes made within the 600 ms autosave window would be silently ignored
+  // and a stale on-disk version would be played instead. (FR-20260425)
+  clearTimeout(_saveTimers[idx]);
+  setStatus(idx, '\u23f3 Saving\u2026');
+  await saveSession(filename, idx);
   setStatus(idx, '\u23f3 Launching\u2026');
   const gradient = getGradient(idx);
   const res = await fetch('/launch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename, gradient }) });
