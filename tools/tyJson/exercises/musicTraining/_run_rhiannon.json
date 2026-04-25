@@ -1,0 +1,14 @@
+{
+    "songPath": "G:\\Muzic\\Rhiannon - Fleetwood Mac.m4a",
+    "title": "Rhiannon",
+    "artist": "Fleetwood Mac",
+    "segments": [
+        {
+            "start": "0:00",
+            "end": "0:15",
+            "speed": 100,
+            "repetition": 1
+        }
+    ],
+    "gradient": 0
+}
