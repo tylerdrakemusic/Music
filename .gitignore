@@ -91,3 +91,8 @@ src/data/*.db-shm
 src/data/backups/
 *.tmp
 .venv/
+
+# FR-20260425-guitar-trainer-data-to-db
+# Exercise definitions and training logs are runtime data (user-modified during
+# practice sessions). They live on disk but must not pollute git state.
+tools/tyJson/exercises/musicTraining/
