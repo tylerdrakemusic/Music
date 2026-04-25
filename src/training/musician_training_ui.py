@@ -11,7 +11,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from flask import Flask, jsonify, render_template_string, request
+from flask import Flask, jsonify, render_template_string, request, Response, abort
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 TRAINING_DIR = PROJECT_ROOT / "tools" / "tyJson" / "exercises" / "musicTraining"
@@ -21,6 +21,13 @@ TRAINING_SCRIPT = PROJECT_ROOT / "tools" / "focused_musician_training.py"
 
 MUZIC_DIR = Path(r"G:\Muzic")
 AUDIO_EXTS = {".mp3", ".m4a", ".wav", ".flac"}
+
+# Security: allowed roots for album-art path requests.
+# Any resolved path that does not start with one of these is rejected (403).
+_ART_ALLOWED_ROOTS: tuple[Path, ...] = (
+    MUZIC_DIR.resolve(),
+    PROJECT_ROOT.resolve(),
+)
 
 def _scan_muzic() -> list[dict]:
     """Return all audio files under G:\\Muzic as {name, path} sorted by name."""
@@ -96,6 +103,7 @@ HTML = r"""
   .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
   .card-header .meta h2{font-size:1rem;color:#fff;margin-bottom:2px}
   .card-header .meta .artist{font-size:.8rem;color:var(--muted)}
+  .album-art{width:200px;height:200px;object-fit:cover;border-radius:4px;display:block;margin-bottom:10px}
   .card-controls{display:flex;align-items:center;gap:6px;flex-shrink:0}
   .lock-label{font-size:.7rem;color:var(--muted);cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px}
   .lock-label input{cursor:pointer}
@@ -137,6 +145,9 @@ HTML = r"""
 <div class="grid" id="sessions-grid">
   {% for s in sessions %}
   <div class="card" id="card-{{ loop.index }}">
+    {% if s.song_path %}
+    <img class="album-art" src="/art?path={{ s.song_path | urlencode }}" onerror="this.style.display='none'" alt="">
+    {% endif %}
     <div class="card-header">
       <div class="meta"><h2>{{ s.title }}</h2><div class="artist">{{ s.artist }}</div></div>
       <div class="card-controls">
@@ -341,6 +352,45 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.new-card')) document.getElementById('catalog-dropdown').style.display = 'none';
 });
 
+function buildCardHTML(s, idx) {
+  const artTag = s.song_path
+    ? `<img class="album-art" src="/art?path=${encodeURIComponent(s.song_path)}" onerror="this.style.display='none'" alt="">`
+    : '';
+  const rows = (s.segments || []).map((seg, i) => `
+    <tr>
+      <td><input value="${seg.start}" data-field="start" style="width:70px" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
+      <td><input value="${seg.end}" data-field="end" style="width:70px" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
+      <td><input type="number" value="${seg.speed||100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
+      <td><input type="number" value="${seg.repetition||1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
+      <td><button class="btn-del" onclick="deleteRow(this,'${s.file}','${idx}')" title="Delete row">&times;</button></td>
+    </tr>`).join('');
+  return `<div class="card" id="card-${idx}">
+    ${artTag}
+    <div class="card-header">
+      <div class="meta"><h2>${s.title}</h2><div class="artist">${s.artist}</div></div>
+      <div class="card-controls">
+        <label class="lock-label" title="Unlock to delete this training file">
+          <input type="checkbox" onchange="toggleCardLock('${idx}',this)"> 🔒
+        </label>
+        <button class="btn-del-card" id="del-card-${idx}" onclick="deleteCard('${s.file}','${idx}')" title="Delete training file">🗑</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th></th></tr></thead>
+      <tbody id="tbody-${idx}">${rows}</tbody>
+    </table>
+    <div class="actions" style="align-items:center">
+      <button class="btn btn-add" onclick="addRow('${s.file}','tbody-${idx}','${idx}')">+ Row</button>
+      <label style="font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:4px">
+        Gradient
+        <input type="number" id="gradient-${idx}" value="${s.gradient||0}" style="width:52px;background:#111;border:1px solid var(--border);color:#fff;padding:2px 4px;border-radius:3px;font-size:.8rem" min="0" max="50" step="1" oninput="scheduleAutosave('${s.file}','${idx}')">
+      </label>
+      <button class="btn btn-red" onclick="launchSession('${s.file}','${idx}')">▶ Launch</button>
+    </div>
+    <div class="status" id="status-${idx}"></div>
+  </div>`;
+}
+
 async function createSession() {
   if (!_selectedPath) { setStatus('new', '✗ Pick a song first', false); return; }
   const name = _selectedPath.split('\\').pop().split('/').pop();
@@ -351,7 +401,19 @@ async function createSession() {
   const res = await fetch('/create', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, artist, songPath: _selectedPath }) });
   const j = await res.json();
   if (j.ok) {
-    setStatus('new', '✓ Created — reload to edit');
+    // Fetch updated session list and inject the new card without a page reload
+    const sessRes = await fetch('/api/sessions');
+    const sessions = await sessRes.json();
+    const newSession = sessions.find(s => s.file === j.file);
+    if (newSession) {
+      const grid = document.getElementById('sessions-grid');
+      const newCard = grid.querySelector('.new-card');
+      const idx = sessions.indexOf(newSession) + 1;
+      const div = document.createElement('div');
+      div.innerHTML = buildCardHTML(newSession, idx);
+      grid.insertBefore(div.firstElementChild, newCard);
+    }
+    setStatus('new', '✓ Created');
     _selectedPath = '';
     document.getElementById('new-selected').style.display = 'none';
     document.getElementById('new-selected-text').textContent = '';
@@ -362,6 +424,59 @@ async function createSession() {
 </body>
 </html>
 """
+
+
+@app.route("/art")
+def album_art():
+    """Return embedded album art bytes for a given audio file path.
+
+    Returns 204 No Content when art is absent or the file cannot be read,
+    so the browser <img> onerror handler hides the element gracefully.
+    """
+    path_str = request.args.get("path", "")
+    if not path_str:
+        return Response(status=204)
+    # --- Security: path-traversal confinement (OWASP A01/A05) ---
+    resolved = Path(path_str).resolve()
+    if not any(resolved.is_relative_to(root) for root in _ART_ALLOWED_ROOTS):
+        abort(403)
+    # -------------------------------------------------------------
+    try:
+        from mutagen import File as MutagenFile  # lazy import
+        audio = MutagenFile(str(resolved))
+        if audio is None:
+            return Response(status=204)
+        data: bytes | None = None
+        mime: str = "image/jpeg"
+        # MP3 — ID3 APIC
+        if hasattr(audio, "tags") and audio.tags is not None:
+            tags = audio.tags
+            # ID3 APIC
+            for key in list(tags.keys()):
+                if key.startswith("APIC"):
+                    apic = tags[key]
+                    data = apic.data
+                    mime = apic.mime or mime
+                    break
+        # FLAC — picture blocks
+        if data is None and hasattr(audio, "pictures"):
+            pics = audio.pictures
+            if pics:
+                data = pics[0].data
+                mime = pics[0].mime or mime
+        # MP4/M4A — covr
+        if data is None and hasattr(audio, "tags") and audio.tags is not None:
+            covr = audio.tags.get("covr")
+            if covr:
+                cover = covr[0]
+                data = bytes(cover)
+                from mutagen.mp4 import MP4Cover
+                mime = "image/png" if cover.imageformat == MP4Cover.FORMAT_PNG else "image/jpeg"
+        if not data:
+            return Response(status=204)
+        return Response(data, status=200, mimetype=mime)
+    except Exception:
+        return Response(status=204)
 
 
 @app.route("/catalog")
