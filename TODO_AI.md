@@ -8,7 +8,7 @@
 
 ## Infrastructure (Cross-Project — tracked in ⊕Workspace/TODO_AI.md)
 
-- [ ] **MCP server analysis + install** — Playwright MCP is the highest-priority for ❤Music: replaces Edge headless subprocess in `tools/print_doc.py`, enables Spotify/DistroKid web automation. SQLite MCP would allow direct DB queries without Python scripts. Full candidate list and install decisions tracked in `⊕Workspace/TODO_AI.md`.
+- [x] **MCP server analysis + install** — Playwright MCP (`@playwright/mcp@latest`) and GitHub MCP installed and wired at user level. Confirmed 2026-04-24. Edge headless subprocess in `tools/print_doc.py` can now be replaced.
 
 ---
 
