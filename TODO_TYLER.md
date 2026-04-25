@@ -8,10 +8,10 @@
 
 ## Immediate
 
-- [ ] **🔴 URGENT: Write bridge for untitled 2026 original** — Melody + lyrics needed. Song template: `studio_master/song_templates/untitled_tyler_original_2026.json`. Key: Am, suspended voicings. Bridge should break the sus pattern for contrast/resolution. Hash out with producer at Hyperthreat Studios. Chorus lyrics also still open.
-- [ ] **CopperCreek status** — Is CopperCreek actively gigging? Who are the current members? Any active recordings?
-- [ ] **Link file** — Confirm `f:\❤Music\linkTyler.json` is the correct path for your streaming/social links.
-- [ ] **Sheet music location** — Confirm sheet music is in `C:\Users\tyler\Documents` and any specific subfolder structure.
+- [ ] **🔴 TOP PRIORITY / THIS WEEKEND: Review CC Prost 05022026 setlist** — Go through the May 2nd Probst gig setlist (`CC Prost 05022026`) and identify risky areas in the performance (transitions, tempos, tricky parts, anything that could go sideways). Shore those up before the gig.
+- [ ] **🔴 TOP PRIORITY / THIS WEEKEND: Isolate Marigolds Suno rough** — Work on separating/isolating the stems or arrangement from the Suno draft of "Marigolds." Goal: pull out usable elements, strip the AI-generated bed, and get the song to a place where it can be developed as a human production.
+
+
 
 ## Studio / Production
 
