@@ -387,12 +387,12 @@ def album_art():
         return Response(status=204)
     # --- Security: path-traversal confinement (OWASP A01/A05) ---
     resolved = Path(path_str).resolve()
-    if not any(str(resolved).startswith(str(root)) for root in _ART_ALLOWED_ROOTS):
+    if not any(resolved.is_relative_to(root) for root in _ART_ALLOWED_ROOTS):
         abort(403)
     # -------------------------------------------------------------
     try:
         from mutagen import File as MutagenFile  # lazy import
-        audio = MutagenFile(path_str)
+        audio = MutagenFile(str(resolved))
         if audio is None:
             return Response(status=204)
         data: bytes | None = None

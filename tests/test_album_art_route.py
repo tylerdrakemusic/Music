@@ -126,3 +126,18 @@ class TestAlbumArtRoute:
         c, _ = client
         resp = c.get("/art")
         assert resp.status_code == 204
+
+    def test_art_prefix_collision_returns_403(self, client, tmp_path):
+        """/art with a path whose prefix matches but is outside the allowed root -> 403.
+
+        e.g. allowed root = /tmp/abc  but request path = /tmp/abc2/evil.mp3
+        The old startswith() guard would pass this; is_relative_to() must reject it.
+        """
+        c, allowed = client
+        # Build a sibling dir whose string prefix starts with the allowed root
+        sibling = allowed.parent / (allowed.name + "2")
+        sibling.mkdir(exist_ok=True)
+        evil = sibling / "evil.mp3"
+        evil.write_bytes(b"JUNK")
+        resp = c.get(f"/art?path={evil}")
+        assert resp.status_code == 403
