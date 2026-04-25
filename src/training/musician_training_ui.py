@@ -352,6 +352,45 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.new-card')) document.getElementById('catalog-dropdown').style.display = 'none';
 });
 
+function buildCardHTML(s, idx) {
+  const artTag = s.song_path
+    ? `<img class="album-art" src="/art?path=${encodeURIComponent(s.song_path)}" onerror="this.style.display='none'" alt="">`
+    : '';
+  const rows = (s.segments || []).map((seg, i) => `
+    <tr>
+      <td><input value="${seg.start}" data-field="start" style="width:70px" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
+      <td><input value="${seg.end}" data-field="end" style="width:70px" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
+      <td><input type="number" value="${seg.speed||100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
+      <td><input type="number" value="${seg.repetition||1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
+      <td><button class="btn-del" onclick="deleteRow(this,'${s.file}','${idx}')" title="Delete row">&times;</button></td>
+    </tr>`).join('');
+  return `<div class="card" id="card-${idx}">
+    ${artTag}
+    <div class="card-header">
+      <div class="meta"><h2>${s.title}</h2><div class="artist">${s.artist}</div></div>
+      <div class="card-controls">
+        <label class="lock-label" title="Unlock to delete this training file">
+          <input type="checkbox" onchange="toggleCardLock('${idx}',this)"> 🔒
+        </label>
+        <button class="btn-del-card" id="del-card-${idx}" onclick="deleteCard('${s.file}','${idx}')" title="Delete training file">🗑</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th></th></tr></thead>
+      <tbody id="tbody-${idx}">${rows}</tbody>
+    </table>
+    <div class="actions" style="align-items:center">
+      <button class="btn btn-add" onclick="addRow('${s.file}','tbody-${idx}','${idx}')">+ Row</button>
+      <label style="font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:4px">
+        Gradient
+        <input type="number" id="gradient-${idx}" value="${s.gradient||0}" style="width:52px;background:#111;border:1px solid var(--border);color:#fff;padding:2px 4px;border-radius:3px;font-size:.8rem" min="0" max="50" step="1" oninput="scheduleAutosave('${s.file}','${idx}')">
+      </label>
+      <button class="btn btn-red" onclick="launchSession('${s.file}','${idx}')">▶ Launch</button>
+    </div>
+    <div class="status" id="status-${idx}"></div>
+  </div>`;
+}
+
 async function createSession() {
   if (!_selectedPath) { setStatus('new', '✗ Pick a song first', false); return; }
   const name = _selectedPath.split('\\').pop().split('/').pop();
@@ -362,7 +401,19 @@ async function createSession() {
   const res = await fetch('/create', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, artist, songPath: _selectedPath }) });
   const j = await res.json();
   if (j.ok) {
-    setStatus('new', '✓ Created — reload to edit');
+    // Fetch updated session list and inject the new card without a page reload
+    const sessRes = await fetch('/api/sessions');
+    const sessions = await sessRes.json();
+    const newSession = sessions.find(s => s.file === j.file);
+    if (newSession) {
+      const grid = document.getElementById('sessions-grid');
+      const newCard = grid.querySelector('.new-card');
+      const idx = sessions.indexOf(newSession) + 1;
+      const div = document.createElement('div');
+      div.innerHTML = buildCardHTML(newSession, idx);
+      grid.insertBefore(div.firstElementChild, newCard);
+    }
+    setStatus('new', '✓ Created');
     _selectedPath = '';
     document.getElementById('new-selected').style.display = 'none';
     document.getElementById('new-selected-text').textContent = '';
