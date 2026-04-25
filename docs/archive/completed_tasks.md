@@ -39,3 +39,13 @@ This file archives completed tasks from TODO_AI.md and TODO_TYLER.md for histori
 ---
 
 (For future sweeps, append new completed items by date.)
+
+---
+
+## 2026-04-24 TODO Reconciliation
+
+### Confirmed by Tyler
+- [x] **Write bridge for untitled 2026 original** — Bridge written. Chorus lyrics also complete. (2026-04-24)
+- [x] **CopperCreek status** — Band is active. Members confirmed: Jim Mann (Keys), Gene Ngo (Bass), Tamala Cameron (Lead Vox), Wade Bolling (Drums), Kevin Redmond (Lead Guitar), Tyler Drake (Trombone + Rhythm Guitar), Drew Kasch (Sax + Backing Perc). All except Wade sing backing vox. Roster saved to `bands/copperCreek/roster.json`. (2026-04-24)
+- [x] **Link file** — `f:\❤Music\linkTyler.json` confirmed correct — streaming/social link map. (2026-04-24)
+- [x] **Sheet music location** — Tyler handles sheet music additions directly into repo. No further AI tracking needed. (2026-04-24)

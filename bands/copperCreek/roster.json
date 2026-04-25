@@ -1,0 +1,15 @@
+{
+  "band": "Copper Creek",
+  "confirmed_date": "2026-04-24",
+  "status": "active",
+  "members": [
+    { "name": "Jim Mann",       "instrument": "Keys",                         "backing_vocals": true  },
+    { "name": "Gene Ngo",       "instrument": "Bass",                         "backing_vocals": true  },
+    { "name": "Tamala Cameron", "instrument": "Lead Vocals",                  "backing_vocals": false },
+    { "name": "Wade Bolling",   "instrument": "Drums",                        "backing_vocals": false },
+    { "name": "Kevin Redmond",  "instrument": "Lead Guitar",                  "backing_vocals": true  },
+    { "name": "Tyler Drake",    "instrument": "Trombone, Rhythm Guitar",      "backing_vocals": true  },
+    { "name": "Drew Kasch",     "instrument": "Sax, Backing Percussion",      "backing_vocals": true  }
+  ],
+  "notes": "All members except drummer (Wade Bolling) sing backing vocals."
+}
