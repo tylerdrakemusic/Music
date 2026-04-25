@@ -11,11 +11,12 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from flask import Flask, jsonify, render_template_string, request, Response, abort
+from flask import Flask, jsonify, render_template_string, request, Response, abort, send_from_directory
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 TRAINING_DIR = PROJECT_ROOT / "tools" / "tyJson" / "exercises" / "musicTraining"
 LOG_FILE = TRAINING_DIR / "trainingLog.json"
+CLICK_DIR = PROJECT_ROOT / "click"
 PYTHON_EXE = r"C:\G\python.exe"
 TRAINING_SCRIPT = PROJECT_ROOT / "tools" / "focused_musician_training.py"
 
@@ -136,11 +137,49 @@ HTML = r"""
   .status{font-size:.75rem;color:#6fdc6f;margin-top:4px;min-height:16px}
   .catalog-item{padding:6px 10px;font-size:.8rem;cursor:pointer;color:#ccc;border-bottom:1px solid #222}
   .catalog-item:hover{background:#2a2a2a;color:#fff}
+  /* Metronome */
+  .metronome{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .metro-title{font-size:.8rem;font-weight:700;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+  .metro-bpm-wrap{display:flex;align-items:center;gap:6px}
+  .metro-bpm{font-size:1.4rem;font-weight:700;color:#fff;width:60px;background:#111;border:1px solid var(--border);border-radius:4px;text-align:center;padding:2px 0}
+  .metro-bpm::-webkit-inner-spin-button{display:none}
+  .metro-label{font-size:.7rem;color:var(--muted)}
+  .metro-tap{padding:5px 12px;background:#111;border:1px solid var(--border);color:#ccc;border-radius:4px;cursor:pointer;font-size:.8rem;font-weight:600}
+  .metro-tap:active{background:#2a2a2a}
+  .metro-sig{padding:5px 10px;background:#111;border:1px solid var(--border);color:#ccc;border-radius:4px;font-size:.8rem;cursor:pointer}
+  .metro-play{padding:6px 20px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:.9rem;font-weight:700;cursor:pointer;min-width:64px}
+  .metro-play:hover{filter:brightness(1.15)}
+  .metro-beat-row{display:flex;gap:5px;align-items:center}
+  .metro-dot{width:10px;height:10px;border-radius:50%;background:#333;transition:background .07s}
+  .metro-dot.active-accent{background:#e8003d;box-shadow:0 0 6px #e8003d}
+  .metro-dot.active-beat{background:#6fdc6f;box-shadow:0 0 4px #6fdc6f}</style>
 </style>
 </head>
 <body>
 <h1>🎸 Lead Guitar Trainer</h1>
 <p class="sub">Focused interval training — loop lead parts, control speed, build muscle memory</p>
+
+<!-- Metronome (FR-20260425-guitar-trainer-metronome) -->
+<div class="metronome" id="metro-panel">
+  <span class="metro-title">🥁 Metro</span>
+  <div class="metro-bpm-wrap">
+    <input class="metro-bpm" id="metro-bpm" type="number" value="120" min="20" max="300" oninput="metroBpmChange(this.value)">
+    <span class="metro-label">BPM</span>
+  </div>
+  <button class="metro-tap" onclick="metroTap()">Tap</button>
+  <select class="metro-sig" id="metro-sig" onchange="metroSigChange(this.value)">
+    <option value="4">4/4</option>
+    <option value="3">3/4</option>
+    <option value="6">6/8</option>
+  </select>
+  <div class="metro-beat-row" id="metro-beat-row">
+    <span class="metro-dot" id="mdot-0"></span>
+    <span class="metro-dot" id="mdot-1"></span>
+    <span class="metro-dot" id="mdot-2"></span>
+    <span class="metro-dot" id="mdot-3"></span>
+  </div>
+  <button class="metro-play" id="metro-play-btn" onclick="metroToggle()">▶</button>
+</div>
 
 <div class="grid" id="sessions-grid">
   {% for s in sessions %}
@@ -420,6 +459,145 @@ async function createSession() {
     document.getElementById('new-path').value = '';
   } else { setStatus('new', '✗ ' + j.error, false); }
 }
+
+// ---------------------------------------------------------------------------
+// Metronome (FR-20260425-guitar-trainer-metronome)
+// Uses Web Audio API scheduler for drift-free timing.
+// first.wav = beat-1 accent; click.wav = all other beats.
+// ---------------------------------------------------------------------------
+(function initMetronome() {
+  let audioCtx = null;
+  let accentBuf = null;
+  let clickBuf = null;
+  let running = false;
+  let schedulerHandle = null;
+  let nextBeatTime = 0;
+  let currentBeat = 0;
+  let bpm = 120;
+  let beatsPerBar = 4;
+  const LOOKAHEAD_MS = 25;
+  const SCHEDULE_AHEAD_S = 0.1;
+
+  // Tap-tempo state
+  const tapTimes = [];
+  const MAX_TAP_GAP_MS = 3000;
+
+  function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  async function loadBuffer(url) {
+    const ctx = getCtx();
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const ab = await resp.arrayBuffer();
+    return ctx.decodeAudioData(ab);
+  }
+
+  async function ensureBuffers() {
+    if (!accentBuf) accentBuf = await loadBuffer('/click/first.wav');
+    if (!clickBuf) clickBuf = await loadBuffer('/click/click.wav');
+  }
+
+  function playBuf(buf, time) {
+    if (!buf) return;
+    const ctx = getCtx();
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(time);
+  }
+
+  function updateDots(beat) {
+    for (let i = 0; i < beatsPerBar; i++) {
+      const dot = document.getElementById('mdot-' + i);
+      if (!dot) continue;
+      dot.classList.remove('active-accent', 'active-beat');
+      if (i === beat) dot.classList.add(beat === 0 ? 'active-accent' : 'active-beat');
+    }
+  }
+
+  function scheduler() {
+    const ctx = getCtx();
+    while (nextBeatTime < ctx.currentTime + SCHEDULE_AHEAD_S) {
+      const isAccent = currentBeat === 0;
+      playBuf(isAccent ? accentBuf : clickBuf, nextBeatTime);
+      // Schedule dot flash at the right wall-clock time
+      const delay = Math.max(0, (nextBeatTime - ctx.currentTime) * 1000);
+      const beatSnapshot = currentBeat;
+      setTimeout(() => updateDots(beatSnapshot), delay);
+      currentBeat = (currentBeat + 1) % beatsPerBar;
+      nextBeatTime += 60.0 / bpm;
+    }
+  }
+
+  async function start() {
+    await ensureBuffers();
+    const ctx = getCtx();
+    if (ctx.state === 'suspended') await ctx.resume();
+    running = true;
+    currentBeat = 0;
+    nextBeatTime = ctx.currentTime + 0.05;
+    scheduler();
+    schedulerHandle = setInterval(scheduler, LOOKAHEAD_MS);
+    document.getElementById('metro-play-btn').textContent = '⏹';
+  }
+
+  function stop() {
+    running = false;
+    clearInterval(schedulerHandle);
+    schedulerHandle = null;
+    // Clear all dots
+    for (let i = 0; i < 6; i++) {
+      const dot = document.getElementById('mdot-' + i);
+      if (dot) dot.classList.remove('active-accent', 'active-beat');
+    }
+    document.getElementById('metro-play-btn').textContent = '▶';
+  }
+
+  function rebuildDots(n) {
+    const row = document.getElementById('metro-beat-row');
+    row.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement('span');
+      d.className = 'metro-dot';
+      d.id = 'mdot-' + i;
+      row.appendChild(d);
+    }
+  }
+
+  // Expose to global scope so inline handlers can call them
+  window.metroToggle = function() { running ? stop() : start(); };
+
+  window.metroBpmChange = function(v) {
+    bpm = Math.max(20, Math.min(300, parseInt(v) || 120));
+  };
+
+  window.metroSigChange = function(v) {
+    beatsPerBar = parseInt(v) || 4;
+    currentBeat = 0;
+    rebuildDots(beatsPerBar);
+    if (running) { stop(); start(); }
+  };
+
+  window.metroTap = function() {
+    const now = performance.now();
+    if (tapTimes.length && now - tapTimes[tapTimes.length - 1] > MAX_TAP_GAP_MS) {
+      tapTimes.length = 0;
+    }
+    tapTimes.push(now);
+    if (tapTimes.length >= 2) {
+      const intervals = [];
+      for (let i = 1; i < tapTimes.length; i++) intervals.push(tapTimes[i] - tapTimes[i - 1]);
+      const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      bpm = Math.round(Math.max(20, Math.min(300, 60000 / avg)));
+      const inp = document.getElementById('metro-bpm');
+      if (inp) inp.value = bpm;
+    }
+    if (tapTimes.length > 8) tapTimes.shift();
+  };
+})();
 </script>
 </body>
 </html>
@@ -482,6 +660,20 @@ def album_art():
 @app.route("/catalog")
 def catalog():
     return jsonify(_scan_muzic())
+
+
+@app.route("/click/<path:filename>")
+def click_audio(filename: str) -> Response:
+    """Serve metronome WAV files from the project click/ directory.
+
+    Security: only .wav files, no path traversal.
+    """
+    if not filename.endswith(".wav") or "/" in filename or "\\" in filename:
+        abort(403)
+    safe = CLICK_DIR.resolve() / filename
+    if not safe.resolve().is_relative_to(CLICK_DIR.resolve()):
+        abort(403)
+    return send_from_directory(str(CLICK_DIR), filename)
 
 
 @app.route("/")
