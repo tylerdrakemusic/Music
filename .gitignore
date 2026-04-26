@@ -96,3 +96,9 @@ src/data/backups/
 # Exercise definitions and training logs are runtime data (user-modified during
 # practice sessions). They live on disk but must not pollute git state.
 tools/tyJson/exercises/musicTraining/
+
+# scratch/debug tools
+tools/_*.py
+
+# temp directory
+tmp/
