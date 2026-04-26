@@ -1,0 +1,496 @@
+"""Generate a standalone Band Management Panel HTML.
+
+Reads catalog_export.json + setlist_active_export.json, builds BM_INLINE,
+and writes reports/band_management_panel.html — a fully self-contained dark
+panel that can be served as a static_html iframe in the workspace portal.
+
+Usage:
+    C:\\G\\python.exe src/band_mgmt/generate_band_mgmt_panel.py
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+CATALOG_JSON = PROJECT_ROOT / "catalog" / "setlists" / "catalog_export.json"
+SETLIST_JSON = PROJECT_ROOT / "catalog" / "setlists" / "setlist_active_export.json"
+OUTPUT_HTML = PROJECT_ROOT / "reports" / "band_management_panel.html"
+OUTPUT_HTML.parent.mkdir(parents=True, exist_ok=True)
+
+# ---------------------------------------------------------------------------
+# Load data
+# ---------------------------------------------------------------------------
+
+def load_inline_data() -> dict:
+    """Build BM_INLINE from flat catalog/setlist exports.
+
+    BM_INLINE format expected by the JS:
+      { "exported_at": str, "bands": [ { "id": int, "name": str, "active": bool,
+          "genre": str, "catalog": {"count": int, "songs": [...]},
+          "setlist": {"setlist": {...}, "count": int, "songs": [...]} }, ... ] }
+    """
+    catalog_raw: dict = {}
+    setlist_raw: dict = {}
+    try:
+        catalog_raw = json.loads(CATALOG_JSON.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"  [WARN] Could not read catalog_export.json: {e}", file=sys.stderr)
+    try:
+        setlist_raw = json.loads(SETLIST_JSON.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"  [WARN] Could not read setlist_active_export.json: {e}", file=sys.stderr)
+
+    exported_at = catalog_raw.get("exported_at", setlist_raw.get("exported_at", ""))
+    catalog_songs = catalog_raw.get("songs", [])
+    setlist_songs = setlist_raw.get("songs", [])
+    setlist_meta = setlist_raw.get("setlist", {})
+
+    # Catalog is Copper Creek (id=1). Groove Unit uses catalog_id = 2 in setlist
+    # if no songs reference id=2, the band simply shows empty.
+    cc_songs = [s for s in catalog_songs]  # all catalog songs are Copper Creek
+    gu_songs: list = []  # The Groove Unit — no separate catalog export yet
+
+    bands = [
+        {
+            "id": 1,
+            "name": "Copper Creek",
+            "active": True,
+            "genre": "Country / Americana",
+            "catalog": {"count": len(cc_songs), "songs": cc_songs},
+            "setlist": {
+                "setlist": setlist_meta,
+                "count": len(setlist_songs),
+                "songs": setlist_songs,
+            },
+        },
+        {
+            "id": 2,
+            "name": "The Groove Unit",
+            "active": True,
+            "genre": "Blues / Rock",
+            "catalog": {"count": len(gu_songs), "songs": gu_songs},
+            "setlist": {"setlist": {}, "count": 0, "songs": []},
+        },
+    ]
+    return {"exported_at": exported_at, "bands": bands}
+
+
+# ---------------------------------------------------------------------------
+# HTML template
+# ---------------------------------------------------------------------------
+
+CSS_VARS = """
+:root {
+    --bg: #0a0d12;
+    --bg2: #1e2530;
+    --sidebar-bg: #0f1318;
+    --surface: #151a22;
+    --border: #1e2530;
+    --accent: #6366f1;
+    --accent-glow: rgba(99,102,241,0.15);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --live-dot: #ef4444;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); }
+"""
+
+PANEL_CSS = """
+  .bm-wrap { display:flex; flex-direction:column; height:100vh; background:var(--bg); overflow:hidden; }
+  .bm-header { padding:1rem 1.5rem 0.75rem; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .bm-title { font-size:1.25rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; }
+  .bm-subtitle { font-size:0.7rem; color:var(--muted); margin-left:0.4rem; font-weight:400; }
+  .bm-meta { font-size:0.72rem; color:var(--muted); margin-top:0.25rem; display:flex; gap:1.2rem; flex-wrap:wrap; }
+  .bm-view-toggle { display:flex; gap:0.4rem; margin-top:0.5rem; }
+  .bm-vtab { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.25rem 0.9rem; font-size:0.78rem; color:var(--muted); cursor:pointer; user-select:none; transition:all .15s; font-weight:600; }
+  .bm-vtab.active { background:rgba(99,102,241,.2); border-color:var(--accent); color:#a5b4fc; }
+  .bm-controls { padding:0.65rem 1.5rem; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; flex-shrink:0; }
+  .bm-search { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.35rem 0.7rem; color:var(--text); font-size:0.82rem; outline:none; width:220px; }
+  .bm-search:focus { border-color:var(--accent); }
+  .bm-tabs { display:flex; gap:0.4rem; }
+  .bm-tab { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:0.2rem 0.75rem; font-size:0.75rem; color:var(--muted); cursor:pointer; user-select:none; transition:all .15s; }
+  .bm-tab.active { background:rgba(99,102,241,.15); border-color:var(--accent); color:#818cf8; }
+  .bm-stat-chips { display:flex; gap:0.4rem; margin-left:auto; flex-wrap:wrap; }
+  .bm-chip { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.15rem 0.5rem; font-size:0.68rem; color:var(--muted); }
+  .bm-chip b { color:var(--text); }
+  .bm-table-wrap { flex:1; overflow-y:auto; padding:0.5rem 1.5rem 1.5rem; }
+  .bm-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  .bm-table th { position:sticky; top:0; background:var(--sidebar-bg); color:var(--muted); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:0.5rem 0.6rem; text-align:left; border-bottom:1px solid var(--border); cursor:pointer; user-select:none; white-space:nowrap; }
+  .bm-table th:hover { color:var(--text); }
+  .bm-table th .sort-arrow { opacity:0.4; margin-left:0.3rem; font-size:0.6rem; }
+  .bm-table th.sorted .sort-arrow { opacity:1; color:var(--accent); }
+  .bm-table td { padding:0.45rem 0.6rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .bm-table tr:hover td { background:var(--accent-glow); }
+  .bm-set-header td { background:var(--surface); color:var(--muted); font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; padding:0.4rem 0.6rem; }
+  .bm-play-btn { background:none; border:1px solid var(--border); color:var(--accent); border-radius:4px; padding:0 0.45rem; height:1.5rem; cursor:pointer; font-size:0.78rem; line-height:1; transition:background .15s,border-color .15s; white-space:nowrap; }
+  .bm-play-btn:hover { background:var(--accent-glow,rgba(99,102,241,.15)); border-color:var(--accent); }
+  .bm-play-btn.playing { border-color:var(--accent); color:#fff; background:var(--accent); }
+  .bm-progress { width:62px; height:3px; cursor:pointer; accent-color:var(--accent); vertical-align:middle; margin-left:5px; }
+  .key-badge { display:inline-block; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.72rem; font-weight:700; letter-spacing:.03em; }
+  .key-major { background:rgba(16,185,129,.15); color:#34d399; }
+  .key-minor { background:rgba(99,102,241,.15); color:#818cf8; }
+  .bpm-val { font-family:'Cascadia Code','Consolas',monospace; font-size:0.8rem; }
+  .bpm-unknown { color:var(--muted); font-style:italic; }
+  .bm-footer { padding:0.5rem 1.5rem; border-top:1px solid var(--border); font-size:0.68rem; color:var(--muted); display:flex; gap:1rem; align-items:center; flex-shrink:0; }
+  .bm-footer a { color:var(--accent); text-decoration:none; }
+  .bm-footer a:hover { text-decoration:underline; }
+  .bm-no-results { text-align:center; padding:3rem; color:var(--muted); }
+  .bm-loading { text-align:center; padding:3rem; color:var(--muted); font-style:italic; }
+  .bm-err { text-align:center; padding:2rem; color:#f87171; background:rgba(239,68,68,.08); border-radius:8px; margin:1rem; }
+"""
+
+BAND_SELECT_STYLE = (
+    "background:var(--bg2,#2a2a2a);border:1px solid var(--accent,#7ecfff);"
+    "border-radius:5px;color:var(--text);font-size:inherit;font-weight:700;"
+    "cursor:pointer;outline:none;padding:.15rem .5rem .15rem .4rem;"
+    "appearance:auto;-webkit-appearance:auto"
+)
+
+PANEL_BODY = f"""
+<div class="bm-wrap">
+  <div class="bm-header">
+    <div class="bm-title">&#x1F3B5; Band Management &mdash;
+      <select id="bm-band-select" onchange="bmSwitchBand(this.value)" style="{BAND_SELECT_STYLE}"></select>
+      <span class="bm-subtitle" id="bm-view-label">&middot; Active Setlist</span>
+    </div>
+    <div class="bm-view-toggle">
+      <span class="bm-vtab active" id="vtab-setlist" onclick="bmSwitchView('setlist',this)">&#x1F3A4; Active Setlist</span>
+      <span class="bm-vtab" id="vtab-catalog" onclick="bmSwitchView('catalog',this)">&#x1F4DA; Full Catalog</span>
+    </div>
+    <div class="bm-meta" id="bm-meta"></div>
+  </div>
+  <div class="bm-controls">
+    <input class="bm-search" id="bm-search" placeholder="Search songs, artists, keys&hellip;" oninput="applyFilter()">
+    <div class="bm-tabs" id="bm-set-tabs"></div>
+    <div class="bm-stat-chips" id="bm-stat-chips"></div>
+  </div>
+  <div class="bm-table-wrap">
+    <div class="bm-loading" id="bm-loading">Loading&hellip;</div>
+    <table class="bm-table" id="bm-table" style="display:none">
+      <thead id="bm-thead"></thead>
+      <tbody id="bm-tbody"></tbody>
+    </table>
+    <div class="bm-no-results" id="bm-no-results" style="display:none">No songs match your search.</div>
+    <div class="bm-err" id="bm-err" style="display:none"></div>
+  </div>
+  <div class="bm-footer">
+    BPM: librosa on <code>G:\\Muzic</code> &middot;
+    Source: catalog_export.json &middot; setlist_active_export.json &middot;
+    <span id="bm-sort-info" style="color:var(--muted)">Default order</span>
+  </div>
+  <audio id="bm-audio" preload="none"></audio>
+</div>
+"""
+
+BM_JS = r"""
+(function(){
+  // BM_INLINE injected by generate_band_mgmt_panel.py
+  // <!--BM_DATA_START-->
+  const BM_INLINE = /*INJECT_DATA*/null/*END_INJECT*/;
+  // <!--BM_DATA_END-->
+
+  let currentView = 'setlist';
+  let currentBandId = null;
+  let allSongs = [];
+  let activeSet = 'all';
+  let sortCol = null;
+  let sortAsc = true;
+  let dataCache = {};
+
+  function getBandData(bandId) {
+    if (!BM_INLINE || !BM_INLINE.bands) return null;
+    return BM_INLINE.bands.find(function(b){ return b.id == bandId; }) || null;
+  }
+
+  function populateBandSelect() {
+    const sel = document.getElementById('bm-band-select');
+    if (!BM_INLINE || !BM_INLINE.bands) return;
+    sel.innerHTML = '';
+    BM_INLINE.bands.forEach(function(b) {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.textContent = b.name + (b.active ? '' : ' (inactive)');
+      sel.appendChild(opt);
+    });
+    currentBandId = BM_INLINE.bands[0] ? BM_INLINE.bands[0].id : null;
+    sel.value = currentBandId;
+  }
+
+  window.bmSwitchBand = function(bandId) {
+    currentBandId = parseInt(bandId);
+    dataCache = {};
+    document.getElementById('bm-search').value = '';
+    activeSet = 'all';
+    sortCol = null; sortAsc = true;
+    loadView(currentView);
+  };
+
+  window.bmSwitchView = function(view, el) {
+    currentView = view;
+    document.querySelectorAll('.bm-vtab').forEach(function(t){ t.classList.remove('active'); });
+    el.classList.add('active');
+    document.getElementById('bm-view-label').textContent = view === 'setlist' ? '\u00b7 Active Setlist' : '\u00b7 Full Catalog';
+    dataCache = {};
+    sortCol = null; sortAsc = true;
+    activeSet = 'all';
+    document.getElementById('bm-search').value = '';
+    loadView(view);
+  };
+
+  function keyBadge(key) {
+    if (!key) return '<span style="color:var(--muted)">\u2014</span>';
+    const minor = /m$/.test(key);
+    return '<span class="key-badge ' + (minor ? 'key-minor' : 'key-major') + '">' + key + '</span>';
+  }
+
+  function showErr(msg) {
+    document.getElementById('bm-loading').style.display = 'none';
+    document.getElementById('bm-err').style.display = 'block';
+    document.getElementById('bm-err').textContent = '\u26a0 ' + msg;
+  }
+
+  function render(songs) {
+    const tbody   = document.getElementById('bm-tbody');
+    const noRes   = document.getElementById('bm-no-results');
+    const tbl     = document.getElementById('bm-table');
+    const loading = document.getElementById('bm-loading');
+    const countEl = document.getElementById('bm-visible-count');
+    loading.style.display = 'none';
+    if (!songs.length) {
+      tbody.innerHTML = '';
+      tbl.style.display = 'none';
+      noRes.style.display = 'block';
+      if (countEl) countEl.textContent = '0';
+      return;
+    }
+    noRes.style.display = 'none';
+    tbl.style.display = 'table';
+    if (countEl) countEl.textContent = songs.length;
+    const grouped = sortCol === null && currentView === 'setlist';
+    let html = '';
+    let lastSet = null;
+    songs.forEach(function(s) {
+      if (grouped && s.set !== lastSet) {
+        lastSet = s.set;
+        const headerLabel = s.set > 3 ? '\u2500\u2500 Backup' : '\u2500\u2500 Set ' + s.set;
+        html += '<tr class="bm-set-header"><td colspan="8">' + headerLabel + '</td></tr>';
+      }
+      const isSetlist = currentView === 'setlist';
+      const bpmHtml  = s.bpm != null ? '<span class="bpm-val">' + s.bpm + '</span>' : '<span class="bpm-val bpm-unknown">?</span>';
+      let smHtml = '';
+      if (s.sheet_music && s.sheet_music.length) {
+        smHtml = s.sheet_music.map(function(url, i) {
+          const fname = decodeURIComponent(url.split('/').pop());
+          const label = fname.replace(/^.*?\(([^)]+)\).*$/, '$1') || ('View ' + (i+1));
+          return '<a href="' + url + '" target="_blank" style="color:var(--accent);font-size:.72rem;margin-right:.35rem;white-space:nowrap">' + label + '</a>';
+        }).join('');
+      } else {
+        smHtml = '<span style="color:var(--muted);font-size:.72rem">\u2014</span>';
+      }
+      let audioHtml = '';
+      if (s.audio_url) {
+        audioHtml = '<button class="bm-play-btn" data-audio-url="' + s.audio_url + '" onclick="bmPlayRow(this)">\u25b6</button>' +
+                    '<input type="range" class="bm-progress" value="0" min="0" max="100" oninput="bmSeek(this)">';
+      } else {
+        audioHtml = '<span style="color:var(--muted);font-size:.72rem">\u2014</span>';
+      }
+      html += '<tr>' +
+        (isSetlist ? '<td style="color:var(--muted);font-size:.72rem;white-space:nowrap">' + (s.set > 3 ? 'BU' : 'S'+s.set) + '.' + s.order + '</td>' : '') +
+        '<td style="font-weight:600">' + s.title + '</td>' +
+        '<td style="color:var(--muted)">' + (s.artist || '') + '</td>' +
+        '<td>' + keyBadge(s.key) + '</td>' +
+        '<td style="text-align:center">' + bpmHtml + '</td>' +
+        '<td>' + smHtml + '</td>' +
+        '<td>' + audioHtml + '</td>' +
+      '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  function buildHeader() {
+    const thead = document.getElementById('bm-thead');
+    const isSetlist = currentView === 'setlist';
+    const cols = [
+      ...(isSetlist ? [['#', '']] : []),
+      ['Title', 'title'], ['Artist', 'artist'], ['Key', 'key'], ['BPM', 'bpm'],
+      ['\u266b', ''], ['\u25b6', ''],
+    ];
+    thead.innerHTML = '<tr>' + cols.map(function(c) {
+      const isSorted = sortCol === c[1] && c[1];
+      return '<th class="' + (isSorted ? 'sorted' : '') + '" ' +
+        (c[1] ? 'onclick="bmSort(\'' + c[1] + '\')"' : '') + '>' +
+        c[0] + (c[1] ? '<span class="sort-arrow">' + (isSorted ? (sortAsc ? '\u25b2' : '\u25bc') : '\u25b2') + '</span>' : '') +
+        '</th>';
+    }).join('') + '</tr>';
+  }
+
+  window.bmSort = function(col) {
+    if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+    document.getElementById('bm-sort-info').textContent = 'Sorted by ' + col + (sortAsc ? ' \u2191' : ' \u2193');
+    applyFilter();
+  };
+
+  function loadView(view) {
+    const cacheKey = currentBandId + ':' + view;
+    if (dataCache[cacheKey]) { allSongs = dataCache[cacheKey]; buildHeader(); applyFilter(); return; }
+    const band = getBandData(currentBandId);
+    if (!band) { showErr('Band data not found'); return; }
+    document.getElementById('bm-loading').style.display = 'block';
+    document.getElementById('bm-table').style.display = 'none';
+    if (view === 'setlist') {
+      var setlistSongs = (band.setlist && band.setlist.songs) || [];
+      var catalogSongs = (band.catalog && band.catalog.songs) || [];
+      var catalogMap = {};
+      catalogSongs.forEach(function(s){ catalogMap[s.id] = s; });
+      allSongs = setlistSongs.map(function(s) {
+        var cat = catalogMap[s.catalog_id] || {};
+        return Object.assign({}, s, {
+          sheet_music: cat.sheet_music || s.sheet_music || [],
+          audio_url: s.audio_url || cat.audio_url || null,
+        });
+      });
+      var meta = band.setlist && band.setlist.setlist;
+      var metaEl = document.getElementById('bm-meta');
+      if (meta && meta.name) {
+        metaEl.innerHTML = '<span>' + meta.name + '</span>' +
+          (meta.gig_date ? '<span>' + meta.gig_date + '</span>' : '') +
+          (meta.venue ? '<span>' + meta.venue + '</span>' : '');
+      } else {
+        metaEl.innerHTML = band.genre ? '<span>' + band.genre + '</span>' : '';
+      }
+      buildSetTabs(allSongs);
+    } else {
+      var catalogSongs2 = (band.catalog && band.catalog.songs) || [];
+      allSongs = catalogSongs2;
+      document.getElementById('bm-meta').innerHTML = band.genre ? '<span>' + band.genre + '</span>' +
+        '<span><b>' + (band.catalog ? band.catalog.count : 0) + '</b> songs</span>' : '';
+      buildSetTabs([]);
+    }
+    dataCache[cacheKey] = allSongs;
+    buildHeader();
+    applyFilter();
+  }
+
+  function buildSetTabs(songs) {
+    const tabsEl = document.getElementById('bm-set-tabs');
+    if (currentView !== 'setlist' || !songs.length) { tabsEl.innerHTML = ''; return; }
+    const sets = [...new Set(songs.map(function(s){ return s.set; }))].sort(function(a,b){return a-b;});
+    tabsEl.innerHTML = ['<span class="bm-tab active" data-set="all" onclick="bmSetTab(this,\'all\')">All</span>']
+      .concat(sets.map(function(s) {
+        return '<span class="bm-tab" data-set="' + s + '" onclick="bmSetTab(this,' + s + ')">' +
+          (s > 3 ? 'Backup' : 'Set ' + s) + '</span>';
+      })).join('');
+  }
+
+  window.bmSetTab = function(el, set) {
+    document.querySelectorAll('.bm-tab').forEach(function(t){ t.classList.remove('active'); });
+    el.classList.add('active');
+    activeSet = set;
+    applyFilter();
+  };
+
+  window.applyFilter = function() {
+    const q = (document.getElementById('bm-search').value || '').toLowerCase();
+    let songs = allSongs;
+    if (activeSet !== 'all') { songs = songs.filter(function(s){ return s.set == activeSet; }); }
+    if (q) { songs = songs.filter(function(s){ return (s.title+s.artist+s.key).toLowerCase().includes(q); }); }
+    if (sortCol) {
+      songs = songs.slice().sort(function(a,b){
+        const av = a[sortCol] != null ? a[sortCol] : '';
+        const bv = b[sortCol] != null ? b[sortCol] : '';
+        return sortAsc ? (av < bv ? -1 : av > bv ? 1 : 0) : (av > bv ? -1 : av < bv ? 1 : 0);
+      });
+    }
+    var chips = document.getElementById('bm-stat-chips');
+    chips.innerHTML = '<span class="bm-chip"><b id="bm-visible-count">0</b> shown</span>';
+    render(songs);
+  };
+
+  var _bmCurrentAudioBtn = null;
+  window.bmPlayRow = function(btn) {
+    const audio = document.getElementById('bm-audio');
+    const url = btn.dataset.audioUrl;
+    if (_bmCurrentAudioBtn && _bmCurrentAudioBtn !== btn) {
+      _bmCurrentAudioBtn.textContent = '\u25b6';
+      _bmCurrentAudioBtn.classList.remove('playing');
+    }
+    if (audio.src === url && !audio.paused) {
+      audio.pause(); btn.textContent = '\u25b6'; btn.classList.remove('playing'); _bmCurrentAudioBtn = null;
+    } else {
+      audio.src = url; audio.play().catch(function(){});
+      btn.textContent = '\u23f8'; btn.classList.add('playing'); _bmCurrentAudioBtn = btn;
+      audio.ontimeupdate = function() {
+        var prog = btn.parentElement ? btn.parentElement.querySelector('.bm-progress') : null;
+        if (prog && audio.duration) prog.value = (audio.currentTime / audio.duration) * 100;
+      };
+      audio.onended = function() {
+        btn.textContent = '\u25b6'; btn.classList.remove('playing'); _bmCurrentAudioBtn = null;
+      };
+    }
+  };
+
+  window.bmSeek = function(range) {
+    const audio = document.getElementById('bm-audio');
+    if (audio.duration) audio.currentTime = (range.value / 100) * audio.duration;
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    populateBandSelect();
+    if (currentBandId !== null) loadView(currentView);
+  });
+})();
+"""
+
+
+def generate(data: dict) -> str:
+    """Build the full standalone HTML."""
+    bm_inline_json = json.dumps(data, ensure_ascii=False)
+    js_with_data = BM_JS.replace(
+        "/*INJECT_DATA*/null/*END_INJECT*/",
+        bm_inline_json,
+    )
+    exported_at = data.get("exported_at", "")
+    band_count = len(data.get("bands", []))
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>\u2764 Band Management</title>
+<style>
+{CSS_VARS}
+{PANEL_CSS}
+</style>
+</head>
+<body>
+{PANEL_BODY}
+<script>
+{js_with_data}
+</script>
+</body>
+</html>
+"""
+
+
+def main() -> None:
+    print("Generating Band Management Panel...")
+    data = load_inline_data()
+    for b in data.get("bands", []):
+        cat_n = b.get("catalog", {}).get("count", 0)
+        sl_n = b.get("setlist", {}).get("count", 0)
+        print(f"  Band: {b['name']} — {cat_n} catalog songs, {sl_n} setlist songs")
+    html = generate(data)
+    OUTPUT_HTML.write_text(html, encoding="utf-8")
+    print(f"  Written to {OUTPUT_HTML}")
+    print(f"  Size: {OUTPUT_HTML.stat().st_size:,} bytes")
+
+
+if __name__ == "__main__":
+    main()
