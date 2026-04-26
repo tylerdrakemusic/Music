@@ -1,7 +1,7 @@
 """
 ❤Music — Focused Musician Training UI
 Flask web interface for managing and launching lead guitar training sessions.
-Reads/writes JSON files in tools/tyJson/exercises/musicTraining/.
+Exercise cards + practice log stored in heartmusic.db (guitar_exercises, guitar_training_log tables).
 """
 
 import argparse
@@ -9,13 +9,18 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
 from flask import Flask, jsonify, render_template_string, request, Response, abort, send_from_directory
 
+# Ensure src/ on path so utils.init_db is importable when run directly
+_SRC = Path(__file__).resolve().parents[1]
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+from utils.init_db import get_connection  # noqa: E402
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# Keep TRAINING_DIR for the ephemeral _run_*.json temp files used by focused_musician_training.py
 TRAINING_DIR = PROJECT_ROOT / "tools" / "tyJson" / "exercises" / "musicTraining"
-LOG_FILE = TRAINING_DIR / "trainingLog.json"
 CLICK_DIR = PROJECT_ROOT / "click"
 PYTHON_EXE = r"C:\G\python.exe"
 TRAINING_SCRIPT = PROJECT_ROOT / "tools" / "focused_musician_training.py"
@@ -48,39 +53,62 @@ app = Flask(__name__)
 # ---------------------------------------------------------------------------
 
 def _list_sessions() -> list[dict]:
-    files = sorted(TRAINING_DIR.glob("*.json"))
+    """Return all exercise cards from guitar_exercises table."""
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT id, title, artist, song_path, segments, gradient FROM guitar_exercises ORDER BY id"
+    ).fetchall()
+    conn.close()
     sessions = []
-    for f in files:
-        if f.name == "trainingLog.json" or f.name.startswith("_"):
-            continue
+    for r in rows:
         try:
-            data = json.loads(f.read_text(encoding="utf-8"))
-            sessions.append({
-                "file": f.name,
-                "title": data.get("title", f.stem),
-                "artist": data.get("artist", ""),
-                "song_path": data.get("songPath", ""),
-                "gradient": data.get("gradient", 2),
-                "segment_count": len(data.get("segments", [])),
-                "segments": data.get("segments", []),
-            })
+            segs = json.loads(r["segments"] or "[]")
         except Exception:
-            pass
+            segs = []
+        sessions.append({
+            "id": r["id"],
+            "title": r["title"],
+            "artist": r["artist"] or "",
+            "song_path": r["song_path"] or "",
+            "gradient": r["gradient"] or 0,
+            "segment_count": len(segs),
+            "segments": segs,
+        })
     return sessions
 
 
 def _load_log() -> list[dict]:
-    if LOG_FILE.exists():
-        try:
-            return json.loads(LOG_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-    return []
+    """Return practice log entries as dicts (newest-first)."""
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT song_path, seg_start, seg_end, repetition, logged_at "
+        "FROM guitar_training_log ORDER BY id DESC LIMIT 200"
+    ).fetchall()
+    conn.close()
+    return [
+        {
+            "timestamp": r["logged_at"],
+            "songPath": r["song_path"],
+            "segment": {
+                "start": r["seg_start"],
+                "end": r["seg_end"],
+                "repetition": r["repetition"],
+            },
+        }
+        for r in rows
+    ]
 
 
-def _save_session(filename: str, data: dict) -> None:
-    path = TRAINING_DIR / filename
-    path.write_text(json.dumps(data, indent=4), encoding="utf-8")
+def _append_log(exercise_id: int | None, song_path: str, seg_start: str, seg_end: str, repetition: int) -> None:
+    """Append a practice log entry to guitar_training_log."""
+    conn = get_connection()
+    conn.execute(
+        "INSERT INTO guitar_training_log (exercise_id, song_path, seg_start, seg_end, repetition) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (exercise_id, song_path, seg_start, seg_end, repetition),
+    )
+    conn.commit()
+    conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -183,44 +211,45 @@ HTML = r"""
 
 <div class="grid" id="sessions-grid">
   {% for s in sessions %}
-  <div class="card" id="card-{{ loop.index }}">
+  <div class="card" id="card-{{ s.id }}">
     {% if s.song_path %}
     <img class="album-art" src="/art?path={{ s.song_path | urlencode }}" onerror="this.style.display='none'" alt="">
     {% endif %}
     <div class="card-header">
       <div class="meta"><h2>{{ s.title }}</h2><div class="artist">{{ s.artist }}</div></div>
       <div class="card-controls">
-        <label class="lock-label" title="Unlock to delete this training file">
-          <input type="checkbox" onchange="toggleCardLock('{{ loop.index }}',this)"> 🔒
+        <label class="lock-label" title="Unlock to delete this exercise">
+          <input type="checkbox" onchange="toggleCardLock({{ s.id }},this)"> 🔒
         </label>
-        <button class="btn-del-card" id="del-card-{{ loop.index }}" onclick="deleteCard('{{ s.file }}','{{ loop.index }}')" title="Delete training file">🗑</button>
+        <button class="btn-del-card" id="del-card-{{ s.id }}" onclick="deleteCard({{ s.id }})" title="Delete exercise">🗑</button>
       </div>
     </div>
     <table>
       <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th></th></tr></thead>
-      <tbody id="tbody-{{ loop.index }}">
+      <tbody id="tbody-{{ s.id }}">
       {% for seg in s.segments %}
         <tr>
-          <td><input value="{{ seg.start }}" data-field="start" style="width:70px" oninput="scheduleAutosave('{{ s.file }}','{{ loop.index }}')"></td>
-          <td><input value="{{ seg.end }}" data-field="end" style="width:70px" oninput="scheduleAutosave('{{ s.file }}','{{ loop.index }}')"></td>
-          <td><input type="number" value="{{ seg.get('speed',100) }}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave('{{ s.file }}','{{ loop.index }}')"></td>
-          <td><input type="number" value="{{ seg.get('repetition',1) }}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave('{{ s.file }}','{{ loop.index }}')"></td>
-          <td><button class="btn-del" id="del-{{ loop.index }}-{{ loop.index0 }}" onclick="deleteRow(this,'{{ s.file }}','{{ loop.index }}')" title="Delete row">&times;</button></td>
+          <td><input value="{{ seg.start }}" data-field="start" style="width:70px" oninput="scheduleAutosave({{ s.id }})"></td>
+          <td><input value="{{ seg.end }}" data-field="end" style="width:70px" oninput="scheduleAutosave({{ s.id }})"></td>
+          <td><input type="number" value="{{ seg.get('speed',100) }}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave({{ s.id }})"></td>
+          <td><input type="number" value="{{ seg.get('repetition',1) }}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave({{ s.id }})"></td>
+          <td><button class="btn-del" onclick="deleteRow(this,{{ s.id }})" title="Delete row">&times;</button></td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
     <div class="actions" style="align-items:center">
-      <button class="btn btn-add" onclick="addRow('{{ s.file }}','tbody-{{ loop.index }}','{{ loop.index }}')">+ Row</button>
+      <button class="btn btn-add" onclick="addRow({{ s.id }})">+ Row</button>
       <label style="font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:4px">
         Gradient
-        <input type="number" id="gradient-{{ loop.index }}" value="{{ s.gradient }}"
+        <input type="number" id="gradient-{{ s.id }}" value="{{ s.gradient }}"
                style="width:52px;background:#111;border:1px solid var(--border);color:#fff;padding:2px 4px;border-radius:3px;font-size:.8rem"
                min="0" max="50" step="1"
-               oninput="scheduleAutosave('{{ s.file }}','{{ loop.index }}')\"></label>
-      <button class="btn btn-red" onclick="launchSession('{{ s.file }}','{{ loop.index }}')">&#9654; Launch</button>
+               oninput="scheduleAutosave({{ s.id }})">
+      </label>
+      <button class="btn btn-red" onclick="launchSession({{ s.id }})">&#9654; Launch</button>
     </div>
-    <div class="status" id="status-{{ loop.index }}"></div>
+    <div class="status" id="status-{{ s.id }}"></div>
   </div>
   {% endfor %}
 
@@ -236,7 +265,7 @@ HTML = r"""
     <div id="new-selected" style="display:none;font-size:.8rem;color:#aaa;margin-bottom:8px;padding:6px 8px;background:#111;border-radius:4px;border:1px solid var(--border)">
       <span id="new-selected-text"></span>
     </div>
-    <button class="btn btn-ghost" onclick="createSession()" style="width:100%">Create File</button>
+    <button class="btn btn-ghost" onclick="createSession()" style="width:100%">Create Exercise Card</button>
     <div class="status" id="status-new"></div>
   </div>
 </div>
@@ -257,7 +286,7 @@ HTML = r"""
       {% endif %}
       {% endfor %}
       {% if log|length > 20 %}
-      <p style="font-size:.75rem;color:var(--muted);padding:6px 0">Showing 20 of {{ log|length }} — older entries in trainingLog.json</p>
+      <p style="font-size:.75rem;color:var(--muted);padding:6px 0">Showing 20 of {{ log|length }} entries</p>
       {% endif %}
     </div>
     {% else %}
@@ -282,45 +311,45 @@ function getRows(tbodyId) {
   return rows;
 }
 
-function getGradient(idx) {
-  const el = document.getElementById('gradient-' + idx);
+function getGradient(id) {
+  const el = document.getElementById('gradient-' + id);
   return el ? (parseInt(el.value) || 0) : 0;
 }
 
-function toggleCardLock(idx, cb) {
-  const btn = document.getElementById('del-card-' + idx);
+function toggleCardLock(id, cb) {
+  const btn = document.getElementById('del-card-' + id);
   if (cb.checked) { btn.classList.add('unlocked'); } else { btn.classList.remove('unlocked'); }
 }
 
-async function deleteCard(filename, idx) {
-  const btn = document.getElementById('del-card-' + idx);
+async function deleteCard(id) {
+  const btn = document.getElementById('del-card-' + id);
   if (!btn.classList.contains('unlocked')) return;
-  const res = await fetch('/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename }) });
+  const res = await fetch('/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
   const j = await res.json();
   if (j.ok) {
-    document.getElementById('card-' + idx).remove();
+    document.getElementById('card-' + id).remove();
   } else {
     alert('Delete failed: ' + j.error);
   }
 }
 
-function scheduleAutosave(filename, idx) {
-  clearTimeout(_saveTimers[idx]);
-  setStatus(idx, '...', true);
-  _saveTimers[idx] = setTimeout(() => saveSession(filename, idx), 600);
+function scheduleAutosave(id) {
+  clearTimeout(_saveTimers[id]);
+  setStatus(id, '...', true);
+  _saveTimers[id] = setTimeout(() => saveSession(id), 600);
 }
 
-function addRow(filename, tbodyId, idx) {
-  const tbody = document.getElementById(tbodyId);
+function addRow(id) {
+  const tbody = document.getElementById('tbody-' + id);
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td><input value="0:00" data-field="start" style="width:70px" oninput="scheduleAutosave('${filename}','${idx}')"></td><td><input value="0:10" data-field="end" style="width:70px" oninput="scheduleAutosave('${filename}','${idx}')"></td><td><input type="number" value="80" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave('${filename}','${idx}')"></td><td><input type="number" value="3" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave('${filename}','${idx}')"></td><td><button class="btn-del" onclick="deleteRow(this,'${filename}','${idx}')" title="Delete row">&times;</button></td>`;
+  tr.innerHTML = `<td><input value="0:00" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input value="0:10" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="80" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="3" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td><td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>`;
   tbody.appendChild(tr);
-  scheduleAutosave(filename, idx);
+  scheduleAutosave(id);
 }
 
-function deleteRow(btn, filename, idx) {
+function deleteRow(btn, id) {
   btn.closest('tr').remove();
-  saveSession(filename, idx);
+  saveSession(id);
 }
 
 function setStatus(id, msg, ok=true) {
@@ -328,27 +357,23 @@ function setStatus(id, msg, ok=true) {
   if (el) { el.textContent = msg; el.style.color = ok ? '#6fdc6f' : '#f55'; }
 }
 
-async function saveSession(filename, idx) {
-  const segs = getRows('tbody-' + idx);
-  const gradient = getGradient(idx);
-  const res = await fetch('/save', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename, segments: segs, gradient }) });
+async function saveSession(id) {
+  const segs = getRows('tbody-' + id);
+  const gradient = getGradient(id);
+  const res = await fetch('/save', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, segments: segs, gradient }) });
   const j = await res.json();
-  setStatus(idx, j.ok ? '\u2713 Saved' : '\u2717 ' + j.error, j.ok);
+  setStatus(id, j.ok ? '\u2713 Saved' : '\u2717 ' + j.error, j.ok);
 }
 
-async function launchSession(filename, idx) {
-  // Flush current DOM state to disk before launching so that edits not yet
-  // persisted by the autosave timer are included in the session. Without this,
-  // changes made within the 600 ms autosave window would be silently ignored
-  // and a stale on-disk version would be played instead. (FR-20260425)
-  clearTimeout(_saveTimers[idx]);
-  setStatus(idx, '\u23f3 Saving\u2026');
-  await saveSession(filename, idx);
-  setStatus(idx, '\u23f3 Launching\u2026');
-  const gradient = getGradient(idx);
-  const res = await fetch('/launch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename, gradient }) });
+async function launchSession(id) {
+  clearTimeout(_saveTimers[id]);
+  setStatus(id, '\u23f3 Saving\u2026');
+  await saveSession(id);
+  setStatus(id, '\u23f3 Launching\u2026');
+  const gradient = getGradient(id);
+  const res = await fetch('/launch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, gradient }) });
   const j = await res.json();
-  setStatus(idx, j.ok ? '\u25b6 Running in terminal' : '\u2717 ' + j.error, j.ok);
+  setStatus(id, j.ok ? '\u25b6 Running in terminal' : '\u2717 ' + j.error, j.ok);
 }
 
 
@@ -391,47 +416,48 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.new-card')) document.getElementById('catalog-dropdown').style.display = 'none';
 });
 
-function buildCardHTML(s, idx) {
+function buildCardHTML(s) {
+  const id = s.id;
   const artTag = s.song_path
     ? `<img class="album-art" src="/art?path=${encodeURIComponent(s.song_path)}" onerror="this.style.display='none'" alt="">`
     : '';
-  const rows = (s.segments || []).map((seg, i) => `
+  const rows = (s.segments || []).map((seg) => `
     <tr>
-      <td><input value="${seg.start}" data-field="start" style="width:70px" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
-      <td><input value="${seg.end}" data-field="end" style="width:70px" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
-      <td><input type="number" value="${seg.speed||100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
-      <td><input type="number" value="${seg.repetition||1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave('${s.file}','${idx}')"></td>
-      <td><button class="btn-del" onclick="deleteRow(this,'${s.file}','${idx}')" title="Delete row">&times;</button></td>
+      <td><input value="${seg.start}" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td>
+      <td><input value="${seg.end}" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td>
+      <td><input type="number" value="${seg.speed||100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td>
+      <td><input type="number" value="${seg.repetition||1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td>
+      <td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>
     </tr>`).join('');
-  return `<div class="card" id="card-${idx}">
+  return `<div class="card" id="card-${id}">
     ${artTag}
     <div class="card-header">
       <div class="meta"><h2>${s.title}</h2><div class="artist">${s.artist}</div></div>
       <div class="card-controls">
-        <label class="lock-label" title="Unlock to delete this training file">
-          <input type="checkbox" onchange="toggleCardLock('${idx}',this)"> 🔒
+        <label class="lock-label" title="Unlock to delete this exercise">
+          <input type="checkbox" onchange="toggleCardLock(${id},this)"> \uD83D\uDD12
         </label>
-        <button class="btn-del-card" id="del-card-${idx}" onclick="deleteCard('${s.file}','${idx}')" title="Delete training file">🗑</button>
+        <button class="btn-del-card" id="del-card-${id}" onclick="deleteCard(${id})" title="Delete exercise">\uD83D\uDDD1</button>
       </div>
     </div>
     <table>
       <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th></th></tr></thead>
-      <tbody id="tbody-${idx}">${rows}</tbody>
+      <tbody id="tbody-${id}">${rows}</tbody>
     </table>
     <div class="actions" style="align-items:center">
-      <button class="btn btn-add" onclick="addRow('${s.file}','tbody-${idx}','${idx}')">+ Row</button>
+      <button class="btn btn-add" onclick="addRow(${id})">+ Row</button>
       <label style="font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:4px">
         Gradient
-        <input type="number" id="gradient-${idx}" value="${s.gradient||0}" style="width:52px;background:#111;border:1px solid var(--border);color:#fff;padding:2px 4px;border-radius:3px;font-size:.8rem" min="0" max="50" step="1" oninput="scheduleAutosave('${s.file}','${idx}')">
+        <input type="number" id="gradient-${id}" value="${s.gradient||0}" style="width:52px;background:#111;border:1px solid var(--border);color:#fff;padding:2px 4px;border-radius:3px;font-size:.8rem" min="0" max="50" step="1" oninput="scheduleAutosave(${id})">
       </label>
-      <button class="btn btn-red" onclick="launchSession('${s.file}','${idx}')">▶ Launch</button>
+      <button class="btn btn-red" onclick="launchSession(${id})">&#9654; Launch</button>
     </div>
-    <div class="status" id="status-${idx}"></div>
+    <div class="status" id="status-${id}"></div>
   </div>`;
 }
 
 async function createSession() {
-  if (!_selectedPath) { setStatus('new', '✗ Pick a song first', false); return; }
+  if (!_selectedPath) { setStatus('new', '\u2717 Pick a song first', false); return; }
   const name = _selectedPath.split('\\').pop().split('/').pop();
   const bare = name.replace(/\.[^.]+$/, '');
   const parts = bare.split(' - ');
@@ -440,24 +466,23 @@ async function createSession() {
   const res = await fetch('/create', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, artist, songPath: _selectedPath }) });
   const j = await res.json();
   if (j.ok) {
-    // Fetch updated session list and inject the new card without a page reload
+    // Fetch the newly created session by id and inject without page reload
     const sessRes = await fetch('/api/sessions');
     const sessions = await sessRes.json();
-    const newSession = sessions.find(s => s.file === j.file);
+    const newSession = sessions.find(s => s.id === j.id);
     if (newSession) {
       const grid = document.getElementById('sessions-grid');
       const newCard = grid.querySelector('.new-card');
-      const idx = sessions.indexOf(newSession) + 1;
       const div = document.createElement('div');
-      div.innerHTML = buildCardHTML(newSession, idx);
+      div.innerHTML = buildCardHTML(newSession);
       grid.insertBefore(div.firstElementChild, newCard);
     }
-    setStatus('new', '✓ Created');
+    setStatus('new', '\u2713 Created');
     _selectedPath = '';
     document.getElementById('new-selected').style.display = 'none';
     document.getElementById('new-selected-text').textContent = '';
     document.getElementById('new-path').value = '';
-  } else { setStatus('new', '✗ ' + j.error, false); }
+  } else { setStatus('new', '\u2717 ' + j.error, false); }
 }
 
 // ---------------------------------------------------------------------------
@@ -686,17 +711,18 @@ def index():
 @app.route("/save", methods=["POST"])
 def save():
     data = request.get_json(force=True)
-    filename = data.get("filename", "")
-    if not filename or "/" in filename or "\\" in filename:
-        return jsonify({"ok": False, "error": "Invalid filename"})
-    path = TRAINING_DIR / filename
-    if not path.exists():
-        return jsonify({"ok": False, "error": "File not found"})
+    exercise_id = data.get("id")
+    if not isinstance(exercise_id, int):
+        return jsonify({"ok": False, "error": "Invalid id"})
     try:
-        existing = json.loads(path.read_text(encoding="utf-8"))
-        existing["segments"] = data.get("segments", [])
-        existing["gradient"] = int(round(float(data.get("gradient", 2))))
-        path.write_text(json.dumps(existing, indent=4), encoding="utf-8")
+        segments = json.dumps(data.get("segments", []))
+        gradient = int(round(float(data.get("gradient", 0))))
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE guitar_exercises SET segments=?, gradient=?, updated_at=datetime('now') WHERE id=?",
+                (segments, gradient, exercise_id),
+            )
+            conn.commit()
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
@@ -705,23 +731,30 @@ def save():
 @app.route("/launch", methods=["POST"])
 def launch():
     data = request.get_json(force=True)
-    filename = data.get("filename", "")
-    if not filename or "/" in filename or "\\" in filename:
-        return jsonify({"ok": False, "error": "Invalid filename"})
+    exercise_id = data.get("id")
+    if not isinstance(exercise_id, int):
+        return jsonify({"ok": False, "error": "Invalid id"})
     try:
-        src_path = TRAINING_DIR / filename
-        session = json.loads(src_path.read_text(encoding="utf-8"))
-        gradient = int(round(float(data.get("gradient", session.get("gradient", 0)))))
-
-        # Patch gradient into a temp JSON so focused_musician_training.py picks it up
-        tmp = json.loads(json.dumps(session))
-        tmp["gradient"] = gradient
-        tmp_name = "_run_" + filename
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT title, artist, song_path, segments, gradient FROM guitar_exercises WHERE id=?",
+                (exercise_id,),
+            ).fetchone()
+        if not row:
+            return jsonify({"ok": False, "error": "Exercise not found"})
+        gradient = int(round(float(data.get("gradient", row["gradient"] or 0))))
+        session = {
+            "songPath": row["song_path"],
+            "title": row["title"],
+            "artist": row["artist"],
+            "segments": json.loads(row["segments"] or "[]"),
+            "gradient": gradient,
+        }
+        tmp_name = f"_run_{exercise_id}.json"
         tmp_path = TRAINING_DIR / tmp_name
-        tmp_path.write_text(json.dumps(tmp, indent=4), encoding="utf-8")
+        tmp_path.write_text(json.dumps(session, indent=4), encoding="utf-8")
 
         tools_dir = str(PROJECT_ROOT / "tools").replace("\u2764", "$([char]0x2764)")
-        tmp_name_safe = tmp_name  # no special chars in tmp_name
         ps_cmd = (
             f"$env:PYTHONUTF8='1'; "
             f"Set-Location \"{tools_dir}\"; "
@@ -744,20 +777,19 @@ def create():
     song_path = (data.get("songPath") or "").strip()
     if not title or not song_path:
         return jsonify({"ok": False, "error": "title and songPath required"})
-    safe_name = "".join(c if c.isalnum() or c in " _-" else "_" for c in title).strip().replace(" ", "_").lower() + ".json"
-    path = TRAINING_DIR / safe_name
-    if path.exists():
-        return jsonify({"ok": False, "error": f"{safe_name} already exists"})
-    payload = {
-        "songPath": song_path,
-        "title": title,
-        "artist": (data.get("artist") or "").strip(),
-        "segments": [
-            {"start": "0:05", "end": "0:15", "speed": 75, "repetition": 4}
-        ],
-    }
-    path.write_text(json.dumps(payload, indent=4), encoding="utf-8")
-    return jsonify({"ok": True, "file": safe_name})
+    artist = (data.get("artist") or "").strip()
+    default_segments = json.dumps([{"start": "0:05", "end": "0:15", "speed": 75, "repetition": 4}])
+    try:
+        with get_connection() as conn:
+            cur = conn.execute(
+                "INSERT INTO guitar_exercises (title, artist, song_path, segments, gradient) VALUES (?,?,?,?,?)",
+                (title, artist, song_path, default_segments, 0),
+            )
+            conn.commit()
+            new_id = cur.lastrowid
+        return jsonify({"ok": True, "id": new_id})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
 
 
 @app.route("/api/sessions")
@@ -773,14 +805,13 @@ def api_log():
 @app.route("/delete", methods=["POST"])
 def delete_session():
     data = request.get_json(force=True)
-    filename = data.get("filename", "")
-    if not filename or "/" in filename or "\\" in filename or not filename.endswith(".json"):
-        return jsonify({"ok": False, "error": "Invalid filename"})
-    path = TRAINING_DIR / filename
-    if not path.exists():
-        return jsonify({"ok": False, "error": "File not found"})
+    exercise_id = data.get("id")
+    if not isinstance(exercise_id, int):
+        return jsonify({"ok": False, "error": "Invalid id"})
     try:
-        path.unlink()
+        with get_connection() as conn:
+            conn.execute("DELETE FROM guitar_exercises WHERE id=?", (exercise_id,))
+            conn.commit()
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
