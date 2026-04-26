@@ -10,7 +10,9 @@ Usage:
 import os
 from pathlib import Path
 
-import sqlcipher3
+# sqlcipher3 is imported lazily inside get_connection() so that test suites
+# running on environments without the native SQLCipher library (e.g. CI) can
+# still import this module and monkeypatch get_connection without crashing.
 
 DB_PATH = Path(__file__).resolve().parents[2] / "data" / "heartmusic.db"
 
@@ -272,13 +274,13 @@ INSERT OR IGNORE INTO tracks (id, album_id, track_number, title, status) VALUES
 """
 
 
-def _apply_cipher_pragmas(conn: sqlcipher3.Connection) -> None:
+def _apply_cipher_pragmas(conn) -> None:
     conn.execute("PRAGMA cipher_page_size=4096")
     conn.execute("PRAGMA kdf_iter=256000")
     conn.execute("PRAGMA cipher_hmac_algorithm=HMAC_SHA512")
 
 
-def _try_open_with_key(conn: sqlcipher3.Connection, key: str, *, use_hex: bool) -> bool:
+def _try_open_with_key(conn, key: str, *, use_hex: bool) -> bool:
     if use_hex:
         key_hex = key.encode().hex()
         conn.execute(f"PRAGMA key=\"x'{key_hex}'\"")
@@ -291,12 +293,13 @@ def _try_open_with_key(conn: sqlcipher3.Connection, key: str, *, use_hex: bool) 
     try:
         conn.execute("SELECT name FROM sqlite_master LIMIT 1").fetchone()
         return True
-    except sqlcipher3.DatabaseError:
+    except Exception:
         return False
 
 
-def get_connection() -> sqlcipher3.Connection:
+def get_connection():
     """Return a sqlcipher3 connection to heartmusic.db."""
+    import sqlcipher3  # noqa: PLC0415 — lazy import; native lib not available on CI
     key = os.environ.get("HEARTMUSIC_DB_KEY", "")
     if not key:
         raise RuntimeError("HEARTMUSIC_DB_KEY not set")
@@ -313,7 +316,8 @@ def get_connection() -> sqlcipher3.Connection:
 
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
-    conn.row_factory = sqlcipher3.Row
+    import sqlcipher3 as _sc3  # noqa: PLC0415
+    conn.row_factory = _sc3.Row
     return conn
 
 
