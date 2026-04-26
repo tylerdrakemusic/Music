@@ -22,6 +22,7 @@ from pathlib import Path
 
 PORTAL_PATH  = Path(r"f:\⊕Workspace\reports\portal.html")
 SHEET_MUSIC  = Path(r"f:\❤Music\catalog\sheet_music")
+AUDIO_ROOT   = Path(r"G:\Muzic")
 BM_START     = "// <!--BM_DATA_START-->"
 BM_END       = "// <!--BM_DATA_END-->"
 
@@ -64,6 +65,13 @@ def sheet_music_for(title: str, index: dict) -> list:
     return index.get(_normalize(title), [])
 
 
+def _audio_url(source_file: str | None) -> str | None:
+    """Convert a bare source_file filename to a file:/// URI pointing at AUDIO_ROOT."""
+    if not source_file:
+        return None
+    return (AUDIO_ROOT / source_file).as_uri()
+
+
 # ── DB queries ────────────────────────────────────────────────────────────────
 
 def export_bands(conn) -> list:
@@ -81,7 +89,7 @@ def export_catalog_for_band(conn, band_id: int, sm_index: dict) -> list:
         """SELECT cs.id, cs.title, cs.artist,
                   COALESCE(bsa.default_key, cs.key_sig) AS key_sig,
                   COALESCE(bsa.default_bpm, cs.bpm)     AS bpm,
-                  cs.bpm_source, cs.genre
+                  cs.bpm_source, cs.genre, cs.source_file
            FROM catalog_songs cs
            JOIN band_song_arrangements bsa
              ON bsa.catalog_song_id = cs.id AND bsa.band_id = ?
@@ -93,6 +101,7 @@ def export_catalog_for_band(conn, band_id: int, sm_index: dict) -> list:
             "id": r[0], "title": r[1], "artist": r[2],
             "key": r[3], "bpm": r[4], "bpm_source": r[5], "genre": r[6],
             "sheet_music": sheet_music_for(r[1], sm_index),
+            "audio_url": _audio_url(r[7]),
         }
         for r in rows
     ]
@@ -111,7 +120,7 @@ def export_active_setlist_for_band(conn, band_id: int) -> tuple:
                   cs.title, cs.artist,
                   COALESCE(ss.key_override, bsa.default_key, cs.key_sig) AS key_sig,
                   COALESCE(ss.bpm_override, bsa.default_bpm, cs.bpm)     AS bpm,
-                  cs.bpm_source, cs.id, ss.notes
+                  cs.bpm_source, cs.id, ss.notes, cs.source_file
            FROM setlist_songs ss
            JOIN catalog_songs cs    ON cs.id = ss.catalog_song_id
            LEFT JOIN band_song_arrangements bsa
@@ -127,6 +136,7 @@ def export_active_setlist_for_band(conn, band_id: int) -> tuple:
             "set": r[0], "order": r[1], "title": r[2], "artist": artist,
             "key": r[4], "bpm": r[5], "bpm_source": r[6], "catalog_id": r[7],
             "notes": r[8] or None,
+            "audio_url": _audio_url(r[9]),
         }
         if artist.startswith("\u26a0"):  # ⚠ NOT IN CATALOG
             entry["catalog_warning"] = True
