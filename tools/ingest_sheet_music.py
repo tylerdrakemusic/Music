@@ -81,6 +81,8 @@ _ARTIST_TABLE: dict[str, str] = {
     "lynyrd-skynyrd":       "Lynyrd Skynyrd",
     "chris-isaak":          "Chris Isaak",
     "tg":                   "TG",   # band abbreviation in Copper Creek setlists
+    "tamala-cameron":       "Tamala Cameron & Gene Ngo",
+    "tamala-and-gene":      "Tamala Cameron & Gene Ngo",
 }
 
 # Single-word artists that appear in the tmp hyphenated filenames.
