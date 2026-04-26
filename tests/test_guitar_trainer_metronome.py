@@ -43,18 +43,77 @@ requires_both_wavs = pytest.mark.skipif(
     reason="click WAV files not present (gitignored — run locally)",
 )
 
+import sqlite3
+
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 import training.musician_training_ui as ui
+import training.musician_training_ui as ui_mod
 
-@pytest.fixture(scope="module")
-def client():
+
+# ---------------------------------------------------------------------------
+# In-memory DB helpers (same pattern as test_guitar_trainer_db.py)
+# ---------------------------------------------------------------------------
+
+class _NoClose:
+    """Proxy that swallows close() so shared in-memory connections stay open."""
+
+    def __init__(self, real_conn: sqlite3.Connection) -> None:
+        self._real = real_conn
+
+    def __getattr__(self, name: str):  # noqa: ANN204
+        return getattr(self._real, name)
+
+    def close(self) -> None:  # noqa: D401
+        pass
+
+    def __enter__(self):  # noqa: ANN204
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        pass
+
+
+def _make_mem_conn() -> sqlite3.Connection:
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS guitar_exercises (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            title       TEXT NOT NULL,
+            artist      TEXT NOT NULL DEFAULT '',
+            song_path   TEXT NOT NULL DEFAULT '',
+            segments    TEXT NOT NULL DEFAULT '[]',
+            gradient    INTEGER NOT NULL DEFAULT 0,
+            created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS guitar_training_log (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            exercise_id INTEGER REFERENCES guitar_exercises(id) ON DELETE SET NULL,
+            song_path   TEXT NOT NULL DEFAULT '',
+            seg_start   TEXT NOT NULL DEFAULT '',
+            seg_end     TEXT NOT NULL DEFAULT '',
+            repetition  INTEGER NOT NULL DEFAULT 1,
+            logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        """
+    )
+    return conn
+
+
+@pytest.fixture
+def client(monkeypatch):
+    real_conn = _make_mem_conn()
+    monkeypatch.setattr(ui_mod, "get_connection", lambda: _NoClose(real_conn))
     ui.app.config["TESTING"] = True
     with ui.app.test_client() as c:
         yield c
+    real_conn.close()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def html(client) -> str:
     resp = client.get("/")
     assert resp.status_code == 200
