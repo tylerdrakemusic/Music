@@ -69,7 +69,15 @@ def _audio_url(source_file: str | None) -> str | None:
     """Convert a bare source_file filename to a file:/// URI pointing at AUDIO_ROOT."""
     if not source_file:
         return None
-    return (AUDIO_ROOT / source_file).as_uri()
+    full = AUDIO_ROOT / source_file
+    try:
+        return full.as_uri()
+    except ValueError:
+        # On non-Windows CI, AUDIO_ROOT is a relative path (G:\Muzic is not
+        # a valid POSIX absolute path). Build the file URI from the raw string.
+        from urllib.parse import quote  # noqa: PLC0415
+        raw = str(full).replace("\\", "/")
+        return "file:///" + quote(raw, safe="/:")
 
 
 # ── DB queries ────────────────────────────────────────────────────────────────
