@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-04-26T00:20:33.043096+00:00",
+  "exported_at": "2026-04-26T02:31:19.972238+00:00",
   "setlist": {
     "id": 3,
     "name": "Copper Creek Prost 2026-05-02",
@@ -28,11 +28,11 @@
       "title": "I'm Alright",
       "artist": "Kenny Loggins",
       "key": "D",
-      "bpm": null,
+      "bpm": 162,
       "bpm_source": "unknown",
       "catalog_id": 3,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/I%27m%20Alright%20-%20Kenny%20Loggins.mp3",
       "catalog_warning": false
     },
     {
@@ -67,11 +67,11 @@
       "title": "Talk Me Into It",
       "artist": "Kevin Redmond",
       "key": "B",
-      "bpm": null,
+      "bpm": 112,
       "bpm_source": null,
       "catalog_id": 83,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/Talk%20Me%20Into%20It%20-%20Kevin%20Redmond.mp3",
       "catalog_warning": false
     },
     {
@@ -93,11 +93,11 @@
       "title": "Shaded Jade",
       "artist": "Tamala Cameron & Gene Ngo",
       "key": "Bm",
-      "bpm": null,
+      "bpm": 129,
       "bpm_source": "unknown",
       "catalog_id": 8,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/Shaded%20Jade%20-%20Tamala%20Cameron%20and%20Gene%20Ngo.mp3",
       "catalog_warning": false
     },
     {
@@ -119,11 +119,11 @@
       "title": "Play That Funky Music",
       "artist": "Wild Cherry",
       "key": "Em",
-      "bpm": null,
+      "bpm": 108,
       "bpm_source": "unknown",
       "catalog_id": 28,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/Play%20That%20Funky%20Music%20-%20Wild%20Cherry.mp3",
       "catalog_warning": false
     },
     {
@@ -340,11 +340,11 @@
       "title": "On the Dark Side",
       "artist": "John Cafferty",
       "key": "E",
-      "bpm": null,
+      "bpm": 162,
       "bpm_source": "unknown",
       "catalog_id": 29,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/On%20the%20Darkside%20-%20John%20Cafferty.mp3",
       "catalog_warning": false
     },
     {
@@ -483,11 +483,11 @@
       "title": "Celebrate",
       "artist": "Kool & the Gang",
       "key": "Ab",
-      "bpm": null,
+      "bpm": 123,
       "bpm_source": "unknown",
       "catalog_id": 18,
       "notes": "May be played for special occasion",
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/Celebration%20-%20Kool%20and%20The%20Gang.mp3",
       "catalog_warning": false
     }
   ]
