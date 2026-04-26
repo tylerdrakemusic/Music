@@ -228,6 +228,29 @@ CREATE TABLE IF NOT EXISTS catalog_song_aliases (
 );
 
 CREATE INDEX IF NOT EXISTS idx_aliases_song ON catalog_song_aliases(catalog_song_id);
+
+-- Guitar Trainer: exercise cards (FR-20260425-guitar-trainer-db-migration)
+CREATE TABLE IF NOT EXISTS guitar_exercises (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    title       TEXT NOT NULL,
+    artist      TEXT NOT NULL DEFAULT '',
+    song_path   TEXT NOT NULL DEFAULT '',
+    segments    TEXT NOT NULL DEFAULT '[]',  -- JSON array blob
+    gradient    INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Guitar Trainer: practice log (append-only)
+CREATE TABLE IF NOT EXISTS guitar_training_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    exercise_id INTEGER REFERENCES guitar_exercises(id) ON DELETE SET NULL,
+    song_path   TEXT NOT NULL DEFAULT '',
+    seg_start   TEXT NOT NULL DEFAULT '',
+    seg_end     TEXT NOT NULL DEFAULT '',
+    repetition  INTEGER NOT NULL DEFAULT 1,
+    logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 _SEED_SQL = """
