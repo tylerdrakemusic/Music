@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-04-24T22:17:57.308524+00:00",
+  "exported_at": "2026-04-26T00:20:33.043096+00:00",
   "setlist": {
     "id": 3,
     "name": "Copper Creek Prost 2026-05-02",
@@ -19,6 +19,7 @@
       "bpm_source": "librosa",
       "catalog_id": 1,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Long%20Train%20Runnin%27%20-%20The%20Doobie%20Brothers.mp3",
       "catalog_warning": false
     },
     {
@@ -31,6 +32,7 @@
       "bpm_source": "unknown",
       "catalog_id": 3,
       "notes": null,
+      "audio_url": null,
       "catalog_warning": false
     },
     {
@@ -43,6 +45,7 @@
       "bpm_source": "librosa",
       "catalog_id": 4,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Me%20and%20Bobby%20McGee%20-%20Janis%20Joplin.mp3",
       "catalog_warning": false
     },
     {
@@ -55,6 +58,7 @@
       "bpm_source": "librosa",
       "catalog_id": 5,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Rhiannon%20-%20Fleetwood%20Mac%20%28in%20Bm%29.wav",
       "catalog_warning": false
     },
     {
@@ -67,6 +71,7 @@
       "bpm_source": null,
       "catalog_id": 83,
       "notes": null,
+      "audio_url": null,
       "catalog_warning": false
     },
     {
@@ -79,6 +84,7 @@
       "bpm_source": "librosa",
       "catalog_id": 9,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Reeling%20In%20the%20Years%20-%20Steely%20Dan.mp3",
       "catalog_warning": false
     },
     {
@@ -91,6 +97,7 @@
       "bpm_source": "unknown",
       "catalog_id": 8,
       "notes": null,
+      "audio_url": null,
       "catalog_warning": false
     },
     {
@@ -103,6 +110,7 @@
       "bpm_source": "librosa",
       "catalog_id": 10,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/I%20Will%20Survive%20-%20Gloria%20Gaynor.mp3",
       "catalog_warning": false
     },
     {
@@ -115,6 +123,7 @@
       "bpm_source": "unknown",
       "catalog_id": 28,
       "notes": null,
+      "audio_url": null,
       "catalog_warning": false
     },
     {
@@ -127,6 +136,7 @@
       "bpm_source": "librosa",
       "catalog_id": 11,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Love%20Sneakin%27%20Up%20On%20You%20-%20Bonnie%20Raitt.mp3",
       "catalog_warning": false
     },
     {
@@ -139,6 +149,7 @@
       "bpm_source": "librosa",
       "catalog_id": 37,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Evil%20Ways%20-%20Santana.mp3",
       "catalog_warning": false
     },
     {
@@ -151,6 +162,7 @@
       "bpm_source": "librosa",
       "catalog_id": 13,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/I%20Can%27t%20Go%20for%20That%20%28No%20Can%20Do%29%20-%20Daryl%20Hall%20and%20John%20Oates.mp3",
       "catalog_warning": false
     },
     {
@@ -163,6 +175,7 @@
       "bpm_source": "librosa",
       "catalog_id": 2,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Too%20Much%20Time%20On%20My%20Hands%20-%20Styx.mp3",
       "catalog_warning": false
     },
     {
@@ -175,6 +188,7 @@
       "bpm_source": "librosa",
       "catalog_id": 14,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/25%20or%206%20to%204%20-%20Chicago.mp3",
       "catalog_warning": false
     },
     {
@@ -187,6 +201,7 @@
       "bpm_source": "librosa",
       "catalog_id": 16,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Do%20It%20Again%20-%20Steely%20Dan.mp3",
       "catalog_warning": false
     },
     {
@@ -199,6 +214,7 @@
       "bpm_source": "librosa",
       "catalog_id": 17,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Baker%20Street%20-%20Gerry%20Rafferty.mp3",
       "catalog_warning": false
     },
     {
@@ -211,6 +227,7 @@
       "bpm_source": "librosa",
       "catalog_id": 20,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Black%20Magic%20Woman%20-%20Santana%20%28Gypsy%20Queen%20medley%29.m4a",
       "catalog_warning": false
     },
     {
@@ -223,6 +240,7 @@
       "bpm_source": "librosa",
       "catalog_id": 21,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/The%20Logical%20Song%20-%20Supertramp.mp3",
       "catalog_warning": false
     },
     {
@@ -235,6 +253,7 @@
       "bpm_source": "librosa",
       "catalog_id": 22,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Jacky%20-%20Jim%20Mann%20%281-7-24%29.mp3",
       "catalog_warning": false
     },
     {
@@ -247,6 +266,7 @@
       "bpm_source": "librosa",
       "catalog_id": 23,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Carnival%20-%20Natalie%20Merchant.mp3",
       "catalog_warning": false
     },
     {
@@ -259,6 +279,7 @@
       "bpm_source": "librosa",
       "catalog_id": 24,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/I%20Feel%20the%20Earth%20Move%20-%20Carole%20King.mp3",
       "catalog_warning": false
     },
     {
@@ -271,6 +292,7 @@
       "bpm_source": "librosa",
       "catalog_id": 19,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Disco%20Inferno%20-%20Tina%20Turner%20%28Live%29.mp3",
       "catalog_warning": false
     },
     {
@@ -283,6 +305,7 @@
       "bpm_source": "librosa",
       "catalog_id": 25,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/The%20Heart%20of%20Rock%20and%20Roll%20-%20Huey%20Lewis%20and%20the%20News.mp3",
       "catalog_warning": false
     },
     {
@@ -295,6 +318,7 @@
       "bpm_source": "librosa",
       "catalog_id": 26,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Heavy%20Chevy%20-%20Alabama%20Shakes%20%282%29.mp3",
       "catalog_warning": false
     },
     {
@@ -307,6 +331,7 @@
       "bpm_source": "librosa",
       "catalog_id": 7,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Call%20Me%20-%20Blondie.mp3",
       "catalog_warning": false
     },
     {
@@ -319,6 +344,7 @@
       "bpm_source": "unknown",
       "catalog_id": 29,
       "notes": null,
+      "audio_url": null,
       "catalog_warning": false
     },
     {
@@ -331,6 +357,7 @@
       "bpm_source": "librosa",
       "catalog_id": 30,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/What%20I%20Like%20About%20You%20-%20The%20Romantics.mp3",
       "catalog_warning": false
     },
     {
@@ -343,6 +370,7 @@
       "bpm_source": "librosa",
       "catalog_id": 12,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/These%20Boots%20Are%20Made%20for%20Walkin%27%20-%20Nancy%20Sinatra.mp3",
       "catalog_warning": false
     },
     {
@@ -355,6 +383,7 @@
       "bpm_source": "librosa",
       "catalog_id": 36,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Blue%20On%20Black%20-%20Kenny%20Wayne%20Shepherd.mp3",
       "catalog_warning": false
     },
     {
@@ -367,6 +396,7 @@
       "bpm_source": "librosa",
       "catalog_id": 32,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Smooth%20-%20Santana%20feat.%20Rob%20Thomas.mp3",
       "catalog_warning": false
     },
     {
@@ -379,6 +409,7 @@
       "bpm_source": "librosa",
       "catalog_id": 27,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Pick%20Up%20the%20Pieces%20-%20Average%20White%20Band.mp3",
       "catalog_warning": false
     },
     {
@@ -391,6 +422,7 @@
       "bpm_source": "librosa",
       "catalog_id": 34,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Stop%20Draggin%27%20My%20Heart%20Around%20-%20Stevie%20Nicks.mp3",
       "catalog_warning": false
     },
     {
@@ -403,6 +435,7 @@
       "bpm_source": "librosa",
       "catalog_id": 33,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/What%20I%20Do%20-%20Tyler%20James%20Drake%20%28Clean%20Master%29.mp3",
       "catalog_warning": false
     },
     {
@@ -415,6 +448,7 @@
       "bpm_source": "librosa",
       "catalog_id": 31,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Smooth%20Operator%20-%20Sade.mp3",
       "catalog_warning": false
     },
     {
@@ -427,6 +461,7 @@
       "bpm_source": "librosa",
       "catalog_id": 38,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Peg%20-%20Steely%20Dan.mp3",
       "catalog_warning": false
     },
     {
@@ -439,6 +474,7 @@
       "bpm_source": "librosa",
       "catalog_id": 39,
       "notes": null,
+      "audio_url": "file:///G:/Muzic/Roll%20With%20the%20Changes%20-%20REO%20Speedwagon.mp3",
       "catalog_warning": false
     },
     {
@@ -451,6 +487,7 @@
       "bpm_source": "unknown",
       "catalog_id": 18,
       "notes": "May be played for special occasion",
+      "audio_url": null,
       "catalog_warning": false
     }
   ]
