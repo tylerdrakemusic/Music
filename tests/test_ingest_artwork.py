@@ -400,13 +400,13 @@ class TestEmbedCover:
         assert result == "SKIPPED_FORMAT"
 
     def test_non_image_exts_ignored_in_plan(self, tmp_path: Path) -> None:
-        """Files with non-image extensions are not ingested."""
+        """Files with non-image extensions (mp3, pdf) are not ingested."""
         tmp = tmp_path / "tmp"
         tmp.mkdir()
         originals = tmp_path / "originals"
         originals.mkdir()
 
-        (tmp / "bloom.avif").write_bytes(b"avif data")
+        (tmp / "bloom.mp3").write_bytes(b"mp3 data")
         (tmp / "bloom.pdf").write_bytes(b"pdf data")
 
         songs = [{"id": 1, "title": "Bloom", "source_file": None, "artwork_path": None}]
