@@ -84,6 +84,13 @@ If additional requirements were clarified or assumed (e.g., on creative static l
 End of analysis. See code below.
 """
 
+# ── Quantum RT bootstrap ─────────────────────────────────────────────────────
+import sys
+from pathlib import Path
+_Q_UTILS = Path(__file__).resolve().parents[2] / "\u27e8\u03c8\u27e9Quantum" / "src" / "utils"
+if _Q_UTILS.exists() and str(_Q_UTILS) not in sys.path:
+    sys.path.insert(0, str(_Q_UTILS))
+
 # --- Critical Quantum Imports (DO NOT MODIFY) ---
 from quantum_rt import qRandom, qRax, qhoice, quuffle, qsample, qpermute, qRandomBool, qRandomBitstring
 
