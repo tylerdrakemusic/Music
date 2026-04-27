@@ -199,8 +199,8 @@ PANEL_BODY = f"""
     <span id="bm-sort-info" style="color:var(--muted)">Default order</span>
   </div>
   <audio id="bm-audio" preload="none"></audio>
-  <div id="bm-print-area" style="display:none"></div>
 </div>
+<div id="bm-print-area" style="display:none"></div>
 """
 
 BM_JS = r"""
