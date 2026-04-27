@@ -38,8 +38,10 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # ❤Music/
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
-# Add executedcode/ for quantum_rt shim
-sys.path.insert(0, str(PROJECT_ROOT.parent))
+# ── Quantum RT bootstrap ─────────────────────────────────────────────────────
+_Q_UTILS = Path(__file__).resolve().parents[3] / "\u27e8\u03c8\u27e9Quantum" / "src" / "utils"
+if _Q_UTILS.exists() and str(_Q_UTILS) not in sys.path:
+    sys.path.insert(0, str(_Q_UTILS))
 
 from dotenv import load_dotenv
 load_dotenv(PROJECT_ROOT.parent / ".env")

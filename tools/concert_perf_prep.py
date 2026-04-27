@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+# ── Quantum RT bootstrap ─────────────────────────────────────────────────────
+_Q_UTILS = Path(__file__).resolve().parents[2] / "\u27e8\u03c8\u27e9Quantum" / "src" / "utils"
+if _Q_UTILS.exists() and str(_Q_UTILS) not in sys.path:
+    sys.path.insert(0, str(_Q_UTILS))
+
 from matplotlib.pyplot import cool
 from torch import ne
 from song_production import *
