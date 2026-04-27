@@ -143,6 +143,7 @@ PANEL_CSS = """
   .bm-footer a:hover { text-decoration:underline; }
   .bm-no-results { text-align:center; padding:3rem; color:var(--muted); }
   @media print {
+    html, body { background:#fff !important; color:#000 !important; height:auto !important; min-height:0 !important; }
     body > * { display:none !important; }
     #bm-print-area { display:block !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#000; background:#fff; }
     #bm-print-area h1 { font-size:1.4rem; margin-bottom:.25rem; }
