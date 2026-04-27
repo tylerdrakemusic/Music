@@ -35,15 +35,15 @@ PROJECT_ROOT  = Path(__file__).resolve().parents[1]
 ORIGINALS_DIR = PROJECT_ROOT / "catalog" / "artwork" / "originals"
 DEFAULT_TMP   = Path(r"C:\Users\tyler\Desktop\tmp")
 
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".avif"}
 ARTIST = "Tyler James Drake"
 
-# Common filename suffixes that should be stripped before title matching.
-_ARTWORK_SUFFIX_RE = re.compile(
-    r"\s+(?:song\s+art\s+image|song\s+art|art\s+image|album\s+art|cover)$",
-    re.IGNORECASE,
-)
+# catalog/ep/ subfolders are song titles directly.
+_EP_ROOT = PROJECT_ROOT / "catalog" / "ep"
+# catalog/masters/ subfolders are album names; their subfolders are song titles.
+_MASTERS_ROOT = PROJECT_ROOT / "catalog" / "masters"
 
+# Common filename suffixes that should be stripped before title matching.
 # Similarity threshold for fuzzy title matching.
 _MATCH_THRESHOLD = 0.75
 
@@ -67,9 +67,28 @@ def _normalize(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
-def _extract_title_from_stem(stem: str) -> str:
-    """Strip common artwork naming suffixes to surface the candidate song title."""
-    return _ARTWORK_SUFFIX_RE.sub("", stem).strip()
+_SUFFIX_PATTERNS = [
+    re.compile(r"\s+song\s+art\s+image$", re.IGNORECASE),
+    re.compile(r"\s+album\s+art$", re.IGNORECASE),
+    re.compile(r"\s+art\s+image$", re.IGNORECASE),
+    re.compile(r"\s+cover$", re.IGNORECASE),
+    re.compile(r"\s+song\s+art$", re.IGNORECASE),
+    re.compile(r"\s+art$", re.IGNORECASE),
+]
+
+
+def _candidate_titles(stem: str) -> list[str]:
+    """Return all plausible title candidates from a filename stem.
+
+    Includes the raw stem plus each possible suffix-stripped variant so the
+    caller can pick the one with the best catalog match.
+    """
+    candidates: list[str] = [stem.strip()]
+    for pat in _SUFFIX_PATTERNS:
+        stripped = pat.sub("", stem).strip()
+        if stripped and stripped != stem.strip():
+            candidates.append(stripped)
+    return candidates
 
 
 def canonical_name(title: str, ext: str) -> str:
@@ -196,9 +215,12 @@ def plan_actions(
             ))
             continue
 
-        # Extract candidate title and match against catalog.
-        candidate_title = _extract_title_from_stem(src.stem)
-        song = _match_song(candidate_title, originals)
+        # Try all suffix-stripped candidates; pick the best catalog match.
+        song: dict | None = None
+        for candidate_title in _candidate_titles(src.stem):
+            song = _match_song(candidate_title, originals)
+            if song is not None:
+                break
 
         if song is None:
             actions.append(IngestAction(
@@ -253,17 +275,65 @@ def add_artwork_column_if_missing(conn) -> None:
         conn.commit()
 
 
+def _discover_titles_from_folders() -> list[str]:
+    """Return canonical song titles from catalog folder structure.
+
+    - catalog/masters/{Album}/{Song}/ — song titles are one level inside each album.
+    - catalog/ep/{Song}/             — song titles are direct subfolders of ep/.
+    """
+    titles: list[str] = []
+    # Masters: two-level depth (album → song)
+    if _MASTERS_ROOT.exists():
+        for album_dir in sorted(_MASTERS_ROOT.iterdir()):
+            if album_dir.is_dir():
+                for song_dir in sorted(album_dir.iterdir()):
+                    if song_dir.is_dir():
+                        titles.append(song_dir.name)
+    # EPs: one-level depth (each subfolder is a song/single)
+    if _EP_ROOT.exists():
+        for song_dir in sorted(_EP_ROOT.iterdir()):
+            if song_dir.is_dir():
+                titles.append(song_dir.name)
+    return titles
+
+
 def load_originals(conn) -> list[dict]:
-    """Return all Tyler James Drake songs from catalog_songs."""
+    """Return originals list built from catalog folder names, with DB ids where available.
+
+    Canonical titles come from catalog/masters/ and catalog/ep/ subfolder names
+    (source of truth). For each title, we attempt a DB lookup by normalized title
+    to populate song_id and source_file for downstream DB updates and embed.
+    """
+    folder_titles = _discover_titles_from_folders()
+
+    # Build a normalized-title → row map from the DB for id/source_file lookup.
     cur = conn.execute(
-        "SELECT id, title, source_file, artwork_path"
-        " FROM catalog_songs WHERE artist = ?",
+        "SELECT id, title, source_file, artwork_path FROM catalog_songs WHERE artist = ?",
         (ARTIST,),
     )
-    return [
+    db_rows = [
         {"id": r[0], "title": r[1], "source_file": r[2], "artwork_path": r[3]}
         for r in cur.fetchall()
     ]
+    db_by_norm = {_normalize(r["title"]): r for r in db_rows}
+
+    originals: list[dict] = []
+    for title in folder_titles:
+        db_row = db_by_norm.get(_normalize(title))
+        originals.append({
+            "id": db_row["id"] if db_row else None,
+            "title": title,  # folder name is canonical
+            "source_file": db_row["source_file"] if db_row else None,
+            "artwork_path": db_row["artwork_path"] if db_row else None,
+        })
+
+    # Also include any DB originals not covered by folder discovery.
+    folder_norms = {_normalize(t) for t in folder_titles}
+    for row in db_rows:
+        if _normalize(row["title"]) not in folder_norms:
+            originals.append(row)
+
+    return originals
 
 
 # ---------------------------------------------------------------------------
