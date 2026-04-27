@@ -62,6 +62,11 @@ Note: The quantum_rt import line is preserved exactly as mandated by the require
 """
 
 # Critical quantum functions import (must match exactly as required by the prompt).
+import sys
+from pathlib import Path
+_Q_UTILS = Path(__file__).resolve().parents[2] / "\u27e8\u03c8\u27e9Quantum" / "src" / "utils"
+if _Q_UTILS.exists() and str(_Q_UTILS) not in sys.path:
+    sys.path.insert(0, str(_Q_UTILS))
 from quantum_rt import qRandom, qRax, qhoice, quuffle, qsample, qpermute, qRandomBool, qRandomBitstring
 
 import argparse
