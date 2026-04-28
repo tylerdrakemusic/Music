@@ -1,3 +1,6 @@
+# DEPRECATED: 2026-04-28. Use the Gig Inventory tab in reports/band_management_panel.html instead.
+# Data lives in heartmusic.db gig_inventory table.
+# This file is kept for historical reference only — do not use for new workflows.
 from fpdf import FPDF
 
 # Define checklist items
