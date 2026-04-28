@@ -206,10 +206,12 @@ PANEL_CSS = """
   .bm-inv-table tr:hover td { background:var(--accent-glow); }
   .bm-inv-cb { width:16px; height:16px; cursor:pointer; accent-color:var(--accent); }
   .bm-inv-cat { display:inline-block; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:0.1rem 0.45rem; font-size:0.72rem; color:var(--muted); }
-  .bm-inv-remove-btn { background:none; border:1px solid var(--border); color:#f87171; border-radius:4px; width:1.4rem; height:1.4rem; cursor:pointer; font-size:0.9rem; line-height:1; padding:0; }
-  .bm-inv-remove-btn:hover { background:rgba(239,68,68,.12); border-color:#f87171; }
+  .bm-inv-remove-btn { background:none; border:none; color:#e74c3c; border-radius:4px; padding:0 6px; cursor:pointer; font-size:1.1em; line-height:1; font-weight:700; transition:color .15s,background .15s; }
+  .bm-inv-remove-btn:hover { color:#ff6b6b; background:rgba(231,76,60,.12); border-radius:3px; }
   .bm-inv-btn { background:var(--surface); border:1px solid var(--border); border-radius:5px; color:var(--text); padding:0.3rem 0.75rem; font-size:0.78rem; cursor:pointer; transition:background .15s,border-color .15s; }
   .bm-inv-btn:hover { background:var(--accent-glow); border-color:var(--accent); color:#a5b4fc; }
+  .bm-inv-editable { cursor:pointer; }
+  .bm-inv-editable:hover { opacity:.75; text-decoration:underline dotted; }
   @media print {
     #bm-inv-print-area { display:block !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#000; background:#fff; }
     #bm-inv-print-area h1 { font-size:1.4rem; margin-bottom:.25rem; }
@@ -584,17 +586,30 @@ BM_JS = r"""
   window.bmRenderInventory = function() {
     var customRows = [];
     try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
-    var allRows = BM_INVENTORY.map(function(r){ return {id: r.id, item: r.item, category: r.category || 'General', custom: false}; })
-      .concat(customRows.map(function(r){ return {id: r.id, item: r.item, category: r.category || 'General', custom: true}; }));
+    var removedIds = [];
+    try { removedIds = JSON.parse(localStorage.getItem('bm_inv_removed_ids') || '[]'); } catch(e) {}
+    var edits = {};
+    try { edits = JSON.parse(localStorage.getItem('bm_inv_edits') || '{}'); } catch(e) {}
+    var seedRows = BM_INVENTORY
+      .filter(function(r){ return removedIds.indexOf(String(r.id)) === -1; })
+      .map(function(r) {
+        var ed = edits[String(r.id)] || {};
+        return {id: r.id, item: ed.item !== undefined ? ed.item : r.item,
+                category: ed.category !== undefined ? ed.category : (r.category || 'General'), custom: false};
+      });
+    var allRows = seedRows.concat(customRows.map(function(r){ return {id: r.id, item: r.item, category: r.category || 'General', custom: true}; }));
     var rowsHtml = allRows.map(function(row) {
       var gc = localStorage.getItem('bm_inv_going_' + row.id) === '1' ? ' checked' : '';
       var rc = localStorage.getItem('bm_inv_returning_' + row.id) === '1' ? ' checked' : '';
-      var rmBtn = row.custom
-        ? '<button class="bm-inv-remove-btn" onclick="bmInvRemove(\'' + row.id + '\')" title="Remove">&times;</button>'
-        : '<span style="color:var(--muted);font-size:.7rem">&mdash;</span>';
+      var isC = row.custom ? 'true' : 'false';
+      var itemHtml = '<span class="bm-inv-editable" title="Click to edit" onclick="bmInvEditField(this,\'' + row.id + '\',\'item\',' + isC + ')">' +
+        '\u270f\u00a0' + _escHtml(row.item) + '</span>';
+      var catHtml = '<span class="bm-inv-cat bm-inv-editable" title="Click to edit" onclick="bmInvEditField(this,\'' + row.id + '\',\'category\',' + isC + ')">' +
+        '\u270f\u00a0' + _escHtml(row.category) + '</span>';
+      var rmBtn = '<button class="bm-inv-remove-btn" onclick="bmInvRemove(\'' + row.id + '\',' + isC + ')" title="Remove row">\u00d7</button>';
       return '<tr data-inv-id="' + row.id + '">' +
-        '<td style="font-weight:600">' + _escHtml(row.item) + '</td>' +
-        '<td><span class="bm-inv-cat">' + _escHtml(row.category) + '</span></td>' +
+        '<td style="font-weight:600">' + itemHtml + '</td>' +
+        '<td>' + catHtml + '</td>' +
         '<td style="text-align:center"><input type="checkbox" class="bm-inv-cb"' + gc + ' data-type="going" data-id="' + row.id + '" onchange="bmInvToggle(this)"></td>' +
         '<td style="text-align:center"><input type="checkbox" class="bm-inv-cb"' + rc + ' data-type="returning" data-id="' + row.id + '" onchange="bmInvToggle(this)"></td>' +
         '<td style="text-align:center">' + rmBtn + '</td>' +
@@ -606,6 +621,7 @@ BM_JS = r"""
       '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
       '<div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">' +
         '<button class="bm-inv-btn" onclick="bmInvResetChecks()">Reset Checks</button>' +
+        '<button class="bm-inv-btn" onclick="bmInvRestoreDefaults()" style="color:#f87171;border-color:rgba(231,76,60,.5);">Restore Defaults</button>' +
         '<button class="bm-inv-btn" onclick="bmInvToggleAddForm()">+ Add Item</button>' +
       '</div>' +
       '<div id="bm-inv-add-form" style="display:none;margin-top:.5rem;padding:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;">' +
@@ -652,14 +668,69 @@ BM_JS = r"""
     bmRenderInventory();
   };
 
-  window.bmInvRemove = function(rowId) {
-    var customRows = [];
-    try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
-    customRows = customRows.filter(function(r){ return String(r.id) !== String(rowId); });
-    localStorage.setItem('bm_inv_custom_rows', JSON.stringify(customRows));
+  window.bmInvRemove = function(rowId, isCustom) {
+    if (isCustom) {
+      var customRows = [];
+      try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
+      customRows = customRows.filter(function(r){ return String(r.id) !== String(rowId); });
+      localStorage.setItem('bm_inv_custom_rows', JSON.stringify(customRows));
+    } else {
+      var removedIds = [];
+      try { removedIds = JSON.parse(localStorage.getItem('bm_inv_removed_ids') || '[]'); } catch(e) {}
+      if (removedIds.indexOf(String(rowId)) === -1) removedIds.push(String(rowId));
+      localStorage.setItem('bm_inv_removed_ids', JSON.stringify(removedIds));
+    }
     localStorage.removeItem('bm_inv_going_'     + rowId);
     localStorage.removeItem('bm_inv_returning_' + rowId);
     bmRenderInventory();
+  };
+
+  window.bmInvRestoreDefaults = function() {
+    localStorage.removeItem('bm_inv_removed_ids');
+    localStorage.removeItem('bm_inv_custom_rows');
+    localStorage.removeItem('bm_inv_edits');
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && (k.startsWith('bm_inv_going_') || k.startsWith('bm_inv_returning_'))) keys.push(k);
+    }
+    keys.forEach(function(k){ localStorage.removeItem(k); });
+    bmRenderInventory();
+  };
+
+  window.bmInvEditField = function(span, rowId, field, isCustom) {
+    var pencilPrefix = '\u270f\u00a0';
+    var current = span.textContent.replace(pencilPrefix, '').trim();
+    var input = document.createElement('input');
+    input.value = current;
+    input.style.cssText = 'background:var(--bg2,#1e2530);border:1px solid var(--accent);border-radius:4px;' +
+      'color:var(--text);padding:.2rem .4rem;font-size:.82rem;width:auto;min-width:80px;max-width:180px;';
+    span.parentNode.replaceChild(input, span);
+    input.focus(); input.select();
+    function save() {
+      var val = input.value.trim() || current;
+      if (isCustom) {
+        var customRows = [];
+        try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
+        customRows = customRows.map(function(r){
+          if (String(r.id) === String(rowId)) { var copy = Object.assign({}, r); copy[field] = val; return copy; }
+          return r;
+        });
+        localStorage.setItem('bm_inv_custom_rows', JSON.stringify(customRows));
+      } else {
+        var edits = {};
+        try { edits = JSON.parse(localStorage.getItem('bm_inv_edits') || '{}'); } catch(e) {}
+        if (!edits[String(rowId)]) edits[String(rowId)] = {};
+        edits[String(rowId)][field] = val;
+        localStorage.setItem('bm_inv_edits', JSON.stringify(edits));
+      }
+      bmRenderInventory();
+    }
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      else if (e.key === 'Escape') { bmRenderInventory(); }
+    });
   };
 
   window.bmPrintInventory = function() {
