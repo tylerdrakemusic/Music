@@ -107,7 +107,7 @@ release operations, verification, amplification, and lifecycle management.
 | Step | Action | Artifact | Owner |
 |------|--------|----------|-------|
 | 3.1 | Update official links / link hub | updated links | Tyler/Agent |
-| 3.2 | Claim or refresh artist surfaces (Pandora AMP, iHeart, Spotify for Artists) | claimed profiles | Tyler |
+| 3.2 | Claim or refresh artist surfaces (Pandora AMP, iHeart, Spotify for Artists) | claimed profiles | Tyler ✅ Pandora AMP submitted 2026-04-28 (PENDING — 1-2 weeks) |
 | 3.3 | Publish Bloom into self-hosted radio rotation | radio playlist update | Agent |
 | 3.4 | Prepare Bandcamp and Audius direct-release versions if desired | uploads or backlog | Tyler/Agent |
 | 3.5 | Push social / press / mailing list assets | campaign assets | Tyler |
