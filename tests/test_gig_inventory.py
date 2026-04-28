@@ -1,10 +1,14 @@
 """Tests for FR-20260428-gig-inventory-checklist.
 
 AC9: 3 tests covering the gig_inventory table and the regenerated HTML panel.
+
+DB isolation: all DB-dependent tests use an in-memory SQLite DB seeded via
+utils.init_db._SCHEMA_SQL and _SEED_SQL — no real heartmusic.db or
+HEARTMUSIC_DB_KEY required. Safe for CI runners.
 """
 from __future__ import annotations
 
-import os
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -32,9 +36,17 @@ EXPECTED_ITEMS = [
 
 @pytest.fixture(scope="module")
 def db_conn():
-    from utils.init_db import get_connection
+    """In-memory SQLite DB seeded with the real schema + seed data.
 
-    conn = get_connection()
+    Uses utils.init_db._SCHEMA_SQL and _SEED_SQL directly so the fixture
+    always stays in sync with production schema without touching the real DB.
+    """
+    from utils.init_db import _SCHEMA_SQL, _SEED_SQL  # noqa: PLC2701
+
+    conn = sqlite3.connect(":memory:", check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.executescript(_SCHEMA_SQL)
+    conn.executescript(_SEED_SQL)
     yield conn
     conn.close()
 
