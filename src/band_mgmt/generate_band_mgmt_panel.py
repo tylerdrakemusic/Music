@@ -142,6 +142,19 @@ PANEL_CSS = """
   .bm-footer a { color:var(--accent); text-decoration:none; }
   .bm-footer a:hover { text-decoration:underline; }
   .bm-no-results { text-align:center; padding:3rem; color:var(--muted); }
+  @media print {
+    html, body { background:#fff !important; color:#000 !important; height:auto !important; min-height:0 !important; }
+    body > * { display:none !important; }
+    #bm-print-area { display:block !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#000; background:#fff; }
+    #bm-print-area h1 { font-size:1.4rem; margin-bottom:.25rem; }
+    #bm-print-area h2 { font-size:1.1rem; font-weight:600; margin-bottom:.2rem; }
+    #bm-print-area p { font-size:.85rem; color:#444; margin-bottom:.75rem; }
+    #bm-print-area table { width:100%; border-collapse:collapse; font-size:.82rem; }
+    #bm-print-area th { border-bottom:2px solid #000; padding:.3rem .5rem; text-align:left; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; }
+    #bm-print-area td { padding:.3rem .5rem; border-bottom:1px solid #ddd; }
+    #bm-print-area tr.bm-print-set-header td { background:#f0f0f0; font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; padding:.25rem .5rem; border-bottom:1px solid #bbb; }
+    #bm-print-area .bm-print-footer { font-size:.7rem; color:#888; margin-top:.75rem; }
+  }
   .bm-loading { text-align:center; padding:3rem; color:var(--muted); font-style:italic; }
   .bm-err { text-align:center; padding:2rem; color:#f87171; background:rgba(239,68,68,.08); border-radius:8px; margin:1rem; }
 """
@@ -163,6 +176,7 @@ PANEL_BODY = f"""
     <div class="bm-view-toggle">
       <span class="bm-vtab active" id="vtab-setlist" onclick="bmSwitchView('setlist',this)">&#x1F3A4; Active Setlist</span>
       <span class="bm-vtab" id="vtab-catalog" onclick="bmSwitchView('catalog',this)">&#x1F4DA; Full Catalog</span>
+      <button id="bm-print-btn" onclick="bmPrintSetlist()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;margin-left:.5rem;">&#x1F5A8; Print Setlist</button>
     </div>
     <div class="bm-meta" id="bm-meta"></div>
   </div>
@@ -187,6 +201,7 @@ PANEL_BODY = f"""
   </div>
   <audio id="bm-audio" preload="none"></audio>
 </div>
+<div id="bm-print-area" style="display:none"></div>
 """
 
 BM_JS = r"""
@@ -237,6 +252,8 @@ BM_JS = r"""
     document.querySelectorAll('.bm-vtab').forEach(function(t){ t.classList.remove('active'); });
     el.classList.add('active');
     document.getElementById('bm-view-label').textContent = view === 'setlist' ? '\u00b7 Active Setlist' : '\u00b7 Full Catalog';
+    var printBtn = document.getElementById('bm-print-btn');
+    if (printBtn) printBtn.style.display = view === 'setlist' ? '' : 'none';
     dataCache = {};
     sortCol = null; sortAsc = true;
     activeSet = 'all';
@@ -441,8 +458,46 @@ BM_JS = r"""
     if (audio.duration) audio.currentTime = (range.value / 100) * audio.duration;
   };
 
+  window.bmPrintSetlist = function() {
+    var band = getBandData(currentBandId);
+    if (!band) return;
+    var meta = (band.setlist && band.setlist.setlist) || {};
+    var songs = allSongs;
+    var exportedAt = (BM_INLINE && BM_INLINE.exported_at) ? BM_INLINE.exported_at : '';
+    var rows = '';
+    var lastSet = null;
+    songs.forEach(function(s, i) {
+      if (s.set !== lastSet) {
+        lastSet = s.set;
+        var hdr = s.set > 3 ? 'Backup' : 'Set ' + s.set;
+        rows += '<tr class="bm-print-set-header"><td colspan="5">' + hdr + '</td></tr>';
+      }
+      rows += '<tr>' +
+        '<td>' + (s.set > 3 ? 'BU.' : 'S' + s.set + '.') + s.order + '</td>' +
+        '<td>' + (s.title || '') + '</td>' +
+        '<td>' + (s.artist || '') + '</td>' +
+        '<td>' + (s.key || '\u2014') + '</td>' +
+        '<td>' + (s.bpm != null ? s.bpm : '?') + '</td>' +
+        '</tr>';
+    });
+    var html = '<h1>\u266a ' + band.name + '</h1>' +
+      (meta.name ? '<h2>' + meta.name + '</h2>' : '') +
+      ((meta.gig_date || meta.venue) ? '<p>' + (meta.gig_date || '') + (meta.gig_date && meta.venue ? ' \u00b7 ' : '') + (meta.venue || '') + '</p>' : '') +
+      '<table>' +
+        '<thead><tr><th>#</th><th>Title</th><th>Artist</th><th>Key</th><th>BPM</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+      '<p class="bm-print-footer">Printed from \u2764Music Band Management \u00b7 ' + exportedAt + '</p>';
+    var area = document.getElementById('bm-print-area');
+    area.innerHTML = html;
+    window.print();
+    area.innerHTML = '';
+  };
+
   document.addEventListener('DOMContentLoaded', function() {
     populateBandSelect();
+    var printBtn = document.getElementById('bm-print-btn');
+    if (printBtn) printBtn.style.display = currentView === 'setlist' ? '' : 'none';
     if (currentBandId !== null) loadView(currentView);
   });
 })();
