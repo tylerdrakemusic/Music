@@ -736,7 +736,18 @@ BM_JS = r"""
   window.bmPrintInventory = function() {
     var customRows = [];
     try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
-    var allRows = BM_INVENTORY.concat(customRows);
+    var removedIds = [];
+    try { removedIds = JSON.parse(localStorage.getItem('bm_inv_removed_ids') || '[]'); } catch(e) {}
+    var edits = {};
+    try { edits = JSON.parse(localStorage.getItem('bm_inv_edits') || '{}'); } catch(e) {}
+    var seedRows = BM_INVENTORY
+      .filter(function(r){ return removedIds.indexOf(String(r.id)) === -1; })
+      .map(function(r) {
+        var ed = edits[String(r.id)] || {};
+        return {id: r.id, item: ed.item !== undefined ? ed.item : r.item,
+                category: ed.category !== undefined ? ed.category : (r.category || 'General')};
+      });
+    var allRows = seedRows.concat(customRows);
     var rowsHtml = allRows.map(function(row) {
       var gc = localStorage.getItem('bm_inv_going_'     + row.id) === '1' ? '\u2611' : '\u2610';
       var rc = localStorage.getItem('bm_inv_returning_' + row.id) === '1' ? '\u2611' : '\u2610';
