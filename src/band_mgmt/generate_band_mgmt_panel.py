@@ -78,6 +78,47 @@ def load_inline_data() -> dict:
     return {"exported_at": exported_at, "bands": bands}
 
 
+def load_inventory_data() -> list:
+    """Load gig_inventory items from heartmusic.db.
+
+    Falls back to hardcoded seed list if DB is unavailable.
+    """
+    _FALLBACK = [
+        {"id": 1,  "item": "Guitar",         "category": "Guitar",        "sort_order": 1},
+        {"id": 2,  "item": "Guitar Stand",   "category": "Guitar",        "sort_order": 2},
+        {"id": 3,  "item": "Amp",            "category": "Amplification", "sort_order": 3},
+        {"id": 4,  "item": "Amp stand",      "category": "Amplification", "sort_order": 4},
+        {"id": 5,  "item": "Trombone",       "category": "Horn",          "sort_order": 5},
+        {"id": 6,  "item": "Trombone stand", "category": "Horn",          "sort_order": 6},
+        {"id": 7,  "item": "Music Stand",    "category": "Accessories",   "sort_order": 7},
+        {"id": 8,  "item": "Gig Bag",        "category": "Accessories",   "sort_order": 8},
+        {"id": 9,  "item": "Sheet Music",    "category": "Accessories",   "sort_order": 9},
+        {"id": 10, "item": "Pedal Board",    "category": "Accessories",   "sort_order": 10},
+        {"id": 11, "item": "Lights",         "category": "Accessories",   "sort_order": 11},
+    ]
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT / "src"))
+        from utils.init_db import get_connection  # noqa: PLC0415
+        conn = get_connection()
+        rows = conn.execute(
+            "SELECT id, item, category, sort_order FROM gig_inventory ORDER BY sort_order, id"
+        ).fetchall()
+        conn.close()
+        if rows:
+            return [
+                {
+                    "id": r["id"],
+                    "item": r["item"],
+                    "category": r["category"] or "General",
+                    "sort_order": r["sort_order"],
+                }
+                for r in rows
+            ]
+    except Exception as e:
+        print(f"  [WARN] Could not load gig_inventory from DB: {e}", file=sys.stderr)
+    return _FALLBACK
+
+
 # ---------------------------------------------------------------------------
 # HTML template
 # ---------------------------------------------------------------------------
@@ -157,6 +198,28 @@ PANEL_CSS = """
   }
   .bm-loading { text-align:center; padding:3rem; color:var(--muted); font-style:italic; }
   .bm-err { text-align:center; padding:2rem; color:#f87171; background:rgba(239,68,68,.08); border-radius:8px; margin:1rem; }
+  /* Gig Inventory tab */
+  #bm-inv-section { padding:0.5rem 1.5rem 1.5rem; overflow-y:auto; }
+  .bm-inv-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  .bm-inv-table th { position:sticky; top:0; background:var(--sidebar-bg); color:var(--muted); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:0.5rem 0.6rem; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .bm-inv-table td { padding:0.45rem 0.6rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .bm-inv-table tr:hover td { background:var(--accent-glow); }
+  .bm-inv-cb { width:16px; height:16px; cursor:pointer; accent-color:var(--accent); }
+  .bm-inv-cat { display:inline-block; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:0.1rem 0.45rem; font-size:0.72rem; color:var(--muted); }
+  .bm-inv-remove-btn { background:none; border:none; color:#e74c3c; border-radius:4px; padding:0 6px; cursor:pointer; font-size:1.1em; line-height:1; font-weight:700; transition:color .15s,background .15s; }
+  .bm-inv-remove-btn:hover { color:#ff6b6b; background:rgba(231,76,60,.12); border-radius:3px; }
+  .bm-inv-btn { background:var(--surface); border:1px solid var(--border); border-radius:5px; color:var(--text); padding:0.3rem 0.75rem; font-size:0.78rem; cursor:pointer; transition:background .15s,border-color .15s; }
+  .bm-inv-btn:hover { background:var(--accent-glow); border-color:var(--accent); color:#a5b4fc; }
+  .bm-inv-editable { cursor:pointer; }
+  .bm-inv-editable:hover { opacity:.75; text-decoration:underline dotted; }
+  @media print {
+    #bm-inv-print-area { display:block !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#000; background:#fff; }
+    #bm-inv-print-area h1 { font-size:1.4rem; margin-bottom:.25rem; }
+    #bm-inv-print-area table { width:100%; border-collapse:collapse; font-size:.82rem; margin-top:.5rem; }
+    #bm-inv-print-area th { border-bottom:2px solid #000; padding:.3rem .5rem; text-align:left; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; }
+    #bm-inv-print-area td { padding:.3rem .5rem; border-bottom:1px solid #ddd; }
+    #bm-inv-print-area .inv-cb-cell { text-align:center; }
+  }
 """
 
 BAND_SELECT_STYLE = (
@@ -176,7 +239,9 @@ PANEL_BODY = f"""
     <div class="bm-view-toggle">
       <span class="bm-vtab active" id="vtab-setlist" onclick="bmSwitchView('setlist',this)">&#x1F3A4; Active Setlist</span>
       <span class="bm-vtab" id="vtab-catalog" onclick="bmSwitchView('catalog',this)">&#x1F4DA; Full Catalog</span>
+      <span class="bm-vtab" id="vtab-inventory" onclick="bmSwitchView('inventory',this)">&#x1F4E6; Gig Inventory</span>
       <button id="bm-print-btn" onclick="bmPrintSetlist()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;margin-left:.5rem;">&#x1F5A8; Print Setlist</button>
+      <button id="bm-print-inv-btn" onclick="bmPrintInventory()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;margin-left:.25rem;display:none;">&#x1F5A8; Print Inventory</button>
     </div>
     <div class="bm-meta" id="bm-meta"></div>
   </div>
@@ -193,6 +258,7 @@ PANEL_BODY = f"""
     </table>
     <div class="bm-no-results" id="bm-no-results" style="display:none">No songs match your search.</div>
     <div class="bm-err" id="bm-err" style="display:none"></div>
+    <div id="bm-inv-section" style="display:none"></div>
   </div>
   <div class="bm-footer">
     BPM: librosa on <code>G:\\Muzic</code> &middot;
@@ -202,6 +268,7 @@ PANEL_BODY = f"""
   <audio id="bm-audio" preload="none"></audio>
 </div>
 <div id="bm-print-area" style="display:none"></div>
+<div id="bm-inv-print-area" style="display:none"></div>
 """
 
 BM_JS = r"""
@@ -210,6 +277,7 @@ BM_JS = r"""
   // <!--BM_DATA_START-->
   const BM_INLINE = /*INJECT_DATA*/null/*END_INJECT*/;
   // <!--BM_DATA_END-->
+  var BM_INVENTORY = /*INJECT_INVENTORY*/[]/*END_INJECT_INVENTORY*/;
 
   let currentView = 'setlist';
   let currentBandId = null;
@@ -251,9 +319,17 @@ BM_JS = r"""
     currentView = view;
     document.querySelectorAll('.bm-vtab').forEach(function(t){ t.classList.remove('active'); });
     el.classList.add('active');
-    document.getElementById('bm-view-label').textContent = view === 'setlist' ? '\u00b7 Active Setlist' : '\u00b7 Full Catalog';
+    var labels = {setlist: '\u00b7 Active Setlist', catalog: '\u00b7 Full Catalog', inventory: '\u00b7 Gig Inventory'};
+    document.getElementById('bm-view-label').textContent = labels[view] || '';
     var printBtn = document.getElementById('bm-print-btn');
     if (printBtn) printBtn.style.display = view === 'setlist' ? '' : 'none';
+    var printInvBtn = document.getElementById('bm-print-inv-btn');
+    if (printInvBtn) printInvBtn.style.display = view === 'inventory' ? '' : 'none';
+    var controls = document.querySelector('.bm-controls');
+    if (controls) controls.style.display = view === 'inventory' ? 'none' : '';
+    var invSection = document.getElementById('bm-inv-section');
+    if (invSection) invSection.style.display = view === 'inventory' ? 'block' : 'none';
+    if (view === 'inventory') { bmLoadInventoryView(); return; }
     dataCache = {};
     sortCol = null; sortAsc = true;
     activeSet = 'all';
@@ -494,22 +570,230 @@ BM_JS = r"""
     area.innerHTML = '';
   };
 
+  // === GIG INVENTORY (AC2-AC6) ===
+  function bmLoadInventoryView() {
+    document.getElementById('bm-loading').style.display = 'none';
+    document.getElementById('bm-table').style.display = 'none';
+    document.getElementById('bm-no-results').style.display = 'none';
+    var invSection = document.getElementById('bm-inv-section');
+    if (invSection) { invSection.style.display = 'block'; bmRenderInventory(); }
+  }
+
+  function _escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  window.bmRenderInventory = function() {
+    var customRows = [];
+    try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
+    var removedIds = [];
+    try { removedIds = JSON.parse(localStorage.getItem('bm_inv_removed_ids') || '[]'); } catch(e) {}
+    var edits = {};
+    try { edits = JSON.parse(localStorage.getItem('bm_inv_edits') || '{}'); } catch(e) {}
+    var seedRows = BM_INVENTORY
+      .filter(function(r){ return removedIds.indexOf(String(r.id)) === -1; })
+      .map(function(r) {
+        var ed = edits[String(r.id)] || {};
+        return {id: r.id, item: ed.item !== undefined ? ed.item : r.item,
+                category: ed.category !== undefined ? ed.category : (r.category || 'General'), custom: false};
+      });
+    var allRows = seedRows.concat(customRows.map(function(r){ return {id: r.id, item: r.item, category: r.category || 'General', custom: true}; }));
+    var rowsHtml = allRows.map(function(row) {
+      var gc = localStorage.getItem('bm_inv_going_' + row.id) === '1' ? ' checked' : '';
+      var rc = localStorage.getItem('bm_inv_returning_' + row.id) === '1' ? ' checked' : '';
+      var isC = row.custom ? 'true' : 'false';
+      var itemHtml = '<span class="bm-inv-editable" title="Click to edit" onclick="bmInvEditField(this,\'' + row.id + '\',\'item\',' + isC + ')">' +
+        '\u270f\u00a0' + _escHtml(row.item) + '</span>';
+      var catHtml = '<span class="bm-inv-cat bm-inv-editable" title="Click to edit" onclick="bmInvEditField(this,\'' + row.id + '\',\'category\',' + isC + ')">' +
+        '\u270f\u00a0' + _escHtml(row.category) + '</span>';
+      var rmBtn = '<button class="bm-inv-remove-btn" onclick="bmInvRemove(\'' + row.id + '\',' + isC + ')" title="Remove row">\u00d7</button>';
+      return '<tr data-inv-id="' + row.id + '">' +
+        '<td style="font-weight:600">' + itemHtml + '</td>' +
+        '<td>' + catHtml + '</td>' +
+        '<td style="text-align:center"><input type="checkbox" class="bm-inv-cb"' + gc + ' data-type="going" data-id="' + row.id + '" onchange="bmInvToggle(this)"></td>' +
+        '<td style="text-align:center"><input type="checkbox" class="bm-inv-cb"' + rc + ' data-type="returning" data-id="' + row.id + '" onchange="bmInvToggle(this)"></td>' +
+        '<td style="text-align:center">' + rmBtn + '</td>' +
+        '</tr>';
+    }).join('');
+    var html =
+      '<table class="bm-inv-table"><thead><tr>' +
+        '<th>Item</th><th>Category</th><th>Going \u2713</th><th>Returning \u2713</th><th></th>' +
+      '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
+      '<div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">' +
+        '<button class="bm-inv-btn" onclick="bmInvResetChecks()">Reset Checks</button>' +
+        '<button class="bm-inv-btn" onclick="bmInvRestoreDefaults()" style="color:#f87171;border-color:rgba(231,76,60,.5);">Restore Defaults</button>' +
+        '<button class="bm-inv-btn" onclick="bmInvToggleAddForm()">+ Add Item</button>' +
+      '</div>' +
+      '<div id="bm-inv-add-form" style="display:none;margin-top:.5rem;padding:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;">' +
+        '<input id="bm-inv-new-item" placeholder="Item name" style="background:var(--bg2,#1e2530);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:.3rem .5rem;font-size:.82rem;margin-right:.4rem;">' +
+        '<input id="bm-inv-new-cat" placeholder="Category" style="background:var(--bg2,#1e2530);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:.3rem .5rem;font-size:.82rem;margin-right:.4rem;">' +
+        '<button class="bm-inv-btn" onclick="bmInvSaveRow()">Save</button>' +
+        ' <button class="bm-inv-btn" onclick="bmInvToggleAddForm()">Cancel</button>' +
+      '</div>';
+    document.getElementById('bm-inv-section').innerHTML = html;
+  };
+
+  window.bmInvToggle = function(cb) {
+    localStorage.setItem('bm_inv_' + cb.dataset.type + '_' + cb.dataset.id, cb.checked ? '1' : '0');
+  };
+
+  window.bmInvResetChecks = function() {
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && (k.startsWith('bm_inv_going_') || k.startsWith('bm_inv_returning_'))) keys.push(k);
+    }
+    keys.forEach(function(k){ localStorage.removeItem(k); });
+    bmRenderInventory();
+  };
+
+  window.bmInvToggleAddForm = function() {
+    var form = document.getElementById('bm-inv-add-form');
+    if (form) form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+  };
+
+  window.bmInvSaveRow = function() {
+    var itemEl = document.getElementById('bm-inv-new-item');
+    var catEl  = document.getElementById('bm-inv-new-cat');
+    var item = itemEl ? itemEl.value.trim() : '';
+    var cat  = catEl  ? catEl.value.trim()  : '';
+    if (!item) { if (itemEl) itemEl.focus(); return; }
+    if (!cat) cat = 'General';
+    var customRows = [];
+    try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
+    customRows.push({id: 'c_' + Date.now(), item: item, category: cat});
+    localStorage.setItem('bm_inv_custom_rows', JSON.stringify(customRows));
+    if (itemEl) itemEl.value = '';
+    if (catEl)  catEl.value  = '';
+    bmRenderInventory();
+  };
+
+  window.bmInvRemove = function(rowId, isCustom) {
+    if (isCustom) {
+      var customRows = [];
+      try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
+      customRows = customRows.filter(function(r){ return String(r.id) !== String(rowId); });
+      localStorage.setItem('bm_inv_custom_rows', JSON.stringify(customRows));
+    } else {
+      var removedIds = [];
+      try { removedIds = JSON.parse(localStorage.getItem('bm_inv_removed_ids') || '[]'); } catch(e) {}
+      if (removedIds.indexOf(String(rowId)) === -1) removedIds.push(String(rowId));
+      localStorage.setItem('bm_inv_removed_ids', JSON.stringify(removedIds));
+    }
+    localStorage.removeItem('bm_inv_going_'     + rowId);
+    localStorage.removeItem('bm_inv_returning_' + rowId);
+    bmRenderInventory();
+  };
+
+  window.bmInvRestoreDefaults = function() {
+    localStorage.removeItem('bm_inv_removed_ids');
+    localStorage.removeItem('bm_inv_custom_rows');
+    localStorage.removeItem('bm_inv_edits');
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && (k.startsWith('bm_inv_going_') || k.startsWith('bm_inv_returning_'))) keys.push(k);
+    }
+    keys.forEach(function(k){ localStorage.removeItem(k); });
+    bmRenderInventory();
+  };
+
+  window.bmInvEditField = function(span, rowId, field, isCustom) {
+    var pencilPrefix = '\u270f\u00a0';
+    var current = span.textContent.replace(pencilPrefix, '').trim();
+    var input = document.createElement('input');
+    input.value = current;
+    input.style.cssText = 'background:var(--bg2,#1e2530);border:1px solid var(--accent);border-radius:4px;' +
+      'color:var(--text);padding:.2rem .4rem;font-size:.82rem;width:auto;min-width:80px;max-width:180px;';
+    span.parentNode.replaceChild(input, span);
+    input.focus(); input.select();
+    function save() {
+      var val = input.value.trim() || current;
+      if (isCustom) {
+        var customRows = [];
+        try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
+        customRows = customRows.map(function(r){
+          if (String(r.id) === String(rowId)) { var copy = Object.assign({}, r); copy[field] = val; return copy; }
+          return r;
+        });
+        localStorage.setItem('bm_inv_custom_rows', JSON.stringify(customRows));
+      } else {
+        var edits = {};
+        try { edits = JSON.parse(localStorage.getItem('bm_inv_edits') || '{}'); } catch(e) {}
+        if (!edits[String(rowId)]) edits[String(rowId)] = {};
+        edits[String(rowId)][field] = val;
+        localStorage.setItem('bm_inv_edits', JSON.stringify(edits));
+      }
+      bmRenderInventory();
+    }
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      else if (e.key === 'Escape') { bmRenderInventory(); }
+    });
+  };
+
+  window.bmPrintInventory = function() {
+    var customRows = [];
+    try { customRows = JSON.parse(localStorage.getItem('bm_inv_custom_rows') || '[]'); } catch(e) {}
+    var removedIds = [];
+    try { removedIds = JSON.parse(localStorage.getItem('bm_inv_removed_ids') || '[]'); } catch(e) {}
+    var edits = {};
+    try { edits = JSON.parse(localStorage.getItem('bm_inv_edits') || '{}'); } catch(e) {}
+    var seedRows = BM_INVENTORY
+      .filter(function(r){ return removedIds.indexOf(String(r.id)) === -1; })
+      .map(function(r) {
+        var ed = edits[String(r.id)] || {};
+        return {id: r.id, item: ed.item !== undefined ? ed.item : r.item,
+                category: ed.category !== undefined ? ed.category : (r.category || 'General')};
+      });
+    var allRows = seedRows.concat(customRows);
+    var rowsHtml = allRows.map(function(row) {
+      var gc = localStorage.getItem('bm_inv_going_'     + row.id) === '1' ? '\u2611' : '\u2610';
+      var rc = localStorage.getItem('bm_inv_returning_' + row.id) === '1' ? '\u2611' : '\u2610';
+      return '<tr>' +
+        '<td>' + _escHtml(row.item) + '</td>' +
+        '<td>' + _escHtml(row.category || 'General') + '</td>' +
+        '<td class="inv-cb-cell">' + gc + '</td>' +
+        '<td class="inv-cb-cell">' + rc + '</td>' +
+        '</tr>';
+    }).join('');
+    var html = '<h1>\u2764 Gig Inventory Checklist</h1>' +
+      '<table><thead><tr><th>Item</th><th>Category</th><th>Going</th><th>Returning</th></tr></thead>' +
+      '<tbody>' + rowsHtml + '</tbody></table>' +
+      '<p style="font-size:.7rem;color:#888;margin-top:.5rem">Printed from \u2764Music Band Management</p>';
+    var area = document.getElementById('bm-inv-print-area');
+    area.innerHTML = html;
+    window.print();
+    area.innerHTML = '';
+  };
+
   document.addEventListener('DOMContentLoaded', function() {
     populateBandSelect();
     var printBtn = document.getElementById('bm-print-btn');
     if (printBtn) printBtn.style.display = currentView === 'setlist' ? '' : 'none';
+    var printInvBtn = document.getElementById('bm-print-inv-btn');
+    if (printInvBtn) printInvBtn.style.display = 'none';
+    var invSection = document.getElementById('bm-inv-section');
+    if (invSection) invSection.style.display = 'none';
     if (currentBandId !== null) loadView(currentView);
   });
 })();
 """
 
 
-def generate(data: dict) -> str:
+def generate(data: dict, inventory: list | None = None) -> str:
     """Build the full standalone HTML."""
+    if inventory is None:
+        inventory = []
     bm_inline_json = json.dumps(data, ensure_ascii=False)
+    bm_inventory_json = json.dumps(inventory, ensure_ascii=False)
     js_with_data = BM_JS.replace(
         "/*INJECT_DATA*/null/*END_INJECT*/",
         bm_inline_json,
+    ).replace(
+        "/*INJECT_INVENTORY*/[]/*END_INJECT_INVENTORY*/",
+        bm_inventory_json,
     )
     exported_at = data.get("exported_at", "")
     band_count = len(data.get("bands", []))
@@ -537,11 +821,13 @@ def generate(data: dict) -> str:
 def main() -> None:
     print("Generating Band Management Panel...")
     data = load_inline_data()
+    inventory = load_inventory_data()
     for b in data.get("bands", []):
         cat_n = b.get("catalog", {}).get("count", 0)
         sl_n = b.get("setlist", {}).get("count", 0)
         print(f"  Band: {b['name']} — {cat_n} catalog songs, {sl_n} setlist songs")
-    html = generate(data)
+    print(f"  Inventory: {len(inventory)} items")
+    html = generate(data, inventory)
     OUTPUT_HTML.write_text(html, encoding="utf-8")
     print(f"  Written to {OUTPUT_HTML}")
     print(f"  Size: {OUTPUT_HTML.stat().st_size:,} bytes")

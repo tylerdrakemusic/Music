@@ -253,6 +253,14 @@ CREATE TABLE IF NOT EXISTS guitar_training_log (
     repetition  INTEGER NOT NULL DEFAULT 1,
     logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- ── Gig Inventory ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS gig_inventory (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    item       TEXT NOT NULL,
+    category   TEXT DEFAULT 'General',
+    sort_order INTEGER DEFAULT 0
+);
 """
 
 _SEED_SQL = """
@@ -271,6 +279,20 @@ INSERT OR IGNORE INTO tracks (id, album_id, track_number, title, status) VALUES
     (8,  2, 5, 'Same Thing',      'mastered'),
     (9,  2, 6, 'You Already Know','mastered'),
     (10, 2, 7, 'Is It Real',      'mastered');
+
+INSERT OR IGNORE INTO gig_inventory (id, item, category, sort_order) VALUES
+    (1,  'Guitar',           'Guitar',        1),
+    (2,  'Guitar Stand',     'Guitar',        2),
+    (3,  'Amp',              'Amplification', 3),
+    (4,  'Amp stand',        'Amplification', 4),
+    (5,  'Trombone',         'Horn',          5),
+    (6,  'Trombone stand',   'Horn',          6),
+    (7,  'iPad',             'Accessories',   7),
+    (8,  'Gig Bag',          'Accessories',   8),
+    (10, 'Extension Chord',  'Accessories',   9),
+    (11, 'Cooling Fan',      'Accessories',   11),
+    (12, 'Wireless 1/4',     'Accessories',   12),
+    (13, 'Pedal Board',      'Accessories',   10);
 """
 
 
