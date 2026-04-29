@@ -26,11 +26,12 @@ EXPECTED_ITEMS = [
     "Amp stand",
     "Trombone",
     "Trombone stand",
-    "Music Stand",
+    "iPad",
     "Gig Bag",
-    "Sheet Music",
+    "Extension Chord",
     "Pedal Board",
-    "Lights",
+    "Cooling Fan",
+    "Wireless 1/4",
 ]
 
 
@@ -52,13 +53,13 @@ def db_conn():
 
 
 def test_gig_inventory_table_exists_and_has_rows(db_conn) -> None:
-    """gig_inventory table must exist and have at least 11 rows."""
+    """gig_inventory table must exist and have at least 12 rows."""
     rows = db_conn.execute("SELECT COUNT(*) AS cnt FROM gig_inventory").fetchone()
-    assert rows["cnt"] >= 11, f"Expected >= 11 rows, got {rows['cnt']}"
+    assert rows["cnt"] >= 12, f"Expected >= 12 rows, got {rows['cnt']}"
 
 
 def test_gig_inventory_expected_items_present(db_conn) -> None:
-    """All 11 seed items must be present in gig_inventory."""
+    """All 12 seed items must be present in gig_inventory."""
     rows = db_conn.execute("SELECT item FROM gig_inventory").fetchall()
     items_in_db = {r["item"] for r in rows}
     missing = [i for i in EXPECTED_ITEMS if i not in items_in_db]
