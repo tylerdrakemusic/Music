@@ -318,6 +318,13 @@
         }
       },
       "Pandora": {
+        "amp_management": {
+          "url": "https://amp.pandora.com",
+          "artist_name": "Tyler James Drake",
+          "claim_status": "PENDING",
+          "claim_submitted": "2026-04-28",
+          "notes": "Claim submitted 2026-04-28; approval takes 1-2 weeks"
+        },
         "artist_links": [
           "https://www.pandora.com/artist/tyler-james-drake/ARwJVPjfV22cX6X",
           "https://www.pandora.com/artist/echoty/ARjXtk9pkKmf77V"
