@@ -1,0 +1,97 @@
+{
+  "artist": {
+    "name": "Tyler James Drake",
+    "aliases": ["EchoTy"],
+    "type": "solo",
+    "active": true,
+    "bio": "Tyler James Drake is a dynamic solo artist and a passionate band member, known for his powerful vocals and electrifying guitar riffs. Blending rock, blues, and pop, Tyler captivates audiences with his unique sound and charismatic stage presence. With a career dedicated to musical excellence, he continues to push boundaries and inspire fans worldwide. As a solo artist, Tyler delivers heartfelt performances and innovative compositions, showcasing his versatility and deep passion for music. His dedication to his craft and his ability to connect with listeners make him a standout performer in the modern music scene."
+  },
+  "studio": {
+    "name": "Hyperthreat Studios",
+    "website": "https://hyperthreat.com",
+    "role": "Recording studio — Bloom album in progress here"
+  },
+  "social": {
+    "facebook": "https://www.facebook.com/profile.php?id=61556394339851",
+    "instagram": "https://www.instagram.com/tylerjamesdrake/",
+    "tiktok": "https://www.tiktok.com/@echoty84",
+    "x": [
+      "https://x.com/echo_ty_ty",
+      "https://x.com/DrakeJames54026"
+    ]
+  },
+  "distribution": {
+    "distrokid": {
+      "tyler_james_drake": "https://hyperfollow.com/tylerjamesdrake",
+      "echoty": "https://hyperfollow.com/echoty"
+    },
+    "spotify": {
+      "tyler_james_drake": "https://open.spotify.com/artist/2PCvPDydZKbRUHb6lZMJXv"
+    },
+    "apple_music": {
+      "tyler_james_drake": "https://music.apple.com/us/artist/tyler-james-drake/1747192774",
+      "echoty": "https://music.apple.com/us/artist/echoty/1734067005"
+    },
+    "amazon_music": {
+      "tyler_james_drake": "https://music.amazon.com/artists/B0CWYSSMTG/tyler-james-drake",
+      "echoty": "https://music.amazon.com/artists/B0CWYRDNF9/echoty"
+    },
+    "youtube_music": {
+      "tyler_james_drake": "https://music.youtube.com/channel/UCm1ZknVFV34a9QKR0LYoJoQ",
+      "echoty": "https://music.youtube.com/channel/UCfEh8PYGIrQ590DVrOoholw"
+    },
+    "tidal": {
+      "tyler_james_drake": "https://listen.tidal.com/artist/47880609",
+      "echoty": "https://listen.tidal.com/artist/46217927"
+    },
+    "deezer": {
+      "tyler_james_drake": "https://www.deezer.com/us/artist/256748002",
+      "echoty": "https://www.deezer.com/us/artist/256747992"
+    },
+    "pandora": {
+      "tyler_james_drake": "https://www.pandora.com/artist/tyler-james-drake/ARwJVPjfV22cX6X",
+      "echoty": "https://www.pandora.com/artist/echoty/ARjXtk9pkKmf77V",
+      "amp_management": "https://amp.pandora.com"
+    },
+    "soundcloud": "https://soundcloud.com/user-590922790-96911984",
+    "bandcamp": "https://tylerjamesdrake.bandcamp.com/",
+    "audius": "https://audius.co/tylerjamesdrake",
+    "boomplay": {
+      "tyler_james_drake": "https://www.boomplay.com/artists/90787115",
+      "echoty": "https://www.boomplay.com/artists/86134137"
+    }
+  },
+  "albums": {
+    "Bloom": {
+      "status": "in_progress",
+      "studio": "Hyperthreat Studios",
+      "tracks": [
+        "Is It Real",
+        "Abbey's Song",
+        "Same Thing",
+        "Bitten",
+        "Fly Away",
+        "Lighthouse",
+        "You Already Know"
+      ]
+    },
+    "EP": {
+      "status": "released",
+      "tracks": [
+        "Get Out",
+        "What I Do",
+        "Marigolds"
+      ]
+    }
+  },
+  "source_locations": {
+    "masters_f": "f:\\Masters\\",
+    "rockstar_backup_g": "G:\\TylerJamesDrake\\rockstar\\",
+    "roughs_e": "E:\\Roughs\\",
+    "recordings": "f:\\recordings\\",
+    "lyrics": "f:\\lyrics\\",
+    "guitar": "f:\\Guitar\\",
+    "bands": "f:\\bands\\",
+    "catalog": "f:\\❤Music\\catalog\\"
+  }
+}
