@@ -11,30 +11,8 @@
       "cli": "C:\\G\\python.exe src/analysis/music_dashboard.py --port 5050",
       "url": "http://localhost:5050",
       "category": "music",
-      "icon": "🎵"
-    },
-    {
-      "id": "tjd-radio",
-      "title": "TJD Radio",
-      "description": "Live continuous stream for Tyler James Drake catalog (crossfade + bumpers)",
-      "type": "flask_app",
-      "generator": "src/radio/tjd_radio.py",
-      "cli": "C:\\G\\python.exe src/radio/tjd_radio.py --port 8100 --bitrate 192 --crossfade 2 --bumper-dir catalog/bumpers --bumper-every 3",
-      "url": "http://localhost:8100",
-      "category": "music",
-      "icon": "📻"
-    }
-  ,
-    {
-      "id": "guitar-trainer",
-      "title": "Guitar Trainer",
-      "description": "Lead guitar interval training — loop segments, control speed, track practice sessions",
-      "type": "flask_app",
-      "generator": "src/training/musician_training_ui.py",
-      "cli": "C:\\G\\python.exe src/training/musician_training_ui.py --port 5055",
-      "url": "http://localhost:5055",
-      "category": "training",
-      "icon": "🎸"
+      "icon": "🎵",
+      "priority": 20
     },
     {
       "id": "band-mgmt",
@@ -45,7 +23,32 @@
       "cli": "C:\\G\\python.exe src/band_mgmt/generate_band_mgmt_panel.py",
       "output": "reports/band_management_panel.html",
       "category": "music",
-      "icon": "🎤"
+      "icon": "🎤",
+      "priority": 21
+    },
+    {
+      "id": "guitar-trainer",
+      "title": "Guitar Trainer",
+      "description": "Lead guitar interval training — loop segments, control speed, track practice sessions",
+      "type": "flask_app",
+      "generator": "src/training/musician_training_ui.py",
+      "cli": "C:\\G\\python.exe src/training/musician_training_ui.py --port 5055",
+      "url": "http://localhost:5055",
+      "category": "training",
+      "icon": "🎸",
+      "priority": 22
+    },
+    {
+      "id": "tjd-radio",
+      "title": "TJD Radio",
+      "description": "Live continuous stream for Tyler James Drake catalog (crossfade + bumpers)",
+      "type": "flask_app",
+      "generator": "src/radio/tjd_radio.py",
+      "cli": "C:\\G\\python.exe src/radio/tjd_radio.py --port 8100 --bitrate 192 --crossfade 2 --bumper-dir catalog/bumpers --bumper-every 3",
+      "url": "http://localhost:8100",
+      "category": "music",
+      "icon": "📻",
+      "priority": 23
     }
   ]
 }
