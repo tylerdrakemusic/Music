@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hyperthreat Studios — Mic Configuration</title>
+<style>
+  :root {
+    --border: #000;
+    --row-stripe: #f4f4f4;
+    --header-bg: #ebebeb;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: #000;
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sheet {
+    width: 7.5in;            /* letter 8.5in - 0.5in margins */
+    margin: 0 auto;
+    padding: 0;
+    page-break-after: always;
+  }
+  .sheet:last-of-type { page-break-after: auto; }
+
+  .sheet + .sheet { page-break-before: always; }
+
+  header.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.25in;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.12in;
+    margin-bottom: 0.18in;
+  }
+
+  header.brand .logo-wrap {
+    width: 0.85in;
+    height: 0.85in;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  header.brand .logo-wrap img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  header.brand .title-block { flex: 1; }
+  header.brand h1 {
+    font-size: 22pt;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+  header.brand .subtitle {
+    font-size: 11pt;
+    margin-top: 2px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #222;
+  }
+
+  /* swap logos for screen vs print */
+  .print-only { display: none; }
+  .screen-only { display: block; }
+
+  table.mic-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  table.mic-grid th,
+  table.mic-grid td {
+    border: 1px solid var(--border);
+    padding: 0;
+    vertical-align: middle;
+  }
+  table.mic-grid thead th {
+    background: var(--header-bg);
+    font-size: 11pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    height: 0.30in;
+    text-align: center;
+    border-bottom: 2px solid var(--border);
+  }
+  table.mic-grid col.col-mic    { width: 14%; }
+  table.mic-grid col.col-wall   { width: 43%; }
+  table.mic-grid col.col-stud   { width: 43%; }
+
+  table.mic-grid td {
+    height: 0.35in;
+    font-size: 13pt;
+  }
+  table.mic-grid td.mic-num {
+    text-align: right;
+    font-weight: 700;
+    padding-right: 0.12in;
+    background: #fafafa;
+  }
+  table.mic-grid tbody tr:nth-child(even) td:not(.mic-num) {
+    background: var(--row-stripe);
+  }
+
+  footer.foot {
+    margin-top: 0.10in;
+    font-size: 8pt;
+    color: #555;
+    text-align: right;
+    letter-spacing: 0.04em;
+  }
+
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+
+  @media print {
+    .screen-only { display: none !important; }
+    .print-only  { display: block !important; }
+    body { background: #fff; }
+    .sheet { width: auto; margin: 0; }
+    table.mic-grid tbody tr:nth-child(even) td:not(.mic-num) {
+      background: #f0f0f0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<template id="sheet-template">
+  <section class="sheet">
+    <header class="brand">
+      <div class="logo-wrap">
+        <!-- Tyler: save Hyperthreat logo PNG to this path -->
+        <img class="screen-only" src="../Brand/hyperthreat/hyperthreat-logo.png" alt="Hyperthreat Studios">
+        <img class="print-only"  src="../Brand/hyperthreat/hyperthreat-logo-print.png" alt="Hyperthreat Studios">
+      </div>
+      <div class="title-block">
+        <h1>Hyperthreat Studios</h1>
+        <div class="subtitle">Mic Configuration</div>
+      </div>
+    </header>
+
+    <table class="mic-grid">
+      <colgroup>
+        <col class="col-mic">
+        <col class="col-wall">
+        <col class="col-stud">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Mic</th>
+          <th>Wall</th>
+          <th>STUD i/o</th>
+        </tr>
+      </thead>
+      <tbody class="grid-body"></tbody>
+    </table>
+
+    <footer class="foot">Hyperthreat Studios &middot; Mic Patch Sheet</footer>
+  </section>
+</template>
+
+<div id="sheets"></div>
+
+<script>
+  const CHANNEL_COUNT = 16;
+  const SHEET_COUNT = 2; // front + back, identical for duplex
+
+  function buildSheet() {
+    const tpl = document.getElementById('sheet-template');
+    const node = tpl.content.cloneNode(true);
+    const tbody = node.querySelector('.grid-body');
+    for (let i = 1; i <= CHANNEL_COUNT; i++) {
+      const tr = document.createElement('tr');
+      const tdNum = document.createElement('td');
+      tdNum.className = 'mic-num';
+      tdNum.textContent = i;
+      const tdWall = document.createElement('td');
+      const tdStud = document.createElement('td');
+      tr.appendChild(tdNum);
+      tr.appendChild(tdWall);
+      tr.appendChild(tdStud);
+      tbody.appendChild(tr);
+    }
+    return node;
+  }
+
+  const host = document.getElementById('sheets');
+  for (let s = 0; s < SHEET_COUNT; s++) {
+    host.appendChild(buildSheet());
+  }
+</script>
+
+</body>
+</html>
