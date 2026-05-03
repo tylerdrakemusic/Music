@@ -6,7 +6,7 @@
 <style>
   :root {
     --border: #000;
-    --row-stripe: #f4f4f4;
+    --row-stripe: #dcdcdc;
     --header-bg: #ebebeb;
   }
 
@@ -96,9 +96,10 @@
     text-align: center;
     border-bottom: 2px solid var(--border);
   }
-  table.mic-grid col.col-mic    { width: 14%; }
-  table.mic-grid col.col-wall   { width: 43%; }
-  table.mic-grid col.col-stud   { width: 43%; }
+  table.mic-grid col.col-mic        { width: 12%; }
+  table.mic-grid col.col-instrument { width: 22%; }
+  table.mic-grid col.col-wall       { width: 22%; }
+  table.mic-grid col.col-stud       { width: 44%; }
 
   table.mic-grid td {
     height: 0.35in;
@@ -133,7 +134,7 @@
     body { background: #fff; }
     .sheet { width: auto; margin: 0; }
     table.mic-grid tbody tr:nth-child(even) td:not(.mic-num) {
-      background: #f0f0f0;
+      background: #ececec;
     }
   }
 </style>
@@ -157,12 +158,14 @@
     <table class="mic-grid">
       <colgroup>
         <col class="col-mic">
+        <col class="col-instrument">
         <col class="col-wall">
         <col class="col-stud">
       </colgroup>
       <thead>
         <tr>
           <th>Mic</th>
+          <th>Instrument</th>
           <th>Wall</th>
           <th>STUD i/o</th>
         </tr>
@@ -189,9 +192,11 @@
       const tdNum = document.createElement('td');
       tdNum.className = 'mic-num';
       tdNum.textContent = i;
+      const tdInstrument = document.createElement('td');
       const tdWall = document.createElement('td');
       const tdStud = document.createElement('td');
       tr.appendChild(tdNum);
+      tr.appendChild(tdInstrument);
       tr.appendChild(tdWall);
       tr.appendChild(tdStud);
       tbody.appendChild(tr);
