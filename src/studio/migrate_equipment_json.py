@@ -30,19 +30,20 @@ CREATE TABLE IF NOT EXISTS studio_equipment (
 """
 
 # Key-prefix → category mapping (matched against the equipment dict key)
+# All categories use lowercase_underscore plural to match HyperThreat convention.
 _KEY_CATEGORY = {
-    "guitar_pedals": "Pedal",  # special: nested dict
-    "microphone": "Microphone",
-    "audio_interface": "Interface",
-    "studio_monitors": "Monitor",
-    "headphones": "Headphones",
-    "midi_controller": "MIDI Controller",
-    "amplifier": "Amplifier",
-    "keyboard": "Keyboard",
-    "bass_guitar": "Bass Guitar",
-    "acoustic_guitar": "Acoustic Guitar",
-    "electric_drumset": "Drums",
-    "guitar": "Guitar",
+    "guitar_pedals": "pedals",          # special: nested dict
+    "microphone": "microphones",
+    "audio_interface": "audio_interfaces",
+    "studio_monitors": "monitors",
+    "headphones": "headphones",
+    "midi_controller": "midi_controllers",
+    "amplifier": "amplifiers",
+    "keyboard": "keyboards",
+    "bass_guitar": "bass_guitars",
+    "acoustic_guitar": "acoustic_guitars",
+    "electric_drumset": "drums",
+    "guitar": "guitars",
 }
 
 
@@ -99,7 +100,7 @@ def _collect_rows(studios: list) -> list[dict]:
                     rows.append(
                         {
                             "studio_name": studio_name,
-                            "category": "Pedal",
+                            "category": "pedals",
                             "label": label,
                             "spec_json": _build_spec_json(pedal_data),
                             "status": "active",
