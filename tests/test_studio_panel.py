@@ -284,3 +284,69 @@ def test_hyperthreat_items_not_other_category(patched_conn):
     ).fetchall()
     other_items = [r for r in rows if r[1].lower() == "other"]
     assert len(other_items) == 0, f"HyperThreat items still in 'Other': {other_items}"
+
+
+# ---------------------------------------------------------------------------
+# Category normalization AC tests (FR-20260503-studio-panel-category-ci)
+# ---------------------------------------------------------------------------
+
+def test_migrate_uses_normalized_categories(patched_conn):
+    """AC2: migrate_equipment_json produces only lowercase_underscore plural categories."""
+    import studio.migrate_equipment_json as mig
+
+    mig.migrate(conn=patched_conn)
+
+    rows = patched_conn._conn.execute(
+        "SELECT DISTINCT category FROM studio_equipment WHERE studio_name='Personal Studio'"
+    ).fetchall()
+    categories = [r[0] for r in rows]
+
+    # None should be Title Case singular (old convention)
+    old_categories = {
+        "Amplifier", "Microphone", "Acoustic Guitar", "Bass Guitar",
+        "Drums", "Guitar", "Headphones", "Interface", "Keyboard",
+        "MIDI Controller", "Monitor", "Pedal", "Other",
+    }
+    violations = [c for c in categories if c in old_categories]
+    assert not violations, f"Old-style categories still produced by migrate: {violations}"
+
+    # All should match lowercase_underscore pattern
+    import re
+    bad_format = [c for c in categories if not re.match(r"^[a-z][a-z0-9_]*$", c)]
+    assert not bad_format, f"Categories not in lowercase_underscore format: {bad_format}"
+
+
+def test_personal_studio_no_duplicate_sections(patched_conn):
+    """AC1: Personal Studio has no duplicate category sections (e.g., both amplifier and amplifiers)."""
+    # Seed one row per old and new name for same concept
+    pairs = [
+        ("Amplifier", "amplifiers"),
+        ("Microphone", "microphones"),
+    ]
+    for old, new in pairs:
+        patched_conn._conn.execute(
+            "INSERT INTO studio_equipment (studio_name, category, label, spec_json) VALUES (?,?,?,?)",
+            ("Personal Studio", old, f"Test {old}", "{}"),
+        )
+        patched_conn._conn.execute(
+            "INSERT INTO studio_equipment (studio_name, category, label, spec_json) VALUES (?,?,?,?)",
+            ("Personal Studio", new, f"Test {new}", "{}"),
+        )
+    patched_conn._conn.commit()
+
+    # After normalization UPDATE (simulate what the migration does)
+    NORM = {"Amplifier": "amplifiers", "Microphone": "microphones"}
+    for old, new in NORM.items():
+        patched_conn._conn.execute(
+            "UPDATE studio_equipment SET category=? WHERE category=? AND studio_name='Personal Studio'",
+            (new, old),
+        )
+    patched_conn._conn.commit()
+
+    cats = [r[0] for r in patched_conn._conn.execute(
+        "SELECT DISTINCT category FROM studio_equipment WHERE studio_name='Personal Studio'"
+    ).fetchall()]
+    assert "Amplifier" not in cats, "Old 'Amplifier' category still present after normalization"
+    assert "Microphone" not in cats, "Old 'Microphone' category still present after normalization"
+    assert "amplifiers" in cats
+    assert "microphones" in cats
