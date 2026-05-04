@@ -59,6 +59,26 @@ def brand_static(filename: str):
     return send_from_directory(str(ROOT / "Brand"), filename)
 
 
+@app.route("/favicon.ico")
+def favicon_personal():
+    """Default favicon — Tyler personal brand."""
+    return send_from_directory(
+        str(ROOT / "Brand" / "tyler-drake"),
+        "tyler-favicon.ico",
+        mimetype="image/vnd.microsoft.icon",
+    )
+
+
+@app.route("/favicon-hyperthreat.png")
+def favicon_hyperthreat():
+    """HyperThreat favicon served separately for JS swap."""
+    return send_from_directory(
+        str(ROOT / "Brand" / "hyperthreat"),
+        "hyperthreat-logo.png",
+        mimetype="image/png",
+    )
+
+
 @app.route("/api/equipment", methods=["GET"])
 def list_equipment():
     studio_filter = request.args.get("studio")
@@ -193,6 +213,7 @@ PANEL_HTML = r"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Studio Equipment Panel</title>
+<link id="favicon" rel="icon" href="/favicon.ico" type="image/x-icon">
 <style>
   :root {
     --bg: #0a0d12;
@@ -267,22 +288,13 @@ PANEL_HTML = r"""<!DOCTYPE html>
 <body>
 
 <nav class="nav">
-  <div class="nav-tab active" data-tab="mic">🎙 Mic Config</div>
-  <div class="nav-tab" data-tab="personal">🎛 Personal Studio</div>
+  <div class="nav-tab active" data-tab="personal">🎛 Personal Studio</div>
   <div class="nav-tab" data-tab="hyperthreat">🏢 HyperThreat Studio</div>
+  <div class="nav-tab" data-tab="mic">🎙 Mic Config</div>
 </nav>
 
-<!-- MIC CONFIG TAB -->
-<div id="tab-mic" class="tab-content active">
-  <div class="mic-header">
-    <h2>Hyperthreat Studios — Mic Configuration</h2>
-    <button class="btn btn-accent" onclick="window.open('/mic-config','_blank'); setTimeout(()=>{ let w=window.open('/mic-config','_blank'); if(w) w.onload=()=>w.print(); },100)">🖨 Print</button>
-  </div>
-  <iframe class="mic-frame" src="/mic-config" title="Mic Config"></iframe>
-</div>
-
 <!-- PERSONAL STUDIO TAB -->
-<div id="tab-personal" class="tab-content">
+<div id="tab-personal" class="tab-content active">
   <div class="studio-header">
     <h2>🎛 Personal Studio</h2>
     <button class="btn btn-accent" onclick="openModal(null, 'Personal Studio')">＋ Add Equipment</button>
@@ -297,6 +309,15 @@ PANEL_HTML = r"""<!DOCTYPE html>
     <button class="btn btn-accent" onclick="openModal(null, 'HyperThreat Recording Studio')">＋ Add Equipment</button>
   </div>
   <div id="hyperthreat-content" class="loading">Loading…</div>
+</div>
+
+<!-- MIC CONFIG TAB -->
+<div id="tab-mic" class="tab-content">
+  <div class="mic-header">
+    <h2>Hyperthreat Studios — Mic Configuration</h2>
+    <button class="btn btn-accent" onclick="window.open('/mic-config','_blank'); setTimeout(()=>{ let w=window.open('/mic-config','_blank'); if(w) w.onload=()=>w.print(); },100)">🖨 Print</button>
+  </div>
+  <iframe class="mic-frame" src="/mic-config" title="Mic Config"></iframe>
 </div>
 
 <!-- MODAL -->
@@ -335,6 +356,16 @@ const STUDIOS = {
   hyperthreat: 'HyperThreat Recording Studio'
 };
 
+// Favicon swap per active tab
+const FAVICONS = {
+  personal: '/favicon.ico',
+  hyperthreat: '/favicon-hyperthreat.png',
+  mic: '/favicon.ico'
+};
+function updateFavicon(tabKey) {
+  document.getElementById('favicon').href = FAVICONS[tabKey] || '/favicon.ico';
+}
+
 // Tab switching
 document.querySelectorAll('.nav-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -343,10 +374,14 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.classList.add('active');
     const id = 'tab-' + tab.dataset.tab;
     document.getElementById(id).classList.add('active');
+    updateFavicon(tab.dataset.tab);
     if (tab.dataset.tab === 'personal') loadStudio('personal');
     if (tab.dataset.tab === 'hyperthreat') loadStudio('hyperthreat');
   });
 });
+
+// Initial load for default tab (Personal Studio)
+loadStudio('personal');
 
 // Load studio data
 async function loadStudio(studioKey) {
