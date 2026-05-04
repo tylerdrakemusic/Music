@@ -79,6 +79,16 @@ def favicon_hyperthreat():
     )
 
 
+@app.route("/brand/personal.ico")
+def brand_personal_ico():
+    """Tyler personal brand icon for use in <img> tags."""
+    return send_from_directory(
+        str(ROOT / "Brand" / "tyler-drake"),
+        "tyler-favicon.ico",
+        mimetype="image/x-icon",
+    )
+
+
 @app.route("/api/equipment", methods=["GET"])
 def list_equipment():
     studio_filter = request.args.get("studio")
@@ -233,9 +243,12 @@ PANEL_HTML = r"""<!DOCTYPE html>
   /* NAV */
   .nav { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--surface); padding: 0 1.5rem; }
   .nav-tab { padding: 0.85rem 1.4rem; cursor: pointer; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;
-             border-bottom: 3px solid transparent; transition: all 0.15s; user-select: none; }
+             border-bottom: 3px solid transparent; transition: all 0.15s; user-select: none;
+             display: flex; align-items: center; gap: 0.5rem; }
   .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
   .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-icon { width: 18px; height: 18px; object-fit: contain; border-radius: 3px; flex-shrink: 0; }
+  .h2-icon { width: 22px; height: 22px; object-fit: contain; border-radius: 3px; vertical-align: middle; margin-right: 0.4rem; }
 
   /* CONTENT */
   .tab-content { display: none; padding: 1.5rem; }
@@ -288,15 +301,15 @@ PANEL_HTML = r"""<!DOCTYPE html>
 <body>
 
 <nav class="nav">
-  <div class="nav-tab active" data-tab="personal">🎛 Personal Studio</div>
-  <div class="nav-tab" data-tab="hyperthreat">🏢 HyperThreat Studio</div>
+  <div class="nav-tab active" data-tab="personal"><img class="tab-icon" src="/brand/personal.ico" alt=""> Personal Studio</div>
+  <div class="nav-tab" data-tab="hyperthreat"><img class="tab-icon" src="/favicon-hyperthreat.png" alt=""> HyperThreat Studio</div>
   <div class="nav-tab" data-tab="mic">🎙 Mic Config</div>
 </nav>
 
 <!-- PERSONAL STUDIO TAB -->
 <div id="tab-personal" class="tab-content active">
   <div class="studio-header">
-    <h2>🎛 Personal Studio</h2>
+    <h2><img class="h2-icon" src="/brand/personal.ico" alt=""> Personal Studio</h2>
     <button class="btn btn-accent" onclick="openModal(null, 'Personal Studio')">＋ Add Equipment</button>
   </div>
   <div id="personal-content" class="loading">Loading…</div>
@@ -305,7 +318,7 @@ PANEL_HTML = r"""<!DOCTYPE html>
 <!-- HYPERTHREAT TAB -->
 <div id="tab-hyperthreat" class="tab-content">
   <div class="studio-header">
-    <h2>🏢 HyperThreat Recording Studio</h2>
+    <h2><img class="h2-icon" src="/favicon-hyperthreat.png" alt=""> HyperThreat Recording Studio</h2>
     <button class="btn btn-accent" onclick="openModal(null, 'HyperThreat Recording Studio')">＋ Add Equipment</button>
   </div>
   <div id="hyperthreat-content" class="loading">Loading…</div>
