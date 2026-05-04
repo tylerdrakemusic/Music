@@ -1,8 +1,8 @@
-"""Studio Equipment Panel — Flask app on port 5060.
+"""Studio Equipment Panel — Flask app on port 5065.
 
 Run:
     C:\\G\\python.exe src/studio/studio_panel.py
-    C:\\G\\python.exe src/studio/studio_panel.py --port 5060
+    C:\\G\\python.exe src/studio/studio_panel.py --port 5065
 """
 import argparse
 import json
@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from flask import Flask, jsonify, request, send_file  # noqa: E402
+from flask import Flask, jsonify, request, send_file, send_from_directory  # noqa: E402
 from utils.init_db import get_connection  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -52,6 +52,11 @@ def _ensure_table():
 @app.route("/mic-config")
 def mic_config():
     return send_file(str(MIC_CONFIG_PATH), mimetype="text/html")
+
+
+@app.route("/Brand/<path:filename>")
+def brand_static(filename: str):
+    return send_from_directory(str(ROOT / "Brand"), filename)
 
 
 @app.route("/api/equipment", methods=["GET"])
