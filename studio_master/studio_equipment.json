@@ -19,6 +19,26 @@
         "preamps": "2x Focusrite preamps with 56dB gain",
         "serial_number": "67890"
       },
+      "pa_speakers": {
+        "manufacturer": "JBL",
+        "model_name": "2600",
+        "type": "Passive 3-Way PA Speaker",
+        "configuration": "passive — requires external power amplifier",
+        "program_power": "300W",
+        "peak_power": "600W",
+        "impedance": "8Ω",
+        "frequency_response": "55Hz - 16kHz",
+        "sensitivity": "96dB SPL (1W/1m)",
+        "max_spl": "119dB",
+        "input_connectors": ["Speakon NL4", "1/4-inch TRS"],
+        "woofer": "12-inch",
+        "driver": "1.5-inch titanium compression driver",
+        "horn": "90x50-degree",
+        "weight_kg": 27,
+        "acquired": "inherited 2026-05-09",
+        "notes": "Cannot be driven directly from Scarlett 2i2 line outputs. Requires power amplifier. See docs/studio-wiring-jbl2600.md.",
+        "serial_number": "TBD"
+      },
       "studio_monitors": {
         "manufacturer": "Yamaha",
         "model_name": "HS8",
