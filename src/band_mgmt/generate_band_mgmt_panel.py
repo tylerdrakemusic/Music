@@ -411,13 +411,14 @@ BM_JS = r"""
     const thead = document.getElementById('bm-thead');
     const isSetlist = currentView === 'setlist';
     const cols = [
-      ...(isSetlist ? [['#', '']] : []),
-      ['Title', 'title'], ['Artist', 'artist'], ['Key', 'key'], ['BPM', 'bpm'],
-      ['\u266b', ''], ['\u25b6', ''],
+      ...(isSetlist ? [['#', '', '']] : []),
+      ['Title', 'title', ''], ['Artist', 'artist', ''], ['Key', 'key', ''], ['BPM', 'bpm', ''],
+      ['\u266b', '', 'bm-th-sheet'], ['\u25b6', '', 'bm-th-audio'],
     ];
     thead.innerHTML = '<tr>' + cols.map(function(c) {
       const isSorted = sortCol === c[1] && c[1];
-      return '<th class="' + (isSorted ? 'sorted' : '') + '" ' +
+      const idAttr = c[2] ? ' id="' + c[2] + '"' : '';
+      return '<th' + idAttr + ' class="' + (isSorted ? 'sorted' : '') + '" ' +
         (c[1] ? 'onclick="bmSort(\'' + c[1] + '\')"' : '') + '>' +
         c[0] + (c[1] ? '<span class="sort-arrow">' + (isSorted ? (sortAsc ? '\u25b2' : '\u25bc') : '\u25b2') + '</span>' : '') +
         '</th>';
