@@ -304,6 +304,7 @@ PANEL_HTML = r"""<!DOCTYPE html>
   <div class="nav-tab active" data-tab="personal"><img class="tab-icon" src="/brand/personal.ico" alt=""> Personal Studio</div>
   <div class="nav-tab" data-tab="hyperthreat"><img class="tab-icon" src="/favicon-hyperthreat.png" alt=""> HyperThreat Studio</div>
   <div class="nav-tab" data-tab="mic">🎙 Mic Config</div>
+  <div class="nav-tab" data-tab="wiring">⚡ Signal Chain</div>
 </nav>
 
 <!-- PERSONAL STUDIO TAB -->
@@ -322,6 +323,18 @@ PANEL_HTML = r"""<!DOCTYPE html>
     <button class="btn btn-accent" onclick="openModal(null, 'HyperThreat Recording Studio')">＋ Add Equipment</button>
   </div>
   <div id="hyperthreat-content" class="loading">Loading…</div>
+</div>
+
+<!-- SIGNAL CHAIN TAB -->
+<div id="tab-wiring" class="tab-content">
+  <div class="studio-header">
+    <h2>⚡ Studio Signal Chain — Locked 2026-05-09</h2>
+    <span style="font-size:0.85rem;color:var(--text-muted)">Crown XLS 1002 + Mackie Big Knob Passive + JBL 2600 + Yamaha HS8</span>
+  </div>
+  <div id="wiring-diagram" style="background:var(--surface);border-radius:8px;padding:1.5rem;overflow:auto;"></div>
+  <p style="margin-top:1rem;font-size:0.82rem;color:var(--text-muted)">
+    Source: <code>docs/studio-wiring-decision.mmd</code> · Full wiring guide: <code>docs/studio-wiring-jbl2600.md</code>
+  </p>
 </div>
 
 <!-- MIC CONFIG TAB -->
@@ -390,11 +403,63 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     updateFavicon(tab.dataset.tab);
     if (tab.dataset.tab === 'personal') loadStudio('personal');
     if (tab.dataset.tab === 'hyperthreat') loadStudio('hyperthreat');
+    if (tab.dataset.tab === 'wiring') loadWiringDiagram();
   });
 });
 
 // Initial load for default tab (Personal Studio)
 loadStudio('personal');
+
+// Mermaid signal chain
+let _wiringLoaded = false;
+async function loadWiringDiagram() {
+  if (_wiringLoaded) return;
+  _wiringLoaded = true;
+  const el = document.getElementById('wiring-diagram');
+  el.innerHTML = '<div class="loading">Rendering diagram…</div>';
+  try {
+    // Load mermaid.js from CDN
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    const diagSource = `flowchart TD
+    Guitar["🎸 Guitar\\n(1/4&quot; TS)"]
+    Mic["🎤 Mic\\n(XLR, phantom)"]
+    DAW["💻 DAW / Computer\\n(USB)"]
+    Interface["Focusrite Scarlett 2i2\\n──────────────────\\nIn 1: Guitar Hi-Z\\nIn 2: Mic XLR/TRS\\nOut L+R: Balanced TRS 1/4&quot;"]
+    MonCtrl["Mackie Big Knob Passive\\n──────────────────\\nMonitor Controller\\nA/B/C speaker switching"]
+    HS8L["Yamaha HS8 (L)\\nActive Monitor"]
+    HS8R["Yamaha HS8 (R)\\nActive Monitor"]
+    PowerAmp["Crown XLS 1002\\n──────────────────\\nPower Amplifier\\n350W x 2 @ 8ohm"]
+    JBL_L["JBL 2600 (L)\\nPassive PA 300W/8ohm"]
+    JBL_R["JBL 2600 (R)\\nPassive PA 300W/8ohm"]
+    Guitar -->|"1/4&quot; TS Hi-Z"| Interface
+    Mic -->|"XLR balanced"| Interface
+    Interface <-->|"USB"| DAW
+    Interface -->|"Balanced TRS 1/4&quot;"| MonCtrl
+    MonCtrl -->|"Output A TRS"| HS8L
+    MonCtrl -->|"Output A TRS"| HS8R
+    MonCtrl -->|"Output B TRS-XLR"| PowerAmp
+    PowerAmp -->|"Ch 1 Speakon NL4"| JBL_L
+    PowerAmp -->|"Ch 2 Speakon NL4"| JBL_R
+    classDef locked fill:#1a3a1a,stroke:#4caf50,color:#e8f5e9
+    classDef active fill:#1a2a3a,stroke:#2196f3,color:#e3f2fd
+    classDef passive fill:#3a1a1a,stroke:#f44336,color:#fce4ec
+    classDef input fill:#2a2a1a,stroke:#ff9800,color:#fff8e1
+    class Interface,MonCtrl,PowerAmp locked
+    class HS8L,HS8R active
+    class JBL_L,JBL_R passive
+    class Guitar,Mic,DAW input`;
+    const { svg } = await mermaid.render('wiring-svg', diagSource);
+    el.innerHTML = svg;
+  } catch(e) {
+    el.innerHTML = '<div style="color:#f44336;padding:1rem">Diagram render failed: ' + e.message + '</div>';
+  }
+}
 
 // Load studio data
 async function loadStudio(studioKey) {
