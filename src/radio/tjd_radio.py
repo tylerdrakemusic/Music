@@ -395,7 +395,24 @@ class RadioBroadcastV2:
                 d.close()
                 self._listeners.remove(d)
 
-    def _build_ffmpeg_cmd(self, path: str, fade_in: float = 0, fade_out: float = 0) -> list[str]:
+    def _get_duration(self, path: str) -> float:
+        """Return audio file duration in seconds via ffprobe, or 0 on failure."""
+        try:
+            result = subprocess.run(
+                [
+                    "ffprobe", "-v", "error",
+                    "-show_entries", "format=duration",
+                    "-of", "default=noprint_wrappers=1:nokey=1",
+                    path,
+                ],
+                capture_output=True, text=True, timeout=5,
+            )
+            return float(result.stdout.strip())
+        except Exception:
+            return 0.0
+
+    def _build_ffmpeg_cmd(self, path: str, fade_in: float = 0, fade_out: float = 0,
+                          duration: float = 0) -> list[str]:
         """Build ffmpeg command with optional fade filters."""
         cmd = [
             "ffmpeg", "-hide_banner", "-loglevel", "error",
@@ -405,8 +422,11 @@ class RadioBroadcastV2:
         filters = []
         if fade_in > 0:
             filters.append(f"afade=t=in:st=0:d={fade_in}")
-        if fade_out > 0:
-            filters.append(f"afade=t=out:st=0:d={fade_out}:curve=tri")
+        if fade_out > 0 and duration > 0:
+            # Fade out must start at (duration - fade_sec) so it ends at EOF,
+            # not at t=0 which would silence the track immediately.
+            st = max(0.0, duration - fade_out)
+            filters.append(f"afade=t=out:st={st:.3f}:d={fade_out}:curve=tri")
         if filters:
             cmd += ["-af", ",".join(filters)]
         cmd += [
@@ -419,7 +439,8 @@ class RadioBroadcastV2:
 
     def _play_audio(self, path: str, fade_in: float = 0, fade_out: float = 0) -> None:
         """Transcode a single file to the stream with optional fades."""
-        cmd = self._build_ffmpeg_cmd(path, fade_in, fade_out)
+        duration = self._get_duration(path) if fade_out > 0 else 0.0
+        cmd = self._build_ffmpeg_cmd(path, fade_in, fade_out, duration)
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         chunk_size = 4096
         pace = chunk_size / (self.bitrate * 125)
