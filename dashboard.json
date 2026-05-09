@@ -52,7 +52,7 @@
     },
     {
       "id": "studio-panel",
-      "title": "Studio Equipment",
+      "title": "❤ Studio",
       "description": "Studio gear inventory (Personal + HyperThreat), mic config print, CRUD management via heartmusic.db",
       "type": "flask_app",
       "generator": "src/studio/studio_panel.py",
