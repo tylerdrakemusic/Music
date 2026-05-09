@@ -13,6 +13,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from radio.tjd_radio import (
+    RadioBroadcastV2,
     build_deduped_playlist,
     build_playlist,
     extract_artist,
@@ -207,3 +208,44 @@ class TestBuildDedupedPlaylist:
         )
         # Should deduplicate — only 1 track
         assert len(result) == 1
+
+
+# ---------------------------------------------------------------------------
+# _build_ffmpeg_cmd crossfade fix (fade_out must start at end of track)
+# ---------------------------------------------------------------------------
+class TestBuildFfmpegCmd:
+    """Verify the crossfade fade-out filter uses the correct start time."""
+
+    def _make_broadcast(self) -> RadioBroadcastV2:
+        return RadioBroadcastV2(playlist=[], bitrate=192, crossfade_sec=0.0)
+
+    def test_fade_out_start_uses_duration(self):
+        b = self._make_broadcast()
+        cmd = b._build_ffmpeg_cmd("song.mp3", fade_out=2.0, duration=180.0)
+        af_idx = cmd.index("-af")
+        filters = cmd[af_idx + 1]
+        # st should be 178s (180 - 2), NOT 0
+        assert "st=178.000" in filters
+        assert "t=out" in filters
+
+    def test_fade_out_not_added_without_duration(self):
+        """If duration is 0 (ffprobe unavailable), fade_out is skipped — no silent track."""
+        b = self._make_broadcast()
+        cmd = b._build_ffmpeg_cmd("song.mp3", fade_out=2.0, duration=0.0)
+        assert "-af" not in cmd  # no filter added when duration unknown
+
+    def test_fade_in_unaffected(self):
+        b = self._make_broadcast()
+        cmd = b._build_ffmpeg_cmd("song.mp3", fade_in=2.0, duration=0.0)
+        af_idx = cmd.index("-af")
+        filters = cmd[af_idx + 1]
+        assert "t=in" in filters
+        assert "st=0" in filters
+
+    def test_fade_out_clamps_to_zero(self):
+        """Track shorter than crossfade duration → st clamped to 0."""
+        b = self._make_broadcast()
+        cmd = b._build_ffmpeg_cmd("short.mp3", fade_out=5.0, duration=3.0)
+        af_idx = cmd.index("-af")
+        filters = cmd[af_idx + 1]
+        assert "st=0.000" in filters
