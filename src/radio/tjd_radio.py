@@ -33,11 +33,43 @@ from flask import Flask, Response, jsonify, render_template_string
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CATALOG_ROOT = PROJECT_ROOT / "catalog"
 BUMPER_DIR = CATALOG_ROOT / "bumpers"
+MUZIC_ROOT = Path("G:/Muzic")
+MASTERS_ROOT = CATALOG_ROOT / "masters"
 
 # ---------------------------------------------------------------------------
 # Playlist builder — scan catalog for playable audio
 # ---------------------------------------------------------------------------
 AUDIO_EXTS = {".mp3", ".wav", ".flac", ".ogg", ".m4a"}
+
+import re
+
+_RE_PITCH_SHIFT = re.compile(r'\([+-]\d+(\.\d+)?\s+steps?\)', re.IGNORECASE)
+_RE_BACKING = re.compile(r'\(Backing Track\s*[+-]', re.IGNORECASE)
+_RE_ROUGH_OPEN = re.compile(r'\(Rough', re.IGNORECASE)
+_RE_ROUGH_CLOSE = re.compile(r'Rough\)$', re.IGNORECASE)
+_RE_TUNED_VOX = re.compile(r'\(Tuned Vox', re.IGNORECASE)
+_RE_PREMASTER = re.compile(r'PreMaster', re.IGNORECASE)
+_RE_VOX_DOWN = re.compile(r'Vox Down', re.IGNORECASE)
+
+
+def is_filtered(stem: str) -> bool:
+    """Return True if the filename stem should be excluded from the playlist."""
+    return bool(
+        _RE_PITCH_SHIFT.search(stem)
+        or _RE_BACKING.search(stem)
+        or _RE_ROUGH_OPEN.search(stem)
+        or _RE_ROUGH_CLOSE.search(stem)
+        or _RE_TUNED_VOX.search(stem)
+        or _RE_PREMASTER.search(stem)
+        or _RE_VOX_DOWN.search(stem)
+    )
+
+
+def extract_artist(stem: str) -> str:
+    """Extract artist from 'Song Title - Artist Name' stem, defaulting to TJD."""
+    if " - " in stem:
+        return stem.split(" - ", 1)[1].strip()
+    return "Tyler James Drake"
 
 
 def build_playlist(roots: list[Path], shuffle: bool = True) -> list[dict]:
@@ -48,15 +80,64 @@ def build_playlist(roots: list[Path], shuffle: bool = True) -> list[dict]:
             continue
         for f in root.rglob("*"):
             if f.suffix.lower() in AUDIO_EXTS and f.stat().st_size > 10_000:
+                stem = f.stem.replace("$", " ").replace("_", " ").strip()
+                if is_filtered(stem):
+                    continue
                 tracks.append({
                     "path": str(f),
-                    "title": f.stem.replace("$", " ").replace("_", " ").strip(),
+                    "title": stem,
                     "album": f.parent.name,
+                    "artist": extract_artist(stem),
                     "format": f.suffix.lower().lstrip("."),
                 })
     if shuffle:
         random.shuffle(tracks)
     return tracks
+
+
+def _normalize_title(stem: str) -> str:
+    """Normalize a stem to a dedup key by stripping artist suffix and lowercasing."""
+    if " - " in stem:
+        return stem.split(" - ", 1)[0].strip().lower()
+    return stem.strip().lower()
+
+
+def build_deduped_playlist(
+    primary_roots: list[Path],
+    secondary_roots: list[Path],
+    shuffle: bool = True,
+) -> list[dict]:
+    """Build a playlist from primary and secondary roots, deduplicating by title.
+
+    Primary roots win on collision; secondary roots skip any track whose
+    normalized title already exists in the primary set.
+    """
+    primary_tracks = build_playlist(primary_roots, shuffle=False)
+    primary_titles: set[str] = {_normalize_title(t["title"]) for t in primary_tracks}
+
+    secondary_tracks = []
+    for root in secondary_roots:
+        if not root.exists():
+            continue
+        for f in root.rglob("*"):
+            if f.suffix.lower() in AUDIO_EXTS and f.stat().st_size > 10_000:
+                stem = f.stem.replace("$", " ").replace("_", " ").strip()
+                if is_filtered(stem):
+                    continue
+                if _normalize_title(stem) in primary_titles:
+                    continue
+                secondary_tracks.append({
+                    "path": str(f),
+                    "title": stem,
+                    "album": f.parent.name,
+                    "artist": extract_artist(stem),
+                    "format": f.suffix.lower().lstrip("."),
+                })
+
+    merged = primary_tracks + secondary_tracks
+    if shuffle:
+        random.shuffle(merged)
+    return merged
 
 
 # ---------------------------------------------------------------------------
@@ -677,7 +758,7 @@ async function pollMeta() {
     const r = await fetch('/api/now_playing');
     const d = await r.json();
     document.getElementById('trackTitle').textContent = d.title || 'Silence...';
-    document.getElementById('trackAlbum').textContent = d.album || '';
+    document.getElementById('trackAlbum').textContent = d.artist || d.album || '';
     document.getElementById('listeners').textContent = d.listeners;
     document.getElementById('totalTracks').textContent = d.total_tracks;
     const m = Math.floor(d.uptime_sec / 60);
@@ -753,11 +834,12 @@ def stream():
 @app.route("/api/now_playing")
 def now_playing():
     if broadcast is None:
-        return jsonify({"title": "Offline", "album": "", "listeners": 0})
+        return jsonify({"title": "Offline", "album": "", "artist": "", "listeners": 0})
     track = broadcast.now_playing
     return jsonify({
         "title": track["title"] if track else "Starting...",
         "album": track["album"] if track else "",
+        "artist": track.get("artist", "") if track else "",
         "format": track.get("format", "") if track else "",
         "listeners": broadcast.listener_count,
         "total_tracks": len(broadcast.playlist),
@@ -792,16 +874,28 @@ def main():
     parser.add_argument("--extra-dirs", nargs="*", default=[], help="Extra directories to scan for audio")
     args = parser.parse_args()
 
-    # Build playlist from EP catalog
-    scan_dirs = [
-        CATALOG_ROOT / "ep" / "Marigold",
-        CATALOG_ROOT / "ep" / "Get Out",
-        CATALOG_ROOT / "ep" / "What I do",
-    ]
-    for d in args.extra_dirs:
-        scan_dirs.append(Path(d))
+    # Build playlist — prefer G:\Muzic (full library) with masters as primary dedup anchor
+    masters_roots = [MASTERS_ROOT] if MASTERS_ROOT.exists() else []
 
-    playlist = build_playlist(scan_dirs)
+    if MUZIC_ROOT.exists():
+        secondary_roots = [MUZIC_ROOT]
+        for d in args.extra_dirs:
+            secondary_roots.append(Path(d))
+        playlist = build_deduped_playlist(
+            primary_roots=masters_roots,
+            secondary_roots=secondary_roots,
+        )
+    else:
+        print("[RADIO] WARNING: G:\\Muzic not available — falling back to catalog")
+        fallback_dirs = [
+            CATALOG_ROOT / "ep" / "Marigold",
+            CATALOG_ROOT / "ep" / "Get Out",
+            CATALOG_ROOT / "ep" / "What I do",
+        ] + masters_roots
+        for d in args.extra_dirs:
+            fallback_dirs.append(Path(d))
+        playlist = build_playlist([d for d in fallback_dirs if d.exists()])
+
     if not playlist:
         print("[RADIO] No audio files found in catalog. Exiting.")
         sys.exit(1)
