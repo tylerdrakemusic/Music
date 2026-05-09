@@ -36,6 +36,7 @@ _KEY_CATEGORY = {
     "microphone": "microphones",
     "audio_interface": "audio_interfaces",
     "studio_monitors": "monitors",
+    "pa_speakers": "pa_speakers",
     "headphones": "headphones",
     "midi_controller": "midi_controllers",
     "amplifier": "amplifiers",
