@@ -1,10 +1,11 @@
 # TJD Radio Phase alpha — Icecast2 + Liquidsoap
+set("init.allow_root", true)
 set("log.stdout", true)
 set("log.file", false)
 
 # Playlist entries include annotate:title/artist metadata for now-playing visibility.
-radio_tracks = playlist(mode="randomize", reload_mode="watch", "F:/❤Music/output/radio_phase_alpha/tyler_catalog_phase_alpha.liqlist")
-radio = smart_crossfade(fade_in=2.0, fade_out=2.0, radio_tracks)
+radio_tracks = playlist(mode="randomize", reload_mode="watch", "/mnt/f/❤Music/output/radio_phase_alpha/tyler_catalog_phase_alpha.liqlist")
+radio = mksafe(radio_tracks)
 
 output.icecast(
   %mp3(bitrate=192, samplerate=44100, stereo=true),

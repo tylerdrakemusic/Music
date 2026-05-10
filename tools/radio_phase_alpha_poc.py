@@ -30,6 +30,14 @@ def _escape_liquidsoap(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
+def _to_runtime_path(path: Path) -> str:
+    path_str = str(path).replace("\\", "/")
+    drive = path.drive.rstrip(":")
+    if drive and len(drive) == 1 and path.is_absolute():
+        return f"/mnt/{drive.lower()}{path_str[2:]}"
+    return path_str
+
+
 def iter_tyler_catalog_audio(project_root: Path) -> list[Path]:
     """Return deterministic list of Tyler-owned audio assets for Phase alpha."""
     roots = [project_root / "catalog" / "masters", project_root / "catalog" / "ep"]
@@ -53,21 +61,22 @@ def write_liquidsoap_playlist(audio_files: list[Path], playlist_path: Path) -> N
         stem = f.stem.replace("_", " ").replace("$", " ").strip()
         title = _escape_liquidsoap(extract_title_from_stem(stem))
         artist = _escape_liquidsoap(extract_artist_from_stem(stem))
-        path_str = _escape_liquidsoap(str(f).replace("\\", "/"))
+        path_str = _escape_liquidsoap(_to_runtime_path(f))
         lines.append(f'annotate:title="{title}",artist="{artist}":{path_str}')
     playlist_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_liquidsoap_config(playlist_path: Path, output_path: Path) -> None:
     """Write a minimal Liquidsoap config targeting local Icecast mount /stream."""
-    playlist_str = str(playlist_path).replace("\\", "/")
+    playlist_str = _to_runtime_path(playlist_path)
     content = f"""# TJD Radio Phase alpha — Icecast2 + Liquidsoap
+set(\"init.allow_root\", true)
 set(\"log.stdout\", true)
 set(\"log.file\", false)
 
 # Playlist entries include annotate:title/artist metadata for now-playing visibility.
 radio_tracks = playlist(mode=\"randomize\", reload_mode=\"watch\", \"{playlist_str}\")
-radio = smart_crossfade(fade_in=2.0, fade_out=2.0, radio_tracks)
+radio = mksafe(radio_tracks)
 
 output.icecast(
   %mp3(bitrate=192, samplerate=44100, stereo=true),
