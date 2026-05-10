@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TJD Radio Phase alpha Player</title>
+  <style>
+    body { font-family: Segoe UI, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 20px; }
+    h1 { margin-top: 0; }
+    .muted { color: #555; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>TJD Radio Phase alpha</h1>
+    <p class="muted">Icecast mount: http://localhost:8000/stream</p>
+    <audio controls preload="none" style="width:100%">
+      <source src="http://localhost:8000/stream" type="audio/mpeg">
+      Your browser does not support HTML5 audio playback.
+    </audio>
+  </div>
+</body>
+</html>
