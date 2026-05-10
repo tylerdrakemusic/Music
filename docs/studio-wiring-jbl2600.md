@@ -1,7 +1,18 @@
 # Studio Wiring: JBL 2600 Passive PA Speakers
 
 **Status:** Decision Locked — 2026-05-09  
-**Gear ID in heartmusic.db:** 27  
+**Gear ID in heartmusic.db:** 27
+
+---
+
+## 📦 Procurement Log
+
+| Item | Order # | Vendor | Date | Status | Notes |
+|------|---------|--------|------|--------|-------|
+| Mackie Big Knob Passive | MAC10881259 | shop.mackie.com | 2026-05-10 12:29 AM EST | Ordered | Monitor controller (A/B switching) |
+| Crown XLS 1002 | — | — | — | Pending | Power amplifier for JBL 2600 |
+| Speaker wire + connectors | — | — | — | Pending | Standard 14 AWG OFC, binding posts to spring clips |
+| TRS cables (Scarlett → Big Knob) | — | — | — | Pending | 1/4" TRS, 3–10 ft |  
 
 ---
 
@@ -115,14 +126,14 @@ All three options are well-matched for the JBL 2600 (300W/8Ω program).
 
 ## Next Steps (Purchasing Decision — Tyler's Call)
 
-1. **Priority:** Power amplifier (required — nothing works without it)
-   - Recommended: Crown XLS 1002 (~$299 new)
-2. **Cables needed:**
-   - 2× TRS 1/4" to XLR male, 10–20ft (~$20 total)
-   - 2× Speakon NL4 speaker cables, appropriate length (~$25 total)
-3. **Optional:** Rack case if mounting amp + interface together
+1. ✅ **Mackie Big Knob Passive** — ORDERED (MAC10881259, 2026-05-10)
+2. **Priority:** Power amplifier (Crown XLS 1002, ~$299 new)
+3. **Cables needed:**
+   - 2× TRS 1/4" male (Scarlett out) to TRS 1/4" male (Big Knob in), 3–10 ft (~$15 total)
+   - 2× 14 AWG OFC speaker wire (Crown binding posts to JBL spring clips), short runs (~$20 total)
+4. **Optional:** Rack case if mounting amp + interface together
 
-**Total estimated cost to go live:** ~$344 (Crown + cables)
+**Total remaining cost:** ~$319 (Crown + cables)
 
 ---
 
