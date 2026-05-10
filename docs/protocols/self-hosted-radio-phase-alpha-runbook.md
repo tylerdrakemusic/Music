@@ -70,17 +70,12 @@ Pass criteria:
 Run this while the stream is live:
 
 ```bash
-start_ts="$(date +%s)"
-end_ts="$((start_ts + 7200))"
-while [[ "$(date +%s)" -lt "${end_ts}" ]]; do
-  bash tools/radio_phase_alpha_wsl_verify.sh
-  sleep 300
-done
-echo "2-hour stability check complete"
+bash tools/radio_phase_alpha_wsl_stability.sh
 ```
 
 Store logs:
 - `output/radio_phase_alpha/liquidsoap.log`
+- `output/radio_phase_alpha/stability_monitor_*.log`
 - `/var/log/icecast2/access.log`
 - `/var/log/icecast2/error.log`
 
