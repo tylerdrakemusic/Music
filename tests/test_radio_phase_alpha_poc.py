@@ -9,6 +9,7 @@ from radio_phase_alpha_poc import (  # noqa: E402
     extract_artist_from_stem,
     extract_title_from_stem,
     iter_tyler_catalog_audio,
+    write_liquidsoap_config,
     write_liquidsoap_playlist,
 )
 
@@ -54,10 +55,24 @@ def test_iter_tyler_catalog_audio_filters_roots_and_size(tmp_path: Path) -> None
 def test_write_liquidsoap_playlist_contains_annotate_metadata(tmp_path: Path) -> None:
     audio = _make_audio_file(tmp_path, "My Song - Tyler James Drake.mp3")
     playlist = tmp_path / "playlist.liqlist"
+    audio_str = str(audio).replace("\\", "/")
+    expected_path = f"/mnt/{audio.drive.rstrip(':').lower()}{audio_str[2:]}"
 
     write_liquidsoap_playlist([audio], playlist)
     content = playlist.read_text(encoding="utf-8")
 
     assert "annotate:title=\"My Song\"" in content
     assert "artist=\"Tyler James Drake\"" in content
-    assert str(audio).replace("\\", "/") in content
+    assert expected_path in content
+
+
+def test_write_liquidsoap_config_uses_wsl_safe_paths(tmp_path: Path) -> None:
+    playlist = Path("F:/❤Music/output/radio_phase_alpha/tyler_catalog_phase_alpha.liqlist")
+    config_path = tmp_path / "tjd_radio_phase_alpha.liq"
+
+    write_liquidsoap_config(playlist, config_path)
+    content = config_path.read_text(encoding="utf-8")
+
+    assert 'set("init.allow_root", true)' in content
+    assert 'radio = mksafe(radio_tracks)' in content
+    assert '/mnt/f/❤Music/output/radio_phase_alpha/tyler_catalog_phase_alpha.liqlist' in content
