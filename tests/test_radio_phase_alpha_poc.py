@@ -12,6 +12,7 @@ from radio_phase_alpha_poc import (  # noqa: E402
     normalize_icecast_metadata,
     write_liquidsoap_config,
     write_liquidsoap_playlist,
+    _to_runtime_path,
 )
 
 
@@ -70,8 +71,7 @@ def test_iter_tyler_catalog_audio_filters_roots_and_size(tmp_path: Path) -> None
 def test_write_liquidsoap_playlist_contains_annotate_metadata(tmp_path: Path) -> None:
     audio = _make_audio_file(tmp_path, "My Song - Tyler James Drake.mp3")
     playlist = tmp_path / "playlist.liqlist"
-    audio_str = str(audio).replace("\\", "/")
-    expected_path = f"/mnt/{audio.drive.rstrip(':').lower()}{audio_str[2:]}"
+    expected_path = _to_runtime_path(audio)
 
     write_liquidsoap_playlist([audio], playlist)
     content = playlist.read_text(encoding="utf-8")
