@@ -16,8 +16,11 @@ from radio.tjd_radio import (
     RadioBroadcastV2,
     build_deduped_playlist,
     build_playlist,
+    canonical_radio_roots,
     extract_artist,
     is_filtered,
+    normalize_icecast_metadata,
+    prioritized_radio_roots,
 )
 
 
@@ -208,6 +211,64 @@ class TestBuildDedupedPlaylist:
         )
         # Should deduplicate — only 1 track
         assert len(result) == 1
+
+
+class TestCanonicalRadioRoots:
+    def test_includes_masters_and_ep_when_present(self, tmp_path: Path):
+        masters = tmp_path / "catalog" / "masters"
+        ep = tmp_path / "catalog" / "ep"
+        masters.mkdir(parents=True)
+        ep.mkdir(parents=True)
+
+        result = canonical_radio_roots(tmp_path)
+
+        assert result == [masters, ep]
+
+    def test_skips_missing_roots(self, tmp_path: Path):
+        masters = tmp_path / "catalog" / "masters"
+        masters.mkdir(parents=True)
+
+        result = canonical_radio_roots(tmp_path)
+
+        assert result == [masters]
+
+
+class TestPrioritizedRadioRoots:
+    def test_muzic_primary_and_catalog_fallback(self, tmp_path: Path):
+        muzic = tmp_path / "Muzic"
+        masters = tmp_path / "catalog" / "masters"
+        ep = tmp_path / "catalog" / "ep"
+        muzic.mkdir(parents=True)
+        masters.mkdir(parents=True)
+        ep.mkdir(parents=True)
+
+        primary, fallback = prioritized_radio_roots(tmp_path, muzic_root=muzic)
+
+        assert primary == [muzic]
+        assert fallback == [masters, ep]
+
+    def test_empty_primary_when_muzic_missing(self, tmp_path: Path):
+        masters = tmp_path / "catalog" / "masters"
+        masters.mkdir(parents=True)
+
+        primary, fallback = prioritized_radio_roots(tmp_path, muzic_root=tmp_path / "Muzic")
+
+        assert primary == []
+        assert fallback == [masters]
+
+
+class TestNormalizeIcecastMetadata:
+    def test_splits_combined_song_field(self):
+        title, artist = normalize_icecast_metadata("Tyler James Drake - Abbey Master", "")
+
+        assert title == "Abbey Master"
+        assert artist == "Tyler James Drake"
+
+    def test_preserves_explicit_artist(self):
+        title, artist = normalize_icecast_metadata("Abbey Master", "Tyler James Drake")
+
+        assert title == "Abbey Master"
+        assert artist == "Tyler James Drake"
 
 
 # ---------------------------------------------------------------------------

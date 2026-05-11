@@ -22,10 +22,12 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Optional
 
-from flask import Flask, Response, jsonify, render_template_string
+from flask import Flask, Response, jsonify, redirect, render_template_string
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -35,6 +37,7 @@ CATALOG_ROOT = PROJECT_ROOT / "catalog"
 BUMPER_DIR = CATALOG_ROOT / "bumpers"
 MUZIC_ROOT = Path("G:/Muzic")
 MASTERS_ROOT = CATALOG_ROOT / "masters"
+EP_ROOT = CATALOG_ROOT / "ep"
 
 # ---------------------------------------------------------------------------
 # Playlist builder — scan catalog for playable audio
@@ -70,6 +73,44 @@ def extract_artist(stem: str) -> str:
     if " - " in stem:
         return stem.split(" - ", 1)[1].strip()
     return "Tyler James Drake"
+
+
+def canonical_radio_roots(project_root: Path) -> list[Path]:
+    """Return the canonical Tyler-owned radio catalog roots used across radio surfaces."""
+    roots = [project_root / "catalog" / "masters", project_root / "catalog" / "ep"]
+    return [root for root in roots if root.exists()]
+
+
+def prioritized_radio_roots(project_root: Path, muzic_root: Path = MUZIC_ROOT) -> tuple[list[Path], list[Path]]:
+    """Return (primary, fallback) roots where Muzic is primary and Tyler catalog is fallback."""
+    primary = [muzic_root] if muzic_root.exists() else []
+    fallback = canonical_radio_roots(project_root)
+    return primary, fallback
+
+
+def normalize_icecast_metadata(title: str, artist: str) -> tuple[str, str]:
+    """Split combined ICY song metadata into title/artist when artist is absent."""
+    clean_title = title.strip()
+    clean_artist = artist.strip()
+    if clean_artist or " - " not in clean_title:
+        return clean_title, clean_artist
+
+    inferred_artist, inferred_title = clean_title.split(" - ", 1)
+    return inferred_title.strip(), inferred_artist.strip()
+
+
+def fetch_icecast_source(status_url: str, timeout_seconds: float = 3.0) -> dict:
+    """Fetch and parse the active source block from Icecast status-json.xsl."""
+    try:
+        with urllib.request.urlopen(status_url, timeout=timeout_seconds) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, UnicodeDecodeError):
+        return {}
+
+    source = payload.get("icestats", {}).get("source")
+    if isinstance(source, list):
+        return source[0] if source else {}
+    return source or {}
 
 
 def build_playlist(roots: list[Path], shuffle: bool = True) -> list[dict]:
@@ -811,6 +852,10 @@ pollMeta();
 # ---------------------------------------------------------------------------
 app = Flask(__name__)
 broadcast: Optional[RadioBroadcastV2] = None
+active_backend = "icecast"
+icecast_stream_url = "http://127.0.0.1:8000/stream"
+icecast_status_url = "http://127.0.0.1:8000/status-json.xsl"
+playlist_snapshot: list[dict] = []
 
 
 @app.route("/")
@@ -821,6 +866,9 @@ def index():
 @app.route("/stream")
 def stream():
     """MP3 audio stream endpoint — each connection gets a listener buffer."""
+    if active_backend == "icecast":
+        return redirect(icecast_stream_url, code=302)
+
     if broadcast is None:
         return "Radio not started", 503
 
@@ -854,6 +902,25 @@ def stream():
 
 @app.route("/api/now_playing")
 def now_playing():
+    if active_backend == "icecast":
+        source = fetch_icecast_source(icecast_status_url)
+        title, artist = normalize_icecast_metadata(
+            str(source.get("title", "")),
+            str(source.get("artist", "")),
+        )
+        listeners = int(source.get("listeners", 0) or 0)
+        return jsonify({
+            "title": title or "Starting...",
+            "album": "",
+            "artist": artist,
+            "format": "icecast-mp3",
+            "listeners": listeners,
+            "total_tracks": len(playlist_snapshot),
+            "uptime_sec": 0,
+            "elapsed_sec": 0,
+            "history": [],
+        })
+
     if broadcast is None:
         return jsonify({"title": "Offline", "album": "", "artist": "", "listeners": 0})
     track = broadcast.now_playing
@@ -872,6 +939,12 @@ def now_playing():
 
 @app.route("/api/playlist")
 def playlist_api():
+    if active_backend == "icecast":
+        return jsonify([
+            {"title": t.get("title", ""), "album": t.get("album", ""), "format": t.get("format", "")}
+            for t in playlist_snapshot
+        ])
+
     if broadcast is None:
         return jsonify([])
     return jsonify([
@@ -884,10 +957,13 @@ def playlist_api():
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    global broadcast
+    global active_backend, broadcast, icecast_status_url, icecast_stream_url, playlist_snapshot
 
     parser = argparse.ArgumentParser(description="TJD Radio — Self-hosted AI Radio Station")
     parser.add_argument("--port", type=int, default=8100, help="HTTP port (default 8100)")
+    parser.add_argument("--backend", choices=["icecast", "local"], default="icecast", help="Runtime backend (default icecast)")
+    parser.add_argument("--icecast-stream-url", type=str, default="http://127.0.0.1:8000/stream", help="Icecast stream URL used in icecast backend mode")
+    parser.add_argument("--icecast-status-url", type=str, default="http://127.0.0.1:8000/status-json.xsl", help="Icecast status JSON URL used in icecast backend mode")
     parser.add_argument("--bitrate", type=int, default=192, help="Stream bitrate kbps (default 192)")
     parser.add_argument("--crossfade", type=float, default=2.0, help="Crossfade seconds between tracks (default 2.0, 0=off)")
     parser.add_argument("--bumper-dir", type=str, default=str(BUMPER_DIR), help="Directory with station-ID bumper audio")
@@ -895,29 +971,25 @@ def main():
     parser.add_argument("--extra-dirs", nargs="*", default=[], help="Extra directories to scan for audio")
     args = parser.parse_args()
 
-    # Build playlist — prefer G:\Muzic (full library) with masters as primary dedup anchor
-    masters_roots = [MASTERS_ROOT] if MASTERS_ROOT.exists() else []
+    active_backend = args.backend
+    icecast_stream_url = args.icecast_stream_url
+    icecast_status_url = args.icecast_status_url
 
-    if MUZIC_ROOT.exists():
-        secondary_roots = [MUZIC_ROOT]
-        for d in args.extra_dirs:
-            secondary_roots.append(Path(d))
-        playlist = build_deduped_playlist(
-            primary_roots=masters_roots,
-            secondary_roots=secondary_roots,
-        )
+    primary_roots, fallback_roots = prioritized_radio_roots(PROJECT_ROOT)
+    for d in args.extra_dirs:
+        extra_root = Path(d)
+        if extra_root.exists():
+            fallback_roots.append(extra_root)
+
+    if primary_roots:
+        playlist = build_deduped_playlist(primary_roots=primary_roots, secondary_roots=fallback_roots)
     else:
-        print("[RADIO] WARNING: G:\\Muzic not available — falling back to catalog")
-        fallback_dirs = [
-            CATALOG_ROOT / "ep" / "Marigold",
-            CATALOG_ROOT / "ep" / "Get Out",
-            CATALOG_ROOT / "ep" / "What I do",
-        ] + masters_roots
-        for d in args.extra_dirs:
-            fallback_dirs.append(Path(d))
-        playlist = build_playlist([d for d in fallback_dirs if d.exists()])
+        print("[RADIO] WARNING: Muzic root missing; using Tyler-owned catalog fallback only")
+        playlist = build_playlist(fallback_roots)
 
-    if not playlist:
+    playlist_snapshot = playlist
+
+    if not playlist and active_backend == "local":
         print("[RADIO] No audio files found in catalog. Exiting.")
         sys.exit(1)
 
@@ -926,28 +998,34 @@ def main():
     if mp3s:
         playlist = mp3s
 
-    # Load bumpers / station IDs
-    bumpers = load_bumpers(Path(args.bumper_dir))
-    if bumpers:
-        print(f"[RADIO] Loaded {len(bumpers)} bumper(s):")
-        for b in bumpers:
-            print(f"  🎙 {b['title']}")
+    if active_backend == "local":
+        # Load bumpers / station IDs
+        bumpers = load_bumpers(Path(args.bumper_dir))
+        if bumpers:
+            print(f"[RADIO] Loaded {len(bumpers)} bumper(s):")
+            for b in bumpers:
+                print(f"  🎙 {b['title']}")
 
-    print(f"[RADIO] Loaded {len(playlist)} tracks:")
-    for t in playlist:
-        print(f"  · {t['title']} ({t['album']}, {t['format']})")
+        print(f"[RADIO] Loaded {len(playlist)} tracks for local broadcaster:")
+        for t in playlist:
+            print(f"  · {t['title']} ({t['album']}, {t['format']})")
 
-    broadcast = RadioBroadcastV2(
-        playlist,
-        bitrate=args.bitrate,
-        crossfade_sec=args.crossfade,
-        bumpers=bumpers,
-        bumper_every=args.bumper_every,
-    )
+        broadcast = RadioBroadcastV2(
+            playlist,
+            bitrate=args.bitrate,
+            crossfade_sec=args.crossfade,
+            bumpers=bumpers,
+            bumper_every=args.bumper_every,
+        )
 
-    # Start broadcast in background thread
-    radio_thread = threading.Thread(target=broadcast.run, daemon=True)
-    radio_thread.start()
+        # Start broadcast in background thread
+        radio_thread = threading.Thread(target=broadcast.run, daemon=True)
+        radio_thread.start()
+    else:
+        print(f"[RADIO] Backend: icecast (default)")
+        print(f"[RADIO] Icecast stream URL: {icecast_stream_url}")
+        print(f"[RADIO] Icecast status URL: {icecast_status_url}")
+        print(f"[RADIO] Source catalog snapshot count: {len(playlist_snapshot)}")
 
     print(f"\n🎵 TJD Radio → http://localhost:{args.port}")
     print(f"   Stream  → http://localhost:{args.port}/stream")

@@ -38,6 +38,10 @@ for _ in $(seq 1 "${samples}"); do
 import json
 import sys
 
+sys.path.insert(0, "/mnt/f/❤Music/tools")
+
+from radio_phase_alpha_poc import normalize_icecast_metadata
+
 payload = json.loads(sys.argv[1])
 sample_time = sys.argv[2]
 source = payload.get("icestats", {}).get("source")
@@ -46,9 +50,14 @@ if isinstance(source, list):
 if not source:
     raise SystemExit("No active source found in Icecast status JSON")
 
+title, artist = normalize_icecast_metadata(
+    source.get('title', ''),
+    source.get('artist', ''),
+)
+
 print(
     f"{sample_time} listeners={source.get('listeners', 0)} "
-    f"title={source.get('title', '')} artist={source.get('artist', '')}"
+    f"title={title} artist={artist}"
 )
 PY
 

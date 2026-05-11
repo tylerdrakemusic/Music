@@ -8,6 +8,8 @@ This runbook implements Phase alpha from IP_STRATEGY.md Section 7 using Icecast 
 - Single mount stream: `/stream`
 - Browser playback validation page
 - Metadata verification through Icecast status endpoint
+- Local panel default backend: Icecast (`src/radio/tjd_radio.py --backend icecast`)
+- Catalog policy for local panel source snapshot: Muzic primary, Tyler-owned roots fallback
 
 ## 1. Setup (one-time per environment)
 From WSL in the ❤Music project root:
@@ -90,6 +92,29 @@ Windows wrapper:
 ```powershell
 ./tools/radio_phase_alpha_stop.ps1
 ```
+
+## 7. Local panel integration (Icecast-first)
+
+Start the local panel with Icecast as the default backend:
+
+```powershell
+C:\G\python.exe src/radio/tjd_radio.py --backend icecast --port 8100
+```
+
+Optional explicit fallback mode (legacy local broadcaster):
+
+```powershell
+C:\G\python.exe src/radio/tjd_radio.py --backend local --port 8100
+```
+
+Icecast-default expected behavior:
+- `http://localhost:8100/stream` redirects to active Icecast mount
+- `http://localhost:8100/api/now_playing` proxies from Icecast status JSON and normalizes artist/title
+- `http://localhost:8100/api/playlist` reflects the panel's source snapshot (Muzic primary + Tyler fallback)
+
+Public interfacing note:
+- Icecast is only internet-public if host/network exposure is explicitly configured.
+- Localhost-only operation keeps stream local to the machine.
 
 ## Notes
 - This phase intentionally excludes quantum integration (Phase beta+).

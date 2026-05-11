@@ -26,6 +26,17 @@ def extract_title_from_stem(stem: str) -> str:
     return stem.strip()
 
 
+def normalize_icecast_metadata(title: str, artist: str) -> tuple[str, str]:
+    """Normalize Icecast metadata when MP3/ICY collapses artist and title into one field."""
+    clean_title = title.strip()
+    clean_artist = artist.strip()
+    if clean_artist or " - " not in clean_title:
+        return clean_title, clean_artist
+
+    inferred_artist, inferred_title = clean_title.split(" - ", 1)
+    return inferred_title.strip(), inferred_artist.strip()
+
+
 def _escape_liquidsoap(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
