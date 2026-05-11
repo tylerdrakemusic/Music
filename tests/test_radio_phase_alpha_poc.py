@@ -9,6 +9,7 @@ from radio_phase_alpha_poc import (  # noqa: E402
     extract_artist_from_stem,
     extract_title_from_stem,
     iter_tyler_catalog_audio,
+    normalize_icecast_metadata,
     write_liquidsoap_config,
     write_liquidsoap_playlist,
 )
@@ -31,6 +32,20 @@ def test_extract_artist_from_stem_default() -> None:
 
 def test_extract_title_from_stem_with_suffix() -> None:
     assert extract_title_from_stem("Song Name - Tyler James Drake") == "Song Name"
+
+
+def test_normalize_icecast_metadata_splits_combined_song_field() -> None:
+    title, artist = normalize_icecast_metadata("Tyler James Drake - Abbey Master", "")
+
+    assert title == "Abbey Master"
+    assert artist == "Tyler James Drake"
+
+
+def test_normalize_icecast_metadata_preserves_explicit_artist() -> None:
+    title, artist = normalize_icecast_metadata("Abbey Master", "Tyler James Drake")
+
+    assert title == "Abbey Master"
+    assert artist == "Tyler James Drake"
 
 
 def test_iter_tyler_catalog_audio_filters_roots_and_size(tmp_path: Path) -> None:
