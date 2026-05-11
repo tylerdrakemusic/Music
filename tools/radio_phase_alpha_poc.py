@@ -42,10 +42,15 @@ def _escape_liquidsoap(value: str) -> str:
 
 
 def _to_runtime_path(path: Path) -> str:
+    """Convert path to Liquidsoap runtime format (WSL /mnt paths or native)."""
     path_str = str(path).replace("\\", "/")
-    drive = path.drive.rstrip(":")
-    if drive and len(drive) == 1 and path.is_absolute():
-        return f"/mnt/{drive.lower()}{path_str[2:]}"
+    
+    # Check for Windows drive letter in path string (works on any OS for cross-platform paths)
+    if len(path_str) >= 2 and path_str[1] == ":" and path_str[0].isalpha():
+        # Windows path like "F:/Music/..." -> "/mnt/f/Music/..."
+        drive = path_str[0].lower()
+        return f"/mnt/{drive}{path_str[2:]}"
+    
     return path_str
 
 
