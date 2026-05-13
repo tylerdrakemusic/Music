@@ -14,9 +14,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from radio.tjd_radio import (
     RadioBroadcastV2,
+    RadioBroadcast,
     build_deduped_playlist,
     build_playlist,
     canonical_radio_roots,
+    compute_recent_variance,
     extract_artist,
     is_filtered,
     normalize_icecast_metadata,
@@ -310,3 +312,66 @@ class TestBuildFfmpegCmd:
         af_idx = cmd.index("-af")
         filters = cmd[af_idx + 1]
         assert "st=0.000" in filters
+
+
+def _mk_track(name: str) -> dict:
+    return {
+        "path": f"/{name}.mp3",
+        "title": name,
+        "album": "test",
+        "artist": "Tyler James Drake",
+        "format": "mp3",
+    }
+
+
+class TestNoRepeatAcrossShuffleBoundary:
+    def test_v1_avoids_immediate_repeat_after_loop(self, monkeypatch: pytest.MonkeyPatch):
+        playlist = [_mk_track("A"), _mk_track("B"), _mk_track("C")]
+        b = RadioBroadcast(playlist=playlist, prefer_quantum_variance=False)
+
+        # Force reshuffle to place C at the front, then verify guard swaps it away.
+        def fake_shuffle(items: list[dict]) -> None:
+            items[:] = [items[2], items[0], items[1]]
+
+        monkeypatch.setattr("radio.tjd_radio.random.shuffle", fake_shuffle)
+        monkeypatch.setattr("radio.tjd_radio.random.randrange", lambda a, b: 1)
+
+        assert b._next_track()["title"] == "A"
+        assert b._next_track()["title"] == "B"
+        assert b._next_track()["title"] == "C"
+
+        next_track = b._next_track()
+        assert next_track["title"] != "C"
+
+    def test_v2_avoids_immediate_repeat_after_loop(self, monkeypatch: pytest.MonkeyPatch):
+        playlist = [_mk_track("A"), _mk_track("B"), _mk_track("C")]
+        b = RadioBroadcastV2(playlist=playlist, prefer_quantum_variance=False)
+
+        def fake_shuffle(items: list[dict]) -> None:
+            items[:] = [items[2], items[0], items[1]]
+
+        monkeypatch.setattr("radio.tjd_radio.random.shuffle", fake_shuffle)
+        monkeypatch.setattr("radio.tjd_radio.random.randrange", lambda a, b: 1)
+
+        assert b._next_track()["title"] == "A"
+        assert b._next_track()["title"] == "B"
+        assert b._next_track()["title"] == "C"
+
+        next_track = b._next_track()
+        assert next_track["title"] != "C"
+
+
+class TestVarianceMetrics:
+    def test_compute_recent_variance_detects_repeats(self):
+        history = [
+            {"title": "A"},
+            {"title": "A"},
+            {"title": "B"},
+            {"title": "C"},
+        ]
+        metrics = compute_recent_variance(history)
+
+        assert metrics["window_size"] == 4
+        assert metrics["unique_titles"] == 3
+        assert metrics["repeat_rate"] == pytest.approx(1 / 3, rel=1e-6)
+        assert metrics["entropy_bits"] > 0

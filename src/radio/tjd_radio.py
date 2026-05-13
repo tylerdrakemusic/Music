@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import math
 import os
 import random
 import subprocess
@@ -33,11 +34,25 @@ from flask import Flask, Response, jsonify, redirect, render_template_string
 # Paths
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+WORKSPACE_ROOT = PROJECT_ROOT.parent
 CATALOG_ROOT = PROJECT_ROOT / "catalog"
 BUMPER_DIR = CATALOG_ROOT / "bumpers"
 MUZIC_ROOT = Path("G:/Muzic")
 MASTERS_ROOT = CATALOG_ROOT / "masters"
 EP_ROOT = CATALOG_ROOT / "ep"
+
+# Optional quantum entropy integration (falls back to classical randomness).
+_Q_SHIM = WORKSPACE_ROOT / "quantum_rt.py"
+if _Q_SHIM.exists() and str(WORKSPACE_ROOT) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_ROOT))
+
+try:
+    from quantum_rt import qRax, quuffle
+    HAS_QUANTUM_ENTROPY = True
+except Exception:
+    HAS_QUANTUM_ENTROPY = False
+    qRax = None
+    quuffle = None
 
 # ---------------------------------------------------------------------------
 # Playlist builder — scan catalog for playable audio
@@ -132,7 +147,7 @@ def build_playlist(roots: list[Path], shuffle: bool = True) -> list[dict]:
                     "format": f.suffix.lower().lstrip("."),
                 })
     if shuffle:
-        random.shuffle(tracks)
+        _shuffle_tracks_with_variance(tracks, prefer_quantum=False)
     return tracks
 
 
@@ -177,8 +192,67 @@ def build_deduped_playlist(
 
     merged = primary_tracks + secondary_tracks
     if shuffle:
-        random.shuffle(merged)
+        _shuffle_tracks_with_variance(merged, prefer_quantum=False)
     return merged
+
+
+def _same_track(a: Optional[dict], b: Optional[dict]) -> bool:
+    """Return True if both track dictionaries resolve to the same audio path."""
+    if not a or not b:
+        return False
+    return a.get("path") == b.get("path")
+
+
+def _shuffle_tracks_with_variance(tracks: list[dict], prefer_quantum: bool = True) -> str:
+    """Shuffle tracks and return the entropy source used: 'quantum' or 'classical'."""
+    if prefer_quantum and HAS_QUANTUM_ENTROPY and quuffle is not None:
+        quuffle(tracks)
+        return "quantum"
+    random.shuffle(tracks)
+    return "classical"
+
+
+def _prevent_boundary_repeat(tracks: list[dict], last_track: Optional[dict]) -> None:
+    """Avoid immediate repeat between previous cycle tail and next cycle head."""
+    if len(tracks) <= 1 or not last_track:
+        return
+    if not _same_track(tracks[0], last_track):
+        return
+
+    if HAS_QUANTUM_ENTROPY and qRax is not None:
+        swap_index = qRax(1, len(tracks) - 1)
+    else:
+        swap_index = random.randrange(1, len(tracks))
+    tracks[0], tracks[swap_index] = tracks[swap_index], tracks[0]
+
+
+def compute_recent_variance(history: list[dict]) -> dict:
+    """Compute lightweight repeat/entropy metrics for recent playback history."""
+    titles = [h.get("title", "") for h in history if h.get("title")]
+    total = len(titles)
+    if total == 0:
+        return {"window_size": 0, "repeat_rate": 0.0, "entropy_bits": 0.0, "unique_titles": 0}
+
+    immediate_repeats = 0
+    for idx in range(1, total):
+        if titles[idx] == titles[idx - 1]:
+            immediate_repeats += 1
+
+    counts: dict[str, int] = {}
+    for title in titles:
+        counts[title] = counts.get(title, 0) + 1
+
+    entropy_bits = 0.0
+    for count in counts.values():
+        p = count / total
+        entropy_bits += -(p * math.log2(p))
+
+    return {
+        "window_size": total,
+        "repeat_rate": (immediate_repeats / max(total - 1, 1)),
+        "entropy_bits": entropy_bits,
+        "unique_titles": len(counts),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -187,15 +261,18 @@ def build_deduped_playlist(
 class RadioBroadcast:
     """Manages a continuous MP3 stream from a playlist using ffmpeg."""
 
-    def __init__(self, playlist: list[dict], bitrate: int = 192):
+    def __init__(self, playlist: list[dict], bitrate: int = 192, prefer_quantum_variance: bool = True):
         self.playlist = playlist
         self.bitrate = bitrate
+        self.prefer_quantum_variance = prefer_quantum_variance
         self._lock = threading.Lock()
         self._listeners: list[io.BytesIO] = []
         self._current_track: Optional[dict] = None
         self._track_index = 0
         self._running = False
         self._history: list[dict] = []
+        self._last_track: Optional[dict] = None
+        self._variance_source = "classical"
 
     @property
     def now_playing(self) -> Optional[dict]:
@@ -209,6 +286,10 @@ class RadioBroadcast:
     @property
     def history(self) -> list[dict]:
         return list(self._history[-20:])
+
+    @property
+    def variance_source(self) -> str:
+        return self._variance_source
 
     def add_listener(self) -> io.BytesIO:
         buf = io.BytesIO()
@@ -225,11 +306,16 @@ class RadioBroadcast:
         if not self.playlist:
             raise RuntimeError("Empty playlist")
         track = self.playlist[self._track_index % len(self.playlist)]
+        self._last_track = track
         self._track_index += 1
         # Re-shuffle when we loop
         if self._track_index >= len(self.playlist):
             self._track_index = 0
-            random.shuffle(self.playlist)
+            self._variance_source = _shuffle_tracks_with_variance(
+                self.playlist,
+                prefer_quantum=self.prefer_quantum_variance,
+            )
+            _prevent_boundary_repeat(self.playlist, self._last_track)
         return track
 
     def _broadcast_chunk(self, data: bytes) -> None:
@@ -361,9 +447,10 @@ class RadioBroadcastV2:
 
     def __init__(self, playlist: list[dict], bitrate: int = 192,
                  crossfade_sec: float = 0.0, bumpers: list[dict] | None = None,
-                 bumper_every: int = 3):
+                 bumper_every: int = 3, prefer_quantum_variance: bool = True):
         self.playlist = playlist
         self.bitrate = bitrate
+        self.prefer_quantum_variance = prefer_quantum_variance
         self.crossfade_sec = crossfade_sec
         self.bumpers = bumpers or []
         self.bumper_every = bumper_every  # play a bumper every N tracks
@@ -374,6 +461,8 @@ class RadioBroadcastV2:
         self._songs_since_bumper = 0
         self._running = False
         self._history: list[dict] = []
+        self._last_track: Optional[dict] = None
+        self._variance_source = "classical"
         self._started_at: Optional[float] = None
         self._track_started: Optional[float] = None
 
@@ -389,6 +478,10 @@ class RadioBroadcastV2:
     @property
     def history(self) -> list[dict]:
         return list(self._history[-20:])
+
+    @property
+    def variance_source(self) -> str:
+        return self._variance_source
 
     @property
     def uptime_sec(self) -> float:
@@ -418,10 +511,15 @@ class RadioBroadcastV2:
         if not self.playlist:
             raise RuntimeError("Empty playlist")
         track = self.playlist[self._track_index % len(self.playlist)]
+        self._last_track = track
         self._track_index += 1
         if self._track_index >= len(self.playlist):
             self._track_index = 0
-            random.shuffle(self.playlist)
+            self._variance_source = _shuffle_tracks_with_variance(
+                self.playlist,
+                prefer_quantum=self.prefer_quantum_variance,
+            )
+            _prevent_boundary_repeat(self.playlist, self._last_track)
         return track
 
     def _broadcast_chunk(self, data: bytes) -> None:
@@ -929,11 +1027,13 @@ def now_playing():
         "album": track["album"] if track else "",
         "artist": track.get("artist", "") if track else "",
         "format": track.get("format", "") if track else "",
+        "variance_source": broadcast.variance_source,
         "listeners": broadcast.listener_count,
         "total_tracks": len(broadcast.playlist),
         "uptime_sec": broadcast.uptime_sec,
         "elapsed_sec": broadcast.track_elapsed_sec,
         "history": broadcast.history,
+        "variance_metrics": compute_recent_variance(broadcast.history),
     })
 
 
@@ -968,6 +1068,12 @@ def main():
     parser.add_argument("--crossfade", type=float, default=2.0, help="Crossfade seconds between tracks (default 2.0, 0=off)")
     parser.add_argument("--bumper-dir", type=str, default=str(BUMPER_DIR), help="Directory with station-ID bumper audio")
     parser.add_argument("--bumper-every", type=int, default=3, help="Play a bumper every N tracks (default 3)")
+    parser.add_argument(
+        "--variance-source",
+        choices=["auto", "classical", "quantum"],
+        default="auto",
+        help="Shuffle entropy source: auto (default), classical only, or quantum-preferred",
+    )
     parser.add_argument("--extra-dirs", nargs="*", default=[], help="Extra directories to scan for audio")
     args = parser.parse_args()
 
@@ -999,6 +1105,10 @@ def main():
         playlist = mp3s
 
     if active_backend == "local":
+        prefer_quantum_variance = args.variance_source in {"auto", "quantum"}
+        if args.variance_source == "quantum" and not HAS_QUANTUM_ENTROPY:
+            print("[RADIO] WARNING: Quantum entropy requested, but quantum_rt is unavailable. Falling back to classical shuffle.")
+
         # Load bumpers / station IDs
         bumpers = load_bumpers(Path(args.bumper_dir))
         if bumpers:
@@ -1016,6 +1126,7 @@ def main():
             crossfade_sec=args.crossfade,
             bumpers=bumpers,
             bumper_every=args.bumper_every,
+            prefer_quantum_variance=prefer_quantum_variance,
         )
 
         # Start broadcast in background thread
