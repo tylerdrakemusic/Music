@@ -555,6 +555,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <button class="tab-btn" onclick="switchTab('signatures', this)">🔐 Release Signatures</button>
   <button class="tab-btn" onclick="switchTab('release-ops', this)">📡 Release Ops</button>
   <button class="tab-btn" onclick="switchTab('radio', this)">📻 Radio</button>
+  <a href="/rhymes" class="tab-btn" style="text-decoration:none;">🎼 Rhyme Grouper</a>
 </div>
 
 <div class="main">
