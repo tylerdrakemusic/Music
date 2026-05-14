@@ -17,14 +17,32 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template_string, request, send_file
+from flask import Flask, jsonify, render_template, render_template_string, request, send_file
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from utils.init_db import get_connection
+from analysis.rhyme_utils import build_suffix_map, get_phonetic_group, last_word
 
 CATALOG_ROOT = Path(__file__).resolve().parent.parent.parent / "catalog"
 
-app = Flask(__name__)
+# ── Ollama (optional) ─────────────────────────────────────────────────────────
+try:
+    import os as _os
+    _ai_root = None
+    for _d in _os.listdir("f:\\"):
+        if "AI" in _d:
+            _ai_root = Path("f:\\") / _d
+            break
+    if _ai_root:
+        sys.path.insert(0, str(_ai_root))
+        from src.integrations.ollama.client import OllamaClient as _OllamaClient
+        _OLLAMA_AVAILABLE = True
+    else:
+        _OLLAMA_AVAILABLE = False
+except Exception:
+    _OLLAMA_AVAILABLE = False
+
+app = Flask(__name__, template_folder="templates")
 
 # ── HTML Template ─────────────────────────────────────────────────────────────
 
@@ -537,6 +555,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <button class="tab-btn" onclick="switchTab('signatures', this)">🔐 Release Signatures</button>
   <button class="tab-btn" onclick="switchTab('release-ops', this)">📡 Release Ops</button>
   <button class="tab-btn" onclick="switchTab('radio', this)">📻 Radio</button>
+  <a href="/rhymes" class="tab-btn" style="text-decoration:none;">🎼 Rhyme Grouper</a>
 </div>
 
 <div class="main">
@@ -1635,6 +1654,340 @@ def api_delete_track(track_id: int):
         conn.commit()
 
     return jsonify({"ok": True, "deleted_id": track_id})
+
+
+# ── Rhyme Grouper helpers ──────────────────────────────────────────────────────
+
+_VAULT_SCHEMA = """
+PRAGMA foreign_keys = ON;
+CREATE TABLE IF NOT EXISTS vault_lines (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    line       TEXT NOT NULL UNIQUE,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS phonetic_groups (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    suffixes TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS vault_line_groups (
+    line_id  INTEGER REFERENCES vault_lines(id) ON DELETE CASCADE,
+    group_id INTEGER REFERENCES phonetic_groups(id) ON DELETE CASCADE,
+    PRIMARY KEY (line_id, group_id)
+);
+"""
+
+
+def _ensure_vault_schema() -> None:
+    """Create vault tables if they don't already exist."""
+    with get_connection() as conn:
+        conn.executescript(_VAULT_SCHEMA)
+        conn.commit()
+
+
+def _load_phonetics() -> tuple[list[list[str]], dict[str, int]]:
+    """Load all phonetic groups from DB and build the suffix map.
+
+    Returns:
+        Tuple of (phonetics list, suffix_map dict).
+    """
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT id, suffixes FROM phonetic_groups ORDER BY id"
+        ).fetchall()
+
+    phonetics: list[list[str]] = []
+    group_db_ids: list[int] = []
+    for row_id, sfx_json in rows:
+        try:
+            slist = json.loads(sfx_json)
+        except (json.JSONDecodeError, TypeError):
+            slist = []
+        phonetics.append(slist)
+        group_db_ids.append(row_id)
+
+    suffix_map = build_suffix_map(phonetics)
+    # Remap: suffix → DB row id (not list index)
+    db_suffix_map: dict[str, int] = {}
+    for idx, slist in enumerate(phonetics):
+        for s in slist:
+            if isinstance(s, str) and s.strip():
+                db_suffix_map[s.strip().lower()] = group_db_ids[idx]
+
+    return phonetics, db_suffix_map
+
+
+def _match_line_to_db_groups(
+    line: str, db_suffix_map: dict[str, int]
+) -> list[int]:
+    """Return DB group IDs that match the last word of a lyric line."""
+    word = last_word(line)
+    if not word:
+        return []
+    # Try suffix lengths 2–9
+    for length in range(2, min(len(word) + 1, 10)):
+        sfx = word[-length:]
+        if sfx in db_suffix_map:
+            return [db_suffix_map[sfx]]
+    # Try singular form
+    if word.endswith("s") and len(word) > 1:
+        singular = word[:-1]
+        for length in range(2, min(len(singular) + 1, 10)):
+            sfx = singular[-length:]
+            if sfx in db_suffix_map:
+                return [db_suffix_map[sfx]]
+    return []
+
+
+def _get_vault_stats() -> dict:
+    """Return counts for stats pills."""
+    with get_connection() as conn:
+        total_lines = (
+            conn.execute("SELECT COUNT(*) FROM vault_lines").fetchone()[0]
+        )
+        total_groups = (
+            conn.execute("SELECT COUNT(*) FROM phonetic_groups").fetchone()[0]
+        )
+        matched_lines = conn.execute(
+            "SELECT COUNT(DISTINCT line_id) FROM vault_line_groups"
+        ).fetchone()[0]
+    return {
+        "total_lines": total_lines,
+        "total_groups": total_groups,
+        "matched_lines": matched_lines,
+        "ungrouped_lines": total_lines - matched_lines,
+    }
+
+
+# ── Rhyme Grouper routes ───────────────────────────────────────────────────────
+
+@app.route("/rhymes")
+def rhymes_page():
+    """Render the Rhyme Grouper main page."""
+    _ensure_vault_schema()
+    _, db_suffix_map = _load_phonetics()
+
+    with get_connection() as conn:
+        group_rows = conn.execute(
+            "SELECT id, suffixes FROM phonetic_groups ORDER BY id"
+        ).fetchall()
+
+        line_rows = conn.execute(
+            "SELECT id, line FROM vault_lines ORDER BY line COLLATE NOCASE"
+        ).fetchall()
+
+        join_rows = conn.execute(
+            "SELECT line_id, group_id FROM vault_line_groups"
+        ).fetchall()
+
+    # Build group_id → line list mapping
+    line_by_id = {r[0]: {"id": r[0], "line": r[1]} for r in line_rows}
+    group_lines: dict[int, list[dict]] = {}
+    grouped_line_ids: set[int] = set()
+    for line_id, group_id in join_rows:
+        group_lines.setdefault(group_id, []).append(line_by_id[line_id])
+        grouped_line_ids.add(line_id)
+
+    groups = []
+    for group_id, sfx_json in group_rows:
+        try:
+            suffixes = json.loads(sfx_json)
+        except (json.JSONDecodeError, TypeError):
+            suffixes = []
+        lines_in_group = group_lines.get(group_id, [])
+        if lines_in_group:
+            groups.append({
+                "id": group_id,
+                "suffixes": suffixes,
+                "lines": lines_in_group,
+            })
+
+    ungrouped = [
+        line_by_id[lid] for lid in sorted(line_by_id)
+        if lid not in grouped_line_ids
+    ]
+
+    stats = _get_vault_stats()
+    return render_template(
+        "rhymes.html",
+        groups=groups,
+        ungrouped=ungrouped,
+        stats=stats,
+    )
+
+
+@app.route("/rhymes/lines", methods=["POST"])
+def rhymes_add_line():
+    """Add a new lyric line and run phonetic matching."""
+    _ensure_vault_schema()
+    data = request.get_json(silent=True) or {}
+    line = (data.get("line") or "").strip()
+    if not line:
+        return jsonify({"error": "line is required"}), 400
+
+    _, db_suffix_map = _load_phonetics()
+    group_ids = _match_line_to_db_groups(line, db_suffix_map)
+
+    with get_connection() as conn:
+        try:
+            cur = conn.execute(
+                "INSERT INTO vault_lines (line) VALUES (?)", (line,)
+            )
+            line_id = cur.lastrowid
+        except Exception:
+            existing = conn.execute(
+                "SELECT id FROM vault_lines WHERE line = ?", (line,)
+            ).fetchone()
+            if existing:
+                return jsonify({"error": "Line already exists"}), 409
+            raise
+
+        for gid in group_ids:
+            conn.execute(
+                "INSERT OR IGNORE INTO vault_line_groups (line_id, group_id) VALUES (?, ?)",
+                (line_id, gid),
+            )
+        conn.commit()
+
+    return jsonify({"id": line_id, "line": line, "groups": group_ids}), 201
+
+
+@app.route("/rhymes/lines/<int:line_id>", methods=["PUT"])
+def rhymes_edit_line(line_id: int):
+    """Update a lyric line and re-run phonetic matching."""
+    _ensure_vault_schema()
+    data = request.get_json(silent=True) or {}
+    new_line = (data.get("line") or "").strip()
+    if not new_line:
+        return jsonify({"error": "line is required"}), 400
+
+    _, db_suffix_map = _load_phonetics()
+
+    with get_connection() as conn:
+        existing = conn.execute(
+            "SELECT id FROM vault_lines WHERE id = ?", (line_id,)
+        ).fetchone()
+        if not existing:
+            return jsonify({"error": "Line not found"}), 404
+
+        conn.execute(
+            "UPDATE vault_lines SET line = ? WHERE id = ?", (new_line, line_id)
+        )
+        conn.execute(
+            "DELETE FROM vault_line_groups WHERE line_id = ?", (line_id,)
+        )
+        new_groups = _match_line_to_db_groups(new_line, db_suffix_map)
+        for gid in new_groups:
+            conn.execute(
+                "INSERT OR IGNORE INTO vault_line_groups (line_id, group_id) VALUES (?, ?)",
+                (line_id, gid),
+            )
+        conn.commit()
+
+    return jsonify({"id": line_id, "line": new_line, "groups": new_groups})
+
+
+@app.route("/rhymes/lines/<int:line_id>", methods=["DELETE"])
+def rhymes_delete_line(line_id: int):
+    """Delete a lyric line (cascades to vault_line_groups)."""
+    _ensure_vault_schema()
+    with get_connection() as conn:
+        existing = conn.execute(
+            "SELECT id FROM vault_lines WHERE id = ?", (line_id,)
+        ).fetchone()
+        if not existing:
+            return jsonify({"error": "Line not found"}), 404
+
+        conn.execute("DELETE FROM vault_line_groups WHERE line_id = ?", (line_id,))
+        conn.execute("DELETE FROM vault_lines WHERE id = ?", (line_id,))
+        conn.commit()
+
+    return jsonify({"ok": True, "deleted_id": line_id})
+
+
+@app.route("/rhymes/suggest")
+def rhymes_suggest():
+    """Suggest rhyming lines for a given query line.
+
+    Query params:
+        q: The lyric line to find rhymes for.
+        fallback: Set to 'ollama' to force Ollama fallback.
+    """
+    _ensure_vault_schema()
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify({"error": "q parameter is required"}), 400
+
+    use_ollama = request.args.get("fallback") == "ollama"
+    word = last_word(q)
+    _, db_suffix_map = _load_phonetics()
+    group_ids = _match_line_to_db_groups(q, db_suffix_map)
+
+    suggestions: list[str] = []
+    source = "phonetics"
+
+    if group_ids and not use_ollama:
+        placeholders = ",".join("?" * len(group_ids))
+        with get_connection() as conn:
+            rows = conn.execute(
+                f"SELECT DISTINCT vl.line FROM vault_lines vl "
+                f"JOIN vault_line_groups vlg ON vl.id = vlg.line_id "
+                f"WHERE vlg.group_id IN ({placeholders}) "
+                f"AND vl.line != ? LIMIT 20",
+                group_ids + [q],
+            ).fetchall()
+        suggestions = [r[0] for r in rows]
+
+    if (not suggestions or use_ollama) and _OLLAMA_AVAILABLE:
+        source = "ollama"
+        try:
+            client = _OllamaClient()
+            prompt = (
+                f"List 5 lyric lines from a songwriter's vault that rhyme with: "
+                f"'{word}'. Return only the lines, one per line."
+            )
+            raw = client.generate(prompt)
+            suggestions = [
+                ln.strip().lstrip("0123456789.-) ")
+                for ln in raw.strip().splitlines()
+                if ln.strip()
+            ][:5]
+        except Exception as exc:
+            source = "ollama_error"
+            suggestions = [f"Ollama unavailable: {exc}"]
+    elif not suggestions and not _OLLAMA_AVAILABLE:
+        source = "none"
+
+    return jsonify({"suggestions": suggestions, "source": source})
+
+
+@app.route("/rhymes/regroup", methods=["POST"])
+def rhymes_regroup():
+    """Clear and re-run full phonetic grouping for all vault lines."""
+    _ensure_vault_schema()
+    _, db_suffix_map = _load_phonetics()
+
+    with get_connection() as conn:
+        conn.execute("DELETE FROM vault_line_groups")
+        lines = conn.execute("SELECT id, line FROM vault_lines").fetchall()
+        groups_updated = 0
+        for line_id, line in lines:
+            group_ids = _match_line_to_db_groups(line, db_suffix_map)
+            for gid in group_ids:
+                conn.execute(
+                    "INSERT OR IGNORE INTO vault_line_groups (line_id, group_id) VALUES (?, ?)",
+                    (line_id, gid),
+                )
+                groups_updated += 1
+        conn.commit()
+
+    return jsonify({"groups_updated": groups_updated})
+
+
+@app.route("/rhymes/stats")
+def rhymes_stats():
+    """Return vault statistics as JSON."""
+    _ensure_vault_schema()
+    return jsonify(_get_vault_stats())
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
