@@ -32,6 +32,9 @@
 *.sqlite
 *.sqlite3
 
+# Generated images (AI portraits, render outputs — regenerated on demand)
+output/images/
+
 # Temp / cache / build
 *.download
 *.pyc

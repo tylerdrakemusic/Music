@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>❤Music — Rhyme Grouper</title>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #252a3a;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-muted: #94a3b8;
+    --accent: #e11d48;
+    --accent2: #fb7185;
+    --ok: #22c55e;
+    --danger: #ef4444;
+    --danger-bg: #2e0808;
+    --warning: #f59e0b;
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────────────────── */
+  .header {
+    background: linear-gradient(135deg, #0d0f14 0%, #1a0812 50%, #0d0f14 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon { font-size: 26px; }
+  .brand-name {
+    font-size: 18px; font-weight: 700;
+    background: linear-gradient(90deg, #e2e8f0, var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .brand-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .back-link {
+    font-size: 12px; color: var(--text-dim); text-decoration: none;
+    border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .back-link:hover { color: var(--text); border-color: var(--text-muted); }
+
+  /* ── Main layout ─────────────────────────────────────────────────────────── */
+  .main { max-width: 1200px; margin: 0 auto; padding: 24px 32px 64px; }
+
+  /* ── Add line bar ────────────────────────────────────────────────────────── */
+  .add-bar {
+    display: flex; gap: 8px; margin-bottom: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+  }
+  .add-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 14px; font-size: 13px;
+    color: var(--text); outline: none;
+  }
+  .add-input:focus { border-color: var(--accent); }
+  .add-input::placeholder { color: var(--text-dim); }
+  .btn {
+    padding: 8px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #be123c; }
+  .btn-secondary {
+    background: var(--surface2); color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border); color: var(--text); }
+  .btn-danger-sm {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-dim); border-radius: var(--radius-sm);
+    padding: 4px 8px; font-size: 11px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-danger-sm:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
+  .btn-edit-sm {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-dim); border-radius: var(--radius-sm);
+    padding: 4px 8px; font-size: 11px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-edit-sm:hover { border-color: #6366f1; color: #a5b4fc; }
+
+  /* ── Toolbar row ─────────────────────────────────────────────────────────── */
+  .toolbar {
+    display: flex; gap: 10px; align-items: center; margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1; min-width: 200px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 8px 16px; font-size: 13px;
+    color: var(--text); outline: none;
+  }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--text-dim); }
+  .regroup-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); border-radius: 20px; padding: 7px 16px;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .regroup-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
+  /* ── Stats pills ─────────────────────────────────────────────────────────── */
+  .stats-row {
+    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 14px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .stat-pill strong { color: var(--accent2); }
+
+  /* ── Groups accordion ────────────────────────────────────────────────────── */
+  .group-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 10px; overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .group-card:hover { border-color: rgba(225,29,72,0.3); }
+  .group-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; cursor: pointer; user-select: none;
+    background: var(--surface2);
+  }
+  .group-toggle { font-size: 10px; color: var(--text-dim); transition: transform 0.2s; }
+  .group-toggle.open { transform: rotate(90deg); }
+  .group-suffixes {
+    display: flex; gap: 6px; flex-wrap: wrap; flex: 1;
+  }
+  .suffix-chip {
+    background: rgba(225,29,72,0.12); border: 1px solid rgba(225,29,72,0.2);
+    border-radius: 999px; padding: 2px 10px; font-size: 11px;
+    color: var(--accent2); font-weight: 600;
+  }
+  .group-count {
+    font-size: 11px; color: var(--text-dim); margin-left: auto;
+    white-space: nowrap;
+  }
+  .group-body {
+    display: none; padding: 8px 0;
+  }
+  .group-body.open { display: block; }
+
+  /* ── Lyric line row ──────────────────────────────────────────────────────── */
+  .lyric-line {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 16px; border-bottom: 1px solid rgba(37,42,58,0.5);
+    transition: background 0.1s;
+  }
+  .lyric-line:last-child { border-bottom: none; }
+  .lyric-line:hover { background: rgba(225,29,72,0.04); }
+  .lyric-text { flex: 1; font-size: 13px; color: var(--text-muted); }
+  .lyric-line.editing .lyric-text { display: none; }
+  .lyric-edit-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--accent);
+    border-radius: var(--radius-sm); padding: 5px 10px; font-size: 13px;
+    color: var(--text); outline: none; display: none;
+  }
+  .lyric-line.editing .lyric-edit-input { display: block; }
+  .lyric-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+  /* ── Ungrouped section ───────────────────────────────────────────────────── */
+  .ungrouped-section { margin-top: 24px; }
+  .section-title {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 10px;
+  }
+
+  /* ── Suggest panel ───────────────────────────────────────────────────────── */
+  .suggest-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px; margin-bottom: 24px;
+  }
+  .suggest-panel h3 {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    margin-bottom: 12px;
+  }
+  .suggest-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .suggest-input {
+    flex: 1; min-width: 200px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 12px;
+    font-size: 13px; color: var(--text); outline: none;
+  }
+  .suggest-input:focus { border-color: #6366f1; }
+  .ollama-check { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+  .ollama-check input { accent-color: #6366f1; cursor: pointer; }
+  .suggest-results {
+    margin-top: 12px; display: none;
+  }
+  .suggest-results.visible { display: block; }
+  .suggest-source {
+    font-size: 11px; color: var(--text-dim); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .suggest-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 12px;
+    font-size: 13px; color: var(--text-muted); margin-bottom: 6px;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .suggest-item:hover { border-color: var(--accent2); color: var(--text); }
+  .suggest-empty { font-size: 12px; color: var(--text-dim); font-style: italic; }
+
+  /* ── Toast ───────────────────────────────────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 300;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 20px; min-width: 200px;
+    font-size: 13px; transform: translateY(100px); opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--ok); color: var(--ok); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+  .toast.info { border-color: #6366f1; color: #a5b4fc; }
+
+  @media (max-width: 768px) {
+    .header { padding: 14px 16px; }
+    .main { padding: 16px; }
+    .add-bar { flex-direction: column; }
+    .toolbar { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-icon">🎵</span>
+      <div>
+        <div class="brand-name">Rhyme Grouper</div>
+        <div class="brand-sub">❤Music Lyrics Vault</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a class="back-link" href="/">← Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Suggest Panel -->
+  <div class="suggest-panel">
+    <h3>🔍 Rhyme Suggestions</h3>
+    <div class="suggest-row">
+      <input type="text" class="suggest-input" id="suggestInput"
+             placeholder="Type a lyric line to find rhymes…" />
+      <button class="btn btn-secondary" onclick="runSuggest()">Suggest</button>
+      <label class="ollama-check">
+        <input type="checkbox" id="ollamaFallback"> Ollama fallback
+      </label>
+    </div>
+    <div class="suggest-results" id="suggestResults">
+      <div class="suggest-source" id="suggestSource"></div>
+      <div id="suggestList"></div>
+    </div>
+  </div>
+
+  <!-- Add line bar -->
+  <div class="add-bar">
+    <input type="text" class="add-input" id="newLineInput"
+           placeholder="Add a new lyric line…"
+           onkeydown="if(event.key==='Enter') addLine()" />
+    <button class="btn btn-primary" onclick="addLine()">+ Add Line</button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input type="text" class="search-box" id="searchBox"
+           placeholder="Filter lines…" oninput="filterLines(this.value)" />
+    <button class="regroup-btn" onclick="regroup()">↻ Re-run Grouping</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-pill">Lines: <strong id="statLines">{{ stats.total_lines }}</strong></div>
+    <div class="stat-pill">Groups: <strong id="statGroups">{{ stats.total_groups }}</strong></div>
+    <div class="stat-pill">Matched: <strong id="statMatched">{{ stats.matched_lines }}</strong></div>
+    <div class="stat-pill">Ungrouped: <strong id="statUngrouped">{{ stats.ungrouped_lines }}</strong></div>
+  </div>
+
+  <!-- Phonetic Groups -->
+  <div id="groupsContainer">
+    {% for group in groups %}
+    <div class="group-card" data-group-id="{{ group.id }}">
+      <div class="group-header" onclick="toggleGroup(this)">
+        <span class="group-toggle">▶</span>
+        <div class="group-suffixes">
+          {% for s in group.suffixes %}
+          <span class="suffix-chip">{{ s }}</span>
+          {% endfor %}
+        </div>
+        <span class="group-count">{{ group.lines | length }} line{{ 's' if group.lines | length != 1 else '' }}</span>
+      </div>
+      <div class="group-body">
+        {% for line in group.lines %}
+        <div class="lyric-line" data-line-id="{{ line.id }}">
+          <span class="lyric-text">{{ line.line }}</span>
+          <input type="text" class="lyric-edit-input"
+                 value="{{ line.line }}"
+                 onkeydown="handleEditKey(event, {{ line.id }})"
+                 onblur="saveEdit({{ line.id }}, this)" />
+          <div class="lyric-actions">
+            <button class="btn-edit-sm" onclick="startEdit({{ line.id }})" title="Edit">✏</button>
+            <button class="btn-danger-sm" onclick="deleteLine({{ line.id }})" title="Delete">✕</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Ungrouped Lines -->
+  {% if ungrouped %}
+  <div class="ungrouped-section">
+    <div class="section-title">Ungrouped ({{ ungrouped | length }})</div>
+    <div class="group-card" id="ungroupedCard">
+      <div class="group-header" onclick="toggleGroup(this)">
+        <span class="group-toggle">▶</span>
+        <div class="group-suffixes">
+          <span class="suffix-chip" style="background:rgba(100,116,139,0.15);border-color:rgba(100,116,139,0.2);color:var(--text-dim)">no match</span>
+        </div>
+        <span class="group-count">{{ ungrouped | length }} lines</span>
+      </div>
+      <div class="group-body">
+        {% for line in ungrouped %}
+        <div class="lyric-line" data-line-id="{{ line.id }}">
+          <span class="lyric-text">{{ line.line }}</span>
+          <input type="text" class="lyric-edit-input"
+                 value="{{ line.line }}"
+                 onkeydown="handleEditKey(event, {{ line.id }})"
+                 onblur="saveEdit({{ line.id }}, this)" />
+          <div class="lyric-actions">
+            <button class="btn-edit-sm" onclick="startEdit({{ line.id }})" title="Edit">✏</button>
+            <button class="btn-danger-sm" onclick="deleteLine({{ line.id }})" title="Delete">✕</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+// ── Accordion ──────────────────────────────────────────────────────────────
+function toggleGroup(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.group-toggle');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  arrow.classList.toggle('open', !isOpen);
+}
+
+// ── Filter ─────────────────────────────────────────────────────────────────
+function filterLines(q) {
+  const lower = q.toLowerCase().trim();
+  document.querySelectorAll('.lyric-line').forEach(row => {
+    const text = row.querySelector('.lyric-text').textContent.toLowerCase();
+    row.style.display = (!lower || text.includes(lower)) ? '' : 'none';
+  });
+  // Open groups that have visible lines
+  document.querySelectorAll('.group-card').forEach(card => {
+    const visible = [...card.querySelectorAll('.lyric-line')]
+      .some(r => r.style.display !== 'none');
+    if (lower) {
+      card.querySelector('.group-body').classList.toggle('open', visible);
+      card.querySelector('.group-toggle').classList.toggle('open', visible);
+    }
+  });
+}
+
+// ── Add line ───────────────────────────────────────────────────────────────
+async function addLine() {
+  const input = document.getElementById('newLineInput');
+  const line = input.value.trim();
+  if (!line) return;
+  try {
+    const res = await fetch('/rhymes/lines', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ line })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Unknown error');
+    input.value = '';
+    showToast('Line added — reload to see it grouped');
+    updateStats();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ── Edit line ──────────────────────────────────────────────────────────────
+function startEdit(id) {
+  const row = document.querySelector(`.lyric-line[data-line-id="${id}"]`);
+  if (!row) return;
+  row.classList.add('editing');
+  row.querySelector('.lyric-edit-input').focus();
+}
+
+function handleEditKey(event, id) {
+  if (event.key === 'Enter') { event.target.blur(); }
+  if (event.key === 'Escape') {
+    const row = event.target.closest('.lyric-line');
+    row.classList.remove('editing');
+    event.target.value = row.querySelector('.lyric-text').textContent;
+  }
+}
+
+async function saveEdit(id, input) {
+  const row = input.closest('.lyric-line');
+  row.classList.remove('editing');
+  const newVal = input.value.trim();
+  const original = row.querySelector('.lyric-text').textContent;
+  if (!newVal || newVal === original) { input.value = original; return; }
+  try {
+    const res = await fetch(`/rhymes/lines/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ line: newVal })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Unknown error');
+    row.querySelector('.lyric-text').textContent = newVal;
+    showToast('Line updated');
+  } catch (e) {
+    input.value = original;
+    showToast(e.message, 'error');
+  }
+}
+
+// ── Delete line ────────────────────────────────────────────────────────────
+async function deleteLine(id) {
+  if (!confirm('Delete this lyric line?')) return;
+  try {
+    const res = await fetch(`/rhymes/lines/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Unknown error');
+    document.querySelector(`.lyric-line[data-line-id="${id}"]`)?.remove();
+    showToast('Line deleted');
+    updateStats();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ── Re-run grouping ────────────────────────────────────────────────────────
+async function regroup() {
+  const btn = document.querySelector('.regroup-btn');
+  const orig = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/rhymes/regroup', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Unknown error');
+    showToast(`Grouping complete — ${data.groups_updated} groups updated. Reload to see changes.`, 'info');
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
+// ── Suggest rhymes ─────────────────────────────────────────────────────────
+async function runSuggest() {
+  const q = document.getElementById('suggestInput').value.trim();
+  if (!q) return;
+  const fallback = document.getElementById('ollamaFallback').checked;
+  const results = document.getElementById('suggestResults');
+  const src = document.getElementById('suggestSource');
+  const list = document.getElementById('suggestList');
+  list.innerHTML = '<em style="color:var(--text-dim)">Loading…</em>';
+  results.classList.add('visible');
+  try {
+    const url = `/rhymes/suggest?q=${encodeURIComponent(q)}${fallback ? '&fallback=ollama' : ''}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Unknown error');
+    src.textContent = `Source: ${data.source}`;
+    if (data.suggestions.length === 0) {
+      list.innerHTML = '<div class="suggest-empty">No rhymes found.</div>';
+    } else {
+      list.innerHTML = data.suggestions
+        .map(s => `<div class="suggest-item" onclick="copyLine(this)">${s}</div>`)
+        .join('');
+    }
+  } catch (e) {
+    list.innerHTML = `<div class="suggest-empty">${e.message}</div>`;
+    showToast(e.message, 'error');
+  }
+}
+
+function copyLine(el) {
+  const input = document.getElementById('newLineInput');
+  input.value = el.textContent;
+  input.focus();
+}
+
+document.getElementById('suggestInput')
+  .addEventListener('keydown', e => { if (e.key === 'Enter') runSuggest(); });
+
+// ── Stats update ───────────────────────────────────────────────────────────
+async function updateStats() {
+  try {
+    const res = await fetch('/rhymes/stats');
+    if (!res.ok) return;
+    const d = await res.json();
+    document.getElementById('statLines').textContent = d.total_lines;
+    document.getElementById('statGroups').textContent = d.total_groups;
+    document.getElementById('statMatched').textContent = d.matched_lines;
+    document.getElementById('statUngrouped').textContent = d.ungrouped_lines;
+  } catch (_) {}
+}
+</script>
+</body>
+</html>
