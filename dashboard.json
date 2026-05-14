@@ -61,6 +61,17 @@
       "category": "music",
       "icon": "🎛",
       "priority": 24
+    },
+    {
+      "id": "rhyme-grouper",
+      "title": "Rhyme Grouper",
+      "description": "Lyrics vault browser — phonetic rhyme groups, CRUD, Ollama-assisted suggestions",
+      "type": "flask_route",
+      "generator": "src/analysis/music_dashboard.py",
+      "url": "http://localhost:5050/rhymes",
+      "category": "music",
+      "icon": "🎵",
+      "priority": 23
     }
   ]
 }
