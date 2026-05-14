@@ -14,6 +14,21 @@ import re
 import sys
 from pathlib import Path
 
+# Vera portrait (lazy import to keep panel generation working even if vera_portrait errors)
+def _get_vera_tag() -> str:
+    """Return Vera's portrait <img> tag, or empty string on any error."""
+    try:
+        _src = Path(__file__).resolve().parents[1] / "utils" / "vera_portrait.py"
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("_vera_portrait", _src)
+        if _spec and _spec.loader:
+            _mod = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
+            return _mod.get_portrait_img_tag(max_width=160)  # type: ignore[attr-defined]
+    except Exception as _exc:
+        print(f"  [WARN] Vera portrait unavailable: {_exc}", file=sys.stderr)
+    return ""
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CATALOG_JSON = PROJECT_ROOT / "catalog" / "setlists" / "catalog_export.json"
 SETLIST_JSON = PROJECT_ROOT / "catalog" / "setlists" / "setlist_active_export.json"
@@ -145,7 +160,26 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 
 PANEL_CSS = """
   .bm-wrap { display:flex; flex-direction:column; height:100vh; background:var(--bg); overflow:hidden; }
-  .bm-header { padding:1rem 1.5rem 0.75rem; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .bm-header { padding:1rem 1.5rem 0.75rem; border-bottom:1px solid var(--border); flex-shrink:0; position:relative; }
+  .bm-vera-portrait { position:absolute; top:0.6rem; right:1.25rem; display:inline-block; }
+  .vera-edit-btn { position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,.65); border:none; border-radius:50%; width:24px; height:24px; font-size:12px; color:#c9a96e; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0.35; transition:opacity .15s; padding:0; line-height:1; }
+  .vera-edit-btn:hover { opacity:0.95 !important; }
+  .vera-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:9999; align-items:center; justify-content:center; }
+  .vera-modal-overlay.open { display:flex; }
+  .vera-modal-card { background:#1a1f2e; border:1px solid #334155; border-radius:14px; padding:1.5rem; width:min(680px,90vw); max-height:90vh; overflow-y:auto; position:relative; box-shadow:0 24px 60px rgba(0,0,0,.7); }
+  .vera-modal-card h2 { font-size:1.1rem; font-weight:700; color:#e2e8f0; margin-bottom:1rem; }
+  .vera-modal-close { position:absolute; top:0.75rem; right:0.9rem; background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer; line-height:1; padding:0; }
+  .vera-modal-close:hover { color:#e2e8f0; }
+  .vera-modal-label { display:block; font-size:0.78rem; font-weight:600; color:#94a3b8; margin-bottom:0.3rem; text-transform:uppercase; letter-spacing:.05em; }
+  .vera-modal-card textarea { width:100%; background:#0f1318; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:0.82rem; padding:0.65rem 0.75rem; font-family:inherit; resize:vertical; outline:none; }
+  .vera-modal-card textarea:focus { border-color:#6366f1; }
+  .vera-modal-card select { background:#1e2530; border:1px solid #334155; border-radius:6px; color:#e2e8f0; font-size:0.82rem; padding:0.3rem 0.6rem; cursor:pointer; outline:none; margin-bottom:0.75rem; }
+  .vera-modal-actions { display:flex; gap:0.6rem; margin-top:0.75rem; flex-wrap:wrap; }
+  .vera-btn-save { background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff; border:none; border-radius:8px; padding:0.45rem 1.1rem; font-size:0.88rem; font-weight:600; cursor:pointer; }
+  .vera-btn-regen { background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; border-radius:8px; padding:0.45rem 1.1rem; font-size:0.88rem; font-weight:600; cursor:pointer; }
+  .vera-btn-cancel { background:transparent; border:1px solid #334155; color:#94a3b8; border-radius:8px; padding:0.45rem 1.1rem; font-size:0.88rem; font-weight:600; cursor:pointer; }
+  .vera-modal-actions button:disabled { opacity:0.5; cursor:wait; }
+  .vera-modal-status { font-size:0.8rem; margin-top:0.5rem; color:#94a3b8; min-height:1.2em; }
   .bm-title { font-size:1.25rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; }
   .bm-subtitle { font-size:0.7rem; color:var(--muted); margin-left:0.4rem; font-weight:400; }
   .bm-meta { font-size:0.72rem; color:var(--muted); margin-top:0.25rem; display:flex; gap:1.2rem; flex-wrap:wrap; }
@@ -789,6 +823,23 @@ def generate(data: dict, inventory: list | None = None) -> str:
         inventory = []
     bm_inline_json = json.dumps(data, ensure_ascii=False)
     bm_inventory_json = json.dumps(inventory, ensure_ascii=False)
+    vera_tag = _get_vera_tag()
+    vera_block = ""
+    if vera_tag:
+        vera_block = (
+            '<div class="bm-vera-portrait">'
+            + vera_tag
+            + '<button class="vera-edit-btn" onclick="openVeraModal()" '
+            + 'title="Edit Vera\'s portrait prompt" '
+            + 'onmouseenter="this.style.opacity=\'0.9\'" '
+            + 'onmouseleave="this.style.opacity=\'0.35\'">&#x270F;</button>'
+            + '</div>'
+        )
+    panel_body_with_vera = PANEL_BODY.replace(
+        '<div class="bm-header">',
+        f'<div class="bm-header">{vera_block}',
+        1,
+    )
     js_with_data = BM_JS.replace(
         "/*INJECT_DATA*/null/*END_INJECT*/",
         bm_inline_json,
@@ -796,6 +847,108 @@ def generate(data: dict, inventory: list | None = None) -> str:
         "/*INJECT_INVENTORY*/[]/*END_INJECT_INVENTORY*/",
         bm_inventory_json,
     )
+    vera_modal_html = """
+<!-- Vera Prompt Modal -->
+<div class="vera-modal-overlay" id="vera-prompt-modal" onclick="veraModalClickOutside(event)">
+  <div class="vera-modal-card" role="dialog" aria-modal="true" aria-labelledby="vera-modal-title">
+    <button class="vera-modal-close" onclick="closeVeraModal()" aria-label="Close">&times;</button>
+    <h2 id="vera-modal-title">&#x270F; Edit Vera&rsquo;s Portrait Prompt</h2>
+    <label class="vera-modal-label" for="vera-mode-select">Mode</label>
+    <select id="vera-mode-select" onchange="veraLoadPromptForMode(this.value)">
+      <option value="rehearsal">Rehearsal &mdash; no gig within 14 days</option>
+      <option value="pre_show">Pre-Show &mdash; gig within 14 days</option>
+      <option value="show_night">Show Night &mdash; gig is today</option>
+    </select>
+    <label class="vera-modal-label" for="vera-positive-prompt">Positive Prompt</label>
+    <textarea id="vera-positive-prompt" rows="10" spellcheck="false"></textarea>
+    <div class="vera-modal-actions">
+      <button class="vera-btn-save" id="vera-save-btn" onclick="veraModalSave()">Save &amp; Regenerate</button>
+      <button class="vera-btn-cancel" onclick="closeVeraModal()">Cancel</button>
+    </div>
+    <div class="vera-modal-status" id="vera-modal-status"></div>
+  </div>
+</div>"""
+    vera_js = r"""
+// Probe whether the Vera API is actually reachable (works in both file:// and portal iframe)
+let _veraApiAvailable = null;
+async function _veraCheckApi() {
+  if (_veraApiAvailable !== null) return _veraApiAvailable;
+  try {
+    const r = await fetch('/vera/prompt?mode=rehearsal', {method: 'HEAD'});
+    _veraApiAvailable = r.ok || r.status === 405;  // 405 = method not allowed → endpoint exists
+  } catch(_) {
+    _veraApiAvailable = false;
+  }
+  return _veraApiAvailable;
+}
+function _veraShowServeHint() {
+  document.getElementById('vera-modal-status').textContent =
+    'Live edits require server mode: python src/band_mgmt/generate_band_mgmt_panel.py --serve';
+}
+async function openVeraModal() {
+  const modal = document.getElementById('vera-prompt-modal');
+  modal.classList.add('open');
+  const sel = document.getElementById('vera-mode-select');
+  veraLoadPromptForMode(sel.value);
+}
+function closeVeraModal() {
+  document.getElementById('vera-prompt-modal').classList.remove('open');
+  document.getElementById('vera-modal-status').textContent = '';
+}
+function veraModalClickOutside(e) {
+  if (e.target === document.getElementById('vera-prompt-modal')) closeVeraModal();
+}
+async function veraLoadPromptForMode(mode) {
+  const available = await _veraCheckApi();
+  if (!available) {
+    document.getElementById('vera-positive-prompt').value = '(Server mode required to load prompt)';
+    document.getElementById('vera-modal-status').textContent =
+      'Run: python src/band_mgmt/generate_band_mgmt_panel.py --serve';
+    return;
+  }
+  const status = document.getElementById('vera-modal-status');
+  status.textContent = 'Loading\u2026';
+  fetch('/vera/prompt?mode=' + encodeURIComponent(mode))
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('vera-positive-prompt').value = d.positive_prompt || '';
+      status.textContent = '';
+    })
+    .catch(e => { status.textContent = 'Failed to load prompt: ' + e.message; });
+}
+async function veraModalSave() {
+  const available = await _veraCheckApi();
+  if (!available) { _veraShowServeHint(); return; }
+  const btn = document.getElementById('vera-save-btn');
+  const status = document.getElementById('vera-modal-status');
+  const prompt = document.getElementById('vera-positive-prompt').value.trim();
+  const mode = document.getElementById('vera-mode-select').value;
+  if (!prompt) { status.textContent = 'Prompt cannot be empty.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  status.textContent = '';
+  try {
+    const saveResp = await fetch('/vera/prompt', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({positive_prompt: prompt, mode: mode})
+    });
+    if (!saveResp.ok) { status.textContent = 'Save failed (' + saveResp.status + ').'; return; }
+    btn.textContent = 'Regenerating…';
+    const regenResp = await fetch('/vera/portrait/regen?mode=' + encodeURIComponent(mode));
+    if (regenResp.ok) {
+      status.textContent = '\u2705 Portrait regenerated. Reloading\u2026';
+      setTimeout(() => { closeVeraModal(); window.location.reload(); }, 1200);
+    } else {
+      status.textContent = 'Regen failed (' + regenResp.status + '). Prompt was saved.';
+    }
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save & Regenerate';
+  }
+}"""
     exported_at = data.get("exported_at", "")
     band_count = len(data.get("bands", []))
     return f"""<!DOCTYPE html>
@@ -810,9 +963,11 @@ def generate(data: dict, inventory: list | None = None) -> str:
 </style>
 </head>
 <body>
-{PANEL_BODY}
+{vera_modal_html}
+{panel_body_with_vera}
 <script>
 {js_with_data}
+{vera_js}
 </script>
 </body>
 </html>
@@ -834,5 +989,136 @@ def main() -> None:
     print(f"  Size: {OUTPUT_HTML.stat().st_size:,} bytes")
 
 
+# ---------------------------------------------------------------------------
+# HTTP server (--serve mode) — API endpoints for Vera prompt editing
+# ---------------------------------------------------------------------------
+
+def _serve_mode(host: str = "127.0.0.1", port: int = 8765) -> None:
+    """Run a local HTTP server that hot-rebuilds the panel and exposes Vera APIs."""
+    import argparse  # noqa: F401 — already parsed before calling
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from socketserver import ThreadingMixIn
+    from urllib.parse import urlparse, parse_qs
+
+    class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+        daemon_threads = True
+
+    def _load_vera_portrait_module():
+        import importlib.util as _ilu
+        _src = Path(__file__).resolve().parents[1] / "utils" / "vera_portrait.py"
+        _spec = _ilu.spec_from_file_location("_vera_portrait_srv", _src)
+        if _spec and _spec.loader:
+            _mod = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
+            return _mod
+        return None
+
+    def _load_vera_config_module():
+        import importlib.util as _ilu
+        _src = Path(__file__).resolve().parents[1] / "utils" / "vera_config_db.py"
+        _spec = _ilu.spec_from_file_location("_vera_config_srv", _src)
+        if _spec and _spec.loader:
+            _mod = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
+            return _mod
+        return None
+
+    class BandMgmtHandler(BaseHTTPRequestHandler):
+        def log_message(self, fmt, *args):  # silence default access log spam
+            print(f"  [{self.address_string()}] {fmt % args}")
+
+        def _json(self, data: dict, status: int = 200) -> None:
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _html(self, body_text: str) -> None:
+            body = body_text.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self) -> None:
+            parsed = urlparse(self.path)
+            qs = parse_qs(parsed.query)
+            path = parsed.path.rstrip("/") or "/"
+            if path in ("/", "/index.html"):
+                data = load_inline_data()
+                inv = load_inventory_data()
+                self._html(generate(data, inv))
+            elif path == "/vera/prompt":
+                mode = qs.get("mode", ["rehearsal"])[0]
+                try:
+                    cfg = _load_vera_config_module()
+                    positive, _ = cfg.get_active_prompt(mode)
+                    self._json({"positive_prompt": positive, "mode": mode})
+                except Exception as exc:
+                    self._json({"error": str(exc)}, 500)
+            elif path == "/vera/portrait/regen":
+                mode = qs.get("mode", ["rehearsal"])[0]
+                try:
+                    mod = _load_vera_portrait_module()
+                    # Delete today's cached file for this mode
+                    today_path = mod._today_cache_path(mode)
+                    if today_path.exists():
+                        today_path.unlink()
+                    from datetime import date as _date
+                    today = _date.today().isoformat()
+                    svg_path = mod._IMAGE_CACHE_DIR / f"vera_portrait_{today}_{mode}.svg"
+                    if svg_path.exists():
+                        svg_path.unlink()
+                    new_path = mod.get_daily_portrait(mode=mode)
+                    self._json({"status": "ok", "path": str(new_path), "mode": mode})
+                except Exception as exc:
+                    self._json({"error": str(exc)}, 500)
+            else:
+                self.send_error(404)
+
+        def do_POST(self) -> None:
+            parsed = urlparse(self.path)
+            path = parsed.path.rstrip("/")
+            if path == "/vera/prompt":
+                try:
+                    content_len = int(self.headers.get("Content-Length", 0))
+                    body = json.loads(self.rfile.read(content_len))
+                    positive_prompt = body.get("positive_prompt", "").strip()
+                    mode = body.get("mode", "rehearsal")
+                    if not positive_prompt:
+                        self._json({"error": "positive_prompt is required"}, 400)
+                        return
+                    cfg = _load_vera_config_module()
+                    cfg.update_active_prompt(positive_prompt, mode)
+                    self._json({"ok": True, "mode": mode})
+                except Exception as exc:
+                    self._json({"error": str(exc)}, 500)
+            else:
+                self.send_error(404)
+
+    server = ThreadedHTTPServer((host, port), BandMgmtHandler)
+    url = f"http://{host}:{port}"
+    print(f"  \u2764 Band Management server running at {url}")
+    print(f"  Vera API: GET/POST {url}/vera/prompt?mode=rehearsal")
+    print(f"          : GET {url}/vera/portrait/regen?mode=rehearsal")
+    print("  Ctrl-C to stop.")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\n  Server stopped.")
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description="❤ Band Management Panel generator")
+    parser.add_argument("--serve", action="store_true", help="Run as a local HTTP server")
+    parser.add_argument("--host", default="127.0.0.1", help="Server host (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8765, help="Server port (default: 8765)")
+    args = parser.parse_args()
+    if args.serve:
+        _serve_mode(host=args.host, port=args.port)
+    else:
+        main()
