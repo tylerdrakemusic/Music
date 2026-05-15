@@ -305,10 +305,10 @@ def _apply_cipher_pragmas(conn) -> None:
 def _try_open_with_key(conn, key: str, *, use_hex: bool) -> bool:
     if use_hex:
         key_hex = key.encode().hex()
-        conn.execute(f"PRAGMA key=\"x'{key_hex}'\"")
+        conn.execute(f"PRAGMA key=\"x'{key_hex}'\"")  # nosec B608 – PRAGMA can't be parameterized; key_hex is hex-encoded
     else:
         safe_key = key.replace("'", "''")
-        conn.execute(f"PRAGMA key='{safe_key}'")
+        conn.execute(f"PRAGMA key='{safe_key}'")  # nosec B608 – PRAGMA can't be parameterized; key is quote-escaped
 
     _apply_cipher_pragmas(conn)
 

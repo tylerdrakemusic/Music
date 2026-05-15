@@ -28,7 +28,7 @@ def migrate_rights_columns(conn) -> None:
     ]
     for col, typedef in migrations:
         if col not in cols:
-            conn.execute(f"ALTER TABLE tracks ADD COLUMN {col} {typedef}")
+            conn.execute(f"ALTER TABLE tracks ADD COLUMN {col} {typedef}")  # nosec B608 – col/typedef from hardcoded migrations list, not user input
             print(f"  + Added column: {col}")
         else:
             print(f"  . Already exists: {col}")
