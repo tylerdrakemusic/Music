@@ -38,7 +38,7 @@ def get_table_counts(conn: sqlite3.Connection) -> dict[str, int]:
     counts: dict[str, int] = {}
     for (tbl,) in tables:
         safe_tbl = tbl.replace("]", "]]")
-        count = conn.execute(f"SELECT COUNT(*) FROM [{safe_tbl}]").fetchone()[0]
+        count = conn.execute(f"SELECT COUNT(*) FROM [{safe_tbl}]").fetchone()[0]  # nosec B608 – tbl from sqlite_master, bracket-escaped, archive script
         counts[tbl] = count
     return counts
 
@@ -73,7 +73,7 @@ def migrate(db_path: Path, key: str) -> None:
 
     enc_conn = sqlcipher3.connect(str(enc_path))
     safe_key = key.replace("'", "''")
-    enc_conn.execute(f"PRAGMA key='{safe_key}'")
+    enc_conn.execute(f"PRAGMA key='{safe_key}'")  # nosec B608 – PRAGMA can't be parameterized; key is quote-escaped
     enc_conn.execute("PRAGMA cipher_page_size=4096")
     enc_conn.execute("PRAGMA kdf_iter=256000")
     enc_conn.execute("PRAGMA cipher_hmac_algorithm=HMAC_SHA512")
@@ -86,7 +86,7 @@ def migrate(db_path: Path, key: str) -> None:
 
     # Verify
     enc_conn2 = sqlcipher3.connect(str(enc_path))
-    enc_conn2.execute(f"PRAGMA key='{safe_key}'")
+    enc_conn2.execute(f"PRAGMA key='{safe_key}'")  # nosec B608 – PRAGMA can't be parameterized; key is quote-escaped
     enc_counts = get_table_counts(enc_conn2)
     enc_conn2.close()
 
