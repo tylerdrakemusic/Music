@@ -46,7 +46,7 @@ def migrate() -> None:
             if col_name in existing:
                 print(f"  Column '{col_name}' already exists — skipping.")
             else:
-                conn.execute(f"ALTER TABLE release_signatures ADD COLUMN {col_name} {col_type}")
+                conn.execute(f"ALTER TABLE release_signatures ADD COLUMN {col_name} {col_type}")  # nosec B608 – col_name/col_type from hardcoded COLUMNS list, archive script
                 added.append(col_name)
 
         # Index on quantum_blake2b for lookups
