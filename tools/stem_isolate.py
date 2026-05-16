@@ -73,14 +73,15 @@ def _run_demucs(wav_path: Path, outdir: Path, device: str) -> bool:
     """
     base_cmd = [
         sys.executable, "-m", "demucs",
-        "--model", "htdemucs_6s",
+        "-n", "htdemucs_6s",
         "--out", str(outdir),
         str(wav_path),
     ]
 
     devices_to_try: list[str]
     if device == "auto":
-        devices_to_try = ["cuda", "cpu"]
+        import torch
+        devices_to_try = ["cuda", "cpu"] if torch.cuda.is_available() else ["cpu"]
     else:
         devices_to_try = [device]
 
@@ -110,7 +111,8 @@ def process_folder(input_dir: Path, output_dir: Path, device: str) -> None:
     - Copy the matching stem to output_dir/<original_filename>.
     - Clean up the temporary Demucs output directory.
     """
-    wav_files = sorted(input_dir.glob("*.wav"))
+    # Exclude macOS resource-fork artifacts (._filename pattern)
+    wav_files = sorted(f for f in input_dir.glob("*.wav") if not f.name.startswith("._"))
     if not wav_files:
         print(f"No .wav files found in {input_dir}")
         return
