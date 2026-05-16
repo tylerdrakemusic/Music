@@ -515,6 +515,104 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   .ops-platform.ok { color: #86efac; border-color: rgba(34,197,94,0.35); }
   .ops-platform.off { color: #fca5a5; border-color: rgba(239,68,68,0.35); }
   .ops-links { color: var(--text-dim); font-size: 12px; }
+
+  /* ── Artist Links Tab (FR-20260515-artist-links-pill-music-dashboard) ────── */
+  .links-section { margin-bottom: 32px; }
+  .links-section-header {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-dim);
+    padding: 8px 0; margin-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .links-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .link-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; transition: border-color 0.15s;
+  }
+  .link-card:hover { border-color: rgba(225,29,72,0.4); }
+  .link-card-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .link-card-platform { font-size: 15px; font-weight: 700; }
+  .link-card-badges { display: flex; gap: 4px; align-items: center; }
+  .pending-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 700;
+    background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3);
+  }
+  .link-rows { display: flex; flex-direction: column; gap: 6px; }
+  .link-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 7px 10px;
+  }
+  .link-row-label {
+    font-size: 12px; color: var(--text-muted); flex: 1; min-width: 80px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;
+  }
+  .link-anchor {
+    font-size: 12px; color: var(--accent2); text-decoration: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;
+    display: inline-block;
+  }
+  .link-anchor:hover { text-decoration: underline; }
+  .link-status-badge {
+    padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 700; white-space: nowrap;
+  }
+  .lsb-confirmed { background: rgba(34,197,94,0.12); color: #86efac; }
+  .lsb-pending   { background: rgba(245,158,11,0.12); color: #fbbf24; }
+  .lsb-broken    { background: rgba(239,68,68,0.12);  color: #fca5a5; }
+  .copy-btn {
+    background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 3px 7px; font-size: 10px;
+    color: var(--text-dim); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .link-row-actions { display: flex; gap: 4px; }
+  .link-action-btn {
+    background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 3px 7px; font-size: 11px;
+    color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+  }
+  .link-action-btn:hover { border-color: var(--accent); color: var(--text); }
+  .link-action-btn.del:hover { border-color: var(--danger); color: var(--danger); }
+  .embed-toggle {
+    display: block; width: 100%; background: transparent; border: 1px dashed var(--border);
+    border-radius: var(--radius-sm); padding: 6px 12px; font-size: 11px;
+    color: var(--text-dim); cursor: pointer; text-align: left; margin-top: 8px; transition: all 0.15s;
+  }
+  .embed-toggle:hover { border-color: var(--accent); color: var(--text); }
+  .embed-container { margin-top: 8px; display: none; }
+  .embed-container.open { display: block; }
+  .embed-container iframe { max-width: 100%; border-radius: 8px; }
+  .links-add-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent); color: white; border: none;
+    border-radius: var(--radius-sm); padding: 8px 18px;
+    font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 20px;
+    transition: background 0.15s;
+  }
+  .links-add-btn:hover { background: #be123c; }
+  .link-modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px; max-width: 520px; width: 90%;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .link-modal h3 { font-size: 16px; margin-bottom: 16px; color: var(--accent2); }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 5px; }
+  .form-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px;
+    color: var(--text); outline: none; transition: border-color 0.15s; box-sizing: border-box;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-textarea { min-height: 80px; resize: vertical; font-family: inherit; }
+  .form-select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px;
+    color: var(--text); outline: none; box-sizing: border-box;
+  }
+  .form-select:focus { border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -556,6 +654,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <button class="tab-btn" onclick="switchTab('release-ops', this)">📡 Release Ops</button>
   <button class="tab-btn" onclick="switchTab('radio', this)">📻 Radio</button>
   <a href="/rhymes" class="tab-btn" style="text-decoration:none;">🎼 Rhyme Grouper</a>
+  <button class="tab-btn" onclick="switchTab('links', this)">🔗 Artist Links</button>
 </div>
 
 <div class="main">
@@ -625,6 +724,12 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   </div>
   <div class="ops-table-note" id="releaseOpsNote"></div>
 </div>
+
+<div id="tab-links" class="tab-content">
+  <button class="links-add-btn" onclick="openLinkModal()">＋ Add Link</button>
+  <div id="linksContainer"></div>
+</div>
+
 </div><!-- end main -->
 
 <div id="tab-radio" class="tab-content">
@@ -674,6 +779,67 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 
 <div class="toast" id="toast"></div>
 
+<!-- Link add/edit modal -->
+<div class="modal-overlay" id="linkModal">
+  <div class="link-modal">
+    <h3 id="linkModalTitle">＋ Add Link</h3>
+    <div class="form-group">
+      <label>Platform *</label>
+      <input class="form-input" id="lf_platform" placeholder="e.g. Spotify, Bandcamp">
+    </div>
+    <div class="form-group">
+      <label>Category *</label>
+      <select class="form-select" id="lf_category">
+        <option value="email">email</option>
+        <option value="social">social</option>
+        <option value="payment">payment</option>
+        <option value="distribution" selected>distribution</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Label *</label>
+      <input class="form-input" id="lf_label" placeholder="e.g. Artist page, Payment link">
+    </div>
+    <div class="form-group">
+      <label>URL</label>
+      <input class="form-input" id="lf_url" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>Embed HTML</label>
+      <textarea class="form-input form-textarea" id="lf_embed_html" placeholder="<iframe ...></iframe>"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Song Title (optional)</label>
+      <input class="form-input" id="lf_song_title" placeholder="e.g. What I Do">
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select class="form-select" id="lf_status">
+        <option value="confirmed" selected>confirmed</option>
+        <option value="pending">pending</option>
+        <option value="broken">broken</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeLinkModal()">Cancel</button>
+      <button class="btn" style="background:var(--accent);color:white;" onclick="saveLinkModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link delete confirmation modal -->
+<div class="modal-overlay" id="linkDeleteModal">
+  <div class="modal">
+    <h3>⚠ Delete Link</h3>
+    <p>This will permanently remove the link.</p>
+    <div class="track-info" id="deleteLinkInfo"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeLinkDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmLinkDelete()">Delete forever</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let tracks = [];
 let albums = [];
@@ -684,6 +850,9 @@ let currentSearch = '';
 let sortCol = 'album';
 let sortAsc = true;
 let pendingDeleteId = null;
+let linksLoaded = false;
+let editingLinkId = null;
+let pendingDeleteLinkId = null;
 let currentAudioPath = null;
 
 async function loadTracks() {
@@ -984,6 +1153,7 @@ function switchTab(tab, btn) {
   if (tab === 'signatures' && !signaturesLoaded) loadSignatures();
   if (tab === 'release-ops' && !releaseOpsLoaded) loadReleaseOps();
   if (tab === 'radio' && !radioLoaded) loadRadio();
+  if (tab === 'links' && !linksLoaded) loadLinks();
 }
 
 // ── Signatures ──
@@ -1268,6 +1438,223 @@ function toggleRadio() {
     document.getElementById('radioPlayBtn').innerHTML = '&#9724;';
   }
 }
+// ── Artist Links ──────────────────────────────────────────────────────────────
+let allLinks = [];
+
+async function loadLinks() {
+  const res = await fetch('/api/links');
+  allLinks = await res.json();
+  linksLoaded = true;
+  renderLinks();
+}
+
+function renderLinks() {
+  const container = document.getElementById('linksContainer');
+  if (!allLinks.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🔗</div>No links yet — add one!</div>';
+    return;
+  }
+  const sections = [
+    { title: '📧 Emails',                cats: ['email'] },
+    { title: '💳 Social & Payment',      cats: ['social', 'payment'] },
+    { title: '🎵 Distribution Platforms', cats: ['distribution'] },
+  ];
+  let html = '';
+  for (const section of sections) {
+    const slinks = allLinks.filter(l => section.cats.includes(l.category));
+    if (!slinks.length) continue;
+    const byPlat = {};
+    for (const l of slinks) {
+      const p = l.platform || 'Other';
+      (byPlat[p] = byPlat[p] || []).push(l);
+    }
+    html += `<div class="links-section"><div class="links-section-header">${esc(section.title)}</div><div class="links-cards">`;
+    for (const [plat, platLinks] of Object.entries(byPlat)) {
+      const hasPending = platLinks.some(l => l.status === 'pending');
+      const embedLinks = platLinks.filter(l => l.embed_html);
+      html += `<div class="link-card">
+        <div class="link-card-header">
+          <div class="link-card-platform">${esc(plat)}</div>
+          <div class="link-card-badges">${hasPending ? '<span class="pending-badge">⚠️ pending</span>' : ''}</div>
+        </div>
+        <div class="link-rows">`;
+      for (const link of platLinks) {
+        const sClass = 'lsb-' + link.status;
+        const dispText = link.url
+          ? (link.url.length > 50 ? link.url.slice(0, 50) + '…' : link.url)
+          : '(embed)';
+        const copyVal = link.url || link.embed_html || '';
+        html += `<div class="link-row">
+          <div class="link-row-label" title="${esc(link.label || '')}">${esc(link.label || link.song_title || '—')}</div>
+          ${link.url ? `<a class="link-anchor" href="${esc(link.url)}" target="_blank" rel="noopener noreferrer" title="${esc(link.url)}">${esc(dispText)}</a>` : ''}
+          <span class="link-status-badge ${sClass}">${esc(link.status)}</span>
+          <button class="copy-btn" data-copy="${esc(copyVal)}" onclick="copyLink(this.dataset.copy)">Copy</button>
+          <div class="link-row-actions">
+            <button class="link-action-btn" onclick="openLinkModal(${link.id})" title="Edit">✏️</button>
+            <button class="link-action-btn del" onclick="requestLinkDelete(${link.id})" title="Delete">🗑️</button>
+          </div>
+        </div>`;
+      }
+      html += '</div>'; // .link-rows
+      if (embedLinks.length) {
+        const eid = 'emb_' + plat.replace(/[^a-z0-9]/gi, '_');
+        // embed_html is trusted-content-only (artist's own platform iframes).
+        // Do not render user-supplied HTML here without sanitization.
+        html += `<button class="embed-toggle" onclick="toggleEmbeds('${eid}')">▶ Show embeds (${embedLinks.length})</button>`
+             +  `<div class="embed-container" id="${eid}">${embedLinks.map(e => e.embed_html).join('\n')}</div>`;
+      }
+      html += '</div>'; // .link-card
+    }
+    html += '</div></div>'; // .links-cards, .links-section
+  }
+  container.innerHTML = html;
+}
+
+function toggleEmbeds(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const open = el.classList.toggle('open');
+  const btn = el.previousElementSibling;
+  const n = el.querySelectorAll('iframe').length || el.children.length;
+  btn.textContent = open ? `▼ Hide embeds (${n})` : `▶ Show embeds (${n})`;
+}
+
+function copyLink(text) {
+  if (!text) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('Copied!', 'success'))
+      .catch(() => _fallbackCopy(text));
+  } else {
+    _fallbackCopy(text);
+  }
+}
+
+function _fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  showToast('Copied!', 'success');
+}
+
+function openLinkModal(id) {
+  editingLinkId = id != null ? id : null;
+  document.getElementById('linkModalTitle').textContent = id != null ? '✏️ Edit Link' : '＋ Add Link';
+  if (id != null) {
+    const link = allLinks.find(l => l.id === id);
+    if (link) {
+      document.getElementById('lf_platform').value   = link.platform   || '';
+      document.getElementById('lf_category').value   = link.category   || 'distribution';
+      document.getElementById('lf_label').value      = link.label      || '';
+      document.getElementById('lf_url').value        = link.url        || '';
+      document.getElementById('lf_embed_html').value = link.embed_html || '';
+      document.getElementById('lf_song_title').value = link.song_title || '';
+      document.getElementById('lf_status').value     = link.status     || 'confirmed';
+    }
+  } else {
+    document.getElementById('lf_platform').value   = '';
+    document.getElementById('lf_category').value   = 'distribution';
+    document.getElementById('lf_label').value      = '';
+    document.getElementById('lf_url').value        = '';
+    document.getElementById('lf_embed_html').value = '';
+    document.getElementById('lf_song_title').value = '';
+    document.getElementById('lf_status').value     = 'confirmed';
+  }
+  document.getElementById('linkModal').classList.add('show');
+}
+
+function closeLinkModal() {
+  document.getElementById('linkModal').classList.remove('show');
+  editingLinkId = null;
+}
+
+async function saveLinkModal() {
+  const platform   = document.getElementById('lf_platform').value.trim();
+  const category   = document.getElementById('lf_category').value;
+  const label      = document.getElementById('lf_label').value.trim();
+  const url        = document.getElementById('lf_url').value.trim() || null;
+  const embed_html = document.getElementById('lf_embed_html').value.trim() || null;
+  const song_title = document.getElementById('lf_song_title').value.trim() || null;
+  const status     = document.getElementById('lf_status').value;
+  if (!platform || !label) {
+    showToast('Platform and label are required', 'error');
+    return;
+  }
+  const body = { platform, category, label, url, embed_html, song_title, status };
+  try {
+    let res;
+    if (editingLinkId != null) {
+      res = await fetch(`/api/links/${editingLinkId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+    } else {
+      res = await fetch('/api/links', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+    }
+    const data = await res.json();
+    if (res.ok) {
+      closeLinkModal();
+      if (editingLinkId != null) {
+        const idx = allLinks.findIndex(l => l.id === editingLinkId);
+        if (idx >= 0) allLinks[idx] = data;
+        showToast('Link updated', 'success');
+      } else {
+        allLinks.push(data);
+        showToast('Link added', 'success');
+      }
+      renderLinks();
+    } else {
+      showToast(data.error || 'Save failed', 'error');
+    }
+  } catch (_) {
+    showToast('Network error', 'error');
+  }
+}
+
+function requestLinkDelete(id) {
+  pendingDeleteLinkId = id;
+  const link = allLinks.find(l => l.id === id);
+  const info = document.getElementById('deleteLinkInfo');
+  info.textContent = '';
+  const strong = document.createElement('strong');
+  strong.textContent = link ? (link.platform + ' — ' + link.label) : 'Unknown';
+  info.appendChild(strong);
+  if (link && link.url) {
+    info.appendChild(document.createTextNode(' · ' + link.url.slice(0, 60)));
+  }
+  document.getElementById('linkDeleteModal').classList.add('show');
+}
+
+function closeLinkDeleteModal() {
+  document.getElementById('linkDeleteModal').classList.remove('show');
+  pendingDeleteLinkId = null;
+}
+
+async function confirmLinkDelete() {
+  if (pendingDeleteLinkId == null) return;
+  const id = pendingDeleteLinkId;
+  closeLinkDeleteModal();
+  try {
+    const res = await fetch(`/api/links/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      allLinks = allLinks.filter(l => l.id !== id);
+      renderLinks();
+      showToast('Link deleted', 'success');
+    } else {
+      showToast(data.error || 'Delete failed', 'error');
+    }
+  } catch (_) {
+    showToast('Network error', 'error');
+  }
+}
+
 function setRadioVol(v) { radioAudio.volume = v / 100; }
 </script>
 </body>
@@ -1654,6 +2041,118 @@ def api_delete_track(track_id: int):
         conn.commit()
 
     return jsonify({"ok": True, "deleted_id": track_id})
+
+
+# ── Artist Links API (FR-20260515-artist-links-pill-music-dashboard) ──────────
+
+_LINK_ALLOWED_CATEGORIES: frozenset[str] = frozenset({"email", "social", "payment", "distribution"})
+_LINK_ALLOWED_STATUSES: frozenset[str] = frozenset({"confirmed", "pending", "broken"})
+
+
+def _validate_link_payload(data: dict) -> tuple[dict, str | None]:
+    """Return (cleaned_fields, error_str).  error_str is None on success."""
+    out: dict = {}
+    if "category" in data:
+        if data["category"] not in _LINK_ALLOWED_CATEGORIES:
+            return {}, f"Invalid category: {data['category']!r}"
+        out["category"] = data["category"]
+    if "status" in data:
+        if data["status"] not in _LINK_ALLOWED_STATUSES:
+            return {}, f"Invalid status: {data['status']!r}"
+        out["status"] = data["status"]
+    for field in ("platform", "label"):
+        if field in data:
+            val = str(data[field]).strip() if data[field] else ""
+            if not val:
+                return {}, f"'{field}' cannot be empty"
+            out[field] = val
+    for field in ("url", "embed_html", "song_title"):
+        if field in data:
+            # NOTE: embed_html is TRUSTED-CONTENT-ONLY — it is injected directly via
+            # innerHTML in the browser to render <iframe> embeds from music platforms.
+            # Never expose this CRUD endpoint to untrusted/multi-user traffic without
+            # adding server-side HTML sanitization (e.g. bleach) first.
+            out[field] = str(data[field]).strip() if data[field] else None
+    if "sort_order" in data:
+        try:
+            out["sort_order"] = int(data["sort_order"])
+        except (ValueError, TypeError):
+            return {}, "sort_order must be an integer"
+    return out, None
+
+
+@app.route("/api/links")
+def api_links_get():
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT * FROM artist_links ORDER BY category, platform, sort_order, id"
+        ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/links", methods=["POST"])
+def api_links_post():
+    data = request.get_json(silent=True) or {}
+    for field in ("category", "platform", "label"):
+        if not data.get(field):
+            return jsonify({"error": f"'{field}' is required"}), 400
+    cleaned, err = _validate_link_payload(data)
+    if err:
+        return jsonify({"error": err}), 400
+    # Ensure required fields are in cleaned (they pass validation above)
+    for field in ("category", "platform", "label"):
+        if field not in cleaned:
+            cleaned[field] = str(data[field]).strip()
+    with get_connection() as conn:
+        cur = conn.execute(
+            """INSERT INTO artist_links
+               (category, platform, label, url, embed_html, song_title, status, sort_order)
+               VALUES (:category, :platform, :label, :url, :embed_html, :song_title, :status, :sort_order)""",
+            {
+                "category":   cleaned["category"],
+                "platform":   cleaned["platform"],
+                "label":      cleaned["label"],
+                "url":        cleaned.get("url"),
+                "embed_html": cleaned.get("embed_html"),
+                "song_title": cleaned.get("song_title"),
+                "status":     cleaned.get("status", "confirmed"),
+                "sort_order": cleaned.get("sort_order", 0),
+            },
+        )
+        conn.commit()
+        row = conn.execute("SELECT * FROM artist_links WHERE id = ?", (cur.lastrowid,)).fetchone()
+    return jsonify(dict(row)), 201
+
+
+@app.route("/api/links/<int:link_id>", methods=["PUT"])
+def api_links_put(link_id: int):
+    data = request.get_json(silent=True) or {}
+    cleaned, err = _validate_link_payload(data)
+    if err:
+        return jsonify({"error": err}), 400
+    if not cleaned:
+        return jsonify({"error": "No valid fields to update"}), 400
+    with get_connection() as conn:
+        if not conn.execute("SELECT id FROM artist_links WHERE id = ?", (link_id,)).fetchone():
+            return jsonify({"error": "Link not found"}), 404
+        set_parts = [f"{k} = ?" for k in cleaned] + ["updated_at = datetime('now')"]
+        conn.execute(
+            f"UPDATE artist_links SET {', '.join(set_parts)} WHERE id = ?",
+            list(cleaned.values()) + [link_id],
+        )
+        conn.commit()
+        row = conn.execute("SELECT * FROM artist_links WHERE id = ?", (link_id,)).fetchone()
+    return jsonify(dict(row))
+
+
+@app.route("/api/links/<int:link_id>", methods=["DELETE"])
+def api_links_delete(link_id: int):
+    with get_connection() as conn:
+        if not conn.execute("SELECT id FROM artist_links WHERE id = ?", (link_id,)).fetchone():
+            return jsonify({"error": "Link not found"}), 404
+        conn.execute("DELETE FROM artist_links WHERE id = ?", (link_id,))
+        conn.commit()
+    return jsonify({"ok": True})
 
 
 # ── Rhyme Grouper helpers ──────────────────────────────────────────────────────

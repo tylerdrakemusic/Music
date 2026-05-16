@@ -261,6 +261,24 @@ CREATE TABLE IF NOT EXISTS gig_inventory (
     category   TEXT DEFAULT 'General',
     sort_order INTEGER DEFAULT 0
 );
+
+-- ── Artist Links (FR-20260515-artist-links-pill-music-dashboard) ─────────────
+CREATE TABLE IF NOT EXISTS artist_links (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    category    TEXT NOT NULL CHECK(category IN ('email','social','payment','distribution')),
+    platform    TEXT NOT NULL,
+    label       TEXT NOT NULL,
+    url         TEXT,
+    embed_html  TEXT,
+    song_title  TEXT,
+    status      TEXT NOT NULL DEFAULT 'confirmed' CHECK(status IN ('confirmed','pending','broken')),
+    sort_order  INTEGER DEFAULT 0,
+    created_at  TEXT DEFAULT (datetime('now')),
+    updated_at  TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_artist_links_category ON artist_links(category);
+CREATE INDEX IF NOT EXISTS idx_artist_links_platform ON artist_links(platform);
 """
 
 _SEED_SQL = """
