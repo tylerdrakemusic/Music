@@ -61,6 +61,18 @@
       "category": "music",
       "icon": "🎛",
       "priority": 24
+    },
+    {
+      "id": "artist-links",
+      "title": "Artist Links",
+      "description": "All platform profile links for Tyler James Drake — Social, Distribution, and Payment pills from linkTyler.json",
+      "type": "static_html",
+      "generator": "src/artist_links/generate_artist_links_panel.py",
+      "cli": "C:\\G\\python.exe src/artist_links/generate_artist_links_panel.py",
+      "output": "reports/artist_links_panel.html",
+      "category": "music",
+      "icon": "🔗",
+      "priority": 25
     }
   ]
 }
