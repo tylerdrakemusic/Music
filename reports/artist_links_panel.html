@@ -10,75 +10,105 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #0d0d0d;
       color: #e0e0e0;
-      padding: 24px;
+      padding: 24px 28px;
       min-height: 100vh;
     }
     header {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 12px;
-      margin-bottom: 28px;
-      border-bottom: 1px solid #2a2a2a;
+      margin-bottom: 32px;
+      border-bottom: 1px solid #222;
       padding-bottom: 16px;
     }
-    header h1 { font-size: 1.5rem; font-weight: 700; }
-    header .generated { font-size: 0.75rem; color: #555; margin-left: auto; }
-    .link-section { margin-bottom: 28px; }
+    header h1 { font-size: 1.4rem; font-weight: 700; flex: 1; }
+    header .generated { font-size: 0.72rem; color: #444; }
+    .link-section { margin-bottom: 32px; }
     .link-section h2 {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #888;
-      margin-bottom: 12px;
+      letter-spacing: 0.1em;
+      color: #555;
+      margin-bottom: 10px;
+    }
+    .accordion { display: flex; flex-direction: column; gap: 4px; }
+    details {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    details[open] { border-color: #333; }
+    summary {
       display: flex;
       align-items: center;
       gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      border-left: 3px solid var(--platform-color, #444);
     }
-    .stub-note { font-size: 0.7rem; font-weight: 400; text-transform: none; color: #555; }
-    .pills {
+    summary::-webkit-details-marker { display: none; }
+    summary:hover { background: #1a1a1a; }
+    .platform-icon { font-size: 1rem; width: 22px; text-align: center; flex-shrink: 0; }
+    .platform-name { font-size: 0.88rem; font-weight: 600; flex: 1; }
+    .link-count {
+      font-size: 0.7rem;
+      color: #555;
+      background: #1e1e1e;
+      padding: 2px 8px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .stub-count { color: #3a3a3a; }
+    .platform-links {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+      padding: 10px 14px 12px 48px;
+      border-top: 1px solid #1e1e1e;
     }
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 14px;
-      border-radius: 9999px;
+    .artist-link {
       font-size: 0.82rem;
-      font-weight: 500;
+      color: #aaa;
       text-decoration: none;
-      color: #fff;
-      background: var(--pill-color, #333);
-      opacity: 0.9;
-      border: 1px solid rgba(255,255,255,0.08);
-      transition: opacity 0.15s, transform 0.1s;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #1e1e1e;
+      border: 1px solid #2a2a2a;
+      transition: color 0.12s, background 0.12s;
       white-space: nowrap;
     }
-    .pill:hover {
-      opacity: 1;
-      transform: translateY(-1px);
+    .artist-link:hover { color: #fff; background: #2a2a2a; }
+    .artist-link.stub { color: #3a3a3a; cursor: default; }
+    .needs-id {
+      font-size: 0.68rem;
+      background: #2a1a00;
+      color: #664400;
+      padding: 1px 5px;
+      border-radius: 4px;
+      margin-left: 4px;
     }
-    .pill-stub {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 14px;
-      border-radius: 9999px;
-      font-size: 0.82rem;
-      font-weight: 500;
-      color: #555;
-      background: #1a1a1a;
-      border: 1px dashed #333;
-      white-space: nowrap;
-      cursor: not-allowed;
+    .stub-platform summary { opacity: 0.45; }
+    .reveal-stubs {
+      display: block;
+      margin: 8px auto 0;
+      background: none;
+      border: 1px dashed #2a2a2a;
+      color: #444;
+      font-size: 0.75rem;
+      padding: 6px 16px;
+      border-radius: 99px;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
     }
+    .reveal-stubs:hover { color: #666; border-color: #444; }
     footer {
       margin-top: 40px;
-      font-size: 0.7rem;
-      color: #3a3a3a;
+      font-size: 0.68rem;
+      color: #2a2a2a;
       text-align: center;
     }
   </style>
@@ -86,89 +116,408 @@
 <body>
   <header>
     <h1>❤ Artist Links</h1>
-    <span class="generated">generated 2026-05-16 05:58 UTC</span>
+    <span class="generated">generated 2026-05-16 06:06 UTC</span>
   </header>
   
-      <section class="link-section">
-        <h2>Social Media </h2>
-        <div class="pills">
-          <a class="pill" href="https://www.facebook.com/profile.php?id=61556394339851" target="_blank" rel="noopener noreferrer" style="--pill-color:#1877f2;">📘 Facebook</a>
-          <a class="pill" href="https://www.instagram.com/tylerjamesdrake/" target="_blank" rel="noopener noreferrer" style="--pill-color:#e1306c;">📸 Instagram</a>
-          <a class="pill" href="https://www.tiktok.com/@echoty84" target="_blank" rel="noopener noreferrer" style="--pill-color:#010101;">🎵 TikTok</a>
-          <a class="pill" href="https://wa.me/3038150107" target="_blank" rel="noopener noreferrer" style="--pill-color:#25d366;">💬 WhatsApp</a>
-          <a class="pill" href="https://x.com/echo_ty_ty" target="_blank" rel="noopener noreferrer" style="--pill-color:#000000;">𝕏 X</a>
-          <a class="pill" href="https://x.com/DrakeJames54026" target="_blank" rel="noopener noreferrer" style="--pill-color:#000000;">𝕏 X</a>
-        </div>
-      </section>
-      <section class="link-section">
-        <h2>Payment </h2>
-        <div class="pills">
-          <a class="pill" href="https://account.venmo.com/u/Tyler-Drake-10" target="_blank" rel="noopener noreferrer" style="--pill-color:#3d95ce;">💙 Venmo</a>
-          <a class="pill" href="https://paypal.me/tylerjamesdrake" target="_blank" rel="noopener noreferrer" style="--pill-color:#003087;">💳 PayPal</a>
-        </div>
-      </section>
-      <section class="link-section">
-        <h2>Distribution Platforms <span class="stub-note">(27 placeholders — fill in real IDs in studio_master/linkTyler.json)</span></h2>
-        <div class="pills">
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Adaptr</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Adaptr</span>
-          <a class="pill" href="https://music.amazon.com/artists/B0CWYSSMTG/tyler-james-drake" target="_blank" rel="noopener noreferrer" style="--pill-color:#00a8e0;">🎵 Amazon Music</a>
-          <a class="pill" href="https://music.amazon.com/artists/B0CWYRDNF9/echoty" target="_blank" rel="noopener noreferrer" style="--pill-color:#00a8e0;">🎵 Amazon Music</a>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Anghami</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Anghami</span>
-          <a class="pill" href="https://music.apple.com/us/artist/tyler-james-drake/1747192774" target="_blank" rel="noopener noreferrer" style="--pill-color:#fc3c44;">🍎 Apple Music</a>
-          <a class="pill" href="https://music.apple.com/us/artist/echoty/1734067005" target="_blank" rel="noopener noreferrer" style="--pill-color:#fc3c44;">🍎 Apple Music</a>
-          <a class="pill" href="https://audius.co/tylerjamesdrake" target="_blank" rel="noopener noreferrer" style="--pill-color:#7e1bcc;">🔊 Audius</a>
-          <a class="pill" href="https://tylerjamesdrake.bandcamp.com/" target="_blank" rel="noopener noreferrer" style="--pill-color:#1da0c3;">🎸 Bandcamp</a>
-          <a class="pill" href="https://tylerjamesdrake.bandcamp.com/music" target="_blank" rel="noopener noreferrer" style="--pill-color:#1da0c3;">🎸 Bandcamp</a>
-          <a class="pill" href="https://www.boomplay.com/artists/90787115" target="_blank" rel="noopener noreferrer" style="--pill-color:#f04124;">🎧 Boomplay</a>
-          <a class="pill" href="https://www.boomplay.com/artists/86134137" target="_blank" rel="noopener noreferrer" style="--pill-color:#f04124;">🎧 Boomplay</a>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Claro Musica</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Claro Musica</span>
-          <a class="pill" href="https://www.deezer.com/us/artist/256748002" target="_blank" rel="noopener noreferrer" style="--pill-color:#ef5466;">🎶 Deezer</a>
-          <a class="pill" href="https://www.deezer.com/us/artist/256747992" target="_blank" rel="noopener noreferrer" style="--pill-color:#ef5466;">🎶 Deezer</a>
-          <a class="pill" href="https://hyperfollow.com/tylerjamesdrake" target="_blank" rel="noopener noreferrer" style="--pill-color:#4a90e2;">📦 Distrokid</a>
-          <a class="pill" href="https://distrokid.com/hyperfollow/tylerjamesdrake/what-i-do-feat-blxckace" target="_blank" rel="noopener noreferrer" style="--pill-color:#4a90e2;">📦 Distrokid</a>
-          <a class="pill" href="https://hyperfollow.com/echoty" target="_blank" rel="noopener noreferrer" style="--pill-color:#4a90e2;">📦 Distrokid</a>
-          <a class="pill" href="https://distrokid.com/hyperfollow/echoty/get-out" target="_blank" rel="noopener noreferrer" style="--pill-color:#4a90e2;">📦 Distrokid</a>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Flo</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Flo</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">❤️ Iheartradio</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">❤️ Iheartradio</span>
-          <a class="pill" href="https://www.instagram.com/tylerjamesdrake" target="_blank" rel="noopener noreferrer" style="--pill-color:#e1306c;">📸 Instagram Facebook</a>
-          <a class="pill" href="https://music.apple.com/us/artist/tyler-james-drake/1747192774" target="_blank" rel="noopener noreferrer" style="--pill-color:#fc3c44;">🍎 Itunes</a>
-          <a class="pill" href="https://music.apple.com/us/artist/echoty/1734067005" target="_blank" rel="noopener noreferrer" style="--pill-color:#fc3c44;">🍎 Itunes</a>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Joox</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Joox</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Kuack Media</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Kuack Media</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Medianet</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Medianet</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Netease</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Netease</span>
-          <a class="pill" href="https://www.pandora.com/artist/tyler-james-drake/ARwJVPjfV22cX6X" target="_blank" rel="noopener noreferrer" style="--pill-color:#3668ff;">📻 Pandora</a>
-          <a class="pill" href="https://www.pandora.com/artist/echoty/ARjXtk9pkKmf77V" target="_blank" rel="noopener noreferrer" style="--pill-color:#3668ff;">📻 Pandora</a>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Qobuz</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Qobuz</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Saavn</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Saavn</span>
-          <a class="pill" href="https://soundcloud.com/user-590922790-96911984" target="_blank" rel="noopener noreferrer" style="--pill-color:#ff5500;">🌊 Soundcloud</a>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🌊 Soundcloud</span>
-          <a class="pill" href="spotify:artist:2PCvPDydZKbRUHb6lZMJXv" target="_blank" rel="noopener noreferrer" style="--pill-color:#1db954;">🟢 Spotify</a>
-          <a class="pill" href="https://open.spotify.com/artist/2PCvPDydZKbRUHb6lZMJXv" target="_blank" rel="noopener noreferrer" style="--pill-color:#1db954;">🟢 Spotify</a>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🟢 Spotify</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Tencent</span>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Tencent</span>
-          <a class="pill" href="https://listen.tidal.com/artist/47880609" target="_blank" rel="noopener noreferrer" style="--pill-color:#000000;">🌊 Tidal</a>
-          <a class="pill" href="https://listen.tidal.com/artist/46217927" target="_blank" rel="noopener noreferrer" style="--pill-color:#000000;">🌊 Tidal</a>
-          <a class="pill" href="https://www.tiktok.com/@echoty84" target="_blank" rel="noopener noreferrer" style="--pill-color:#010101;">🎵 Tiktok</a>
-          <span class="pill pill-stub" title="Placeholder URL — real ID not yet filled in">🎵 Tiktok</span>
-          <a class="pill" href="https://music.youtube.com/channel/UCm1ZknVFV34a9QKR0LYoJoQ" target="_blank" rel="noopener noreferrer" style="--pill-color:#ff0000;">▶️ Youtube Music</a>
-          <a class="pill" href="https://music.youtube.com/channel/UCfEh8PYGIrQ590DVrOoholw" target="_blank" rel="noopener noreferrer" style="--pill-color:#ff0000;">▶️ Youtube Music</a>
-        </div>
-      </section>
+  <section class="link-section">
+    <h2>Social Media</h2>
+    <div class="accordion">
+    <details>
+      <summary style="--platform-color:#1877f2;">
+        <span class="platform-icon">📘</span>
+        <span class="platform-name">Facebook</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://www.facebook.com/profile.php?id=61556394339851" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#e1306c;">
+        <span class="platform-icon">📸</span>
+        <span class="platform-name">Instagram</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://www.instagram.com/tylerjamesdrake/" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#010101;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Tiktok</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://www.tiktok.com/@echoty84" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#25d366;">
+        <span class="platform-icon">💬</span>
+        <span class="platform-name">Whatsapp</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://wa.me/3038150107" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#1a1a1a;">
+        <span class="platform-icon">𝕏</span>
+        <span class="platform-name">X</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://x.com/echo_ty_ty" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://x.com/DrakeJames54026" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    </div>
+  </section>
+  <section class="link-section">
+    <h2>Payment</h2>
+    <div class="accordion">
+    <details>
+      <summary style="--platform-color:#3d95ce;">
+        <span class="platform-icon">💙</span>
+        <span class="platform-name">Venmo</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://account.venmo.com/u/Tyler-Drake-10" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#003087;">
+        <span class="platform-icon">💳</span>
+        <span class="platform-name">Paypal</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://paypal.me/tylerjamesdrake" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+      </div>
+    </details>
+    </div>
+  </section>
+  <section class="link-section">
+    <h2>Streaming &amp; Distribution</h2>
+    <div class="accordion">
+    <details>
+      <summary style="--platform-color:#00a8e0;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Amazon Music</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://music.amazon.com/artists/B0CWYSSMTG/tyler-james-drake" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://music.amazon.com/artists/B0CWYRDNF9/echoty" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#fc3c44;">
+        <span class="platform-icon">🍎</span>
+        <span class="platform-name">Apple Music</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://music.apple.com/us/artist/tyler-james-drake/1747192774" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://music.apple.com/us/artist/echoty/1734067005" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#7e1bcc;">
+        <span class="platform-icon">🔊</span>
+        <span class="platform-name">Audius</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://audius.co/tylerjamesdrake" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#1da0c3;">
+        <span class="platform-icon">🎸</span>
+        <span class="platform-name">Bandcamp</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://tylerjamesdrake.bandcamp.com/" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://tylerjamesdrake.bandcamp.com/music" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#f04124;">
+        <span class="platform-icon">🎧</span>
+        <span class="platform-name">Boomplay</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://www.boomplay.com/artists/90787115" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://www.boomplay.com/artists/86134137" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#ef5466;">
+        <span class="platform-icon">🎶</span>
+        <span class="platform-name">Deezer</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://www.deezer.com/us/artist/256748002" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://www.deezer.com/us/artist/256747992" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#4a90e2;">
+        <span class="platform-icon">📦</span>
+        <span class="platform-name">DistroKid</span>
+        <span class="link-count">4 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://hyperfollow.com/tylerjamesdrake" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://distrokid.com/hyperfollow/tylerjamesdrake/what-i-do-feat-blxckace" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://hyperfollow.com/echoty" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+          <a class="artist-link" href="https://distrokid.com/hyperfollow/echoty/get-out" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#e1306c;">
+        <span class="platform-icon">📸</span>
+        <span class="platform-name">Instagram/Facebook</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://www.instagram.com/tylerjamesdrake" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#fc3c44;">
+        <span class="platform-icon">🍎</span>
+        <span class="platform-name">Itunes</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://music.apple.com/us/artist/tyler-james-drake/1747192774" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://music.apple.com/us/artist/echoty/1734067005" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#3668ff;">
+        <span class="platform-icon">📻</span>
+        <span class="platform-name">Pandora</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://www.pandora.com/artist/tyler-james-drake/ARwJVPjfV22cX6X" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://www.pandora.com/artist/echoty/ARjXtk9pkKmf77V" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#ff5500;">
+        <span class="platform-icon">🌊</span>
+        <span class="platform-name">SoundCloud</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://soundcloud.com/user-590922790-96911984" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#1db954;">
+        <span class="platform-icon">🟢</span>
+        <span class="platform-name">Spotify</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="spotify:artist:2PCvPDydZKbRUHb6lZMJXv" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://open.spotify.com/artist/2PCvPDydZKbRUHb6lZMJXv" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">Profile 3 <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#2d2d2d;">
+        <span class="platform-icon">🌊</span>
+        <span class="platform-name">Tidal</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://listen.tidal.com/artist/47880609" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://listen.tidal.com/artist/46217927" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#010101;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Tiktok</span>
+        <span class="link-count">1 profile</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://www.tiktok.com/@echoty84" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details>
+      <summary style="--platform-color:#ff0000;">
+        <span class="platform-icon">▶️</span>
+        <span class="platform-name">YouTube Music</span>
+        <span class="link-count">2 profiles</span>
+      </summary>
+      <div class="platform-links">
+        <a class="artist-link" href="https://music.youtube.com/channel/UCm1ZknVFV34a9QKR0LYoJoQ" target="_blank" rel="noopener noreferrer">Tyler James Drake ↗</a>
+          <a class="artist-link" href="https://music.youtube.com/channel/UCfEh8PYGIrQ590DVrOoholw" target="_blank" rel="noopener noreferrer">EchoTy ↗</a>
+      </div>
+    </details>
+    </div>
+    <div class="stub-group" hidden>
+          <details class="stub-platform">
+      <summary style="--platform-color:#666;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Adaptr</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#7f00ff;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Anghami</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#e63c2f;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Claro Música</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#ff7300;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Flo</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#cc0000;">
+        <span class="platform-icon">❤️</span>
+        <span class="platform-name">iHeartRadio</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#00b050;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Joox</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#666;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Kuack Media</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#666;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Medianet</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#cc0000;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">NetEase</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#4a90d9;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Qobuz</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#2bc5b4;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">JioSaavn</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    <details class="stub-platform">
+      <summary style="--platform-color:#0abf53;">
+        <span class="platform-icon">🎵</span>
+        <span class="platform-name">Tencent</span>
+        <span class="link-count stub-count">needs setup</span>
+      </summary>
+      <div class="platform-links">
+        <span class="artist-link stub" title="Placeholder — fill in real ID">Tyler James Drake <span class="needs-id">needs ID</span></span>
+          <span class="artist-link stub" title="Placeholder — fill in real ID">EchoTy <span class="needs-id">needs ID</span></span>
+      </div>
+    </details>
+    </div>
+  </section>
+  <button class="reveal-stubs" onclick="toggleStubs(this)">Show 12 platforms needing setup ▼</button>
   <footer>
     Source: studio_master/linkTyler.json &nbsp;·&nbsp; ❤Music &nbsp;·&nbsp; Tyler James Drake
   </footer>
+  <script>
+    function toggleStubs(btn) {
+      const groups = document.querySelectorAll('.stub-group');
+      const hidden = groups[0]?.hidden;
+      groups.forEach(g => g.hidden = !hidden);
+      btn.textContent = hidden
+        ? btn.textContent.replace('Show', 'Hide').replace('▼', '▲')
+        : btn.textContent.replace('Hide', 'Show').replace('▲', '▼');
+    }
+  </script>
 </body>
 </html>
