@@ -37,7 +37,7 @@ The Mackie Big Knob and Crown XLS 1002 plan is **superseded** by the inherited D
 Scarlett 2i2
   ├── REAR Out 1 (1/4" TRS) → Yamaha HS8 L  ← always connected, studio monitoring
   ├── REAR Out 2 (1/4" TRS) → Yamaha HS8 R  ← always connected, studio monitoring
-  └── FRONT Headphone Out (1/4" TRS stereo) → [1/4" TRS → dual RCA cable] → Denon AVR-1000 CD input
+  └── FRONT Headphone Out (1/4" TRS stereo) → [1/4" TRS → dual RCA cable] → Denon AVR-1000 DAT/TAPE input
                                                   ├── Front L → JBL 2600 (L)  [speaker wire → spring clips]
                                                   ├── Front R → JBL 2600 (R)  [speaker wire → spring clips]
                                                   └── Center  → Sterling center  [speaker wire]
@@ -53,9 +53,14 @@ The Scarlett 2i2 only has 2 rear line outputs (Out 1 and Out 2). Using the **fro
 **Denon input notes (confirmed from unit — 2026-05-17):**
 - Input connectors: **standard RCA (phono/cinch)** — the circular connectors with center pin
 - Available inputs: PHONO, CD, DAT/TAPE, VDP/DBS, VCR
-- **Use: CD or DAT/TAPE** — these are flat line-level inputs
+- **CD input: occupied by Denon AL32 CD Processing Unit** (built-in CD player)
+- **Use: DAT/TAPE** for the Scarlett 2i2 HP Out → dual RCA cable
 - **⚠ Do NOT use PHONO** — the PHONO input has a built-in RIAA equalization preamp for turntables; it will add bass boost and treble cut to anything you plug into it
 - Impedance spec on speaker outputs: **6–16 Ω** (JBL 2600 at 8Ω is perfectly within range)
+
+```
+Denon AL32 CD Processing Unit (built-in) → CD input  ← CD playback through all 3 speakers + FM/AM tuner
+```
 
 **See `docs/studio-wiring-decision.mmd` for the full Mermaid diagram.**
 
