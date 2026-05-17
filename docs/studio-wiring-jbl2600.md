@@ -1,6 +1,6 @@
 # Studio Wiring: JBL 2600 Passive PA Speakers
 
-**Status:** Decision Locked — 2026-05-09  
+**Status:** Revised — 2026-05-17 (Denon AVR-1000 inherited, Crown/Mackie plans dropped)  
 **Gear ID in heartmusic.db:** 27
 
 ---
@@ -9,38 +9,51 @@
 
 | Item | Order # | Vendor | Date | Status | Notes |
 |------|---------|--------|------|--------|-------|
-| Mackie Big Knob Passive | MAC10881259 | shop.mackie.com | 2026-05-10 12:29 AM EST | Ordered | Monitor controller (A/B switching) |
-| Crown XLS 1002 | — | — | — | Pending | Power amplifier for JBL 2600 |
-| Speaker wire + connectors | — | — | — | Pending | Standard 14 AWG OFC, binding posts to spring clips |
-| TRS cables (Scarlett → Big Knob) | — | — | — | Pending | 1/4" TRS, 3–10 ft |  
+| Mackie Big Knob Passive | MAC10881259 | shop.mackie.com | 2026-05-10 | ❌ Cancelled (vendor) | Replaced by Denon AVR-1000 |
+| Crown XLS 1002 | — | — | — | 🚫 Dropped | Denon AVR-1000 provides amplification |
+| Denon AVR-1000 | — | Inherited | 2026-05-17 | ✅ In hand | AV receiver — powers JBL 2600 + Sterling center |
+| Sterling center speaker | — | Inherited | 2026-05-17 | ✅ In hand | Passive, standard speaker wire |
+| Speaker wire (JBLs + Sterling) | — | TBD | — | Pending | 14 AWG OFC, spring clips / binding posts |
+| TRS → RCA cable (Scarlett → Denon) | — | TBD | — | Pending | 1/4" TRS to dual RCA, ~6 ft |
 
 ---
 
-## ✅ Final Decision — Locked 2026-05-09
+## ✅ Revised Signal Chain — 2026-05-17
 
-| Component | Model | Est. Price | Purpose |
-|-----------|-------|-----------|---------|
-| **Power Amp** | Crown XLS 1002 | ~$299 | Drives JBL 2600 (passive, 350W × 2 @ 8Ω) |
-| **Monitor Controller** | Mackie Big Knob Passive | ~$99 | A/B/C speaker switching — Scarlett 2i2 → HS8 or JBL 2600 |
+The Mackie Big Knob and Crown XLS 1002 plan is **superseded** by the inherited Denon AVR-1000, which provides both amplification and volume control at zero cost.
 
-**Total to go live:** ~$398 + cables (~$45) = **~$443**
+| Component | Source | Cost | Purpose |
+|-----------|--------|------|---------| 
+| Focusrite Scarlett 2i2 | Owned | — | Interface, guitar/mic input, feeds HS8s directly |
+| Yamaha HS8 × 2 | Owned | — | Active studio monitors, direct from Scarlett |
+| **Denon AVR-1000** | **Inherited** | **$0** | AV receiver — powers passive speakers, volume knob |
+| **JBL 2600 × 2** | **Inherited** | **$0** | Passive PA — Denon Front L/R outputs |
+| **Sterling center speaker** | **Inherited** | **$0** | Passive center — Denon Center output |
 
-**Signal chain (locked):**
+**Total to go live:** ~$30–40 (cables only)
+
+**Signal chain:**
 ```
-Scarlett 2i2 (Outputs 1+2, balanced TRS)
-        │
-        ▼
-  Mackie Big Knob Passive (monitor controller)
-    ├── Output A (balanced TRS) → Yamaha HS8 × 2  (active, existing monitors)
-    └── Output B (balanced TRS) → Crown XLS 1002 (power amp)
-                                        └── Speakon NL4 → JBL 2600 × 2  (passive PA)
+Scarlett 2i2
+  ├── Out 1 (TRS direct) → Yamaha HS8 L  ← studio monitoring path
+  ├── Out 2 (TRS direct) → Yamaha HS8 R  ← studio monitoring path
+  └── Out 1+2 (TRS → RCA) → Denon AVR-1000 stereo input  ← PA / playback path
+                                ├── Front L → JBL 2600 (L)  [speaker wire, spring clips]
+                                ├── Front R → JBL 2600 (R)  [speaker wire, spring clips]
+                                └── Center → Sterling center  [speaker wire]
 ```
+
+**Switching modes:**
+- **Studio monitoring:** Scarlett direct to HS8s (active monitors, no Denon in chain)
+- **PA / room fill / playback:** Route DAW output through Denon by adjusting DAW monitor output assignment or using a Y-split on the Scarlett outputs
 
 **See `docs/studio-wiring-decision.mmd` for the full Mermaid diagram.**
 
-**Interface upgrade deferred:** The Scarlett 2i2 handles guitar (Hi-Z input 1) and mic (XLR phantom power) — no upgrade needed for current use. Option B/C (4i4 or MOTU M4) remains open for future expansion if simultaneous multi-output or more inputs are needed. See `docs/interface-upgrade-research.md`.
+**Cables still needed (~$30–40 total):**
+- 1× TRS 1/4" male to dual RCA male, ~6 ft (Scarlett → Denon AUX/CD input)
+- Speaker wire, 14 AWG OFC: enough for JBL L/R runs + Sterling center run
 
-**Budget entry:** Log in `heartmusic.db` budget table at time of purchase.
+**Interface upgrade deferred:** Still no upgrade needed. Option B/C (4i4 or MOTU M4) remains open if simultaneous multi-output or more inputs are needed.
 
 ---
 
@@ -84,36 +97,36 @@ Scarlett 2i2 (line out) → Power Amplifier → JBL 2600 (passive)
 ## Signal Chain Wiring Diagram
 
 ```
-┌─────────────────────┐       TRS or XLR        ┌──────────────────────┐       Speakon or 1/4"      ┌───────────────┐
-│   Focusrite         │  ─────────────────────►  │   Power Amplifier    │  ─────────────────────►   │  JBL 2600     │
-│   Scarlett 2i2      │  (balanced line level)    │   (see options below)│  (speaker level signal)    │  (passive)    │
-│   Output L (TRS)    │                           │   Input: XLR or TRS  │                            │  Input: Speakon│
-│   Output R (TRS)    │  ─────────────────────►  │   Output: Speakon    │  ─────────────────────►   │  or 1/4" TRS  │
-└─────────────────────┘                           └──────────────────────┘                            └───────────────┘
+Scarlett 2i2 Out 1+2 (1/4" TRS)
+        │
+        ▼ [TRS → dual RCA cable]
+Denon AVR-1000 Stereo Input (RCA L/R)
+        │
+        ├── Front L (speaker wire) → JBL 2600 (L) spring clips
+        ├── Front R (speaker wire) → JBL 2600 (R) spring clips
+        └── Center  (speaker wire) → Sterling center speaker
+
+Scarlett 2i2 Out 1 → Yamaha HS8 L  (TRS direct, active monitor)
+Scarlett 2i2 Out 2 → Yamaha HS8 R  (TRS direct, active monitor)
 ```
 
-**Cable 1 (Interface → Amp input):**  
-TRS 1/4" to XLR male — balanced, professional audio. ~$10–20 per cable.  
-OR TRS to TRS if the amp accepts TRS inputs.
+**Cable 1 (Interface → Denon):**
+1/4" TRS male to dual RCA male (Y-split stereo), ~6 ft. ~$10–15.
 
-**Cable 2 (Amp output → Speaker):**  
-Speakon NL4 to Speakon NL4 — industry standard, locking, safe.  
-OR 1/4" TS to 1/4" TS — legacy, works but not locking.  
-**Never use XLR for speaker-level — wrong impedance and signal type.**
+**Cable 2 (Denon → Speakers):**
+Standard 14 AWG OFC speaker wire. Denon binding posts → JBL spring clips and Sterling binding posts.
 
 ---
 
-## Recommended Power Amplifiers
+## Amplifier Notes (Denon AVR-1000)
 
-All three options are well-matched for the JBL 2600 (300W/8Ω program).
-
-| Amp | Power (8Ω/ch) | Price | Notes |
-|-----|--------------|-------|-------|
-| **Crown XLS 1002** | 350W × 2 | ~$299 | Industry standard, lightweight, reliable. Balanced XLR inputs. Best choice. |
-| **QSC GX3** | 300W × 2 | ~$350–400 (used) | Studio-grade, clean, excellent for monitoring. Balanced XLR inputs. |
-| **Behringer iNuke NU1000** | 500W × 2 | ~$150 | Budget-friendly, higher risk of coloration. Good for PA use, not critical monitoring. |
-
-**Recommendation:** Crown XLS 1002 — proven reliability, perfect wattage match, available new.
+The inherited **Denon AVR-1000** is a home AV receiver providing:
+- Built-in multi-channel amplification (typically 75–100W × 5 @ 8Ω)
+- RCA analog stereo inputs (AUX, CD, etc.)
+- Speaker output terminals: Front L/R, Center, Surround L/R
+- Master volume knob — replaces Mackie Big Knob controller role
+- JBL 2600 (8Ω, 300W program) is well within safe operating range
+- Sterling center speaker (passive, 8Ω typical) driven from Center channel
 
 ---
 
@@ -126,14 +139,14 @@ All three options are well-matched for the JBL 2600 (300W/8Ω program).
 
 ## Next Steps (Purchasing Decision — Tyler's Call)
 
-1. ✅ **Mackie Big Knob Passive** — ORDERED (MAC10881259, 2026-05-10)
-2. **Priority:** Power amplifier (Crown XLS 1002, ~$299 new)
-3. **Cables needed:**
-   - 2× TRS 1/4" male (Scarlett out) to TRS 1/4" male (Big Knob in), 3–10 ft (~$15 total)
-   - 2× 14 AWG OFC speaker wire (Crown binding posts to JBL spring clips), short runs (~$20 total)
-4. **Optional:** Rack case if mounting amp + interface together
+1. ✅ **Denon AVR-1000** — IN HAND (inherited 2026-05-17)
+2. ✅ **JBL 2600 × 2** — IN HAND (inherited)
+3. ✅ **Sterling center speaker** — IN HAND (inherited)
+4. **Cables needed (~$30–40 total):**
+   - 1× TRS 1/4" male to dual RCA male, ~6 ft (Scarlett → Denon input)
+   - 14 AWG OFC speaker wire (Denon binding posts → JBL spring clips × 2 + Sterling)
 
-**Total remaining cost:** ~$319 (Crown + cables)
+**Total remaining cost:** ~$30–40 (cables only)
 
 ---
 

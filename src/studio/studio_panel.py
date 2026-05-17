@@ -328,8 +328,8 @@ PANEL_HTML = r"""<!DOCTYPE html>
 <!-- SIGNAL CHAIN TAB -->
 <div id="tab-wiring" class="tab-content">
   <div class="studio-header">
-    <h2>⚡ Studio Signal Chain — Locked 2026-05-09</h2>
-    <span style="font-size:0.85rem;color:var(--text-muted)">Crown XLS 1002 + Mackie Big Knob Passive + JBL 2600 + Yamaha HS8</span>
+    <h2>⚡ Studio Signal Chain — Revised 2026-05-17</h2>
+    <span style="font-size:0.85rem;color:var(--text-muted)">Denon AVR-1000 → JBL 2600 × 2 + Sterling Center · Scarlett direct → Yamaha HS8 × 2</span>
   </div>
   <div id="wiring-diagram" style="background:var(--surface);border-radius:8px;padding:1.5rem;overflow:auto;"></div>
   <p style="margin-top:1rem;font-size:0.82rem;color:var(--text-muted)">
@@ -430,29 +430,29 @@ async function loadWiringDiagram() {
     Guitar["🎸 Guitar\\n(1/4&quot; TS)"]
     Mic["🎤 Mic\\n(XLR, phantom)"]
     DAW["💻 DAW / Computer\\n(USB)"]
-    Interface["Focusrite Scarlett 2i2\\n──────────────────\\nIn 1: Guitar Hi-Z\\nIn 2: Mic XLR/TRS\\nOut L+R: Balanced TRS 1/4&quot;"]
-    MonCtrl["Mackie Big Knob Passive\\n──────────────────\\nMonitor Controller\\nA/B/C speaker switching"]
-    HS8L["Yamaha HS8 (L)\\nActive Monitor"]
-    HS8R["Yamaha HS8 (R)\\nActive Monitor"]
-    PowerAmp["Crown XLS 1002\\n──────────────────\\nPower Amplifier\\n350W x 2 @ 8ohm"]
-    JBL_L["JBL 2600 (L)\\nPassive PA 300W/8ohm"]
-    JBL_R["JBL 2600 (R)\\nPassive PA 300W/8ohm"]
+    Interface["Focusrite Scarlett 2i2\\n──────────────────\\nIn 1: Guitar Hi-Z\\nIn 2: Mic XLR/TRS\\nOut 1+2: TRS direct to HS8\\nOut 1+2: TRS→RCA to Denon"]
+    HS8L["Yamaha HS8 (L)\\nActive Monitor\\nTRS direct from Scarlett"]
+    HS8R["Yamaha HS8 (R)\\nActive Monitor\\nTRS direct from Scarlett"]
+    Denon["Denon AVR-1000\\n──────────────────\\nAV Receiver (inherited)\\nInput: RCA stereo\\nFront L/R + Center outputs"]
+    JBL_L["JBL 2600 (L)\\nPassive PA 300W/8ohm\\nSpring-clip input"]
+    JBL_R["JBL 2600 (R)\\nPassive PA 300W/8ohm\\nSpring-clip input"]
+    Sterling["Sterling Center Speaker\\nPassive\\nSpeaker wire"]
     Guitar -->|"1/4&quot; TS Hi-Z"| Interface
     Mic -->|"XLR balanced"| Interface
     Interface <-->|"USB"| DAW
-    Interface -->|"Balanced TRS 1/4&quot;"| MonCtrl
-    MonCtrl -->|"Output A TRS"| HS8L
-    MonCtrl -->|"Output A TRS"| HS8R
-    MonCtrl -->|"Output B TRS-XLR"| PowerAmp
-    PowerAmp -->|"Ch 1 Speakon NL4"| JBL_L
-    PowerAmp -->|"Ch 2 Speakon NL4"| JBL_R
-    classDef locked fill:#1a3a1a,stroke:#4caf50,color:#e8f5e9
+    Interface -->|"TRS direct\\n(studio mode)"| HS8L
+    Interface -->|"TRS direct\\n(studio mode)"| HS8R
+    Interface -->|"TRS→RCA\\n(PA mode)"| Denon
+    Denon -->|"Front L\\nspeaker wire"| JBL_L
+    Denon -->|"Front R\\nspeaker wire"| JBL_R
+    Denon -->|"Center\\nspeaker wire"| Sterling
+    classDef inherited fill:#1a3a1a,stroke:#4caf50,color:#e8f5e9
     classDef active fill:#1a2a3a,stroke:#2196f3,color:#e3f2fd
     classDef passive fill:#3a1a1a,stroke:#f44336,color:#fce4ec
     classDef input fill:#2a2a1a,stroke:#ff9800,color:#fff8e1
-    class Interface,MonCtrl,PowerAmp locked
+    class Interface,Denon inherited
     class HS8L,HS8R active
-    class JBL_L,JBL_R passive
+    class JBL_L,JBL_R,Sterling passive
     class Guitar,Mic,DAW input`;
     const { svg } = await mermaid.render('wiring-svg', diagSource);
     el.innerHTML = svg;
