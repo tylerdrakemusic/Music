@@ -6,12 +6,12 @@ flowchart TD
     Mic["🎤 Mic\n(XLR, phantom)"]
     DAW["💻 DAW / Computer\n(USB)"]
 
-    Interface["Focusrite Scarlett 2i2\n──────────────────\nIn 1: Guitar Hi-Z\nIn 2: Mic XLR/TRS\nOut 1: TRS → HS8 L\nOut 2: TRS → HS8 R\nOut Alt: TRS → RCA to Denon"]
+    Interface["Focusrite Scarlett 2i2\n──────────────────\nIn 1: Guitar Hi-Z\nIn 2: Mic XLR/TRS\nREAR Out 1 → TRS → HS8 L\nREAR Out 2 → TRS → HS8 R\nFRONT HP Out → TRS → Denon"]
 
-    HS8L["Yamaha HS8 (L)\nActive Monitor\nTRS 1/4&quot; direct from Scarlett"]
-    HS8R["Yamaha HS8 (R)\nActive Monitor\nTRS 1/4&quot; direct from Scarlett"]
+    HS8L["Yamaha HS8 (L)\nActive Monitor\n1/4&quot; TRS — rear Out 1"]
+    HS8R["Yamaha HS8 (R)\nActive Monitor\n1/4&quot; TRS — rear Out 2"]
 
-    Denon["Denon AVR-1000\n──────────────────\nAV Receiver (inherited)\nInput: RCA stereo\nFront L/R + Center outputs\nVolume control built-in"]
+    Denon["Denon AVR-1000\n──────────────────\nAV Receiver (inherited)\nInput: RCA — CD or DAT/TAPE jack\n⚠ NOT PHONO (has EQ preamp)\nFront L/R + Center speaker outputs\n6–16 Ω impedance"]
 
     JBL_L["JBL 2600 (L)\nPassive PA Speaker\n300W / 8Ω\nSpring-clip input"]
     JBL_R["JBL 2600 (R)\nPassive PA Speaker\n300W / 8Ω\nSpring-clip input"]
@@ -22,10 +22,10 @@ flowchart TD
     Mic -->|"XLR balanced"| Interface
     Interface <-->|"USB"| DAW
 
-    Interface -->|"TRS 1/4&quot; direct\n(studio monitoring)"| HS8L
-    Interface -->|"TRS 1/4&quot; direct\n(studio monitoring)"| HS8R
+    Interface -->|"REAR Out 1+2\nTRS 1/4&quot; direct\n(always connected)"| HS8L
+    Interface -->|"REAR Out 1+2\nTRS 1/4&quot; direct\n(always connected)"| HS8R
 
-    Interface -->|"TRS → RCA\n(PA / playback mode)"| Denon
+    Interface -->|"FRONT HP Out\n1/4&quot; TRS → dual RCA\n~$12 cable"| Denon
 
     Denon -->|"Front L\nspeaker wire"| JBL_L
     Denon -->|"Front R\nspeaker wire"| JBL_R
