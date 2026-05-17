@@ -30,30 +30,39 @@ The Mackie Big Knob and Crown XLS 1002 plan is **superseded** by the inherited D
 | **JBL 2600 × 2** | **Inherited** | **$0** | Passive PA — Denon Front L/R outputs |
 | **Sterling center speaker** | **Inherited** | **$0** | Passive center — Denon Center output |
 
-**Total to go live:** ~$30–40 (cables only)
+**Total to go live:** ~$25–35 (one cable + speaker wire)
 
-**Signal chain:**
+**Signal chain — confirmed from unit inspection (2026-05-17):**
 ```
 Scarlett 2i2
-  ├── Out 1 (TRS direct) → Yamaha HS8 L  ← studio monitoring path
-  ├── Out 2 (TRS direct) → Yamaha HS8 R  ← studio monitoring path
-  └── Out 1+2 (TRS → RCA) → Denon AVR-1000 stereo input  ← PA / playback path
-                                ├── Front L → JBL 2600 (L)  [speaker wire, spring clips]
-                                ├── Front R → JBL 2600 (R)  [speaker wire, spring clips]
-                                └── Center → Sterling center  [speaker wire]
+  ├── REAR Out 1 (1/4" TRS) → Yamaha HS8 L  ← always connected, studio monitoring
+  ├── REAR Out 2 (1/4" TRS) → Yamaha HS8 R  ← always connected, studio monitoring
+  └── FRONT Headphone Out (1/4" TRS stereo) → [1/4" TRS → dual RCA cable] → Denon AVR-1000 CD input
+                                                  ├── Front L → JBL 2600 (L)  [speaker wire → spring clips]
+                                                  ├── Front R → JBL 2600 (R)  [speaker wire → spring clips]
+                                                  └── Center  → Sterling center  [speaker wire]
 ```
 
-**Switching modes:**
-- **Studio monitoring:** Scarlett direct to HS8s (active monitors, no Denon in chain)
-- **PA / room fill / playback:** Route DAW output through Denon by adjusting DAW monitor output assignment or using a Y-split on the Scarlett outputs
+**Why the headphone output is the key:**
+The Scarlett 2i2 only has 2 rear line outputs (Out 1 and Out 2). Using the **front-panel headphone output** as the Denon feed means both paths can run simultaneously — HS8s from rear outputs, Denon/JBLs from headphone out. No Y-splitter, no monitor controller, no mode switching required.
+
+**Volume controls:**
+- HS8s: Scarlett main monitor knob (rear panel or front knob controls rear outputs)
+- Denon/JBLs: Scarlett headphone knob + Denon master volume knob
+
+**Denon input notes (confirmed from unit — 2026-05-17):**
+- Input connectors: **standard RCA (phono/cinch)** — the circular connectors with center pin
+- Available inputs: PHONO, CD, DAT/TAPE, VDP/DBS, VCR
+- **Use: CD or DAT/TAPE** — these are flat line-level inputs
+- **⚠ Do NOT use PHONO** — the PHONO input has a built-in RIAA equalization preamp for turntables; it will add bass boost and treble cut to anything you plug into it
+- Impedance spec on speaker outputs: **6–16 Ω** (JBL 2600 at 8Ω is perfectly within range)
 
 **See `docs/studio-wiring-decision.mmd` for the full Mermaid diagram.**
 
-**Cables still needed (~$30–40 total):**
-- 1× TRS 1/4" male to dual RCA male, ~6 ft (Scarlett → Denon AUX/CD input)
-- Speaker wire, 14 AWG OFC: enough for JBL L/R runs + Sterling center run
-
-**Interface upgrade deferred:** Still no upgrade needed. Option B/C (4i4 or MOTU M4) remains open if simultaneous multi-output or more inputs are needed.
+**One cable to buy (~$12–15):**
+- 1× **1/4" TRS male to dual RCA male**, ~6 ft — "stereo headphone to RCA" adapter cable  
+  (Scarlett front HP out → Denon CD input L/R)
+- Speaker wire, 14 AWG OFC: Denon binding posts → JBL spring clips × 2 + Sterling binding posts
 
 ---
 

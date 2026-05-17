@@ -430,19 +430,19 @@ async function loadWiringDiagram() {
     Guitar["🎸 Guitar\\n(1/4&quot; TS)"]
     Mic["🎤 Mic\\n(XLR, phantom)"]
     DAW["💻 DAW / Computer\\n(USB)"]
-    Interface["Focusrite Scarlett 2i2\\n──────────────────\\nIn 1: Guitar Hi-Z\\nIn 2: Mic XLR/TRS\\nOut 1+2: TRS direct to HS8\\nOut 1+2: TRS→RCA to Denon"]
-    HS8L["Yamaha HS8 (L)\\nActive Monitor\\nTRS direct from Scarlett"]
-    HS8R["Yamaha HS8 (R)\\nActive Monitor\\nTRS direct from Scarlett"]
-    Denon["Denon AVR-1000\\n──────────────────\\nAV Receiver (inherited)\\nInput: RCA stereo\\nFront L/R + Center outputs"]
+    Interface["Focusrite Scarlett 2i2\\n──────────────────\\nIn 1: Guitar Hi-Z\\nIn 2: Mic XLR/TRS\\nREAR Out 1 → TRS → HS8 L\\nREAR Out 2 → TRS → HS8 R\\nFRONT HP Out → TRS → Denon"]
+    HS8L["Yamaha HS8 (L)\\nActive Monitor\\n1/4&quot; TRS — rear Out 1"]
+    HS8R["Yamaha HS8 (R)\\nActive Monitor\\n1/4&quot; TRS — rear Out 2"]
+    Denon["Denon AVR-1000\\n──────────────────\\nAV Receiver (inherited)\\nInput: RCA — CD or DAT/TAPE\\n⚠ NOT PHONO (has EQ preamp)\\nFront L/R + Center outputs\\n6–16 Ω impedance"]
     JBL_L["JBL 2600 (L)\\nPassive PA 300W/8ohm\\nSpring-clip input"]
     JBL_R["JBL 2600 (R)\\nPassive PA 300W/8ohm\\nSpring-clip input"]
     Sterling["Sterling Center Speaker\\nPassive\\nSpeaker wire"]
     Guitar -->|"1/4&quot; TS Hi-Z"| Interface
     Mic -->|"XLR balanced"| Interface
     Interface <-->|"USB"| DAW
-    Interface -->|"TRS direct\\n(studio mode)"| HS8L
-    Interface -->|"TRS direct\\n(studio mode)"| HS8R
-    Interface -->|"TRS→RCA\\n(PA mode)"| Denon
+    Interface -->|"REAR Out 1+2\\nTRS direct\\n(always on)"| HS8L
+    Interface -->|"REAR Out 1+2\\nTRS direct\\n(always on)"| HS8R
+    Interface -->|"FRONT HP Out\\n1/4&quot; TRS → dual RCA\\n~$12 cable"| Denon
     Denon -->|"Front L\\nspeaker wire"| JBL_L
     Denon -->|"Front R\\nspeaker wire"| JBL_R
     Denon -->|"Center\\nspeaker wire"| Sterling
