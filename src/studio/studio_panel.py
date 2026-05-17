@@ -433,7 +433,8 @@ async function loadWiringDiagram() {
     Interface["Focusrite Scarlett 2i2\\n──────────────────\\nIn 1: Guitar Hi-Z\\nIn 2: Mic XLR/TRS\\nREAR Out 1 → TRS → HS8 L\\nREAR Out 2 → TRS → HS8 R\\nFRONT HP Out → TRS → Denon"]
     HS8L["Yamaha HS8 (L)\\nActive Monitor\\n1/4&quot; TRS — rear Out 1"]
     HS8R["Yamaha HS8 (R)\\nActive Monitor\\n1/4&quot; TRS — rear Out 2"]
-    Denon["Denon AVR-1000\\n──────────────────\\nAV Receiver (inherited)\\nInput: RCA — CD or DAT/TAPE\\n⚠ NOT PHONO (has EQ preamp)\\nFront L/R + Center outputs\\n6–16 Ω impedance"]
+    CDP["Denon AL32 CD Processing Unit\\n(built-in CD player)"]
+    Denon["Denon AVR-1000\\n──────────────────\\nAV Receiver (inherited)\\nCD input → AL32 (built-in CD)\\nDAT/TAPE input → Scarlett HP Out\\n⚠ NOT PHONO (has EQ preamp)\\nFront L/R + Center outputs\\n6–16 Ω impedance"]
     JBL_L["JBL 2600 (L)\\nPassive PA 300W/8ohm\\nSpring-clip input"]
     JBL_R["JBL 2600 (R)\\nPassive PA 300W/8ohm\\nSpring-clip input"]
     Sterling["Sterling Center Speaker\\nPassive\\nSpeaker wire"]
@@ -442,7 +443,8 @@ async function loadWiringDiagram() {
     Interface <-->|"USB"| DAW
     Interface -->|"REAR Out 1+2\\nTRS direct\\n(always on)"| HS8L
     Interface -->|"REAR Out 1+2\\nTRS direct\\n(always on)"| HS8R
-    Interface -->|"FRONT HP Out\\n1/4&quot; TRS → dual RCA\\n~$12 cable"| Denon
+    Interface -->|"FRONT HP Out\\n1/4&quot; TRS → dual RCA\\n~$12 cable → DAT/TAPE"| Denon
+    CDP -->|"CD input\\n(FM/AM also)"| Denon
     Denon -->|"Front L\\nspeaker wire"| JBL_L
     Denon -->|"Front R\\nspeaker wire"| JBL_R
     Denon -->|"Center\\nspeaker wire"| Sterling
@@ -450,7 +452,7 @@ async function loadWiringDiagram() {
     classDef active fill:#1a2a3a,stroke:#2196f3,color:#e3f2fd
     classDef passive fill:#3a1a1a,stroke:#f44336,color:#fce4ec
     classDef input fill:#2a2a1a,stroke:#ff9800,color:#fff8e1
-    class Interface,Denon inherited
+    class Interface,Denon,CDP inherited
     class HS8L,HS8R active
     class JBL_L,JBL_R,Sterling passive
     class Guitar,Mic,DAW input`;
