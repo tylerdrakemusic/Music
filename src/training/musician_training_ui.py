@@ -849,9 +849,15 @@ async function createSession() {
     const sorted = pos.notes.slice().sort((a, b) => a.midi - b.midi);
     // Deduplicate midi values for playback sequence
     const seen = new Set();
-    const asc = [];
-    for (const n of sorted) { if (!seen.has(n.midi)) { seen.add(n.midi); asc.push(n); } }
-    const desc = asc.slice(0, -1).reverse();
+    const allAsc = [];
+    for (const n of sorted) { if (!seen.has(n.midi)) { seen.add(n.midi); allAsc.push(n); } }
+    // Start ascending run from the position root (lowest C note = midi % 12 === 0).
+    // Notes below the root are played on the way back down, locking in the root as
+    // the departure point (e.g. C shape starts on A-string fret 3, descends to low E).
+    const rootNote = allAsc.find(n => n.midi % 12 === 0);
+    const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
+    const asc  = allAsc.slice(rootIdx);          // root → top
+    const desc = allAsc.slice(0, -1).reverse();  // (top-1) → very bottom
     const sequence = [...asc, ...desc];
     _scalePlaying = true;
     _scaleStopFlag = false;
@@ -861,7 +867,7 @@ async function createSession() {
     for (let rep = 0; rep < reps && !_scaleStopFlag; rep++) {
       for (let i = 0; i < sequence.length && !_scaleStopFlag; i++) {
         status.textContent = `Rep ${rep + 1}/${reps} — note ${i + 1}/${sequence.length}`;
-        drawFretboard(pos.notes, asc.indexOf(sequence[i]));
+        drawFretboard(pos.notes, allAsc.indexOf(sequence[i]));
         await playNote(sequence[i].midi, noteDurationMs * 0.85);
         await sleep(noteDurationMs);
       }

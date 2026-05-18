@@ -113,9 +113,9 @@ _pos5_notes = _pos(
 CAGED_POSITIONS: list[CagedPosition] = [
     CagedPosition(
         label="Position 1 — C shape (open)",
-        root_string="B string",
-        root_fret=1,
-        instructor_phrase="Start on the 1st fret of the B string — C major open position.",
+        root_string="A string",
+        root_fret=3,
+        instructor_phrase="Start on the 3rd fret of the A string — C major C shape.",
         notes=_pos1_notes,
     ),
     CagedPosition(
