@@ -100,14 +100,20 @@ _pos3_notes = _pos(
     (1, 5), (1, 7), (1, 8),       # e:      A4  B4  C5★
 )
 
-# Position 4 — E shape (frets 8–13)
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  Position 4 — E shape (frets 8–12)  ✅ VERIFIED by Tyler — DO NOT EDIT  ║
+# ║  low E: 8,10,12  A: 8,10,12  D: 9,10,12  G: 9,10  B: 8,10,12          ║
+# ║  e: 8,10,12                                                             ║
+# ║  Playback: starts on root C3★ (low E fret 8), ascends to C5★,          ║
+# ║  descends to D3 — closed loop, no duplicate root at seam.              ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
 # Roots: E6 fret 8 = C3★  |  D4 fret 10 = C4★  |  e1 fret 8 = C5★
 _pos4_notes = _pos(
-    (6, 8), (6, 10),              # low E:  C3★ D3
-    (5, 10), (5, 12),             # A:      G3  A3
+    (6, 8), (6, 10), (6, 12),     # low E:  C3★ D3  E3
+    (5, 8), (5, 10), (5, 12),     # A:      F3  G3  A3
     (4, 9), (4, 10), (4, 12),     # D:      B3  C4★ D4
-    (3, 9), (3, 10), (3, 12),     # G:      E4  F4  G4
-    (2, 10), (2, 12), (2, 13),    # B:      A4  B4  C5★
+    (3, 9), (3, 10),              # G:      E4  F4
+    (2, 8), (2, 10), (2, 12),     # B:      G4  A4  B4
     (1, 8), (1, 10), (1, 12),     # e:      C5★ D5  E5
 )
 
@@ -146,10 +152,10 @@ CAGED_POSITIONS: list[CagedPosition] = [
         notes=_pos3_notes,
     ),
     CagedPosition(
-        label="Position 4 — E shape (10th fret)",
-        root_string="D string",
-        root_fret=10,
-        instructor_phrase="Start on the 10th fret of the D string — C major E shape.",
+        label="Position 4 — E shape (8th fret)",
+        root_string="Low E string",
+        root_fret=8,
+        instructor_phrase="Start on the 8th fret of the low E string — C major E shape.",
         notes=_pos4_notes,
     ),
     CagedPosition(
