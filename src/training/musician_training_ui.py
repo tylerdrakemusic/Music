@@ -852,13 +852,15 @@ async function createSession() {
     const allAsc = [];
     for (const n of sorted) { if (!seen.has(n.midi)) { seen.add(n.midi); allAsc.push(n); } }
     // Start ascending run from the position root (lowest C note = midi % 12 === 0).
-    // Notes below the root are played on the way back down, locking in the root as
-    // the departure point (e.g. C shape starts on A-string fret 3, descends to low E).
+    // Notes below the root are played on the way back down, then we return back up
+    // to the root so each rep is a closed loop with no pitch jump at the seam.
+    // (e.g. C shape: C3 → G4 → E2 → C3, traversing every string up and down)
     const rootNote = allAsc.find(n => n.midi % 12 === 0);
     const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
-    const asc  = allAsc.slice(rootIdx);          // root → top
-    const desc = allAsc.slice(0, -1).reverse();  // (top-1) → very bottom
-    const sequence = [...asc, ...desc];
+    const asc       = allAsc.slice(rootIdx);           // root → top
+    const desc      = allAsc.slice(0, -1).reverse();   // (top-1) → very bottom
+    const returnAsc = allAsc.slice(1, rootIdx + 1);    // (bottom+1) → root (empty if rootIdx=0)
+    const sequence = [...asc, ...desc, ...returnAsc];
     _scalePlaying = true;
     _scaleStopFlag = false;
     const btn = document.getElementById('scale-play-btn');
