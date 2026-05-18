@@ -40,32 +40,39 @@ _STREAMING = {
     "tencent", "tidal", "tiktok", "youtube_music", "adaptr", "instagram_facebook",
 }
 
+def _si(slug: str, color: str, alt: str) -> str:
+    """Return a Simple Icons CDN <img> tag."""
+    return (
+        f'<img src="https://cdn.simpleicons.org/{slug}/{color}"'
+        f' width="18" height="18" alt="{alt}" style="vertical-align:middle;">'
+    )
+
 _PLATFORM_META: dict[str, tuple[str, str]] = {
-    "facebook":           ("📘", "#1877f2"),
-    "instagram":          ("📸", "#e1306c"),
-    "instagram_facebook": ("📸", "#e1306c"),
-    "tiktok":             ("🎵", "#010101"),
-    "whatsapp":           ("💬", "#25d366"),
-    "x":                  ("𝕏",  "#1a1a1a"),
-    "venmo":              ("💙", "#3d95ce"),
-    "paypal":             ("💳", "#003087"),
-    "amazon_music":       ("🎵", "#00a8e0"),
-    "apple_music":        ("🍎", "#fc3c44"),
-    "itunes":             ("🍎", "#fc3c44"),
-    "audius":             ("🔊", "#7e1bcc"),
-    "bandcamp":           ("🎸", "#1da0c3"),
+    "facebook":           (_si("facebook",     "1877F2", "Facebook"),       "#1877f2"),
+    "instagram":          (_si("instagram",    "E1306C", "Instagram"),      "#e1306c"),
+    "instagram_facebook": (_si("instagram",    "E1306C", "Instagram"),      "#e1306c"),
+    "tiktok":             (_si("tiktok",       "010101", "TikTok"),         "#010101"),
+    "whatsapp":           (_si("whatsapp",     "25D366", "WhatsApp"),       "#25d366"),
+    "x":                  (_si("x",            "000000", "X"),              "#1a1a1a"),
+    "venmo":              (_si("venmo",        "3D95CE", "Venmo"),          "#3d95ce"),
+    "paypal":             (_si("paypal",       "003087", "PayPal"),         "#003087"),
+    "amazon_music":       (_si("amazonmusic",  "00A8E0", "Amazon Music"),   "#00a8e0"),
+    "apple_music":        (_si("applemusic",   "FC3C44", "Apple Music"),    "#fc3c44"),
+    "itunes":             (_si("applemusic",   "FC3C44", "Apple Music"),    "#fc3c44"),
+    "audius":             (_si("audius",       "7E1BCC", "Audius"),         "#7e1bcc"),
+    "bandcamp":           (_si("bandcamp",     "1DA0C3", "Bandcamp"),       "#1da0c3"),
     "boomplay":           ("🎧", "#f04124"),
-    "deezer":             ("🎶", "#ef5466"),
+    "deezer":             (_si("deezer",       "EF5466", "Deezer"),         "#ef5466"),
     "distrokid":          ("📦", "#4a90e2"),
-    "pandora":            ("📻", "#3668ff"),
-    "soundcloud":         ("🌊", "#ff5500"),
-    "spotify":            ("🟢", "#1db954"),
-    "tidal":              ("🌊", "#2d2d2d"),
-    "youtube_music":      ("▶️", "#ff0000"),
-    "anghami":            ("🎵", "#7f00ff"),
+    "pandora":            (_si("pandora",      "3668FF", "Pandora"),        "#3668ff"),
+    "soundcloud":         (_si("soundcloud",   "FF5500", "SoundCloud"),     "#ff5500"),
+    "spotify":            (_si("spotify",      "1DB954", "Spotify"),        "#1db954"),
+    "tidal":              (_si("tidal",        "2D2D2D", "Tidal"),          "#2d2d2d"),
+    "youtube_music":      (_si("youtubemusic", "FF0000", "YouTube Music"),  "#ff0000"),
+    "anghami":            (_si("anghami",      "F54033", "Anghami"),        "#f54033"),
     "claro_musica":       ("🎵", "#e63c2f"),
     "flo":                ("🎵", "#ff7300"),
-    "iheartradio":        ("❤️", "#cc0000"),
+    "iheartradio":        (_si("iheartradio",  "CC0000", "iHeartRadio"),    "#cc0000"),
     "joox":               ("🎵", "#00b050"),
     "kuack_media":        ("🎵", "#666"),
     "medianet":           ("🎵", "#666"),
@@ -200,7 +207,8 @@ def _link_html(lk: dict) -> str:
     return f'<a class="artist-link" href="{url}" target="_blank" rel="noopener noreferrer">{artist} ↗</a>'
 
 def _accordion_html(p: dict) -> str:
-    icon  = html.escape(p["icon"])
+    raw_icon = p["icon"]
+    icon  = raw_icon if raw_icon.startswith("<img") else html.escape(raw_icon)
     name  = html.escape(p["name"])
     color = html.escape(p["color"])
     links_html = "\n          ".join(_link_html(lk) for lk in p["links"])

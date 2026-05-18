@@ -654,7 +654,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <button class="tab-btn" onclick="switchTab('release-ops', this)">📡 Release Ops</button>
   <button class="tab-btn" onclick="switchTab('radio', this)">📻 Radio</button>
   <a href="/rhymes" class="tab-btn" style="text-decoration:none;">🎼 Rhyme Grouper</a>
-  <button class="tab-btn" onclick="switchTab('links', this)">🔗 Artist Links</button>
+  <a href="/links" class="tab-btn" style="text-decoration:none;">🔗 Artist Links</a>
 </div>
 
 <div class="main">
@@ -2312,6 +2312,12 @@ def rhymes_page():
         ungrouped=ungrouped,
         stats=stats,
     )
+
+
+@app.route("/links")
+def links_page():
+    """Render the Artist Links standalone page."""
+    return render_template("links.html")
 
 
 @app.route("/rhymes/lines", methods=["POST"])
