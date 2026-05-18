@@ -2,6 +2,7 @@
 ❤Music — Focused Musician Training UI
 Flask web interface for managing and launching lead guitar training sessions.
 Exercise cards + practice log stored in heartmusic.db (guitar_exercises, guitar_training_log tables).
+Scales & Arpeggios tab added in FR-20260517-guitar-trainer-scale-exercises.
 """
 
 import argparse
@@ -17,11 +18,15 @@ _SRC = Path(__file__).resolve().parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 from utils.init_db import get_connection  # noqa: E402
+from training.scale_data import CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence  # noqa: E402
+from training.scale_tts import get_instructor_audio  # noqa: E402
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Keep TRAINING_DIR for the ephemeral _run_*.json temp files used by focused_musician_training.py
 TRAINING_DIR = PROJECT_ROOT / "tools" / "tyJson" / "exercises" / "musicTraining"
 CLICK_DIR = PROJECT_ROOT / "click"
+TTS_CACHE_DIR = PROJECT_ROOT / "output" / "tts" / "scale_instructor"
+TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 PYTHON_EXE = r"C:\G\python.exe"
 TRAINING_SCRIPT = PROJECT_ROOT / "tools" / "focused_musician_training.py"
 
@@ -180,13 +185,45 @@ HTML = r"""
   .metro-beat-row{display:flex;gap:5px;align-items:center}
   .metro-dot{width:10px;height:10px;border-radius:50%;background:#333;transition:background .07s}
   .metro-dot.active-accent{background:#e8003d;box-shadow:0 0 6px #e8003d}
-  .metro-dot.active-beat{background:#6fdc6f;box-shadow:0 0 4px #6fdc6f}</style>
+  .metro-dot.active-beat{background:#6fdc6f;box-shadow:0 0 4px #6fdc6f}
+  /* Scales tab (FR-20260517-guitar-trainer-scale-exercises) */
+  .tab-nav{display:flex;gap:8px;margin-bottom:20px}
+  .tab-btn{padding:8px 22px;border:1px solid var(--border);background:#111;color:var(--muted);border-radius:5px;cursor:pointer;font-weight:600;font-size:.9rem;transition:background .15s,color .15s}
+  .tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .tab-panel{}
+  .scales-header{margin-bottom:18px}
+  .scales-header h2{color:var(--accent);font-size:1.2rem;margin-bottom:4px}
+  .scales-header .sub{color:var(--muted);font-size:.82rem}
+  .scale-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .scale-row label{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .scale-select{background:#111;border:1px solid var(--border);color:#fff;padding:6px 10px;border-radius:4px;font-size:.85rem;min-width:260px}
+  .instructor-box{padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:.88rem;margin-bottom:14px;min-height:38px;line-height:1.5}
+  #fretboard-svg{width:100%;max-width:920px;height:160px;display:block;margin:0 0 16px 0;background:#111;border:1px solid var(--border);border-radius:6px}
+  .scale-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .scale-ctrl-label{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:5px}
+  .scale-ctrl-input{background:#111;border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:.9rem;width:64px;text-align:center}
+  .scale-ctrl-input::-webkit-inner-spin-button{display:none}
+  .btn-scale-tap{padding:5px 12px;background:#111;border:1px solid var(--border);color:#ccc;border-radius:4px;cursor:pointer;font-size:.8rem;font-weight:600}
+  .btn-scale-tap:active{background:#2a2a2a}
+  .btn-scale-play{padding:8px 28px;background:var(--accent);color:#fff;border:none;border-radius:5px;font-size:1rem;font-weight:700;cursor:pointer;min-width:80px}
+  .btn-scale-play:disabled{opacity:.4;cursor:default}
+  .scale-status{font-size:.8rem;color:#6fdc6f;min-height:18px;margin-bottom:10px}
+  .scale-log-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
+  .scale-log-table th{color:var(--muted);text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)}
+  .scale-log-table td{padding:4px 8px;border-bottom:1px solid #222;color:#aaa}</style>
 </style>
 </head>
 <body>
 <h1>🎸 Lead Guitar Trainer</h1>
 <p class="sub">Focused interval training — loop lead parts, control speed, build muscle memory</p>
 
+<!-- Tab navigation (FR-20260517-guitar-trainer-scale-exercises) -->
+<div class="tab-nav" id="tab-nav">
+  <button class="tab-btn active" id="tab-btn-exercises" onclick="switchTab('exercises')">🎸 Exercises</button>
+  <button class="tab-btn" id="tab-btn-scales" onclick="switchTab('scales')">🎵 Scales</button>
+</div>
+
+<div id="tab-exercises" class="tab-panel">
 <!-- Metronome (FR-20260425-guitar-trainer-metronome) -->
 <div class="metronome" id="metro-panel">
   <span class="metro-title">🥁 Metro</span>
@@ -293,7 +330,51 @@ HTML = r"""
     <p style="color:var(--muted);font-size:.85rem;margin-top:8px">No sessions logged yet.</p>
     {% endif %}
   </details>
-</div>
+</div><!-- /tab-exercises -->
+
+<!-- Scales & Arpeggios tab panel (FR-20260517-guitar-trainer-scale-exercises) -->
+<div id="tab-scales" class="tab-panel" style="display:none">
+  <div class="scales-header">
+    <h2>🎵 Scales &amp; Arpeggios</h2>
+    <p class="sub">C major — all 5 CAGED positions — Web Audio playback</p>
+  </div>
+
+  <div class="scale-row">
+    <label>Position
+      <select id="scale-position" class="scale-select" onchange="onPositionChange()"></select>
+    </label>
+  </div>
+
+  <div class="instructor-box" id="instructor-phrase">Loading positions…</div>
+  <audio id="instructor-audio" style="display:none"></audio>
+
+  <svg id="fretboard-svg" viewBox="0 0 920 160" preserveAspectRatio="xMinYMid meet">
+    <text x="460" y="88" fill="#555" text-anchor="middle" font-size="13" font-family="Segoe UI,sans-serif">Loading fretboard…</text>
+  </svg>
+
+  <div class="scale-controls">
+    <label class="scale-ctrl-label">BPM
+      <input id="scale-bpm" class="scale-ctrl-input" type="number" value="60" min="40" max="200" oninput="scaleSetBpm(this.value)">
+    </label>
+    <button class="btn-scale-tap" onclick="scaleTap()">Tap</button>
+    <label class="scale-ctrl-label">Reps
+      <input id="scale-reps" class="scale-ctrl-input" type="number" value="4" min="1" max="20">
+    </label>
+    <button class="btn-scale-play" id="scale-play-btn" onclick="scaleToggle()">▶ Play</button>
+  </div>
+
+  <div class="scale-status" id="scale-status"></div>
+
+  <details style="margin-top:16px">
+    <summary style="cursor:pointer;color:var(--accent);font-weight:600;font-size:.9rem;user-select:none">Scale Practice Log</summary>
+    <div style="margin-top:8px" id="scale-log-wrap">
+      <table class="scale-log-table">
+        <thead><tr><th>Time</th><th>Scale</th><th>Position</th><th>BPM</th><th>Reps</th></tr></thead>
+        <tbody id="scale-log-tbody"><tr><td colspan="5" style="color:var(--muted)">No sessions yet.</td></tr></tbody>
+      </table>
+    </div>
+  </details>
+</div><!-- /tab-scales -->
 
 <script>
 const _saveTimers = {};
@@ -623,7 +704,219 @@ async function createSession() {
     if (tapTimes.length > 8) tapTimes.shift();
   };
 })();
-</script>
+// ---------------------------------------------------------------------------
+// Scales tab (FR-20260517-guitar-trainer-scale-exercises)
+// ---------------------------------------------------------------------------
+(function initScales() {
+  let _positions = [];
+  let _currentPos = 0;
+  let _scaleBpm = 60;
+  let _scalePlaying = false;
+  let _scaleStopFlag = false;
+  const _scaleTapTimes = [];
+  const MAX_TAP_GAP_MS = 3000;
+
+  // ── Tab switching ────────────────────────────────────────────────────────
+  window.switchTab = function(name) {
+    document.getElementById('tab-exercises').style.display = name === 'exercises' ? '' : 'none';
+    document.getElementById('tab-scales').style.display   = name === 'scales'    ? '' : 'none';
+    document.getElementById('tab-btn-exercises').classList.toggle('active', name === 'exercises');
+    document.getElementById('tab-btn-scales').classList.toggle('active', name === 'scales');
+    if (name === 'scales' && !_positions.length) loadScalePositions();
+  };
+
+  // ── Load positions from server ───────────────────────────────────────────
+  async function loadScalePositions() {
+    try {
+      const r = await fetch('/api/scale-positions');
+      _positions = await r.json();
+    } catch (e) { console.error('scale positions load failed', e); return; }
+    const sel = document.getElementById('scale-position');
+    sel.innerHTML = _positions.map((p, i) =>
+      `<option value="${i}">${p.label}</option>`
+    ).join('');
+    onPositionChange();
+  }
+
+  window.onPositionChange = function() {
+    _currentPos = parseInt(document.getElementById('scale-position').value) || 0;
+    const pos = _positions[_currentPos];
+    if (!pos) return;
+    document.getElementById('instructor-phrase').textContent = pos.instructor_phrase;
+    // Load instructor audio
+    const audio = document.getElementById('instructor-audio');
+    audio.src = `/api/instructor-audio?position=${_currentPos + 1}`;
+    audio.load();
+    audio.play().catch(() => {});
+    drawFretboard(pos.notes, -1);
+  };
+
+  // ── SVG fretboard renderer ───────────────────────────────────────────────
+  window.drawFretboard = function(notes, activeIdx) {
+    const svg = document.getElementById('fretboard-svg');
+    const W = 920, H = 160;
+    const LEFT = 40, RIGHT = W - 20;
+    const TOP = 20, BOTTOM = H - 30;
+    const NUM_STRINGS = 6;
+    const NUM_FRETS = 15;
+    const strGap = (BOTTOM - TOP) / (NUM_STRINGS - 1);
+    const fretW = (RIGHT - LEFT) / NUM_FRETS;
+    const ACCENT = '#e8003d';
+    const MUTED = '#4a4a6a';
+    const PLAYING_COLOR = '#ffe066';
+    let html = '';
+    // Fret lines
+    for (let f = 0; f <= NUM_FRETS; f++) {
+      const x = LEFT + f * fretW;
+      const w = f === 0 ? 3 : 1;
+      html += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOTTOM}" stroke="${f===0?'#ccc':'#333'}" stroke-width="${w}"/>`;
+    }
+    // String lines (string 6 = low E at top, string 1 = high e at bottom)
+    for (let s = 0; s < NUM_STRINGS; s++) {
+      const y = TOP + s * strGap;
+      html += `<line x1="${LEFT}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="#555" stroke-width="${1 + (5-s)*0.3}"/>`;
+    }
+    // Fret numbers
+    for (let f = 0; f <= NUM_FRETS; f++) {
+      const x = LEFT + f * fretW + fretW / 2;
+      if (f % 3 === 0 || f <= 1) {
+        html += `<text x="${x}" y="${H - 8}" fill="#555" text-anchor="middle" font-size="9" font-family="Segoe UI,sans-serif">${f}</text>`;
+      }
+    }
+    // String labels (low E … high e)
+    const stringLabels = ['E','A','D','G','B','e'];
+    for (let s = 0; s < NUM_STRINGS; s++) {
+      const y = TOP + s * strGap;
+      html += `<text x="${LEFT - 6}" y="${y + 4}" fill="#666" text-anchor="end" font-size="9" font-family="Segoe UI,sans-serif">${stringLabels[s]}</text>`;
+    }
+    // Scale dots — note: string 1=high e → display row 5 (bottom), string 6=low E → row 0 (top)
+    const sorted = (notes || []).slice().sort((a,b) => a.midi - b.midi);
+    sorted.forEach((n, i) => {
+      const row = n.string - 1;  // string 1→row 0 (high e at bottom)
+      const displayRow = NUM_STRINGS - 1 - row;  // flip: string 6 at top
+      const y = TOP + displayRow * strGap;
+      const x = LEFT + (n.fret === 0 ? 0.4 : n.fret - 0.5) * fretW;
+      const isActive = i === activeIdx;
+      const color = isActive ? PLAYING_COLOR : (n.fret === 0 ? MUTED : ACCENT);
+      const r = isActive ? 9 : 7;
+      html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" stroke="#000" stroke-width="1" class="fret-dot${isActive?' playing':''}" data-note-idx="${i}"/>`;
+      // Interval label (root = C)
+      if (n.midi % 12 === 0) {
+        html += `<text x="${x}" y="${y + 4}" fill="#000" text-anchor="middle" font-size="7" font-weight="bold" font-family="Segoe UI,sans-serif">C</text>`;
+      }
+    });
+    svg.innerHTML = html;
+  };
+
+  // ── Web Audio oscillator playback ────────────────────────────────────────
+  let _audioCtx = null;
+  function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return _audioCtx;
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function playNote(midi, durationMs) {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') await ctx.resume();
+    const freq = {{ freq_table | tojson }}[midi];
+    if (!freq) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const now = ctx.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.35, now + 0.01);
+    gain.gain.setValueAtTime(0.35, now + durationMs / 1000 - 0.04);
+    gain.gain.linearRampToValueAtTime(0, now + durationMs / 1000);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + durationMs / 1000 + 0.01);
+  }
+
+  window.scaleToggle = async function() {
+    if (_scalePlaying) { _scaleStopFlag = true; return; }
+    const pos = _positions[_currentPos];
+    if (!pos) return;
+    const reps = Math.max(1, Math.min(20, parseInt(document.getElementById('scale-reps').value) || 4));
+    const noteDurationMs = Math.round(60000 / _scaleBpm);
+    const sorted = pos.notes.slice().sort((a, b) => a.midi - b.midi);
+    // Deduplicate midi values for playback sequence
+    const seen = new Set();
+    const asc = [];
+    for (const n of sorted) { if (!seen.has(n.midi)) { seen.add(n.midi); asc.push(n); } }
+    const desc = asc.slice(0, -1).reverse();
+    const sequence = [...asc, ...desc];
+    _scalePlaying = true;
+    _scaleStopFlag = false;
+    const btn = document.getElementById('scale-play-btn');
+    btn.textContent = '⏹ Stop';
+    const status = document.getElementById('scale-status');
+    for (let rep = 0; rep < reps && !_scaleStopFlag; rep++) {
+      for (let i = 0; i < sequence.length && !_scaleStopFlag; i++) {
+        status.textContent = `Rep ${rep + 1}/${reps} — note ${i + 1}/${sequence.length}`;
+        drawFretboard(pos.notes, asc.indexOf(sequence[i]));
+        await playNote(sequence[i].midi, noteDurationMs * 0.85);
+        await sleep(noteDurationMs);
+      }
+    }
+    _scalePlaying = false;
+    _scaleStopFlag = false;
+    btn.textContent = '▶ Play';
+    drawFretboard(pos.notes, -1);
+    status.textContent = _scaleStopFlag ? '' : '✓ Complete';
+    if (!_scaleStopFlag) {
+      logScaleSession('C_major', _currentPos + 1, _scaleBpm, reps);
+    }
+  };
+
+  window.scaleSetBpm = function(v) {
+    _scaleBpm = Math.max(40, Math.min(200, parseInt(v) || 60));
+  };
+
+  window.scaleTap = function() {
+    const now = performance.now();
+    if (_scaleTapTimes.length && now - _scaleTapTimes[_scaleTapTimes.length - 1] > MAX_TAP_GAP_MS) {
+      _scaleTapTimes.length = 0;
+    }
+    _scaleTapTimes.push(now);
+    if (_scaleTapTimes.length >= 2) {
+      const intervals = [];
+      for (let i = 1; i < _scaleTapTimes.length; i++) intervals.push(_scaleTapTimes[i] - _scaleTapTimes[i-1]);
+      const avg = intervals.reduce((a,b)=>a+b,0) / intervals.length;
+      _scaleBpm = Math.round(Math.max(40, Math.min(200, 60000 / avg)));
+      const inp = document.getElementById('scale-bpm');
+      if (inp) inp.value = _scaleBpm;
+    }
+    if (_scaleTapTimes.length > 8) _scaleTapTimes.shift();
+  };
+
+  async function logScaleSession(scale, position, bpm, reps) {
+    try {
+      const r = await fetch('/api/scale-log', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({scale, position, bpm, reps}),
+      });
+      if ((await r.json()).ok) loadScaleLog();
+    } catch (e) { console.warn('scale log failed', e); }
+  }
+
+  async function loadScaleLog() {
+    try {
+      const r = await fetch('/api/scale-log');
+      const rows = await r.json();
+      const tbody = document.getElementById('scale-log-tbody');
+      if (!rows.length) return;
+      tbody.innerHTML = rows.slice(0, 10).map(row =>
+        `<tr><td>${row.logged_at}</td><td>${row.scale.replace('_',' ')}</td><td>${row.position}</td><td>${row.bpm}</td><td>${row.reps}</td></tr>`
+      ).join('');
+    } catch(e) { console.warn('scale log load failed', e); }
+  }
+})();</script>
 </body>
 </html>
 """
@@ -705,7 +998,7 @@ def click_audio(filename: str) -> Response:
 def index():
     sessions = _list_sessions()
     log = _load_log()
-    return render_template_string(HTML, sessions=sessions, log=log)
+    return render_template_string(HTML, sessions=sessions, log=log, freq_table=MIDI_TO_FREQ)
 
 
 @app.route("/save", methods=["POST"])
@@ -815,6 +1108,109 @@ def delete_session():
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
+
+
+# ---------------------------------------------------------------------------
+# Scale & Arpeggio routes (FR-20260517-guitar-trainer-scale-exercises)
+# ---------------------------------------------------------------------------
+
+@app.route("/api/scale-positions")
+def api_scale_positions():
+    """Return all CAGED positions as JSON (label, root info, notes, instructor phrase)."""
+    return jsonify([
+        {
+            "label": p["label"],
+            "root_string": p["root_string"],
+            "root_fret": p["root_fret"],
+            "instructor_phrase": p["instructor_phrase"],
+            "notes": p["notes"],
+        }
+        for p in CAGED_POSITIONS
+    ])
+
+
+@app.route("/api/scale-log", methods=["GET", "POST"])
+def api_scale_log():
+    if request.method == "GET":
+        try:
+            with get_connection() as conn:
+                rows = conn.execute(
+                    "SELECT scale, position, bpm, reps, logged_at "
+                    "FROM scale_practice_log ORDER BY id DESC LIMIT 50"
+                ).fetchall()
+            return jsonify([dict(r) for r in rows])
+        except Exception as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+    # POST — log a scale session
+    data = request.get_json(force=True) or {}
+    scale = str(data.get("scale") or "C_major").strip()
+    position = data.get("position")
+    bpm = data.get("bpm")
+    reps = data.get("reps")
+
+    # Validate
+    if not scale:
+        return jsonify({"ok": False, "error": "scale required"})
+    try:
+        position = int(position)
+        if not 1 <= position <= 5:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "position must be integer 1-5"})
+    try:
+        bpm = int(bpm)
+        if not 40 <= bpm <= 200:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "bpm must be integer 40-200"})
+    try:
+        reps = int(reps)
+        if not 1 <= reps <= 100:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "reps must be integer 1-100"})
+
+    try:
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO scale_practice_log (scale, position, bpm, reps) VALUES (?,?,?,?)",
+                (scale, position, bpm, reps),
+            )
+            conn.commit()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+
+@app.route("/api/instructor-audio")
+def api_instructor_audio():
+    """Return cached ElevenLabs MP3 for the instructor phrase of the given position (1-5).
+
+    Returns 204 No Content when TTS is unavailable (no key, network error, etc.)
+    """
+    try:
+        position = int(request.args.get("position", 0))
+        if not 1 <= position <= 5:
+            abort(400)
+    except (TypeError, ValueError):
+        abort(400)
+
+    pos = CAGED_POSITIONS[position - 1]
+    audio_path = get_instructor_audio(pos["instructor_phrase"], TTS_CACHE_DIR)
+    if audio_path is None or not audio_path.exists():
+        return Response(status=204)
+
+    # Security: ensure the resolved path is inside TTS_CACHE_DIR
+    if not audio_path.resolve().is_relative_to(TTS_CACHE_DIR.resolve()):
+        abort(403)
+
+    return Response(
+        audio_path.read_bytes(),
+        status=200,
+        mimetype="audio/mpeg",
+        headers={"Cache-Control": "public, max-age=31536000"},
+    )
 
 
 # ---------------------------------------------------------------------------
