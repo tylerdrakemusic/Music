@@ -52,7 +52,12 @@ def _pos(*string_fret_pairs: tuple[int, int]) -> list[ScaleNote]:
 # Root C appears on each position: marked ★
 # ---------------------------------------------------------------------------
 
-# Position 1 — C shape (open position, frets 0–3)
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  Position 1 — C shape (open, frets 0–3)  ✅ VERIFIED by Tyler — DO NOT EDIT  ║
+# ║  low E: 0,1,3  A: 0,2,3  D: 0,2,3  G: 0,2  B: 0,1,3  e: 0,1,3        ║
+# ║  Playback: starts on root C3★ (A fret 3), ascends to G4, descends to   ║
+# ║  E2, then returns up to B2 — closed loop, no duplicate root at seam.   ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
 # Roots: A5 fret 3 = C3★  |  B2 fret 1 = C4★
 _pos1_notes = _pos(
     (6, 0), (6, 1), (6, 3),       # low E:  E2  F2  G2
