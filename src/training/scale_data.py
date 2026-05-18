@@ -70,10 +70,13 @@ _pos1_notes = _pos(
 
 # ╔══════════════════════════════════════════════════════════════════════════╗
 # ║  Position 2 — A shape (frets 3–8)  ✅ VERIFIED by Tyler — DO NOT EDIT  ║
-# ║  A: 3,5,7  D: 3,5,7  G: 4,5  B: 3,5,6  e: 3,5,7,8  (no low E)        ║
+# ║  low E: 3,5,7  A: 3,5,7  D: 3,5,7  G: 4,5  B: 3,5,6  e: 3,5,7,8      ║
+# ║  Playback: starts on root C3★ (A fret 3), up to C5★, down to G2,       ║
+# ║  returns A2→B2 — closed loop, no duplicate root at seam.               ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 # Roots: A5 fret 3 = C3★  |  G3 fret 5 = C4★  |  e1 fret 8 = C5★
 _pos2_notes = _pos(
+    (6, 3), (6, 5), (6, 7),       # low E:  G2  A2  B2
     (5, 3), (5, 5), (5, 7),       # A:      C3★ D3  E3
     (4, 3), (4, 5), (4, 7),       # D:      F3  G3  A3
     (3, 4), (3, 5),               # G:      B3  C4★  (semitone shift at G–B break)
