@@ -84,15 +84,20 @@ _pos2_notes = _pos(
     (1, 3), (1, 5), (1, 7), (1, 8),  # e:  G4  A4  B4  C5★
 )
 
-# Position 3 — G shape (frets 7–12)
-# Roots: E6 fret 8 = C3★  |  D4 fret 10 = C4★  |  e1 fret 8 = C5★
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  Position 3 — G shape (frets 5–9)  ✅ VERIFIED by Tyler — DO NOT EDIT  ║
+# ║  low E: 8  A: 5,7,8  D: 5,7,9  G: 5,7  B: 5,6,8  e: 5,7,8            ║
+# ║  Playback: starts on root C3★ (low E fret 8), ascends to C5★,          ║
+# ║  descends to D3 — closed loop, no duplicate root at seam.              ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# Roots: E6 fret 8 = C3★  |  G3 fret 5 = C4★  |  e1 fret 8 = C5★
 _pos3_notes = _pos(
-    (6, 8), (6, 10),              # low E:  C3★ D3
-    (5, 7), (5, 8), (5, 10),      # A:      E3  F3  G3
-    (4, 7), (4, 9), (4, 10),      # D:      A3  B3  C4★
-    (3, 7), (3, 9), (3, 10),      # G:      D4  E4  F4
-    (2, 8), (2, 10), (2, 12),     # B:      G4  A4  B4
-    (1, 8), (1, 10), (1, 12),     # e:      C5★ D5  E5
+    (6, 8),                       # low E:  C3★
+    (5, 5), (5, 7), (5, 8),       # A:      D3  E3  F3
+    (4, 5), (4, 7), (4, 9),       # D:      G3  A3  B3
+    (3, 5), (3, 7),               # G:      C4★ D4
+    (2, 5), (2, 6), (2, 8),       # B:      E4  F4  G4
+    (1, 5), (1, 7), (1, 8),       # e:      A4  B4  C5★
 )
 
 # Position 4 — E shape (frets 8–13)
