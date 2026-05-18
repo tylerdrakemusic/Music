@@ -859,7 +859,7 @@ async function createSession() {
     const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
     const asc       = allAsc.slice(rootIdx);           // root → top
     const desc      = allAsc.slice(0, -1).reverse();   // (top-1) → very bottom
-    const returnAsc = allAsc.slice(1, rootIdx + 1);    // (bottom+1) → root (empty if rootIdx=0)
+    const returnAsc = allAsc.slice(1, rootIdx);      // (bottom+1) → one below root (root plays at start of next rep)
     const sequence = [...asc, ...desc, ...returnAsc];
     _scalePlaying = true;
     _scaleStopFlag = false;
