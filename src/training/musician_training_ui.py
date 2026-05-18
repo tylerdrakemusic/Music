@@ -330,6 +330,7 @@ HTML = r"""
     <p style="color:var(--muted);font-size:.85rem;margin-top:8px">No sessions logged yet.</p>
     {% endif %}
   </details>
+</div><!-- /log-section -->
 </div><!-- /tab-exercises -->
 
 <!-- Scales & Arpeggios tab panel (FR-20260517-guitar-trainer-scale-exercises) -->
