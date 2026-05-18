@@ -2316,8 +2316,14 @@ def rhymes_page():
 
 @app.route("/links")
 def links_page():
-    """Render the Artist Links standalone page."""
-    return render_template("links.html")
+    """Serve the generated Artist Links panel (clean accordion by platform)."""
+    from datetime import datetime, timezone
+    from artist_links.generate_artist_links_panel import build_sections, render_html, LINKS_JSON
+    import json as _json
+    data = _json.loads(LINKS_JSON.read_text(encoding="utf-8"))
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    sections = build_sections(data)
+    return render_html(sections, generated_at), 200, {"Content-Type": "text/html; charset=utf-8"}
 
 
 @app.route("/rhymes/lines", methods=["POST"])
