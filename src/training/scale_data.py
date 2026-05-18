@@ -40,92 +40,71 @@ def _note(string: int, fret: int) -> ScaleNote:
     return ScaleNote(string=string, fret=fret, midi=_OPEN_MIDI[string] + fret)
 
 
+def _pos(*string_fret_pairs: tuple[int, int]) -> list[ScaleNote]:
+    """Build a note list from (string, fret) pairs."""
+    return [_note(s, f) for s, f in string_fret_pairs]
+
+
 # ---------------------------------------------------------------------------
-# All 5 CAGED positions for C major scale
-# Standard C major scale intervals: W W H W W W H (C D E F G A B C)
-# Notes: C D E F G A B  (midi: 60 62 64 65 67 69 71)
+# All 5 CAGED positions — C major scale, explicit note definitions
+# String numbering: 1=high e (E4), 2=B3, 3=G3, 4=D3, 5=A2, 6=low E (E2)
+# C major scale intervals: C D E F G A B  (midi pc: 0 2 4 5 7 9 11)
+# Root C appears on each position: marked ★
 # ---------------------------------------------------------------------------
 
-# Helper: check if a midi pitch class is in C major (no sharps/flats)
-_C_MAJOR_PCS = {0, 2, 4, 5, 7, 9, 11}  # C D E F G A B
+# Position 1 — C shape (open position, frets 0–3)
+# Roots: A5 fret 3 = C3★  |  B2 fret 1 = C4★
+_pos1_notes = _pos(
+    (6, 0), (6, 1), (6, 3),       # low E:  E2  F2  G2
+    (5, 0), (5, 2), (5, 3),       # A:      A2  B2  C3★
+    (4, 0), (4, 2), (4, 3),       # D:      D3  E3  F3
+    (3, 0), (3, 2),               # G:      G3  A3
+    (2, 0), (2, 1), (2, 3),       # B:      B3  C4★ D4
+    (1, 0), (1, 1), (1, 3),       # e:      E4  F4  G4
+)
 
+# Position 2 — A shape (frets 3–8)
+# Roots: A5 fret 3 = C3★  |  G3 fret 5 = C4★  |  e1 fret 8 = C5★
+_pos2_notes = _pos(
+    (5, 3), (5, 5), (5, 7),       # A:      C3★ D3  E3
+    (4, 3), (4, 5), (4, 7),       # D:      F3  G3  A3
+    (3, 4), (3, 5),               # G:      B3  C4★  (semitone shift at G–B break)
+    (2, 3), (2, 5), (2, 6),       # B:      D4  E4  F4
+    (1, 3), (1, 5), (1, 7), (1, 8),  # e:  G4  A4  B4  C5★
+)
 
-def _in_c_major(midi: int) -> bool:
-    return (midi % 12) in _C_MAJOR_PCS
+# Position 3 — G shape (frets 7–12)
+# Roots: E6 fret 8 = C3★  |  D4 fret 10 = C4★  |  e1 fret 8 = C5★
+_pos3_notes = _pos(
+    (6, 8), (6, 10),              # low E:  C3★ D3
+    (5, 7), (5, 8), (5, 10),      # A:      E3  F3  G3
+    (4, 7), (4, 9), (4, 10),      # D:      A3  B3  C4★
+    (3, 7), (3, 9), (3, 10),      # G:      D4  E4  F4
+    (2, 8), (2, 10), (2, 12),     # B:      G4  A4  B4
+    (1, 8), (1, 10), (1, 12),     # e:      C5★ D5  E5
+)
 
+# Position 4 — E shape (frets 8–13)
+# Roots: E6 fret 8 = C3★  |  D4 fret 10 = C4★  |  e1 fret 8 = C5★
+_pos4_notes = _pos(
+    (6, 8), (6, 10),              # low E:  C3★ D3
+    (5, 10), (5, 12),             # A:      G3  A3
+    (4, 9), (4, 10), (4, 12),     # D:      B3  C4★ D4
+    (3, 9), (3, 10), (3, 12),     # G:      E4  F4  G4
+    (2, 10), (2, 12), (2, 13),    # B:      A4  B4  C5★
+    (1, 8), (1, 10), (1, 12),     # e:      C5★ D5  E5
+)
 
-# Position 1 — C shape (open position, spans frets 0-3)
-# Root: C on B string fret 1 (midi 60)
-_pos1_candidates: list[ScaleNote] = []
-for s in range(1, 7):
-    for f in range(0, 4):
-        n = _note(s, f)
-        if _in_c_major(n["midi"]) and 40 <= n["midi"] <= 76:
-            _pos1_candidates.append(n)
-_pos1_notes = sorted(_pos1_candidates, key=lambda n: (n["midi"], n["string"]))
-# Deduplicate by midi (keep lowest string number = most standard fingering)
-_seen: set[int] = set()
-_pos1_dedup: list[ScaleNote] = []
-for n in sorted(_pos1_candidates, key=lambda x: (x["midi"], x["string"])):
-    if n["midi"] not in _seen:
-        _seen.add(n["midi"])
-        _pos1_dedup.append(n)
-
-# Position 2 — A shape (root on A string fret 3, spans frets 2-5)
-_pos2_candidates: list[ScaleNote] = []
-for s in range(1, 7):
-    for f in range(2, 6):
-        n = _note(s, f)
-        if _in_c_major(n["midi"]) and 45 <= n["midi"] <= 79:
-            _pos2_candidates.append(n)
-_seen2: set[int] = set()
-_pos2_dedup: list[ScaleNote] = []
-for n in sorted(_pos2_candidates, key=lambda x: (x["midi"], x["string"])):
-    if n["midi"] not in _seen2:
-        _seen2.add(n["midi"])
-        _pos2_dedup.append(n)
-
-# Position 3 — G shape (root on low E string fret 8 / high e fret 8, spans frets 5-8)
-_pos3_candidates: list[ScaleNote] = []
-for s in range(1, 7):
-    for f in range(5, 9):
-        n = _note(s, f)
-        if _in_c_major(n["midi"]) and 50 <= n["midi"] <= 84:
-            _pos3_candidates.append(n)
-_seen3: set[int] = set()
-_pos3_dedup: list[ScaleNote] = []
-for n in sorted(_pos3_candidates, key=lambda x: (x["midi"], x["string"])):
-    if n["midi"] not in _seen3:
-        _seen3.add(n["midi"])
-        _pos3_dedup.append(n)
-
-# Position 4 — E shape (root on D string fret 10, spans frets 7-10)
-_pos4_candidates: list[ScaleNote] = []
-for s in range(1, 7):
-    for f in range(7, 11):
-        n = _note(s, f)
-        if _in_c_major(n["midi"]) and 55 <= n["midi"] <= 88:
-            _pos4_candidates.append(n)
-_seen4: set[int] = set()
-_pos4_dedup: list[ScaleNote] = []
-for n in sorted(_pos4_candidates, key=lambda x: (x["midi"], x["string"])):
-    if n["midi"] not in _seen4:
-        _seen4.add(n["midi"])
-        _pos4_dedup.append(n)
-
-# Position 5 — D shape (root on G string fret 12, spans frets 10-13)
-_pos5_candidates: list[ScaleNote] = []
-for s in range(1, 7):
-    for f in range(10, 14):
-        n = _note(s, f)
-        if _in_c_major(n["midi"]) and 60 <= n["midi"] <= 93:
-            _pos5_candidates.append(n)
-_seen5: set[int] = set()
-_pos5_dedup: list[ScaleNote] = []
-for n in sorted(_pos5_candidates, key=lambda x: (x["midi"], x["string"])):
-    if n["midi"] not in _seen5:
-        _seen5.add(n["midi"])
-        _pos5_dedup.append(n)
+# Position 5 — D shape (frets 12–15, mirrors position 1 up one octave)
+# Roots: A5 fret 15 = C4★  |  B2 fret 13 = C5★
+_pos5_notes = _pos(
+    (6, 12), (6, 13), (6, 15),    # low E:  E3  F3  G3
+    (5, 12), (5, 14), (5, 15),    # A:      A3  B3  C4★
+    (4, 12), (4, 14), (4, 15),    # D:      D4  E4  F4
+    (3, 12), (3, 14),             # G:      G4  A4
+    (2, 12), (2, 13), (2, 15),    # B:      B4  C5★ D5
+    (1, 12), (1, 13), (1, 15),    # e:      E5  F5  G5
+)
 
 
 CAGED_POSITIONS: list[CagedPosition] = [
@@ -134,35 +113,35 @@ CAGED_POSITIONS: list[CagedPosition] = [
         root_string="B string",
         root_fret=1,
         instructor_phrase="Start on the 1st fret of the B string — C major open position.",
-        notes=_pos1_dedup,
+        notes=_pos1_notes,
     ),
     CagedPosition(
         label="Position 2 — A shape (3rd fret)",
         root_string="A string",
         root_fret=3,
         instructor_phrase="Start on the 3rd fret of the A string — C major A shape.",
-        notes=_pos2_dedup,
+        notes=_pos2_notes,
     ),
     CagedPosition(
         label="Position 3 — G shape (8th fret)",
         root_string="Low E string",
         root_fret=8,
         instructor_phrase="Start on the 8th fret of the low E string — C major G shape.",
-        notes=_pos3_dedup,
+        notes=_pos3_notes,
     ),
     CagedPosition(
         label="Position 4 — E shape (10th fret)",
         root_string="D string",
         root_fret=10,
         instructor_phrase="Start on the 10th fret of the D string — C major E shape.",
-        notes=_pos4_dedup,
+        notes=_pos4_notes,
     ),
     CagedPosition(
         label="Position 5 — D shape (12th fret)",
         root_string="G string",
         root_fret=12,
         instructor_phrase="Start on the 12th fret of the G string — C major D shape.",
-        notes=_pos5_dedup,
+        notes=_pos5_notes,
     ),
 ]
 
