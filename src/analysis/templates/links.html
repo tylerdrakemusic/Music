@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>❤Music — Artist Links</title>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #252a3a;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-muted: #94a3b8;
+    --accent: #e11d48;
+    --accent2: #fb7185;
+    --ok: #22c55e;
+    --danger: #ef4444;
+    --danger-bg: #2e0808;
+    --warning: #f59e0b;
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────────────────── */
+  .header {
+    background: linear-gradient(135deg, #0d0f14 0%, #1a0812 50%, #0d0f14 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon { font-size: 26px; }
+  .brand-name {
+    font-size: 18px; font-weight: 700;
+    background: linear-gradient(90deg, #e2e8f0, var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .brand-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .back-link {
+    font-size: 12px; color: var(--text-dim); text-decoration: none;
+    border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .back-link:hover { color: var(--text); border-color: var(--text-muted); }
+
+  /* ── Main layout ─────────────────────────────────────────────────────────── */
+  .main { max-width: 1200px; margin: 0 auto; padding: 24px 32px 64px; }
+
+  /* ── Artist Links ────────────────────────────────────────────────────────── */
+  .links-section { margin-bottom: 32px; }
+  .links-section-header {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-dim);
+    padding: 8px 0; margin-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .links-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .link-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; transition: border-color 0.15s;
+  }
+  .link-card:hover { border-color: rgba(225,29,72,0.4); }
+  .link-card-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .link-card-platform { font-size: 15px; font-weight: 700; }
+  .link-card-badges { display: flex; gap: 4px; align-items: center; }
+  .pending-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 700;
+    background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3);
+  }
+  .link-rows { display: flex; flex-direction: column; gap: 6px; }
+  .link-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 7px 10px;
+  }
+  .link-row-label {
+    font-size: 12px; color: var(--text-muted); flex: 1; min-width: 80px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;
+  }
+  .link-anchor {
+    font-size: 12px; color: var(--accent2); text-decoration: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;
+    display: inline-block;
+  }
+  .link-anchor:hover { text-decoration: underline; }
+  .link-status-badge {
+    padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 700; white-space: nowrap;
+  }
+  .lsb-confirmed { background: rgba(34,197,94,0.12); color: #86efac; }
+  .lsb-pending   { background: rgba(245,158,11,0.12); color: #fbbf24; }
+  .lsb-broken    { background: rgba(239,68,68,0.12);  color: #fca5a5; }
+  .copy-btn {
+    background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 3px 7px; font-size: 10px;
+    color: var(--text-dim); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .link-row-actions { display: flex; gap: 4px; }
+  .link-action-btn {
+    background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 3px 7px; font-size: 11px;
+    color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+  }
+  .link-action-btn:hover { border-color: var(--accent); color: var(--text); }
+  .link-action-btn.del:hover { border-color: var(--danger); color: var(--danger); }
+  .embed-toggle {
+    display: block; width: 100%; background: transparent; border: 1px dashed var(--border);
+    border-radius: var(--radius-sm); padding: 6px 12px; font-size: 11px;
+    color: var(--text-dim); cursor: pointer; text-align: left; margin-top: 8px; transition: all 0.15s;
+  }
+  .embed-toggle:hover { border-color: var(--accent); color: var(--text); }
+  .embed-container { margin-top: 8px; display: none; }
+  .embed-container.open { display: block; }
+  .embed-container iframe { max-width: 100%; border-radius: 8px; }
+  .links-add-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent); color: white; border: none;
+    border-radius: var(--radius-sm); padding: 8px 18px;
+    font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 20px;
+    transition: background 0.15s;
+  }
+  .links-add-btn:hover { background: #be123c; }
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text-dim);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* ── Modals ──────────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 200;
+    justify-content: center; align-items: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px; max-width: 420px; width: 90%;
+  }
+  .modal h3 { font-size: 16px; margin-bottom: 8px; color: var(--danger); }
+  .modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+  .modal .track-info {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .modal .track-info strong { color: var(--text); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .link-modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px; max-width: 520px; width: 90%;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .link-modal h3 { font-size: 16px; margin-bottom: 16px; color: var(--accent2); }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 5px; }
+  .form-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px;
+    color: var(--text); outline: none; transition: border-color 0.15s; box-sizing: border-box;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-textarea { min-height: 80px; resize: vertical; font-family: inherit; }
+  .form-select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px;
+    color: var(--text); outline: none; box-sizing: border-box;
+  }
+  .form-select:focus { border-color: var(--accent); }
+  .btn {
+    padding: 8px 18px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+    transition: all 0.15s;
+  }
+  .btn-cancel { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-cancel:hover { background: var(--border); color: var(--text); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { background: #dc2626; }
+
+  /* ── Toast ───────────────────────────────────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 300;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 20px;
+    font-size: 13px; transform: translateY(100px); opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--ok); color: var(--ok); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  @media (max-width: 768px) {
+    .header { padding: 16px 20px; }
+    .main { padding: 16px 20px 48px; }
+    .links-cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">❤</div>
+      <div>
+        <div class="brand-name">❤ Artist Links</div>
+        <div class="brand-sub">Tyler James Drake · Platform Profiles &amp; Distribution</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="/" class="back-link">← Back</a>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <button class="links-add-btn" onclick="openLinkModal()">＋ Add Link</button>
+  <div id="linksContainer"></div>
+</div>
+
+<!-- Link add/edit modal -->
+<div class="modal-overlay" id="linkModal">
+  <div class="link-modal">
+    <h3 id="linkModalTitle">＋ Add Link</h3>
+    <div class="form-group">
+      <label>Platform *</label>
+      <input class="form-input" id="lf_platform" placeholder="e.g. Spotify, Bandcamp">
+    </div>
+    <div class="form-group">
+      <label>Category *</label>
+      <select class="form-select" id="lf_category">
+        <option value="email">email</option>
+        <option value="social">social</option>
+        <option value="payment">payment</option>
+        <option value="distribution" selected>distribution</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Label *</label>
+      <input class="form-input" id="lf_label" placeholder="e.g. Artist page, Payment link">
+    </div>
+    <div class="form-group">
+      <label>URL</label>
+      <input class="form-input" id="lf_url" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>Embed HTML</label>
+      <textarea class="form-input form-textarea" id="lf_embed_html" placeholder="<iframe ...></iframe>"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Song Title (optional)</label>
+      <input class="form-input" id="lf_song_title" placeholder="e.g. What I Do">
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select class="form-select" id="lf_status">
+        <option value="confirmed" selected>confirmed</option>
+        <option value="pending">pending</option>
+        <option value="broken">broken</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeLinkModal()">Cancel</button>
+      <button class="btn" style="background:var(--accent);color:white;" onclick="saveLinkModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link delete confirmation modal -->
+<div class="modal-overlay" id="linkDeleteModal">
+  <div class="modal">
+    <h3>⚠ Delete Link</h3>
+    <p>This will permanently remove the link.</p>
+    <div class="track-info" id="deleteLinkInfo"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeLinkDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmLinkDelete()">Delete forever</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allLinks = [];
+let editingLinkId = null;
+let pendingDeleteLinkId = null;
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function loadLinks() {
+  const res = await fetch('/api/links');
+  allLinks = await res.json();
+  renderLinks();
+}
+
+function renderLinks() {
+  const container = document.getElementById('linksContainer');
+  if (!allLinks.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🔗</div>No links yet — add one!</div>';
+    return;
+  }
+  const sections = [
+    { title: '📧 Emails',                cats: ['email'] },
+    { title: '💳 Social & Payment',      cats: ['social', 'payment'] },
+    { title: '🎵 Distribution Platforms', cats: ['distribution'] },
+  ];
+  let html = '';
+  for (const section of sections) {
+    const slinks = allLinks.filter(l => section.cats.includes(l.category));
+    if (!slinks.length) continue;
+    const byPlat = {};
+    for (const l of slinks) {
+      const p = l.platform || 'Other';
+      (byPlat[p] = byPlat[p] || []).push(l);
+    }
+    html += `<div class="links-section"><div class="links-section-header">${esc(section.title)}</div><div class="links-cards">`;
+    for (const [plat, platLinks] of Object.entries(byPlat)) {
+      const hasPending = platLinks.some(l => l.status === 'pending');
+      const embedLinks = platLinks.filter(l => l.embed_html);
+      html += `<div class="link-card">
+        <div class="link-card-header">
+          <div class="link-card-platform">${esc(plat)}</div>
+          <div class="link-card-badges">${hasPending ? '<span class="pending-badge">⚠️ pending</span>' : ''}</div>
+        </div>
+        <div class="link-rows">`;
+      for (const link of platLinks) {
+        const sClass = 'lsb-' + link.status;
+        const dispText = link.url
+          ? (link.url.length > 50 ? link.url.slice(0, 50) + '…' : link.url)
+          : '(embed)';
+        const copyVal = link.url || link.embed_html || '';
+        html += `<div class="link-row">
+          <div class="link-row-label" title="${esc(link.label || '')}">${esc(link.label || link.song_title || '—')}</div>
+          ${link.url ? `<a class="link-anchor" href="${esc(link.url)}" target="_blank" rel="noopener noreferrer" title="${esc(link.url)}">${esc(dispText)}</a>` : ''}
+          <span class="link-status-badge ${sClass}">${esc(link.status)}</span>
+          <button class="copy-btn" data-copy="${esc(copyVal)}" onclick="copyLink(this.dataset.copy)">Copy</button>
+          <div class="link-row-actions">
+            <button class="link-action-btn" onclick="openLinkModal(${link.id})" title="Edit">✏️</button>
+            <button class="link-action-btn del" onclick="requestLinkDelete(${link.id})" title="Delete">🗑️</button>
+          </div>
+        </div>`;
+      }
+      html += '</div>'; // .link-rows
+      if (embedLinks.length) {
+        const eid = 'emb_' + plat.replace(/[^a-z0-9]/gi, '_');
+        html += `<button class="embed-toggle" onclick="toggleEmbeds('${eid}')">▶ Show embeds (${embedLinks.length})</button>`
+             +  `<div class="embed-container" id="${eid}">${embedLinks.map(e => e.embed_html).join('\n')}</div>`;
+      }
+      html += '</div>'; // .link-card
+    }
+    html += '</div></div>'; // .links-cards, .links-section
+  }
+  container.innerHTML = html;
+}
+
+function toggleEmbeds(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const open = el.classList.toggle('open');
+  const btn = el.previousElementSibling;
+  const n = el.querySelectorAll('iframe').length || el.children.length;
+  btn.textContent = open ? `▼ Hide embeds (${n})` : `▶ Show embeds (${n})`;
+}
+
+function copyLink(text) {
+  if (!text) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('Copied!', 'success'))
+      .catch(() => _fallbackCopy(text));
+  } else {
+    _fallbackCopy(text);
+  }
+}
+
+function _fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  showToast('Copied!', 'success');
+}
+
+function openLinkModal(id) {
+  editingLinkId = id != null ? id : null;
+  document.getElementById('linkModalTitle').textContent = id != null ? '✏️ Edit Link' : '＋ Add Link';
+  if (id != null) {
+    const link = allLinks.find(l => l.id === id);
+    if (link) {
+      document.getElementById('lf_platform').value   = link.platform   || '';
+      document.getElementById('lf_category').value   = link.category   || 'distribution';
+      document.getElementById('lf_label').value      = link.label      || '';
+      document.getElementById('lf_url').value        = link.url        || '';
+      document.getElementById('lf_embed_html').value = link.embed_html || '';
+      document.getElementById('lf_song_title').value = link.song_title || '';
+      document.getElementById('lf_status').value     = link.status     || 'confirmed';
+    }
+  } else {
+    document.getElementById('lf_platform').value   = '';
+    document.getElementById('lf_category').value   = 'distribution';
+    document.getElementById('lf_label').value      = '';
+    document.getElementById('lf_url').value        = '';
+    document.getElementById('lf_embed_html').value = '';
+    document.getElementById('lf_song_title').value = '';
+    document.getElementById('lf_status').value     = 'confirmed';
+  }
+  document.getElementById('linkModal').classList.add('show');
+}
+
+function closeLinkModal() {
+  document.getElementById('linkModal').classList.remove('show');
+  editingLinkId = null;
+}
+
+async function saveLinkModal() {
+  const platform   = document.getElementById('lf_platform').value.trim();
+  const category   = document.getElementById('lf_category').value;
+  const label      = document.getElementById('lf_label').value.trim();
+  const url        = document.getElementById('lf_url').value.trim() || null;
+  const embed_html = document.getElementById('lf_embed_html').value.trim() || null;
+  const song_title = document.getElementById('lf_song_title').value.trim() || null;
+  const status     = document.getElementById('lf_status').value;
+  if (!platform || !label) {
+    showToast('Platform and label are required', 'error');
+    return;
+  }
+  const body = { platform, category, label, url, embed_html, song_title, status };
+  try {
+    let res;
+    if (editingLinkId != null) {
+      res = await fetch(`/api/links/${editingLinkId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+    } else {
+      res = await fetch('/api/links', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+    }
+    const data = await res.json();
+    if (res.ok) {
+      closeLinkModal();
+      if (editingLinkId != null) {
+        const idx = allLinks.findIndex(l => l.id === editingLinkId);
+        if (idx >= 0) allLinks[idx] = data;
+        showToast('Link updated', 'success');
+      } else {
+        allLinks.push(data);
+        showToast('Link added', 'success');
+      }
+      renderLinks();
+    } else {
+      showToast(data.error || 'Save failed', 'error');
+    }
+  } catch (_) {
+    showToast('Network error', 'error');
+  }
+}
+
+function requestLinkDelete(id) {
+  pendingDeleteLinkId = id;
+  const link = allLinks.find(l => l.id === id);
+  const info = document.getElementById('deleteLinkInfo');
+  info.textContent = '';
+  const strong = document.createElement('strong');
+  strong.textContent = link ? (link.platform + ' — ' + link.label) : 'Unknown';
+  info.appendChild(strong);
+  if (link && link.url) {
+    info.appendChild(document.createTextNode(' · ' + link.url.slice(0, 60)));
+  }
+  document.getElementById('linkDeleteModal').classList.add('show');
+}
+
+function closeLinkDeleteModal() {
+  document.getElementById('linkDeleteModal').classList.remove('show');
+  pendingDeleteLinkId = null;
+}
+
+async function confirmLinkDelete() {
+  if (pendingDeleteLinkId == null) return;
+  const id = pendingDeleteLinkId;
+  closeLinkDeleteModal();
+  try {
+    const res = await fetch(`/api/links/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      allLinks = allLinks.filter(l => l.id !== id);
+      renderLinks();
+      showToast('Link deleted', 'success');
+    } else {
+      showToast(data.error || 'Delete failed', 'error');
+    }
+  } catch (_) {
+    showToast('Network error', 'error');
+  }
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', loadLinks);
+</script>
+</body>
+</html>
