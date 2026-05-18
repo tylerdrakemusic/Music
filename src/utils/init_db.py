@@ -254,6 +254,16 @@ CREATE TABLE IF NOT EXISTS guitar_training_log (
     logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Scale & Arpeggio practice log (FR-20260517-guitar-trainer-scale-exercises)
+CREATE TABLE IF NOT EXISTS scale_practice_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    scale       TEXT NOT NULL DEFAULT 'C_major',
+    position    INTEGER NOT NULL DEFAULT 1,  -- CAGED position 1-5
+    bpm         INTEGER NOT NULL DEFAULT 60,
+    reps        INTEGER NOT NULL DEFAULT 1,
+    logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ── Gig Inventory ─────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS gig_inventory (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
