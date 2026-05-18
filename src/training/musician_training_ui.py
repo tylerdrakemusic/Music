@@ -756,52 +756,54 @@ async function createSession() {
   window.drawFretboard = function(notes, activeIdx) {
     const svg = document.getElementById('fretboard-svg');
     const W = 920, H = 160;
-    const LEFT = 40, RIGHT = W - 20;
+    const LEFT = 58, RIGHT = W - 20;  // wider left margin for open-string zone
     const TOP = 20, BOTTOM = H - 30;
     const NUM_STRINGS = 6;
     const NUM_FRETS = 15;
     const strGap = (BOTTOM - TOP) / (NUM_STRINGS - 1);
     const fretW = (RIGHT - LEFT) / NUM_FRETS;
     const ACCENT = '#e8003d';
-    const MUTED = '#4a4a6a';
     const PLAYING_COLOR = '#ffe066';
     let html = '';
-    // Fret lines
+    // Fret lines (nut = thick white bar at f=0)
     for (let f = 0; f <= NUM_FRETS; f++) {
       const x = LEFT + f * fretW;
       const w = f === 0 ? 3 : 1;
       html += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOTTOM}" stroke="${f===0?'#ccc':'#333'}" stroke-width="${w}"/>`;
     }
-    // String lines (string 6 = low E at top, string 1 = high e at bottom)
+    // String lines — string 1 (high e) at top, string 6 (low E) at bottom; thickness increases downward
     for (let s = 0; s < NUM_STRINGS; s++) {
       const y = TOP + s * strGap;
-      html += `<line x1="${LEFT}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="#555" stroke-width="${1 + (5-s)*0.3}"/>`;
+      html += `<line x1="${LEFT}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="#555" stroke-width="${1 + s * 0.3}"/>`;
     }
-    // Fret numbers
-    for (let f = 0; f <= NUM_FRETS; f++) {
-      const x = LEFT + f * fretW + fretW / 2;
-      if (f % 3 === 0 || f <= 1) {
+    // Fret numbers (skip "0" — left zone is reserved for open-string dots)
+    for (let f = 1; f <= NUM_FRETS; f++) {
+      const x = LEFT + (f - 0.5) * fretW;
+      if (f === 1 || f % 3 === 0) {
         html += `<text x="${x}" y="${H - 8}" fill="#555" text-anchor="middle" font-size="9" font-family="Segoe UI,sans-serif">${f}</text>`;
       }
     }
-    // String labels (low E … high e)
-    const stringLabels = ['E','A','D','G','B','e'];
+    // String labels — high e at top (row 0) … low E at bottom (row 5)
+    const stringLabels = ['e','B','G','D','A','E'];
     for (let s = 0; s < NUM_STRINGS; s++) {
       const y = TOP + s * strGap;
-      html += `<text x="${LEFT - 6}" y="${y + 4}" fill="#666" text-anchor="end" font-size="9" font-family="Segoe UI,sans-serif">${stringLabels[s]}</text>`;
+      html += `<text x="${LEFT - 8}" y="${y + 4}" fill="#666" text-anchor="end" font-size="9" font-family="Segoe UI,sans-serif">${stringLabels[s]}</text>`;
     }
-    // Scale dots — note: string 1=high e → display row 5 (bottom), string 6=low E → row 0 (top)
+    // "open" zone label
+    html += `<text x="${LEFT - 20}" y="${H - 8}" fill="#444" text-anchor="middle" font-size="8" font-family="Segoe UI,sans-serif">open</text>`;
+    // Scale dots — string 1 (high e) → row 0 (top), string 6 (low E) → row 5 (bottom)
+    // Open-string notes appear to the LEFT of the nut
     const sorted = (notes || []).slice().sort((a,b) => a.midi - b.midi);
     sorted.forEach((n, i) => {
-      const row = n.string - 1;  // string 1→row 0 (high e at bottom)
-      const displayRow = NUM_STRINGS - 1 - row;  // flip: string 6 at top
-      const y = TOP + displayRow * strGap;
-      const x = LEFT + (n.fret === 0 ? 0.4 : n.fret - 0.5) * fretW;
+      const row = n.string - 1;  // string 1→row 0 (top), string 6→row 5 (bottom)
+      const y = TOP + row * strGap;
+      const isOpen = n.fret === 0;
+      const x = isOpen ? LEFT - 18 : LEFT + (n.fret - 0.5) * fretW;
       const isActive = i === activeIdx;
-      const color = isActive ? PLAYING_COLOR : (n.fret === 0 ? MUTED : ACCENT);
+      const color = isActive ? PLAYING_COLOR : ACCENT;
       const r = isActive ? 9 : 7;
       html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" stroke="#000" stroke-width="1" class="fret-dot${isActive?' playing':''}" data-note-idx="${i}"/>`;
-      // Interval label (root = C)
+      // Root label (C)
       if (n.midi % 12 === 0) {
         html += `<text x="${x}" y="${y + 4}" fill="#000" text-anchor="middle" font-size="7" font-weight="bold" font-family="Segoe UI,sans-serif">C</text>`;
       }
