@@ -117,15 +117,19 @@ _pos4_notes = _pos(
     (1, 8), (1, 10), (1, 12),     # e:      C5★ D5  E5
 )
 
-# Position 5 — D shape (frets 12–15, mirrors position 1 up one octave)
-# Roots: A5 fret 15 = C4★  |  B2 fret 13 = C5★
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  Position 5 — D shape (frets 8–14)  ✅ VERIFIED by Tyler — DO NOT EDIT  ║
+# ║  low E: 8,10,12,13  A: 10,12,14  D: 10,12,14  G: 10,12,14              ║
+# ║  B: 12,13  e: 10,12,13                                                  ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# Roots: E6 fret 8 = C3★  |  D4 fret 10 = C4★  |  B2 fret 13 = C5★
 _pos5_notes = _pos(
-    (6, 12), (6, 13), (6, 15),    # low E:  E3  F3  G3
-    (5, 12), (5, 14), (5, 15),    # A:      A3  B3  C4★
-    (4, 12), (4, 14), (4, 15),    # D:      D4  E4  F4
-    (3, 12), (3, 14),             # G:      G4  A4
-    (2, 12), (2, 13), (2, 15),    # B:      B4  C5★ D5
-    (1, 12), (1, 13), (1, 15),    # e:      E5  F5  G5
+    (6, 8), (6, 10), (6, 12), (6, 13),  # low E:  C3★ D3  E3  F3
+    (5, 10), (5, 12), (5, 14),           # A:      G3  A3  B3
+    (4, 10), (4, 12), (4, 14),           # D:      C4★ D4  E4
+    (3, 10), (3, 12), (3, 14),           # G:      F4  G4  A4
+    (2, 12), (2, 13),                    # B:      B4  C5★
+    (1, 10), (1, 12), (1, 13),           # e:      D5  E5  F5
 )
 
 
@@ -159,10 +163,10 @@ CAGED_POSITIONS: list[CagedPosition] = [
         notes=_pos4_notes,
     ),
     CagedPosition(
-        label="Position 5 — D shape (12th fret)",
-        root_string="G string",
-        root_fret=12,
-        instructor_phrase="Start on the 12th fret of the G string — C major D shape.",
+        label="Position 5 — D shape (10th fret)",
+        root_string="D string",
+        root_fret=10,
+        instructor_phrase="Start on the 10th fret of the D string — C major D shape.",
         notes=_pos5_notes,
     ),
 ]
