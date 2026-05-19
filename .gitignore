@@ -10,6 +10,8 @@
 *.aiff
 *.m4a
 *.ogg
+*.mid
+*.midi
 
 # Video
 *.mp4
