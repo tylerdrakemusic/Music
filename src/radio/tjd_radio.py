@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import collections
 import io
 import json
 import math
@@ -168,7 +169,7 @@ def build_deduped_playlist(
     Primary roots win on collision; secondary roots skip any track whose
     normalized title already exists in the primary set.
     """
-    primary_tracks = build_playlist(primary_roots, shuffle=False)
+    primary_tracks = _dedup_by_title(build_playlist(primary_roots, shuffle=False))
     primary_titles: set[str] = {_normalize_title(t["title"]) for t in primary_tracks}
 
     secondary_tracks = []
@@ -210,6 +211,42 @@ def _shuffle_tracks_with_variance(tracks: list[dict], prefer_quantum: bool = Tru
         return "quantum"
     random.shuffle(tracks)
     return "classical"
+
+
+_RE_VERSION_SUFFIX = re.compile(r'\s*\([^)]+\)\s*$')
+_FORMAT_PREF: dict[str, int] = {"mp3": 0, "flac": 1, "wav": 2, "m4a": 3, "ogg": 4}
+
+
+def _dedup_key(stem: str) -> str:
+    """Dedup key: (base_title_no_version_suffix, artist) both lowercased.
+
+    Strips trailing version markers like (Live), (Master 6), (in Bm), (2),
+    (Clean Master) but preserves artist so different artists' songs with the
+    same title are NOT collapsed (e.g. 'Diamonds - Rihanna' ≠ 'Diamonds - Sam Smith').
+    """
+    if " - " in stem:
+        title_part, artist_part = stem.split(" - ", 1)
+    else:
+        title_part, artist_part = stem, ""
+    base_title = _RE_VERSION_SUFFIX.sub("", title_part).strip().lower()
+    return f"{base_title}|{artist_part.strip().lower()}"
+
+
+def _dedup_by_title(tracks: list[dict]) -> list[dict]:
+    """Remove duplicate tracks (same song, same artist, different version/format).
+
+    Sorts by format preference first (mp3 > flac > wav > m4a > ogg) so the
+    best-quality representive is kept when a song exists in multiple formats.
+    """
+    ordered = sorted(tracks, key=lambda t: _FORMAT_PREF.get(t.get("format", ""), 99))
+    seen: set[str] = set()
+    result = []
+    for t in ordered:
+        key = _dedup_key(t["title"])
+        if key not in seen:
+            seen.add(key)
+            result.append(t)
+    return result
 
 
 def _prevent_boundary_repeat(tracks: list[dict], last_track: Optional[dict]) -> None:
@@ -955,6 +992,34 @@ icecast_stream_url = "http://127.0.0.1:8000/stream"
 icecast_status_url = "http://127.0.0.1:8000/status-json.xsl"
 playlist_snapshot: list[dict] = []
 
+# Server-side history for icecast backend (Icecast status API exposes only current track)
+_icecast_history: collections.deque = collections.deque(maxlen=20)
+_icecast_current_title: str = ""
+_icecast_started_at: float = 0.0
+
+
+def _poll_icecast_history() -> None:
+    """Background thread: poll Icecast status and maintain a server-side play history."""
+    global _icecast_current_title, _icecast_started_at
+    while True:
+        try:
+            source = fetch_icecast_source(icecast_status_url)
+            raw_title = str(source.get("title", ""))
+            raw_artist = str(source.get("artist", ""))
+            title, artist = normalize_icecast_metadata(raw_title, raw_artist)
+            if title and title != _icecast_current_title:
+                _icecast_current_title = title
+                _icecast_started_at = time.time()
+                _icecast_history.append({
+                    "title": title,
+                    "album": artist or "Muzic",
+                    "format": "icecast-mp3",
+                    "started_at": time.strftime("%H:%M:%S"),
+                })
+        except Exception:
+            pass
+        time.sleep(5)
+
 
 @app.route("/")
 def index():
@@ -1007,6 +1072,12 @@ def now_playing():
             str(source.get("artist", "")),
         )
         listeners = int(source.get("listeners", 0) or 0)
+        uptime = time.time() - _icecast_started_at if _icecast_started_at else 0.0
+        # Exclude the currently-playing track from history (it's shown as now-playing)
+        history = [
+            h for h in list(_icecast_history)
+            if h["title"] != (title or "")
+        ]
         return jsonify({
             "title": title or "Starting...",
             "album": "",
@@ -1014,9 +1085,9 @@ def now_playing():
             "format": "icecast-mp3",
             "listeners": listeners,
             "total_tracks": len(playlist_snapshot),
-            "uptime_sec": 0,
-            "elapsed_sec": 0,
-            "history": [],
+            "uptime_sec": uptime,
+            "elapsed_sec": uptime,
+            "history": history,
         })
 
     if broadcast is None:
@@ -1137,6 +1208,10 @@ def main():
         print(f"[RADIO] Icecast stream URL: {icecast_stream_url}")
         print(f"[RADIO] Icecast status URL: {icecast_status_url}")
         print(f"[RADIO] Source catalog snapshot count: {len(playlist_snapshot)}")
+        # Start history-tracking thread for icecast backend
+        history_thread = threading.Thread(target=_poll_icecast_history, daemon=True)
+        history_thread.start()
+        print("[RADIO] Icecast history poller started")
 
     print(f"\n🎵 TJD Radio → http://localhost:{args.port}")
     print(f"   Stream  → http://localhost:{args.port}/stream")
