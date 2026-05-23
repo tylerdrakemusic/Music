@@ -105,8 +105,8 @@ def client(mem_conn):
 # ---------------------------------------------------------------------------
 
 def test_caged_positions_count() -> None:
-    """There must be exactly 5 CAGED positions."""
-    assert len(CAGED_POSITIONS) == 5
+    """There must be exactly 8 CAGED positions."""
+    assert len(CAGED_POSITIONS) == 8
 
 
 def test_caged_positions_schema() -> None:
@@ -203,7 +203,7 @@ def test_get_scale_sequence_descending_second_half() -> None:
 def test_get_scale_sequence_invalid_index() -> None:
     """Out-of-range index must raise ValueError."""
     with pytest.raises(ValueError):
-        get_scale_sequence(5)
+        get_scale_sequence(8)
     with pytest.raises(ValueError):
         get_scale_sequence(-1)
 
@@ -212,13 +212,13 @@ def test_get_scale_sequence_invalid_index() -> None:
 # /api/scale-positions route
 # ---------------------------------------------------------------------------
 
-def test_api_scale_positions_returns_5(client) -> None:
-    """GET /api/scale-positions must return a list of exactly 5 positions."""
+def test_api_scale_positions_returns_8(client) -> None:
+    """GET /api/scale-positions must return a list of exactly 8 positions."""
     resp = client.get("/api/scale-positions")
     assert resp.status_code == 200
     data = resp.get_json()
     assert isinstance(data, list)
-    assert len(data) == 5
+    assert len(data) == 8
 
 
 def test_api_scale_positions_schema(client) -> None:

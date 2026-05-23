@@ -132,6 +132,59 @@ _pos5_notes = _pos(
     (1, 10), (1, 12), (1, 13),           # e:      D5  E5  F5
 )
 
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  Position 6 — C shape (15th fret)                                        ║
+# ║  Same fingering as Position 1 shifted one octave up (+12 frets).         ║
+# ║  low E: 12,13,15  A: 12,14,15  D: 12,14,15  G: 12,14                   ║
+# ║  B: 12,13,15  e: 12,13,15                                               ║
+# ║  Root C4★ = A string fret 15  |  Root C5★ = B string fret 13            ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# Roots: A5 fret 15 = C4★  |  B2 fret 13 = C5★
+_pos6_notes = _pos(
+    (6, 12), (6, 13), (6, 15),    # low E:  E3  F3  G3
+    (5, 12), (5, 14), (5, 15),    # A:      A3  B3  C4★
+    (4, 12), (4, 14), (4, 15),    # D:      D4  E4  F4
+    (3, 12), (3, 14),             # G:      G4  A4
+    (2, 12), (2, 13), (2, 15),    # B:      B4  C5★ D5
+    (1, 12), (1, 13), (1, 15),    # e:      E5  F5  G5
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  Position 7 — A shape (15th fret)                                        ║
+# ║  Same fingering as Position 2 shifted one octave up (+12 frets).         ║
+# ║  low E: 15,17,19  A: 15,17,19  D: 15,17,19  G: 16,17                   ║
+# ║  B: 15,17,18  e: 15,17,19,20                                            ║
+# ║  Root C4★ = A string fret 15  |  Root C5★ = G string fret 17            ║
+# ║  Root C6★ = e string fret 20                                             ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# Roots: A5 fret 15 = C4★  |  G3 fret 17 = C5★  |  e1 fret 20 = C6★
+_pos7_notes = _pos(
+    (6, 15), (6, 17), (6, 19),         # low E:  G3  A3  B3
+    (5, 15), (5, 17), (5, 19),         # A:      C4★ D4  E4
+    (4, 15), (4, 17), (4, 19),         # D:      F4  G4  A4
+    (3, 16), (3, 17),                  # G:      B4  C5★  (semitone shift at G–B break)
+    (2, 15), (2, 17), (2, 18),         # B:      D5  E5  F5
+    (1, 15), (1, 17), (1, 19), (1, 20),  # e:    G5  A5  B5  C6★
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  Position 8 — G shape (20th fret)                                        ║
+# ║  Same fingering as Position 3 shifted one octave up (+12 frets).         ║
+# ║  low E: 20  A: 17,19,20  D: 17,19,21  G: 17,19                         ║
+# ║  B: 17,18,20  e: 17,19,20                                               ║
+# ║  Root C4★ = low E fret 20  |  Root C5★ = G string fret 17               ║
+# ║  Root C6★ = e string fret 20                                             ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# Roots: E6 fret 20 = C4★  |  G3 fret 17 = C5★  |  e1 fret 20 = C6★
+_pos8_notes = _pos(
+    (6, 20),                       # low E:  C4★
+    (5, 17), (5, 19), (5, 20),     # A:      D4  E4  F4
+    (4, 17), (4, 19), (4, 21),     # D:      G4  A4  B4
+    (3, 17), (3, 19),              # G:      C5★ D5
+    (2, 17), (2, 18), (2, 20),     # B:      E5  F5  G5
+    (1, 17), (1, 19), (1, 20),     # e:      A5  B5  C6★
+)
+
 
 CAGED_POSITIONS: list[CagedPosition] = [
     CagedPosition(
@@ -166,8 +219,29 @@ CAGED_POSITIONS: list[CagedPosition] = [
         label="Position 5 — D shape (10th fret)",
         root_string="D string",
         root_fret=10,
-        instructor_phrase="Start on the 10th fret of the D string — C major D shape.",
+        instructor_phrase="Start on the 8th fret of the E string — C major D shape.",
         notes=_pos5_notes,
+    ),
+    CagedPosition(
+        label="Position 6 — C shape (15th fret)",
+        root_string="A string",
+        root_fret=15,
+        instructor_phrase="Start on the 15th fret of the A string — C major C shape one octave up.",
+        notes=_pos6_notes,
+    ),
+    CagedPosition(
+        label="Position 7 — A shape (15th fret)",
+        root_string="Low E string",
+        root_fret=15,
+        instructor_phrase="Start on the 15th fret of the low E string — C major A shape one octave up.",
+        notes=_pos7_notes,
+    ),
+    CagedPosition(
+        label="Position 8 — G shape (20th fret)",
+        root_string="Low E string",
+        root_fret=20,
+        instructor_phrase="Start on the 20th fret of the low E string — C major G shape one octave up.",
+        notes=_pos8_notes,
     ),
 ]
 
