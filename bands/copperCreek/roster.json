@@ -3,13 +3,17 @@
   "confirmed_date": "2026-04-24",
   "status": "active",
   "members": [
-    { "name": "Jim Mann",       "instrument": "Keys",                         "backing_vocals": true  },
-    { "name": "Gene Ngo",       "instrument": "Bass",                         "backing_vocals": true  },
-    { "name": "Tamala Cameron", "instrument": "Lead Vocals",                  "backing_vocals": false },
-    { "name": "Wade Bolling",   "instrument": "Drums",                        "backing_vocals": false },
-    { "name": "Kevin Redmond",  "instrument": "Lead Guitar",                  "backing_vocals": true  },
-    { "name": "Tyler Drake",    "instrument": "Trombone, Rhythm Guitar",      "backing_vocals": true  },
-    { "name": "Drew Kasch",     "instrument": "Sax, Backing Percussion",      "backing_vocals": true  }
+    { "name": "Jim Mann",       "instrument": "Keys",                    "backing_vocals": true,  "email": "mannjm53@gmail.com"        },
+    { "name": "Gene Ngo",       "instrument": "Bass",                    "backing_vocals": true,  "email": "Geneyeeng@gmail.com"       },
+    { "name": "Tamala Cameron", "instrument": "Lead Vocals",             "backing_vocals": false, "email": "tammala.c@gmail.com"       },
+    { "name": "Wade Bolling",   "instrument": "Drums",                   "backing_vocals": false, "email": "Bollingw@aol.com"          },
+    { "name": "Kevin Redmond",  "instrument": "Lead Guitar",             "backing_vocals": true,  "email": "kpredmond@comcast.net"     },
+    { "name": "Tyler Drake",    "instrument": "Trombone, Rhythm Guitar", "backing_vocals": true,  "email": "ty.drake.music@gmail.com"  },
+    { "name": "Drew Kasch",     "instrument": "Sax, Backing Percussion", "backing_vocals": true,  "email": "drew.kasch17@gmail.com"    },
+    { "name": "Anne Freeman",   "instrument": "Audio Consultant",        "backing_vocals": false, "email": "info@hyperthreat.com"      }
+  ],
+  "crew": [
+    { "name": "Jeff McFarland", "role": "Sound Engineer (Dedicated)",          "backing_vocals": false, "email": "jeffreyamcfarland@outlook.com" }
   ],
   "notes": "All members except drummer (Wade Bolling) sing backing vocals."
 }
