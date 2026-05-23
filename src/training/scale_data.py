@@ -390,9 +390,9 @@ SCALE_POSITIONS: dict[str, list[CagedPosition]] = {
         ),
         CagedPosition(
             label="Position 3 — D shape (5th fret)",
-            root_string="D string",
-            root_fret=5,
-            instructor_phrase="Start on the 5th fret of the D string — G major D shape.",
+            root_string="Low E string",
+            root_fret=3,
+            instructor_phrase="Start on the 3rd fret of the low E string — G major D shape.",
             notes=_gpos3_notes,
         ),
         CagedPosition(
@@ -425,9 +425,9 @@ SCALE_POSITIONS: dict[str, list[CagedPosition]] = {
         ),
         CagedPosition(
             label="Position 8 — D shape (17th fret)",
-            root_string="D string",
-            root_fret=17,
-            instructor_phrase="Start on the 17th fret of the D string — G major D shape one octave up.",
+            root_string="Low E string",
+            root_fret=15,
+            instructor_phrase="Start on the 15th fret of the low E string — G major D shape one octave up.",
             notes=_gpos8_notes,
         ),
     ],
