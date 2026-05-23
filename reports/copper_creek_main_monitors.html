@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copper Creek — PA Main Speaker Research</title>
+<style>
+/* ── Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  color: #1a1a2e;
+  background: #f7f8fa;
+  line-height: 1.5;
+}
+
+/* ── Page wrapper ── */
+.page {
+  max-width: 960px;
+  margin: 24px auto;
+  background: #fff;
+  box-shadow: 0 2px 20px rgba(0,0,0,.10);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── Cover header ── */
+.cover {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #fff;
+  padding: 36px 40px 28px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.cover-logo {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(255,255,255,.08);
+  padding: 6px;
+  flex-shrink: 0;
+}
+.cover-logo-placeholder {
+  width: 90px;
+  height: 90px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.12);
+  border: 2px solid rgba(255,255,255,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,.7);
+  letter-spacing: .06em;
+  text-align: center;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+.cover-text h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+  line-height: 1.2;
+}
+.cover-text h1 span {
+  color: #e4a837;
+}
+.cover-text .sub {
+  font-size: 12px;
+  color: rgba(255,255,255,.65);
+  margin-top: 6px;
+  letter-spacing: .03em;
+}
+.cover-meta {
+  margin-left: auto;
+  text-align: right;
+  font-size: 11px;
+  color: rgba(255,255,255,.55);
+  line-height: 1.7;
+  flex-shrink: 0;
+}
+.cover-meta strong {
+  color: rgba(255,255,255,.85);
+  font-size: 12px;
+}
+
+/* ── Sections ── */
+.section {
+  padding: 28px 40px;
+  border-bottom: 1px solid #e8eaf0;
+}
+.section:last-child { border-bottom: none; }
+
+.section-title {
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #0f3460;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e4a837;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title .icon {
+  width: 18px;
+  height: 18px;
+  background: #0f3460;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e4a837;
+  font-size: 10px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+/* ── Context box ── */
+.context-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.context-card {
+  background: #f7f8fa;
+  border: 1px solid #e0e3ea;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+.context-card dt {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: #7c8aaa;
+  margin-bottom: 4px;
+}
+.context-card dd {
+  font-size: 13px;
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+/* ── Comparison table ── */
+.comp-table-wrap {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.comp-table th {
+  background: #0f3460;
+  color: #fff;
+  padding: 10px 12px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.comp-table th.row-label {
+  background: #16213e;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: rgba(255,255,255,.75);
+  min-width: 130px;
+}
+.comp-table th .model-brand {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255,255,255,.65);
+  display: block;
+}
+.comp-table th .model-name {
+  font-size: 12px;
+  font-weight: 800;
+  display: block;
+}
+.comp-table th .model-price {
+  font-size: 13px;
+  color: #e4a837;
+  font-weight: 900;
+  display: block;
+  margin-top: 3px;
+}
+.comp-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e8eaf0;
+  text-align: center;
+  vertical-align: middle;
+  color: #1a1a2e;
+}
+.comp-table td.row-label {
+  text-align: left;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 11.5px;
+  background: #fafbfd;
+}
+.comp-table tr:nth-child(even) td { background: #fafbfd; }
+.comp-table tr:nth-child(even) td.row-label { background: #f3f4f8; }
+.comp-table tr:hover td { background: #eef2ff; }
+.comp-table tr:hover td.row-label { background: #e8edfc; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge-gold { background: #fff8e1; color: #b8860b; border: 1px solid #e4a837; }
+.badge-green { background: #e8f5e9; color: #2e7d32; border: 1px solid #81c784; }
+.badge-blue { background: #e3f2fd; color: #1565c0; border: 1px solid #64b5f6; }
+.badge-gray { background: #f5f5f5; color: #616161; border: 1px solid #bdbdbd; }
+.badge-rec {
+  background: linear-gradient(135deg, #0f3460, #1a4b8c);
+  color: #fff;
+  border: none;
+  font-size: 9px;
+  letter-spacing: .05em;
+}
+
+/* ── Model cards ── */
+.model-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.model-card {
+  border: 1.5px solid #e0e3ea;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.model-card.recommended { border-color: #e4a837; }
+.model-card-header {
+  background: #f7f8fa;
+  border-bottom: 1px solid #e0e3ea;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.model-card.recommended .model-card-header { background: #fffbf0; border-color: #e4a837; }
+.model-rank {
+  width: 28px;
+  height: 28px;
+  background: #0f3460;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.model-card.recommended .model-rank { background: #e4a837; color: #1a1a2e; }
+.model-card-title { flex: 1; }
+.model-card-title .brand { font-size: 10px; color: #7c8aaa; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.model-card-title .name { font-size: 14px; font-weight: 800; color: #1a1a2e; }
+.model-card-title .price-tag { font-size: 15px; font-weight: 900; color: #0f3460; margin-top: 2px; }
+.model-card-title .pair-price { font-size: 11px; color: #7c8aaa; font-weight: 500; }
+.model-card-body { padding: 12px 14px; }
+.model-card-body .pros-cons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.pros-list, .cons-list { font-size: 11.5px; }
+.pros-list strong, .cons-list strong {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 5px;
+}
+.pros-list strong { color: #2e7d32; }
+.cons-list strong { color: #c62828; }
+.pros-list li, .cons-list li {
+  list-style: none;
+  padding-left: 14px;
+  position: relative;
+  margin-bottom: 3px;
+  color: #3a3a4e;
+  line-height: 1.4;
+}
+.pros-list li::before { content: '✓'; position: absolute; left: 0; color: #43a047; font-weight: 700; font-size: 11px; }
+.cons-list li::before { content: '✗'; position: absolute; left: 0; color: #e53935; font-weight: 700; font-size: 11px; }
+.verdict-pill {
+  display: inline-block;
+  background: #eef2ff;
+  border: 1px solid #c5cae9;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3949ab;
+}
+.model-card.recommended .verdict-pill { background: #fff8e1; border-color: #ffd54f; color: #b8860b; }
+
+/* ── Recommendation summary ── */
+.rec-box {
+  background: linear-gradient(135deg, #fffbf0, #fff8e1);
+  border: 2px solid #e4a837;
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.rec-box h3 {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f3460;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rec-box h3::before { content: '★'; color: #e4a837; font-size: 16px; }
+.rec-box p { font-size: 12.5px; color: #3a3a4e; line-height: 1.6; }
+.rec-box .rec-highlight {
+  display: inline-block;
+  background: #e4a837;
+  color: #1a1a2e;
+  font-weight: 800;
+  padding: 1px 8px;
+  border-radius: 4px;
+}
+
+.also-consider {
+  background: #f0f4ff;
+  border: 1px solid #c5cae9;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: #3a3a4e;
+}
+.also-consider strong { color: #3949ab; }
+
+/* ── Vote section ── */
+.vote-intro {
+  font-size: 12.5px;
+  color: #4a5568;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.vote-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.vote-table th {
+  background: #0f3460;
+  color: #fff;
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.vote-table td {
+  padding: 14px 14px;
+  border-bottom: 1px solid #e0e3ea;
+  vertical-align: top;
+}
+.vote-table tr:last-child td { border-bottom: none; }
+.vote-table .member-name {
+  font-weight: 700;
+  color: #1a1a2e;
+  font-size: 13px;
+}
+.vote-table .member-role {
+  font-size: 11px;
+  color: #7c8aaa;
+  margin-top: 2px;
+}
+.vote-line {
+  border: none;
+  border-bottom: 1.5px solid #bbb;
+  width: 100%;
+  display: block;
+  margin-top: 8px;
+}
+.vote-model-cols {
+  display: flex;
+  gap: 0;
+}
+.vote-model-col {
+  flex: 1;
+  padding: 4px 8px;
+  border-right: 1px solid #e0e3ea;
+  font-size: 10.5px;
+  text-align: center;
+}
+.vote-model-col:last-child { border-right: none; }
+.vote-model-col .col-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #7c8aaa;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  display: block;
+  margin-bottom: 6px;
+}
+.vote-checkbox-area {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #9ba3bf;
+  border-radius: 4px;
+  margin: 0 auto 4px;
+  display: block;
+}
+.vote-comments {
+  border-bottom: 1.5px solid #bbb;
+  height: 32px;
+  width: 100%;
+  display: block;
+}
+.vote-signature-area {
+  border-bottom: 1.5px solid #bbb;
+  height: 40px;
+  width: 90%;
+  display: block;
+  margin-top: 4px;
+}
+
+/* ── Source link ── */
+.source-link {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,.65);
+  text-decoration: none;
+  letter-spacing: .02em;
+  border-bottom: 1px dotted rgba(255,255,255,.4);
+}
+.source-link:hover { color: #e4a837; border-color: #e4a837; }
+.model-source-link {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #3949ab;
+  text-decoration: none;
+  margin-top: 4px;
+}
+.model-source-link:hover { color: #1a237e; text-decoration: underline; }
+@media print {
+  .source-link, .model-source-link { color: #555 !important; border-color: #aaa !important; }
+}
+
+/* ── Footer ── */
+.doc-footer {
+  background: #f7f8fa;
+  border-top: 1px solid #e0e3ea;
+  padding: 14px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  color: #9ba3bf;
+}
+.doc-footer strong { color: #4a5568; }
+
+/* ── Print styles — ink-light ── */
+@media print {
+  body { background: #fff; font-size: 11px; }
+  .page { box-shadow: none; border-radius: 0; margin: 0; max-width: 100%; }
+
+  /* Cover: white bg, dark text, bottom rule instead of dark fill */
+  .cover {
+    background: #fff !important;
+    color: #1a1a2e !important;
+    border-bottom: 3px solid #1a1a2e !important;
+    padding: 18px 40px 14px !important;
+  }
+  .cover-text h1 { color: #1a1a2e !important; }
+  .cover-text h1 span { color: #0f3460 !important; }
+  .cover-text .sub { color: #4a5568 !important; }
+  .cover-meta { color: #4a5568 !important; }
+  .cover-meta strong { color: #1a1a2e !important; }
+  .cover-logo-placeholder {
+    background: #f0f0f0 !important;
+    border-color: #999 !important;
+    color: #333 !important;
+  }
+
+  /* Section titles: keep gold underline, outline icon */
+  .section-title { color: #1a1a2e !important; }
+  .section-title .icon {
+    background: #fff !important;
+    color: #1a1a2e !important;
+    border: 1.5px solid #1a1a2e !important;
+  }
+
+  /* Comparison table: light gray headers, dark text */
+  .comp-table th {
+    background: #e8eaf0 !important;
+    color: #1a1a2e !important;
+    border: 1px solid #9ba3bf !important;
+  }
+  .comp-table th.row-label {
+    background: #d4d8e8 !important;
+    color: #1a1a2e !important;
+  }
+  .comp-table th .model-brand { color: #4a5568 !important; }
+  .comp-table th .model-name  { color: #1a1a2e !important; }
+  .comp-table th .model-price { color: #0f3460 !important; }
+  /* Recommended column (inline dark-blue bg) */
+  .comp-table th[style*="1a4b8c"] {
+    background: #dde5f4 !important;
+    border: 2px solid #0f3460 !important;
+    color: #1a1a2e !important;
+  }
+  .comp-table th[style*="1a4b8c"] .model-brand { color: #4a5568 !important; }
+
+  /* Vote table: same light gray header */
+  .vote-table th {
+    background: #e8eaf0 !important;
+    color: #1a1a2e !important;
+    border-bottom: 1px solid #9ba3bf !important;
+  }
+
+  /* Model rank circles: outline only */
+  .model-rank {
+    background: #fff !important;
+    color: #1a1a2e !important;
+    border: 2px solid #1a1a2e !important;
+  }
+  .model-card.recommended .model-rank {
+    background: #fff !important;
+    color: #1a1a2e !important;
+    border-color: #0f3460 !important;
+  }
+
+  /* Badges: outline-only */
+  .badge {
+    background: #fff !important;
+    color: #1a1a2e !important;
+    border: 1px solid #9ba3bf !important;
+  }
+
+  /* Rec box: white fill, dark rule border */
+  .rec-box {
+    background: #fff !important;
+    border: 2px solid #1a1a2e !important;
+  }
+  .rec-box h3 { color: #1a1a2e !important; }
+  .rec-box .rec-highlight {
+    background: #e8eaf0 !important;
+    color: #1a1a2e !important;
+  }
+
+  /* Also-consider / note boxes: white fill */
+  .also-consider { background: #fff !important; border-color: #9ba3bf !important; }
+
+  /* Context + model cards: white fill */
+  .context-card { background: #fff !important; }
+  .model-card-header { background: #fff !important; }
+  .model-card.recommended .model-card-header { background: #fff !important; }
+
+  /* Inline-styled info boxes (Jim note, scenario table rows) */
+  div[style*="background:#f0f4ff"],
+  div[style*="background:#fff8e1"],
+  div[style*="background:#fffbf0"] {
+    background: #fff !important;
+    border-color: #9ba3bf !important;
+  }
+
+  /* Page flow */
+  .section { page-break-inside: avoid; }
+  .model-cards { page-break-before: auto; }
+  .vote-section { page-break-before: always; }
+  .vote-table tr { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Cover -->
+  <div class="cover">
+    <img class="cover-logo"
+         src="../bands/copperCreek/branding/Copper-Creek-High-Res.avif"
+         alt="Copper Creek"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="cover-logo-placeholder" style="display:none">COPPER<br>CREEK</div>
+    <div class="cover-text">
+      <h1>PA Main Speakers<br><span>Research &amp; Comparison</span></h1>
+      <p class="sub">15&quot; Full-Range Powered PA Tops &nbsp;·&nbsp; Tyler Drake (Owner) &nbsp;·&nbsp; Copper Creek</p>
+    </div>
+    <div class="cover-meta">
+      <strong>Prepared for band review</strong><br>
+      May 23, 2026<br>
+      FR-20260523-copper-creek-mains<br>
+      <br>
+      7 members &nbsp;·&nbsp; Mixed venue sizes<br>
+      Current: EV mains + 18-ch mixer
+    </div>
+  </div>
+
+  <!-- Context -->
+  <div class="section">
+    <div class="section-title"><div class="icon">i</div> Context &amp; Goals</div>
+    <p style="font-size:12.5px;color:#3a3a4e;line-height:1.7;margin-bottom:14px;">
+      Copper Creek's current EV main speakers have been flagged for replacement following feedback
+      from a sound professional. The band plays everything from small
+      bars and clubs to outdoor festivals and mid-size halls, so the new mains must scale
+      across all venue sizes. This document compares five powered 15&quot; PA tops across price
+      tiers to support a group decision. Tyler is the purchasing owner; all band members
+      are invited to provide input.
+    </p>
+    <div class="context-grid">
+      <dl class="context-card">
+        <dt>Band</dt>
+        <dd>Copper Creek (7 members)</dd>
+      </dl>
+      <dl class="context-card">
+        <dt>Owner / Buyer</dt>
+        <dd>Tyler Drake</dd>
+      </dl>
+      <dl class="context-card">
+        <dt>Venue Range</dt>
+        <dd>Small bars → outdoor festivals</dd>
+      </dl>
+      <dl class="context-card">
+        <dt>Existing PA</dt>
+        <dd>18-ch mixer + EV mains (to be replaced)</dd>
+      </dl>
+      <dl class="context-card">
+        <dt>Speaker Type</dt>
+        <dd>15&quot; powered (active) full-range tops</dd>
+      </dl>
+      <dl class="context-card">
+        <dt>Budget</dt>
+        <dd>Open — buy the right tool</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Quick comparison table -->
+  <div class="section">
+    <div class="section-title"><div class="icon">≡</div> Side-by-Side Comparison</div>
+    <div class="comp-table-wrap">
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th class="row-label">Specification</th>
+            <th>
+              <span class="model-brand">Turbosound</span>
+              <span class="model-name">iQ15</span>
+              <span class="model-price">$889</span>
+              <a class="source-link" href="https://www.sweetwater.com/store/detail/iQ15--turbosound-iq15-2500w-15-inch-powered-speaker" target="_blank">sweetwater.com ↗</a>
+            </th>
+            <th>
+              <span class="model-brand">Yamaha</span>
+              <span class="model-name">DXR15mkII</span>
+              <span class="model-price">$899</span>
+              <a class="source-link" href="https://www.sweetwater.com/store/detail/DXR15mkII--yamaha-dxr15mkii-1100w-15-inch-powered-speaker" target="_blank">sweetwater.com ↗</a>
+            </th>
+            <th>
+              <span class="model-brand">Electro-Voice</span>
+              <span class="model-name">ELX200-15P</span>
+              <span class="model-price">$949</span>
+              <a class="source-link" href="https://www.sweetwater.com/store/detail/ELX200-15P--electro-voice-elx200-15p-15-inch-powered-speaker" target="_blank">sweetwater.com ↗</a>
+            </th>
+            <th>
+              <span class="model-brand">Electro-Voice</span>
+              <span class="model-name">EKX-15P</span>
+              <span class="model-price">$1,049</span>
+              <a class="source-link" href="https://www.sweetwater.com/store/detail/EKX15P--electro-voice-ekx-15p-1500w-15-inch-powered-speaker" target="_blank">sweetwater.com ↗</a>
+            </th>
+            <th style="background:#1a4b8c;">
+              <span class="model-brand" style="color:rgba(255,255,255,.7);">JBL</span>
+              <span class="model-name">PRX915</span>
+              <span class="model-price">$1,099</span>
+              <span style="display:block;margin-top:2px;"><span class="badge badge-gold" style="font-size:9px;">RECOMMENDED</span></span>
+              <a class="source-link" href="https://www.sweetwater.com/store/detail/PRX915--jbl-prx915-2000-watt-15-inch-powered-speaker" target="_blank">sweetwater.com ↗</a>
+            </th>
+            <th>
+              <span class="model-brand">Electro-Voice</span>
+              <span class="model-name">ETX-15P</span>
+              <span class="model-price">$1,699</span>
+              <span style="display:block;margin-top:2px;"></span>
+              <a class="source-link" href="https://www.sweetwater.com/store/detail/ETX15P--electro-voice-etx-15p-2000w-15-inch-powered-speaker" target="_blank">sweetwater.com ↗</a>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-label">Peak Power</td>
+            <td>2,500W</td>
+            <td>1,100W</td>
+            <td>1,200W</td>
+            <td>1,500W</td>
+            <td><strong>2,000W / 1,000W RMS</strong></td>
+            <td>2,000W Class D</td>
+          </tr>
+          <tr>
+            <td class="row-label">LF Driver</td>
+            <td>15&quot; woofer</td>
+            <td>15&quot; woofer</td>
+            <td>15&quot; woofer</td>
+            <td>15&quot; EVS-15M</td>
+            <td>15&quot; woofer</td>
+            <td>15&quot; woofer</td>
+          </tr>
+          <tr>
+            <td class="row-label">HF Driver</td>
+            <td>1.4&quot; titanium</td>
+            <td>1.4&quot; driver</td>
+            <td>1&quot; driver</td>
+            <td>1&quot; titanium</td>
+            <td><strong>1.5&quot; neodymium</strong></td>
+            <td><strong>1.25&quot; titanium</strong></td>
+          </tr>
+          <tr>
+            <td class="row-label">Max SPL (peak)</td>
+            <td><strong>137 dB</strong></td>
+            <td>133 dB</td>
+            <td>131 dB</td>
+            <td>134 dB</td>
+            <td>133 dB</td>
+            <td>135 dB</td>
+          </tr>
+          <tr>
+            <td class="row-label">Freq. Response</td>
+            <td>40 Hz – 20 kHz</td>
+            <td>52 Hz – 20 kHz</td>
+            <td>53 Hz – 20 kHz</td>
+            <td><strong>44 Hz – 20 kHz</strong></td>
+            <td>48 Hz – 19 kHz</td>
+            <td>55 Hz – 20 kHz</td>
+          </tr>
+          <tr>
+            <td class="row-label">Coverage (H × V)</td>
+            <td>90° × 60°</td>
+            <td>90° × 55°</td>
+            <td>90° × 60°</td>
+            <td>90° × 60°</td>
+            <td>90° × 50°</td>
+            <td>90° × 60°</td>
+          </tr>
+          <tr>
+            <td class="row-label">Weight</td>
+            <td><strong>42 lbs</strong></td>
+            <td>47.2 lbs</td>
+            <td>44.7 lbs</td>
+            <td>53.7 lbs</td>
+            <td>53.1 lbs</td>
+            <td>55.6 lbs</td>
+          </tr>
+          <tr>
+            <td class="row-label">Cabinet</td>
+            <td>ABS plastic</td>
+            <td>ABS plastic</td>
+            <td>ABS plastic</td>
+            <td><strong>15mm plywood</strong></td>
+            <td>Polypropylene/talc</td>
+            <td><strong>Wood (tour-grade)</strong></td>
+          </tr>
+          <tr>
+            <td class="row-label">Inputs</td>
+            <td>2× combo XLR</td>
+            <td>2× combo XLR/¼&quot;</td>
+            <td>2× combo XLR</td>
+            <td>2× combo + RCA</td>
+            <td>2× combo + ⅛&quot;</td>
+            <td>2× combo XLR/TRS</td>
+          </tr>
+          <tr>
+            <td class="row-label">Mixer Channels</td>
+            <td>2-ch</td>
+            <td>3-ch</td>
+            <td>2-ch</td>
+            <td>2-ch</td>
+            <td>3-ch</td>
+            <td>2-ch</td>
+          </tr>
+          <tr>
+            <td class="row-label">DSP / EQ</td>
+            <td>KLARK TEKNIK DSP</td>
+            <td>FIR-X + D-Contour</td>
+            <td>3-band EQ + presets</td>
+            <td>QuickSmartDSP</td>
+            <td><strong>12-band PEQ + AFS</strong></td>
+            <td>QuickSmartDSP + FIR-Drive</td>
+          </tr>
+          <tr>
+            <td class="row-label">App Control</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td><strong>JBL Pro Connect</strong></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td class="row-label">Mounting</td>
+            <td>Pole / Wedge</td>
+            <td>Pole / Wedge</td>
+            <td>Pole / Wedge</td>
+            <td>Pole / Wedge / Fly</td>
+            <td>Pole / Wedge</td>
+            <td>Pole / Wedge / Array</td>
+          </tr>
+          <tr>
+            <td class="row-label">Sweetwater Rating</td>
+            <td><strong>4.5 ★ (50 reviews)</strong></td>
+            <td>5.0 ★ (5 reviews)</td>
+            <td>4.5 ★ (9 reviews)</td>
+            <td>4.5 ★ (14 reviews)</td>
+            <td>3.4 ★ (5 reviews)</td>
+            <td><strong>5.0 ★ (8 reviews)</strong></td>
+          </tr>
+          <tr>
+            <td class="row-label">Manufacturer Warranty</td>
+            <td>1 year</td>
+            <td>3 years</td>
+            <td>3 years</td>
+            <td>3 years</td>
+            <td><strong>7 years</strong></td>
+            <td>3 years</td>
+          </tr>
+          <tr>
+            <td class="row-label">Price per Speaker</td>
+            <td>$889</td>
+            <td>$899</td>
+            <td>$949</td>
+            <td>$1,049</td>
+            <td>$1,099 <em style="font-size:10px;color:#2e7d32;">(was $1,199)</em></td>
+            <td>$1,699</td>
+          </tr>
+          <tr style="font-weight:700;">
+            <td class="row-label">Price — Pair (×2)</td>
+            <td>$1,778</td>
+            <td>$1,799</td>
+            <td>$1,898</td>
+            <td>$2,098</td>
+            <td>$2,198</td>
+            <td>$3,398</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Model deep-dives -->
+  <div class="section">
+    <div class="section-title"><div class="icon">▶</div> Model Profiles</div>
+    <div class="model-cards">
+
+      <!-- Turbosound iQ15 -->
+      <div class="model-card">
+        <div class="model-card-header">
+          <div class="model-rank">1</div>
+          <div class="model-card-title">
+            <div class="brand">Turbosound</div>
+            <div class="name">iQ15</div>
+            <div class="price-tag">$889 &nbsp;<span class="pair-price">· $1,778/pair</span></div>
+            <a class="model-source-link" href="https://www.sweetwater.com/store/detail/iQ15--turbosound-iq15-2500w-15-inch-powered-speaker" target="_blank">View at Sweetwater ↗</a>
+          </div>
+          <span class="badge badge-green">Best Value</span>
+        </div>
+        <div class="model-card-body">
+          <div class="pros-cons">
+            <ul class="pros-list">
+              <strong>Strengths</strong>
+              <li>Highest SPL of the group (137 dB)</li>
+              <li>Highest wattage (2,500W peak)</li>
+              <li>Lightest at 42 lbs</li>
+              <li>Best bang-for-buck</li>
+              <li>Most reviewed (50 reviews, 4.5★)</li>
+              <li>KLARK TEKNIK DSP (Midas pedigree)</li>
+            </ul>
+            <ul class="cons-list">
+              <strong>Weaknesses</strong>
+              <li>Shorter warranty (1 year)</li>
+              <li>Lesser-known brand vs. JBL/EV</li>
+              <li>No app control</li>
+              <li>ABS plastic cabinet</li>
+            </ul>
+          </div>
+          <span class="verdict-pill">Great for outdoor/high-SPL needs</span>
+        </div>
+      </div>
+
+      <!-- Yamaha DXR15mkII -->
+      <div class="model-card">
+        <div class="model-card-header">
+          <div class="model-rank">2</div>
+          <div class="model-card-title">
+            <div class="brand">Yamaha</div>
+            <div class="name">DXR15mkII</div>
+            <div class="price-tag">$899 &nbsp;<span class="pair-price">· $1,799/pair</span></div>
+            <a class="model-source-link" href="https://www.sweetwater.com/store/detail/DXR15mkII--yamaha-dxr15mkii-1100w-15-inch-powered-speaker" target="_blank">View at Sweetwater ↗</a>
+          </div>
+          <span class="badge badge-blue">Studio Brand</span>
+        </div>
+        <div class="model-card-body">
+          <div class="pros-cons">
+            <ul class="pros-list">
+              <strong>Strengths</strong>
+              <li>Yamaha reliability &amp; reputation</li>
+              <li>FIR-X DSP: minimal crossover phase shift</li>
+              <li>D-Contour: consistent sound at any volume</li>
+              <li>FOH/Monitor switch built-in</li>
+              <li>3-channel on-board mixer</li>
+              <li>3-year warranty</li>
+            </ul>
+            <ul class="cons-list">
+              <strong>Weaknesses</strong>
+              <li>Lower wattage (1,100W peak)</li>
+              <li>Only 133 dB SPL</li>
+              <li>No app control</li>
+              <li>ABS cabinet</li>
+              <li>Few reviews so far (5)</li>
+            </ul>
+          </div>
+          <span class="verdict-pill">Excellent studio-quality clarity</span>
+        </div>
+      </div>
+
+      <!-- EV ELX200-15P -->
+      <div class="model-card">
+        <div class="model-card-header">
+          <div class="model-rank">3</div>
+          <div class="model-card-title">
+            <div class="brand">Electro-Voice</div>
+            <div class="name">ELX200-15P</div>
+            <div class="price-tag">$949 &nbsp;<span class="pair-price">· $1,898/pair</span></div>
+            <a class="model-source-link" href="https://www.sweetwater.com/store/detail/ELX200-15P--electro-voice-elx200-15p-15-inch-powered-speaker" target="_blank">View at Sweetwater ↗</a>
+          </div>
+          <span class="badge badge-gray">Mid-Range</span>
+        </div>
+        <div class="model-card-body">
+          <div class="pros-cons">
+            <ul class="pros-list">
+              <strong>Strengths</strong>
+              <li>EV brand — same family as current mains</li>
+              <li>Familiar interface / workflow for band</li>
+              <li>3-year warranty</li>
+              <li>Solid EV ELX Series track record</li>
+              <li>Available in white for installs</li>
+            </ul>
+            <ul class="cons-list">
+              <strong>Weaknesses</strong>
+              <li>Lowest SPL in group (131 dB)</li>
+              <li>1,200W — middle-tier power</li>
+              <li>Basic 3-band EQ vs. competitors</li>
+              <li>ABS cabinet</li>
+            </ul>
+          </div>
+          <span class="verdict-pill">Safe upgrade from current EV gear</span>
+        </div>
+      </div>
+
+      <!-- EV EKX-15P -->
+      <div class="model-card">
+        <div class="model-card-header">
+          <div class="model-rank">4</div>
+          <div class="model-card-title">
+            <div class="brand">Electro-Voice</div>
+            <div class="name">EKX-15P</div>
+            <div class="price-tag">$1,049 &nbsp;<span class="pair-price">· $2,098/pair</span></div>
+            <a class="model-source-link" href="https://www.sweetwater.com/store/detail/EKX15P--electro-voice-ekx-15p-1500w-15-inch-powered-speaker" target="_blank">View at Sweetwater ↗</a>
+          </div>
+          <span class="badge badge-blue">Pro Build</span>
+        </div>
+        <div class="model-card-body">
+          <div class="pros-cons">
+            <ul class="pros-list">
+              <strong>Strengths</strong>
+              <li>Wood (plywood) cabinet — touring-grade</li>
+              <li>Titanium HF compression driver</li>
+              <li>Deepest bass extension (44 Hz)</li>
+              <li>134 dB SPL — strong</li>
+              <li>8× M10 fly points for hanging</li>
+              <li>Programmable crossover for sub integration</li>
+            </ul>
+            <ul class="cons-list">
+              <strong>Weaknesses</strong>
+              <li>Heaviest at 53.7 lbs</li>
+              <li>Higher price point</li>
+              <li>1,500W — less than iQ15/JBL</li>
+              <li>No app control</li>
+            </ul>
+          </div>
+          <span class="verdict-pill">Best-built physical cabinet</span>
+        </div>
+      </div>
+
+      <!-- JBL PRX915 — RECOMMENDED (spans full width) -->
+      <div class="model-card recommended" style="grid-column: 1 / -1;">
+        <div class="model-card-header">
+          <div class="model-rank" style="width:36px;height:36px;font-size:16px;">★</div>
+          <div class="model-card-title">
+            <div class="brand">JBL Professional</div>
+            <div class="name" style="font-size:16px;">PRX915 &nbsp;— &nbsp;Staff Recommendation</div>
+            <div class="price-tag">$1,099 <em style="font-size:11px;font-weight:500;color:#7c8aaa;">on sale from $1,199</em> &nbsp;<span class="pair-price">· $2,198/pair</span></div>
+            <a class="model-source-link" href="https://www.sweetwater.com/store/detail/PRX915--jbl-prx915-2000-watt-15-inch-powered-speaker" target="_blank">View at Sweetwater ↗</a>
+          </div>
+          <span class="badge badge-gold" style="font-size:11px;padding:4px 12px;">★ TOP PICK</span>
+        </div>
+        <div class="model-card-body">
+          <div class="pros-cons" style="grid-template-columns: 1fr 1fr 1fr;">
+            <ul class="pros-list">
+              <strong>Strengths</strong>
+              <li>12-band parametric EQ — most flexible DSP in class</li>
+              <li>Automatic Feedback Suppression (critical for live bands)</li>
+              <li>2,000W peak / 1,000W continuous RMS</li>
+              <li>JBL Pro Connect app — remote EQ control from phone</li>
+            </ul>
+            <ul class="pros-list">
+              <strong>More Strengths</strong>
+              <li>7-year manufacturer warranty (best by far)</li>
+              <li>LCD screen for on-speaker adjustment</li>
+              <li>133 dB SPL with neodymium HF driver</li>
+              <li>Currently $100 off — ends 5/31/2026</li>
+            </ul>
+            <ul class="cons-list">
+              <strong>Weaknesses</strong>
+              <li>Heaviest (53.1 lbs)</li>
+              <li>Only 3.4★ on Sweetwater (small sample — 5 reviews)</li>
+              <li>Polypropylene cabinet vs. wood (EKX)</li>
+              <li>Highest price in comparison</li>
+            </ul>
+          </div>
+          <p style="font-size:12px;color:#3a3a4e;margin-bottom:8px;">
+            <strong>Why it wins for Copper Creek:</strong> For a 7-piece live band with horns and
+            vocals across mixed venues, the 12-band parametric EQ and built-in Automatic Feedback
+            Suppression are game-changers — feedback kills live shows. The 7-year warranty means
+            the investment is protected for the long haul. App control lets sound adjustments
+            happen from the stage or FOH without touching the speakers. The current $100 discount
+            further closes the price gap with the EKX-15P.
+          </p>
+          <span class="verdict-pill" style="font-size:12px;padding:5px 14px;">Best for Copper Creek: Feedback suppression + 7-yr warranty + app control</span>
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-card-header">
+          <div class="model-rank">6</div>
+          <div class="model-card-title">
+            <div class="brand">Electro-Voice</div>
+            <div class="name">ETX-15P</div>
+            <div class="price-tag">$1,699 &nbsp;<span class="pair-price">· $3,398/pair</span></div>
+            <a class="model-source-link" href="https://www.sweetwater.com/store/detail/ETX15P--electro-voice-etx-15p-2000w-15-inch-powered-speaker" target="_blank">View at Sweetwater ↗</a>
+          </div>
+        </div>
+        <div class="model-card-body">
+          <div class="pros-cons">
+            <ul class="pros-list">
+              <strong>Strengths</strong>
+              <li>EV's top-of-line series (ETX &gt; EKX &gt; ELX)</li>
+              <li>2,000W Class D — same as JBL PRX915</li>
+              <li>FIR-Drive DSP — transducer linearity optimization</li>
+              <li>Wood tour-grade cabinet</li>
+              <li>135 dB SPL — strong output</li>
+              <li>5.0 ★ Sweetwater (8 reviews)</li>
+            </ul>
+            <ul class="cons-list">
+              <strong>Weaknesses</strong>
+              <li>Most expensive — $1,699/ea ($3,398/pair)</li>
+              <li>55 Hz low end — narrower bass than EKX-15P</li>
+              <li>No app control</li>
+              <li>53% more expensive than PRX915</li>
+            </ul>
+          </div>
+          <span class="verdict-pill">Premium EV touring tier — significant price step-up</span>
+        </div>
+      </div>
+
+    </div><!-- /model-cards -->
+
+    <!-- Notes -->
+    <div class="also-consider" style="margin-top:14px;">
+      <strong>Note — QSC K.2 Series:</strong> QSC's acclaimed K-series currently tops out at the
+      <strong>K12.2 (12&quot;, $899)</strong> — there is no K15 in the current lineup. If the band
+      is open to a 12&quot; top, the K12.2 earns 4.5★ across 162 Sweetwater reviews and is
+      considered one of the most reliable portable PA tops on the market. Worth considering
+      if weight and portability are priorities over driver size.
+    </div>
+    <div class="also-consider" style="margin-top:10px;background:#fff8e1;border-color:#e4a837;">
+      <strong>Note — Jim Mann's Research (May 23, 2026):</strong> Jim provided additional candidates he is investigating.
+      The following were reviewed and flagged:
+      <ul style="margin-top:6px;margin-left:16px;font-size:12px;line-height:1.8;">
+        <li><strong>EV ETX-15P</strong> — Valid. Added to this comparison as Option F above ($1,699 at Sweetwater).</li>
+        <li><strong>EV EKK-15P</strong> — <em>Model does not exist.</em> Likely a typo for EKX-15P (already Option D in this report).</li>
+        <li><strong>JBL PRX912</strong> — Valid product but a <em>12&quot; driver</em>, not 15&quot;. Out of scope for this comparison.</li>
+        <li><strong>JBL SRX835</strong> — <em>Passive (no built-in amp)</em> — requires a separate power amplifier. Different purchase category entirely.</li>
+        <li><strong>JBL SRX922</strong> — 12&quot; dual-woofer line array component; not a standard PA top. Out of scope.</li>
+        <li><strong>JBL PRX935</strong> — Model number not confirmed in current JBL lineup. Possibly confused with SRX935 (passive) or PRX915 (Option E above). Needs clarification.</li>
+        <li><strong>ProAudioStar</strong> — This is a <em>retailer</em> (New York City), not a brand. Jim may have priced some models there; worth checking their pricing vs. Sweetwater.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Recommendation summary -->
+  <div class="section">
+    <div class="section-title"><div class="icon">★</div> Recommendation</div>
+
+    <div class="rec-box">
+      <h3>Staff Pick: JBL PRX915 — $1,099/ea · $2,198/pair</h3>
+      <p>
+        The <span class="rec-highlight">JBL PRX915</span> is the strongest overall match for
+        Copper Creek's needs. The 12-band parametric EQ and Automatic Feedback Suppression
+        are purpose-built for live bands in venues ranging from intimate clubs to outdoor stages.
+        The JBL Pro Connect app gives real-time control from anywhere in the room.
+        The 7-year warranty — the best in the comparison by a wide margin — means
+        the pair should outlast the band's next several years of gigs without concern.
+      </p>
+      <p style="margin-top:10px;font-size:12px;color:#5a5a6e;">
+        <strong>Runner-up:</strong> EV EKX-15P ($1,049) for the band that prioritizes touring-grade
+        wood construction, deepest bass extension, and eventual sub integration via the programmatic
+        crossover. &nbsp;·&nbsp;
+        <strong>Best value:</strong> Turbosound iQ15 ($889) if SPL and wattage are the priority
+        and budget is tight.
+      </p>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr>
+        <th style="background:#0f3460;color:#fff;padding:8px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;">Scenario</th>
+        <th style="background:#0f3460;color:#fff;padding:8px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;">Best Choice</th>
+        <th style="background:#0f3460;color:#fff;padding:8px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;">Why</th>
+      </tr>
+      <tr>
+        <td style="padding:9px 12px;border-bottom:1px solid #e8eaf0;">All-around live band, mixed venues</td>
+        <td style="padding:9px 12px;border-bottom:1px solid #e8eaf0;"><strong>JBL PRX915</strong></td>
+        <td style="padding:9px 12px;border-bottom:1px solid #e8eaf0;">DSP + AFS + 7-year warranty</td>
+      </tr>
+      <tr style="background:#fafbfd;">
+        <td style="padding:9px 12px;border-bottom:1px solid #e8eaf0;">Outdoor/high-volume gigs on a budget</td>
+        <td style="padding:9px 12px;border-bottom:1px solid #e8eaf0;"><strong>Turbosound iQ15</strong></td>
+        <td style="padding:9px 12px;border-bottom:1px solid #e8eaf0;">Highest SPL (137 dB), lightest, cheapest</td>
+      </tr>
+      <tr>
+        <td style="padding:9px 12px;border-bottom:1px solid #e8eaf0;">Consistent EV ecosystem + sub upgrade later</td>
+        <td style="padding:9px 12px;border-bottom:1px solid #e8eaf0;"><strong>EV EKX-15P</strong></td>
+        <td style="padding:9px 12px;border-bottom:1px solid #e8eaf0;">Wood cabinet, programmatic crossover, EV subs pair perfectly</td>
+      </tr>
+      <tr style="background:#fafbfd;">
+        <td style="padding:9px 12px;">Studio-quality sound, smaller venues</td>
+        <td style="padding:9px 12px;"><strong>Yamaha DXR15mkII</strong></td>
+        <td style="padding:9px 12px;">FIR-X phase coherence, D-Contour tonal consistency</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Vote / Opinion section -->
+  <div class="section vote-section">
+    <div class="section-title"><div class="icon">✓</div> Band Member Votes &amp; Opinions</div>
+    <div style="background:#f0f4ff;border:1px solid #c5cae9;border-radius:6px;padding:12px 16px;margin-bottom:14px;font-size:12px;">
+      <strong style="color:#3949ab;">Contributing Member — Jim Mann (Keys):</strong>
+      Jim is actively researching options and submitted additional candidates (see Notes section above).
+      His current rig: <strong>Yamaha MOX8 + MODX7</strong> keyboards, <strong>Behringer XR-18</strong> 18-ch digital mixer,
+      <strong>2× EV ZLX-12BT</strong> active monitors. Jim's XR-18 experience means he has strong opinions on
+      mix quality and EV ecosystem compatibility — weight his input accordingly.<br>
+      <em hidden="true" style="color:#7c8aaa;">Full band equipment inventory is tracked in <code>bands/copperCreek/band_equipment.json</code>.</em>
+    </div>
+    <p class="vote-intro">
+      Each member: circle or check your preferred model below, add comments, and sign.
+      Return to Tyler Drake for tabulation. <em>Purchasing decision rests with Tyler as owner.</em>
+    </p>
+
+    <table class="vote-table">
+      <thead>
+        <tr>
+          <th style="width:160px;">Member</th>
+          <th>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="col-label">Option A</span>Turbosound<br><strong>iQ15</strong><br>$889</div>
+              <div class="vote-model-col"><span class="col-label">Option B</span>Yamaha<br><strong>DXR15mkII</strong><br>$899</div>
+              <div class="vote-model-col"><span class="col-label">Option C</span>EV<br><strong>ELX200-15P</strong><br>$949</div>
+              <div class="vote-model-col"><span class="col-label">Option D</span>EV<br><strong>EKX-15P</strong><br>$1,049</div>
+              <div class="vote-model-col"><span class="col-label">★ Rec.</span>JBL<br><strong>PRX915</strong><br>$1,099</div>
+              <div class="vote-model-col"><span class="col-label">Option F</span>EV<br><strong>ETX-15P</strong><br>$1,699</div>
+            </div>
+          </th>
+          <th style="width:190px;">Comments</th>
+          <th style="width:130px;">Signature</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="member-name">Tyler Drake</div>
+            <div class="member-role">Trombone, Rhythm Guitar<br><em>Owner / Buyer</em></div>
+          </td>
+          <td>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+            </div>
+          </td>
+          <td><span class="vote-comments"></span></td>
+          <td><span class="vote-signature-area"></span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="member-name">Tamala Cameron</div>
+            <div class="member-role">Lead Vocals</div>
+          </td>
+          <td>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+            </div>
+          </td>
+          <td><span class="vote-comments"></span></td>
+          <td><span class="vote-signature-area"></span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="member-name">Jim Mann</div>
+            <div class="member-role">Keys, Backing Vocals</div>
+          </td>
+          <td>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+            </div>
+          </td>
+          <td><span class="vote-comments"></span></td>
+          <td><span class="vote-signature-area"></span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="member-name">Gene Ngo</div>
+            <div class="member-role">Bass, Backing Vocals</div>
+          </td>
+          <td>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+            </div>
+          </td>
+          <td><span class="vote-comments"></span></td>
+          <td><span class="vote-signature-area"></span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="member-name">Kevin Redmond</div>
+            <div class="member-role">Lead Guitar, Backing Vocals</div>
+          </td>
+          <td>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+            </div>
+          </td>
+          <td><span class="vote-comments"></span></td>
+          <td><span class="vote-signature-area"></span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="member-name">Drew Kasch</div>
+            <div class="member-role">Sax, Backing Percussion<br>Backing Vocals</div>
+          </td>
+          <td>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+            </div>
+          </td>
+          <td><span class="vote-comments"></span></td>
+          <td><span class="vote-signature-area"></span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="member-name">Wade Bolling</div>
+            <div class="member-role">Drums</div>
+          </td>
+          <td>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+            </div>
+          </td>
+          <td><span class="vote-comments"></span></td>
+          <td><span class="vote-signature-area"></span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="member-name">Jeff McFarland</div>
+            <div class="member-role">Sound Engineer<br><em>Crew — Technical Opinion</em></div>
+          </td>
+          <td>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+            </div>
+          </td>
+          <td><span class="vote-comments"></span></td>
+          <td><span class="vote-signature-area"></span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="member-name">Anne Freeman</div>
+            <div class="member-role">Audio Consultant</div>
+          </td>
+          <td>
+            <div class="vote-model-cols">
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+              <div class="vote-model-col"><span class="vote-checkbox-area"></span></div>
+            </div>
+          </td>
+          <td><span class="vote-comments"></span></td>
+          <td><span class="vote-signature-area"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:11px;color:#9ba3bf;margin-top:14px;text-align:center;">
+      Prices current as of May 23, 2026 via Sweetwater.com · All specs per manufacturer spec sheets ·
+      FR-20260523-copper-creek-mains
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    <span><strong>Copper Creek PA Research</strong> &nbsp;·&nbsp; Prepared by Tyler Drake &nbsp;·&nbsp; May 23, 2026</span>
+    <span>Sweetwater: (800) 222-4700</span>
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>
