@@ -257,8 +257,9 @@ CREATE TABLE IF NOT EXISTS guitar_training_log (
 -- Scale & Arpeggio practice log (FR-20260517-guitar-trainer-scale-exercises)
 CREATE TABLE IF NOT EXISTS scale_practice_log (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    key         TEXT NOT NULL DEFAULT 'C',   -- musical key (FR-20260522-guitar-trainer-multi-key)
     scale       TEXT NOT NULL DEFAULT 'C_major',
-    position    INTEGER NOT NULL DEFAULT 1,  -- CAGED position 1-5
+    position    INTEGER NOT NULL DEFAULT 1,
     bpm         INTEGER NOT NULL DEFAULT 60,
     reps        INTEGER NOT NULL DEFAULT 1,
     logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
@@ -375,6 +376,14 @@ def init_db(*, seed: bool = True) -> None:
     """Create all tables and optionally seed with catalog data. Safe to re-run."""
     conn = get_connection()
     conn.executescript(_SCHEMA_SQL)
+    # FR-20260522: add 'key' column to scale_practice_log for existing DBs
+    try:
+        conn.execute(
+            "ALTER TABLE scale_practice_log ADD COLUMN key TEXT NOT NULL DEFAULT 'C'"
+        )
+        conn.commit()
+    except Exception:
+        pass  # column already exists
     if seed:
         conn.executescript(_SEED_SQL)
     conn.commit()
