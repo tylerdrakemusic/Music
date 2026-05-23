@@ -767,6 +767,7 @@ async function createSession() {
   };
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
+  const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11};
   window.drawFretboard = function(notes, activeIdx) {
     const svg = document.getElementById('fretboard-svg');
     const W = 1320, H = 160;
@@ -817,9 +818,10 @@ async function createSession() {
       const color = isActive ? PLAYING_COLOR : ACCENT;
       const r = isActive ? 9 : 7;
       html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" stroke="#000" stroke-width="1" class="fret-dot${isActive?' playing':''}" data-note-idx="${i}"/>`;
-      // Root label (C)
-      if (n.midi % 12 === 0) {
-        html += `<text x="${x}" y="${y + 4}" fill="#000" text-anchor="middle" font-size="7" font-weight="bold" font-family="Segoe UI,sans-serif">C</text>`;
+      // Root label — dynamic per key
+      const rootPc = KEY_PC[_currentKey] ?? 0;
+      if (n.midi % 12 === rootPc) {
+        html += `<text x="${x}" y="${y + 4}" fill="#000" text-anchor="middle" font-size="7" font-weight="bold" font-family="Segoe UI,sans-serif">${_currentKey}</text>`;
       }
     });
     svg.innerHTML = html;
