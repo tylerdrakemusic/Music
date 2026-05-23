@@ -1,7 +1,8 @@
 """
 ❤Music — Guitar Scale Data
-CAGED positions for C major scale on standard-tuned 6-string guitar.
+CAGED positions for C major and G major scales on standard-tuned 6-string guitar.
 FR-20260517-guitar-trainer-scale-exercises
+FR-20260522-guitar-trainer-multi-key
 """
 from __future__ import annotations
 
@@ -186,7 +187,135 @@ _pos8_notes = _pos(
 )
 
 
-CAGED_POSITIONS: list[CagedPosition] = [
+# ---------------------------------------------------------------------------
+# G major positions — G A B C D E F#  (midi pc: 7 9 11 0 2 4 6)
+# Same CAGED shapes as C major, root G instead of root C.
+# Derived by transposing verified C-major shapes; all pitch classes confirmed.
+# String numbering: 1=high e (E4), 2=B3, 3=G3, 4=D3, 5=A2, 6=low E (E2)
+# ---------------------------------------------------------------------------
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  G Pos 1 — G shape (open, frets 0–3)                                    ║
+# ║  low E: 3  A: 0,2,3  D: 0,2,4  G: 0,2  B: 0,1,3  e: 0,2,3            ║
+# ║  Root G2★ = low E fret 3 | G3★ = G string open | G4★ = e fret 3        ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gpos1_notes = _pos(
+    (6, 3),                       # low E:  G2★
+    (5, 0), (5, 2), (5, 3),       # A:      A2  B2  C3
+    (4, 0), (4, 2), (4, 4),       # D:      D3  E3  F#3
+    (3, 0), (3, 2),               # G:      G3★ A3
+    (2, 0), (2, 1), (2, 3),       # B:      B3  C4  D4
+    (1, 0), (1, 2), (1, 3),       # e:      E4  F#4 G4★
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  G Pos 2 — E shape (3rd fret)                                           ║
+# ║  low E: 3,5,7  A: 3,5,7  D: 4,5,7  G: 4,5  B: 3,5,7  e: 3,5,7        ║
+# ║  Root G2★ = low E fret 3 | G3★ = D fret 5 | G4★ = e fret 3            ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gpos2_notes = _pos(
+    (6, 3), (6, 5), (6, 7),       # low E:  G2★ A2  B2
+    (5, 3), (5, 5), (5, 7),       # A:      C3  D3  E3
+    (4, 4), (4, 5), (4, 7),       # D:      F#3 G3★ A3   (semitone shift at G-B break)
+    (3, 4), (3, 5),               # G:      B3  C4
+    (2, 3), (2, 5), (2, 7),       # B:      D4  E4  F#4
+    (1, 3), (1, 5), (1, 7),       # e:      G4★ A4  B4
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  G Pos 3 — D shape (5th fret)                                           ║
+# ║  low E: 3,5,7,8  A: 5,7,9  D: 5,7,9  G: 5,7,9  B: 7,8  e: 5,7,8      ║
+# ║  Root G2★ = low E fret 3 | G3★ = D fret 5 | G4★ = B fret 8            ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gpos3_notes = _pos(
+    (6, 3), (6, 5), (6, 7), (6, 8),  # low E:  G2★ A2  B2  C3
+    (5, 5), (5, 7), (5, 9),           # A:      D3  E3  F#3
+    (4, 5), (4, 7), (4, 9),           # D:      G3★ A3  B3
+    (3, 5), (3, 7), (3, 9),           # G:      C4  D4  E4
+    (2, 7), (2, 8),                   # B:      F#4 G4★
+    (1, 5), (1, 7), (1, 8),           # e:      A4  B4  C5
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  G Pos 4 — C shape (7th fret)                                           ║
+# ║  low E: 7,8,10  A: 7,9,10  D: 7,9,10  G: 7,9  B: 7,8,10  e: 7,8,10   ║
+# ║  Root G3★ = A fret 10 | G4★ = B fret 8                                 ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gpos4_notes = _pos(
+    (6, 7), (6, 8), (6, 10),     # low E:  B2  C3  D3
+    (5, 7), (5, 9), (5, 10),     # A:      E3  F#3 G3★
+    (4, 7), (4, 9), (4, 10),     # D:      A3  B3  C4
+    (3, 7), (3, 9),              # G:      D4  E4
+    (2, 7), (2, 8), (2, 10),     # B:      F#4 G4★ A4
+    (1, 7), (1, 8), (1, 10),     # e:      B4  C5  D5
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  G Pos 5 — A shape (10th fret)                                          ║
+# ║  low E: 10,12,14  A: 10,12,14  D: 10,12,14  G: 11,12  B: 10,12,13     ║
+# ║  e: 10,12,14,15                                                         ║
+# ║  Root G3★ = A fret 10 | G4★ = G fret 12 | G5★ = e fret 15             ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gpos5_notes = _pos(
+    (6, 10), (6, 12), (6, 14),          # low E:  D3  E3  F#3
+    (5, 10), (5, 12), (5, 14),          # A:      G3★ A3  B3
+    (4, 10), (4, 12), (4, 14),          # D:      C4  D4  E4
+    (3, 11), (3, 12),                   # G:      F#4 G4★  (semitone shift at G-B break)
+    (2, 10), (2, 12), (2, 13),          # B:      A4  B4  C5
+    (1, 10), (1, 12), (1, 14), (1, 15), # e:      D5  E5  F#5 G5★
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  G Pos 6 — G shape (15th fret, +12 from Pos 1)                          ║
+# ║  low E: 15  A: 12,14,15  D: 12,14,16  G: 12,14  B: 12,13,15  e: 12,14,15 ║
+# ║  Root G3★ = low E fret 15 | G4★ = G fret 12 | G5★ = e fret 15         ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gpos6_notes = _pos(
+    (6, 15),                       # low E:  G3★
+    (5, 12), (5, 14), (5, 15),    # A:      A3  B3  C4
+    (4, 12), (4, 14), (4, 16),    # D:      E4  F#4 G4? — D3+12=D4(2), D3+14=E4(4), D3+16=F#4(6) ✓
+    (3, 12), (3, 14),             # G:      G4★ A4
+    (2, 12), (2, 13), (2, 15),    # B:      B4  C5  D5
+    (1, 12), (1, 14), (1, 15),    # e:      E5  F#5 G5★
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  G Pos 7 — E shape (15th fret, +12 from Pos 2)                          ║
+# ║  low E: 15,17,19  A: 15,17,19  D: 16,17,19  G: 16,17  B: 15,17,19     ║
+# ║  e: 15,17,19                                                            ║
+# ║  Root G3★ = low E fret 15 | G4★ = D fret 17 | G5★ = e fret 15         ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gpos7_notes = _pos(
+    (6, 15), (6, 17), (6, 19),    # low E:  G3★ A3  B3
+    (5, 15), (5, 17), (5, 19),    # A:      C4  D4  E4
+    (4, 16), (4, 17), (4, 19),    # D:      F#4 G4★ A4
+    (3, 16), (3, 17),             # G:      B4  C5
+    (2, 15), (2, 17), (2, 19),    # B:      D5  E5  F#5
+    (1, 15), (1, 17), (1, 19),    # e:      G5★ A5  B5
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  G Pos 8 — D shape (17th fret, +12 from Pos 3)                          ║
+# ║  low E: 15,17,19,20  A: 17,19,21  D: 17,19,21  G: 17,19,21            ║
+# ║  B: 19,20  e: 17,19,20                                                  ║
+# ║  Root G3★ = low E fret 15 | G4★ = D fret 17 | G5★ = B fret 20         ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gpos8_notes = _pos(
+    (6, 15), (6, 17), (6, 19), (6, 20),  # low E:  G3★ A3  B3  C4
+    (5, 17), (5, 19), (5, 21),            # A:      D4  E4  F#4
+    (4, 17), (4, 19), (4, 21),            # D:      G4★ A4  B4
+    (3, 17), (3, 19), (3, 21),            # G:      C5  D5  E5
+    (2, 19), (2, 20),                     # B:      F#5 G5★
+    (1, 17), (1, 19), (1, 20),            # e:      A5  B5  C6
+)
+
+
+# ---------------------------------------------------------------------------
+# SCALE_POSITIONS — multi-key dict (FR-20260522-guitar-trainer-multi-key)
+# ---------------------------------------------------------------------------
+SCALE_POSITIONS: dict[str, list[CagedPosition]] = {
+    "C": [
+        # original 8 C major positions (unchanged)
     CagedPosition(
         label="Position 1 — C shape (open)",
         root_string="A string",
@@ -236,14 +365,76 @@ CAGED_POSITIONS: list[CagedPosition] = [
         instructor_phrase="Start on the 15th fret of the low E string — C major A shape one octave up.",
         notes=_pos7_notes,
     ),
-    CagedPosition(
-        label="Position 8 — G shape (20th fret)",
-        root_string="Low E string",
-        root_fret=20,
-        instructor_phrase="Start on the 20th fret of the low E string — C major G shape one octave up.",
-        notes=_pos8_notes,
-    ),
-]
+        CagedPosition(
+            label="Position 8 — G shape (20th fret)",
+            root_string="Low E string",
+            root_fret=20,
+            instructor_phrase="Start on the 20th fret of the low E string — C major G shape one octave up.",
+            notes=_pos8_notes,
+        ),
+    ],
+    "G": [
+        CagedPosition(
+            label="Position 1 — G shape (open)",
+            root_string="Low E string",
+            root_fret=3,
+            instructor_phrase="Start on the 3rd fret of the low E string — G major G shape.",
+            notes=_gpos1_notes,
+        ),
+        CagedPosition(
+            label="Position 2 — E shape (3rd fret)",
+            root_string="Low E string",
+            root_fret=3,
+            instructor_phrase="Start on the 3rd fret of the low E string — G major E shape.",
+            notes=_gpos2_notes,
+        ),
+        CagedPosition(
+            label="Position 3 — D shape (5th fret)",
+            root_string="D string",
+            root_fret=5,
+            instructor_phrase="Start on the 5th fret of the D string — G major D shape.",
+            notes=_gpos3_notes,
+        ),
+        CagedPosition(
+            label="Position 4 — C shape (7th fret)",
+            root_string="A string",
+            root_fret=10,
+            instructor_phrase="Start on the 10th fret of the A string — G major C shape.",
+            notes=_gpos4_notes,
+        ),
+        CagedPosition(
+            label="Position 5 — A shape (10th fret)",
+            root_string="A string",
+            root_fret=10,
+            instructor_phrase="Start on the 10th fret of the A string — G major A shape.",
+            notes=_gpos5_notes,
+        ),
+        CagedPosition(
+            label="Position 6 — G shape (15th fret)",
+            root_string="Low E string",
+            root_fret=15,
+            instructor_phrase="Start on the 15th fret of the low E string — G major G shape one octave up.",
+            notes=_gpos6_notes,
+        ),
+        CagedPosition(
+            label="Position 7 — E shape (15th fret)",
+            root_string="Low E string",
+            root_fret=15,
+            instructor_phrase="Start on the 15th fret of the low E string — G major E shape one octave up.",
+            notes=_gpos7_notes,
+        ),
+        CagedPosition(
+            label="Position 8 — D shape (17th fret)",
+            root_string="D string",
+            root_fret=17,
+            instructor_phrase="Start on the 17th fret of the D string — G major D shape one octave up.",
+            notes=_gpos8_notes,
+        ),
+    ],
+}
+
+# Backward-compat alias — C major positions
+CAGED_POSITIONS: list[CagedPosition] = SCALE_POSITIONS["C"]
 
 
 # ---------------------------------------------------------------------------
@@ -255,14 +446,18 @@ MIDI_TO_FREQ: dict[int, float] = {
 }
 
 
-def get_scale_sequence(position_idx: int) -> list[int]:
-    """Return ascending + descending MIDI note sequence for a CAGED position (0-indexed).
+def get_scale_sequence(position_idx: int, key: str = "C") -> list[int]:
+    """Return ascending + descending MIDI note sequence for a scale position (0-indexed).
 
     Sequence: ascending from lowest to highest note, then descending back to lowest.
+    ``key`` must be a key present in :data:`SCALE_POSITIONS` (e.g. ``'C'``, ``'G'``).
     """
-    if not 0 <= position_idx < len(CAGED_POSITIONS):
-        raise ValueError(f"position_idx must be 0-{len(CAGED_POSITIONS) - 1}, got {position_idx}")
-    notes = CAGED_POSITIONS[position_idx]["notes"]
+    positions = SCALE_POSITIONS.get(key)
+    if positions is None:
+        raise ValueError(f"Unknown key {key!r}; available: {list(SCALE_POSITIONS)}")
+    if not 0 <= position_idx < len(positions):
+        raise ValueError(f"position_idx must be 0-{len(positions) - 1}, got {position_idx}")
+    notes = positions[position_idx]["notes"]
     midis_asc = sorted(n["midi"] for n in notes)
     # Remove duplicate midi values
     seen: set[int] = set()
