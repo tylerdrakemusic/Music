@@ -1,16 +1,20 @@
 """
-Tests for FR-20260517-guitar-trainer-scale-exercises.
+Tests for FR-20260517-guitar-trainer-scale-exercises and
+FR-20260522-guitar-trainer-multi-key.
 
 Covers:
-  - CAGED_POSITIONS count and schema
+  - SCALE_POSITIONS structure (2 keys, 8 positions each)
+  - CAGED_POSITIONS backward-compat alias
   - ScaleNote fields validity
+  - G major pitch-class validation
   - MIDI_TO_FREQ A440 accuracy
-  - get_scale_sequence ascending+descending shape
-  - /api/scale-positions returns 5 positions
-  - /api/scale-log POST: valid insert, invalid position, invalid bpm
-  - /api/scale-log GET: returns list
+  - get_scale_sequence ascending+descending shape, key='G' variant
+  - /api/scale-positions?key=C and ?key=G return 8 positions each
+  - /api/scale-positions?key=X returns 400
+  - /api/scale-log POST: valid insert, key='G' insert, invalid position, invalid bpm
+  - /api/scale-log GET: returns list with key column
   - /api/instructor-audio: returns 204 when ELEVENLABS_API_KEY not set
-  - HTML: tab-nav, fretboard SVG, scale-position select present
+  - HTML: tab-nav, fretboard SVG, scale-key select, scale-position select present
   - DB: scale_practice_log table exists after init_db schema
 """
 from __future__ import annotations
@@ -26,7 +30,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from training.scale_data import CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence
+from training.scale_data import SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence
 import training.musician_training_ui as ui
 
 
@@ -56,6 +60,7 @@ CREATE TABLE IF NOT EXISTS guitar_training_log (
 );
 CREATE TABLE IF NOT EXISTS scale_practice_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key TEXT NOT NULL DEFAULT 'C',
     scale TEXT NOT NULL DEFAULT 'C_major',
     position INTEGER NOT NULL DEFAULT 1,
     bpm INTEGER NOT NULL DEFAULT 60,
@@ -101,12 +106,24 @@ def client(mem_conn):
 
 
 # ---------------------------------------------------------------------------
-# scale_data.py — CAGED_POSITIONS
+# scale_data.py — SCALE_POSITIONS and CAGED_POSITIONS
 # ---------------------------------------------------------------------------
 
+def test_scale_positions_has_c_and_g() -> None:
+    """SCALE_POSITIONS must have exactly 'C' and 'G' keys."""
+    assert set(SCALE_POSITIONS.keys()) == {"C", "G"}
+
+
+def test_scale_positions_each_has_8() -> None:
+    """Both C and G must have exactly 8 positions."""
+    for key, positions in SCALE_POSITIONS.items():
+        assert len(positions) == 8, f"SCALE_POSITIONS['{key}'] has {len(positions)} positions, expected 8"
+
+
 def test_caged_positions_count() -> None:
-    """There must be exactly 8 CAGED positions."""
+    """CAGED_POSITIONS alias must point to the 8 C major positions."""
     assert len(CAGED_POSITIONS) == 8
+    assert CAGED_POSITIONS is SCALE_POSITIONS["C"]
 
 
 def test_caged_positions_schema() -> None:
@@ -130,12 +147,23 @@ def test_caged_notes_have_required_keys() -> None:
 
 
 def test_caged_notes_all_in_c_major() -> None:
-    """All notes in all positions must belong to the C major scale."""
+    """All notes in all C major positions must belong to the C major scale."""
     C_MAJOR_PCS = {0, 2, 4, 5, 7, 9, 11}
     for i, pos in enumerate(CAGED_POSITIONS):
         for note in pos["notes"]:
             assert note["midi"] % 12 in C_MAJOR_PCS, (
                 f"Position {i+1} note midi={note['midi']} not in C major"
+            )
+
+
+def test_g_major_positions_pitch_classes() -> None:
+    """All notes in all G major positions must belong to the G major scale."""
+    G_MAJOR_PCS = {7, 9, 11, 0, 2, 4, 6}  # G A B C D E F#
+    for i, pos in enumerate(SCALE_POSITIONS["G"]):
+        for note in pos["notes"]:
+            assert note["midi"] % 12 in G_MAJOR_PCS, (
+                f"G major Position {i+1} note midi={note['midi']} "
+                f"(pc={note['midi'] % 12}) not in G major scale"
             )
 
 
@@ -203,9 +231,25 @@ def test_get_scale_sequence_descending_second_half() -> None:
 def test_get_scale_sequence_invalid_index() -> None:
     """Out-of-range index must raise ValueError."""
     with pytest.raises(ValueError):
-        get_scale_sequence(8)
+        get_scale_sequence(8)  # 0-7 are valid for C
     with pytest.raises(ValueError):
         get_scale_sequence(-1)
+
+
+def test_get_scale_sequence_g_key() -> None:
+    """get_scale_sequence with key='G' must return a valid ascending+descending sequence."""
+    for i in range(8):
+        seq = get_scale_sequence(i, key="G")
+        assert len(seq) > 1
+        mid = len(seq) // 2
+        asc = seq[:mid + 1]
+        assert asc == sorted(asc), f"G Pos {i+1} first half not ascending"
+
+
+def test_get_scale_sequence_invalid_key() -> None:
+    """Unknown key must raise ValueError."""
+    with pytest.raises(ValueError):
+        get_scale_sequence(0, key="X")
 
 
 # ---------------------------------------------------------------------------
@@ -213,12 +257,28 @@ def test_get_scale_sequence_invalid_index() -> None:
 # ---------------------------------------------------------------------------
 
 def test_api_scale_positions_returns_8(client) -> None:
-    """GET /api/scale-positions must return a list of exactly 8 positions."""
+    """GET /api/scale-positions must return a list of exactly 8 positions (default key=C)."""
     resp = client.get("/api/scale-positions")
     assert resp.status_code == 200
     data = resp.get_json()
     assert isinstance(data, list)
     assert len(data) == 8
+
+
+def test_api_scale_positions_g_returns_8(client) -> None:
+    """GET /api/scale-positions?key=G must return a list of exactly 8 G major positions."""
+    resp = client.get("/api/scale-positions?key=G")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) == 8
+    assert all("G major" in p["instructor_phrase"] for p in data)
+
+
+def test_api_scale_positions_invalid_key_400(client) -> None:
+    """GET /api/scale-positions?key=X must return 400."""
+    resp = client.get("/api/scale-positions?key=X")
+    assert resp.status_code == 400
 
 
 def test_api_scale_positions_schema(client) -> None:
@@ -238,7 +298,7 @@ def test_scale_log_valid_insert(client, mem_conn) -> None:
     """POST /api/scale-log with valid data must return {ok: true} and insert a row."""
     resp = client.post(
         "/api/scale-log",
-        data=json.dumps({"scale": "C_major", "position": 2, "bpm": 80, "reps": 4}),
+        data=json.dumps({"scale": "C_major", "position": 2, "bpm": 80, "reps": 4, "key": "C"}),
         content_type="application/json",
     )
     assert resp.status_code == 200
@@ -249,24 +309,49 @@ def test_scale_log_valid_insert(client, mem_conn) -> None:
     assert row["position"] == 2
     assert row["bpm"] == 80
     assert row["reps"] == 4
+    assert row["key"] == "C"
 
 
-def test_scale_log_invalid_position_zero(client) -> None:
-    """Position 0 must be rejected."""
+def test_scale_log_g_major_insert(client, mem_conn) -> None:
+    """POST /api/scale-log with key='G' must insert a row with key='G'."""
     resp = client.post(
         "/api/scale-log",
-        data=json.dumps({"scale": "C_major", "position": 0, "bpm": 60, "reps": 1}),
+        data=json.dumps({"scale": "G_major", "position": 3, "bpm": 100, "reps": 2, "key": "G"}),
+        content_type="application/json",
+    )
+    assert resp.get_json()["ok"] is True
+    row = mem_conn.execute("SELECT * FROM scale_practice_log").fetchone()
+    assert row["key"] == "G"
+    assert row["position"] == 3
+
+
+def test_scale_log_invalid_key(client) -> None:
+    """POST /api/scale-log with unknown key must be rejected."""
+    resp = client.post(
+        "/api/scale-log",
+        data=json.dumps({"scale": "X_major", "position": 1, "bpm": 60, "reps": 1, "key": "X"}),
         content_type="application/json",
     )
     j = resp.get_json()
     assert j["ok"] is False
 
 
-def test_scale_log_invalid_position_six(client) -> None:
-    """Position 6 must be rejected."""
+def test_scale_log_invalid_position_zero(client) -> None:
+    """Position 0 must be rejected."""
     resp = client.post(
         "/api/scale-log",
-        data=json.dumps({"scale": "C_major", "position": 6, "bpm": 60, "reps": 1}),
+        data=json.dumps({"scale": "C_major", "position": 0, "bpm": 60, "reps": 1, "key": "C"}),
+        content_type="application/json",
+    )
+    j = resp.get_json()
+    assert j["ok"] is False
+
+
+def test_scale_log_invalid_position_nine(client) -> None:
+    """Position 9 must be rejected (max is 8)."""
+    resp = client.post(
+        "/api/scale-log",
+        data=json.dumps({"scale": "C_major", "position": 9, "bpm": 60, "reps": 1, "key": "C"}),
         content_type="application/json",
     )
     j = resp.get_json()
@@ -277,7 +362,7 @@ def test_scale_log_invalid_bpm_low(client) -> None:
     """BPM below 40 must be rejected."""
     resp = client.post(
         "/api/scale-log",
-        data=json.dumps({"scale": "C_major", "position": 1, "bpm": 10, "reps": 1}),
+        data=json.dumps({"scale": "C_major", "position": 1, "bpm": 10, "reps": 1, "key": "C"}),
         content_type="application/json",
     )
     j = resp.get_json()
@@ -288,7 +373,7 @@ def test_scale_log_invalid_bpm_high(client) -> None:
     """BPM above 200 must be rejected."""
     resp = client.post(
         "/api/scale-log",
-        data=json.dumps({"scale": "C_major", "position": 1, "bpm": 300, "reps": 1}),
+        data=json.dumps({"scale": "C_major", "position": 1, "bpm": 300, "reps": 1, "key": "C"}),
         content_type="application/json",
     )
     j = resp.get_json()
@@ -324,8 +409,14 @@ def test_instructor_audio_204_when_no_key(client) -> None:
 
 
 def test_instructor_audio_400_invalid_position(client) -> None:
-    """Invalid position must return 400."""
+    """Invalid position must return 400 (max 8 positions for any key)."""
     resp = client.get("/api/instructor-audio?position=9")
+    assert resp.status_code == 400
+
+
+def test_instructor_audio_400_invalid_key(client) -> None:
+    """Unknown key must return 400."""
+    resp = client.get("/api/instructor-audio?position=1&key=X")
     assert resp.status_code == 400
 
 
@@ -359,6 +450,11 @@ def test_html_has_scales_tab_btn(html: str) -> None:
 def test_html_has_fretboard_svg(html: str) -> None:
     """Rendered HTML must contain the fretboard SVG element."""
     assert 'id="fretboard-svg"' in html
+
+
+def test_html_has_scale_key_select(html: str) -> None:
+    """Rendered HTML must contain the scale key dropdown."""
+    assert 'id="scale-key"' in html
 
 
 def test_html_has_scale_position_select(html: str) -> None:

@@ -18,7 +18,7 @@ _SRC = Path(__file__).resolve().parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 from utils.init_db import get_connection  # noqa: E402
-from training.scale_data import CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence  # noqa: E402
+from training.scale_data import SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence  # noqa: E402
 from training.scale_tts import get_instructor_audio  # noqa: E402
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -337,10 +337,16 @@ HTML = r"""
 <div id="tab-scales" class="tab-panel" style="display:none">
   <div class="scales-header">
     <h2>🎵 Scales &amp; Arpeggios</h2>
-    <p class="sub">C major — all 5 CAGED positions — Web Audio playback</p>
+    <p class="sub">C / G major — all 8 positions — Web Audio playback</p>
   </div>
 
   <div class="scale-row">
+    <label>Key
+      <select id="scale-key" class="scale-select" onchange="onKeyChange()">
+        <option value="C">C major</option>
+        <option value="G">G major</option>
+      </select>
+    </label>
     <label>Position
       <select id="scale-position" class="scale-select" onchange="onPositionChange()"></select>
     </label>
@@ -370,8 +376,8 @@ HTML = r"""
     <summary style="cursor:pointer;color:var(--accent);font-weight:600;font-size:.9rem;user-select:none">Scale Practice Log</summary>
     <div style="margin-top:8px" id="scale-log-wrap">
       <table class="scale-log-table">
-        <thead><tr><th>Time</th><th>Scale</th><th>Position</th><th>BPM</th><th>Reps</th></tr></thead>
-        <tbody id="scale-log-tbody"><tr><td colspan="5" style="color:var(--muted)">No sessions yet.</td></tr></tbody>
+        <thead><tr><th>Time</th><th>Key</th><th>Scale</th><th>Position</th><th>BPM</th><th>Reps</th></tr></thead>
+        <tbody id="scale-log-tbody"><tr><td colspan="6" style="color:var(--muted)">No sessions yet.</td></tr></tbody>
       </table>
     </div>
   </details>
@@ -714,6 +720,7 @@ async function createSession() {
   let _scaleBpm = 60;
   let _scalePlaying = false;
   let _scaleStopFlag = false;
+  let _currentKey = 'C';
   const _scaleTapTimes = [];
   const MAX_TAP_GAP_MS = 3000;
 
@@ -723,13 +730,14 @@ async function createSession() {
     document.getElementById('tab-scales').style.display   = name === 'scales'    ? '' : 'none';
     document.getElementById('tab-btn-exercises').classList.toggle('active', name === 'exercises');
     document.getElementById('tab-btn-scales').classList.toggle('active', name === 'scales');
-    if (name === 'scales' && !_positions.length) loadScalePositions();
+    if (name === 'scales' && !_positions.length) loadScalePositions(_currentKey);
   };
 
   // ── Load positions from server ───────────────────────────────────────────
-  async function loadScalePositions() {
+  async function loadScalePositions(key) {
+    key = key || 'C';
     try {
-      const r = await fetch('/api/scale-positions');
+      const r = await fetch('/api/scale-positions?key=' + encodeURIComponent(key));
       _positions = await r.json();
     } catch (e) { console.error('scale positions load failed', e); return; }
     const sel = document.getElementById('scale-position');
@@ -739,6 +747,12 @@ async function createSession() {
     onPositionChange();
   }
 
+  window.onKeyChange = function() {
+    _currentKey = document.getElementById('scale-key').value || 'C';
+    _positions = [];
+    loadScalePositions(_currentKey);
+  };
+
   window.onPositionChange = function() {
     _currentPos = parseInt(document.getElementById('scale-position').value) || 0;
     const pos = _positions[_currentPos];
@@ -746,13 +760,14 @@ async function createSession() {
     document.getElementById('instructor-phrase').textContent = pos.instructor_phrase;
     // Load instructor audio
     const audio = document.getElementById('instructor-audio');
-    audio.src = `/api/instructor-audio?position=${_currentPos + 1}`;
+    audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}`;
     audio.load();
     audio.play().catch(() => {});
     drawFretboard(pos.notes, -1);
   };
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
+  const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11};
   window.drawFretboard = function(notes, activeIdx) {
     const svg = document.getElementById('fretboard-svg');
     const W = 1320, H = 160;
@@ -803,9 +818,10 @@ async function createSession() {
       const color = isActive ? PLAYING_COLOR : ACCENT;
       const r = isActive ? 9 : 7;
       html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" stroke="#000" stroke-width="1" class="fret-dot${isActive?' playing':''}" data-note-idx="${i}"/>`;
-      // Root label (C)
-      if (n.midi % 12 === 0) {
-        html += `<text x="${x}" y="${y + 4}" fill="#000" text-anchor="middle" font-size="7" font-weight="bold" font-family="Segoe UI,sans-serif">C</text>`;
+      // Root label — dynamic per key
+      const rootPc = KEY_PC[_currentKey] ?? 0;
+      if (n.midi % 12 === rootPc) {
+        html += `<text x="${x}" y="${y + 4}" fill="#000" text-anchor="middle" font-size="7" font-weight="bold" font-family="Segoe UI,sans-serif">${_currentKey}</text>`;
       }
     });
     svg.innerHTML = html;
@@ -851,13 +867,14 @@ async function createSession() {
     const seen = new Set();
     const allAsc = [];
     for (const n of sorted) { if (!seen.has(n.midi)) { seen.add(n.midi); allAsc.push(n); } }
-    // Start ascending run from the position root (lowest C note = midi % 12 === 0).
+    // Start ascending run from the position root (lowest root-pitch-class note).
     // Each rep is a closed loop with no double root at the seam:
     // - rootIdx > 0 (C/A shape): desc goes all the way to the bottom, returnAsc
     //   climbs back to one below root; next rep opens on root.
     // - rootIdx = 0 (G/E/D shape): root IS the lowest note, so desc starts from
     //   allAsc[1] and stops one above root; no returnAsc needed.
-    const rootNote = allAsc.find(n => n.midi % 12 === 0);
+    const rootPc   = KEY_PC[_currentKey] ?? 0;
+    const rootNote = allAsc.find(n => n.midi % 12 === rootPc);
     const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
     const asc       = allAsc.slice(rootIdx);
     const desc      = allAsc.slice(rootIdx === 0 ? 1 : 0, -1).reverse();
@@ -882,7 +899,7 @@ async function createSession() {
     drawFretboard(pos.notes, -1);
     status.textContent = _scaleStopFlag ? '' : '✓ Complete';
     if (!_scaleStopFlag) {
-      logScaleSession('C_major', _currentPos + 1, _scaleBpm, reps);
+      logScaleSession(_currentKey + '_major', _currentPos + 1, _scaleBpm, reps, _currentKey);
     }
   };
 
@@ -907,12 +924,12 @@ async function createSession() {
     if (_scaleTapTimes.length > 8) _scaleTapTimes.shift();
   };
 
-  async function logScaleSession(scale, position, bpm, reps) {
+  async function logScaleSession(scale, position, bpm, reps, key) {
     try {
       const r = await fetch('/api/scale-log', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({scale, position, bpm, reps}),
+        body: JSON.stringify({scale, position, bpm, reps, key: key || 'C'}),
       });
       if ((await r.json()).ok) loadScaleLog();
     } catch (e) { console.warn('scale log failed', e); }
@@ -925,7 +942,7 @@ async function createSession() {
       const tbody = document.getElementById('scale-log-tbody');
       if (!rows.length) return;
       tbody.innerHTML = rows.slice(0, 10).map(row =>
-        `<tr><td>${row.logged_at}</td><td>${row.scale.replace('_',' ')}</td><td>${row.position}</td><td>${row.bpm}</td><td>${row.reps}</td></tr>`
+        `<tr><td>${row.logged_at}</td><td>${row.key || 'C'}</td><td>${row.scale.replace('_',' ')}</td><td>${row.position}</td><td>${row.bpm}</td><td>${row.reps}</td></tr>`
       ).join('');
     } catch(e) { console.warn('scale log load failed', e); }
   }
@@ -1129,7 +1146,11 @@ def delete_session():
 
 @app.route("/api/scale-positions")
 def api_scale_positions():
-    """Return all CAGED positions as JSON (label, root info, notes, instructor phrase)."""
+    """Return positions for the given key as JSON. Query param: ?key=C (default) or ?key=G."""
+    key = request.args.get("key", "C").strip().upper()
+    positions = SCALE_POSITIONS.get(key)
+    if positions is None:
+        abort(400)
     return jsonify([
         {
             "label": p["label"],
@@ -1138,7 +1159,7 @@ def api_scale_positions():
             "instructor_phrase": p["instructor_phrase"],
             "notes": p["notes"],
         }
-        for p in CAGED_POSITIONS
+        for p in positions
     ])
 
 
@@ -1148,7 +1169,7 @@ def api_scale_log():
         try:
             with get_connection() as conn:
                 rows = conn.execute(
-                    "SELECT scale, position, bpm, reps, logged_at "
+                    "SELECT key, scale, position, bpm, reps, logged_at "
                     "FROM scale_practice_log ORDER BY id DESC LIMIT 50"
                 ).fetchall()
             return jsonify([dict(r) for r in rows])
@@ -1161,16 +1182,19 @@ def api_scale_log():
     position = data.get("position")
     bpm = data.get("bpm")
     reps = data.get("reps")
+    key = str(data.get("key") or "C").strip().upper()
 
     # Validate
     if not scale:
         return jsonify({"ok": False, "error": "scale required"})
+    if key not in SCALE_POSITIONS:
+        return jsonify({"ok": False, "error": f"key must be one of {list(SCALE_POSITIONS)}"})
     try:
         position = int(position)
-        if not 1 <= position <= 5:
+        if not 1 <= position <= len(SCALE_POSITIONS[key]):
             raise ValueError
     except (TypeError, ValueError):
-        return jsonify({"ok": False, "error": "position must be integer 1-5"})
+        return jsonify({"ok": False, "error": f"position must be integer 1-{len(SCALE_POSITIONS[key])}"})
     try:
         bpm = int(bpm)
         if not 40 <= bpm <= 200:
@@ -1187,8 +1211,8 @@ def api_scale_log():
     try:
         with get_connection() as conn:
             conn.execute(
-                "INSERT INTO scale_practice_log (scale, position, bpm, reps) VALUES (?,?,?,?)",
-                (scale, position, bpm, reps),
+                "INSERT INTO scale_practice_log (key, scale, position, bpm, reps) VALUES (?,?,?,?,?)",
+                (key, scale, position, bpm, reps),
             )
             conn.commit()
         return jsonify({"ok": True})
@@ -1202,14 +1226,18 @@ def api_instructor_audio():
 
     Returns 204 No Content when TTS is unavailable (no key, network error, etc.)
     """
+    key = request.args.get("key", "C").strip().upper()
+    key_positions = SCALE_POSITIONS.get(key)
+    if key_positions is None:
+        abort(400)
     try:
         position = int(request.args.get("position", 0))
-        if not 1 <= position <= len(CAGED_POSITIONS):
+        if not 1 <= position <= len(key_positions):
             abort(400)
     except (TypeError, ValueError):
         abort(400)
 
-    pos = CAGED_POSITIONS[position - 1]
+    pos = key_positions[position - 1]
     audio_path = get_instructor_audio(pos["instructor_phrase"], TTS_CACHE_DIR)
     if audio_path is None or not audio_path.exists():
         return Response(status=204)
