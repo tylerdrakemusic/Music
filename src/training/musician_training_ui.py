@@ -867,13 +867,14 @@ async function createSession() {
     const seen = new Set();
     const allAsc = [];
     for (const n of sorted) { if (!seen.has(n.midi)) { seen.add(n.midi); allAsc.push(n); } }
-    // Start ascending run from the position root (lowest C note = midi % 12 === 0).
+    // Start ascending run from the position root (lowest root-pitch-class note).
     // Each rep is a closed loop with no double root at the seam:
     // - rootIdx > 0 (C/A shape): desc goes all the way to the bottom, returnAsc
     //   climbs back to one below root; next rep opens on root.
     // - rootIdx = 0 (G/E/D shape): root IS the lowest note, so desc starts from
     //   allAsc[1] and stops one above root; no returnAsc needed.
-    const rootNote = allAsc.find(n => n.midi % 12 === 0);
+    const rootPc   = KEY_PC[_currentKey] ?? 0;
+    const rootNote = allAsc.find(n => n.midi % 12 === rootPc);
     const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
     const asc       = allAsc.slice(rootIdx);
     const desc      = allAsc.slice(rootIdx === 0 ? 1 : 0, -1).reverse();
@@ -898,7 +899,7 @@ async function createSession() {
     drawFretboard(pos.notes, -1);
     status.textContent = _scaleStopFlag ? '' : '✓ Complete';
     if (!_scaleStopFlag) {
-      logScaleSession('C_major', _currentPos + 1, _scaleBpm, reps, _currentKey);
+      logScaleSession(_currentKey + '_major', _currentPos + 1, _scaleBpm, reps, _currentKey);
     }
   };
 
