@@ -355,7 +355,7 @@ HTML = r"""
   <div class="instructor-box" id="instructor-phrase">Loading positions…</div>
   <audio id="instructor-audio" style="display:none"></audio>
 
-  <svg id="fretboard-svg" viewBox="0 0 1320 160" preserveAspectRatio="xMinYMid meet">
+  <svg id="fretboard-svg" viewBox="0 0 1320 220" preserveAspectRatio="xMinYMid meet">
     <text x="460" y="88" fill="#555" text-anchor="middle" font-size="13" font-family="Segoe UI,sans-serif">Loading fretboard…</text>
   </svg>
 
@@ -768,17 +768,23 @@ async function createSession() {
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
   const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11};
+  const PC_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  // Standard guitar fret dot positions
+  const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
+  // Interval color map: root=white, major 3rd=amber, perfect 5th=sky-blue, other=grey
+  const DOT_FILL  = { root: '#ffffff', third: '#fbbf24', fifth: '#60a5fa', other: '#555555' };
+  const DOT_TEXT  = { root: '#000000', third: '#000000', fifth: '#000000', other: '#ffffff' };
+  const DOT_STROKE = { root: '#888888', third: '#000000', fifth: '#000000', other: '#333333' };
+  const PLAYING_COLOR = '#ffe066';
   window.drawFretboard = function(notes, activeIdx) {
     const svg = document.getElementById('fretboard-svg');
-    const W = 1320, H = 160;
+    const W = 1320, H = 220;
     const LEFT = 58, RIGHT = W - 20;  // wider left margin for open-string zone
     const TOP = 20, BOTTOM = H - 30;
     const NUM_STRINGS = 6;
     const NUM_FRETS = 22;
     const strGap = (BOTTOM - TOP) / (NUM_STRINGS - 1);
     const fretW = (RIGHT - LEFT) / NUM_FRETS;
-    const ACCENT = '#e8003d';
-    const PLAYING_COLOR = '#ffe066';
     let html = '';
     // Fret lines (nut = thick white bar at f=0)
     for (let f = 0; f <= NUM_FRETS; f++) {
@@ -791,23 +797,23 @@ async function createSession() {
       const y = TOP + s * strGap;
       html += `<line x1="${LEFT}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="#555" stroke-width="${1 + s * 0.3}"/>`;
     }
-    // Fret numbers (skip "0" — left zone is reserved for open-string dots)
+    // Fret numbers — standard guitar marker positions only
     for (let f = 1; f <= NUM_FRETS; f++) {
+      if (!FRET_MARKERS.has(f)) continue;
       const x = LEFT + (f - 0.5) * fretW;
-      if (f === 1 || f % 3 === 0) {
-        html += `<text x="${x}" y="${H - 8}" fill="#555" text-anchor="middle" font-size="9" font-family="Segoe UI,sans-serif">${f}</text>`;
-      }
+      html += `<text x="${x}" y="${H - 8}" fill="#aaa" text-anchor="middle" font-size="9" font-family="Segoe UI,sans-serif">${f}</text>`;
     }
     // String labels — high e at top (row 0) … low E at bottom (row 5)
     const stringLabels = ['e','B','G','D','A','E'];
     for (let s = 0; s < NUM_STRINGS; s++) {
       const y = TOP + s * strGap;
-      html += `<text x="${LEFT - 8}" y="${y + 4}" fill="#666" text-anchor="end" font-size="9" font-family="Segoe UI,sans-serif">${stringLabels[s]}</text>`;
+      html += `<text x="${LEFT - 8}" y="${y + 4}" fill="#aaa" text-anchor="end" font-size="9" font-family="Segoe UI,sans-serif">${stringLabels[s]}</text>`;
     }
     // "open" zone label
-    html += `<text x="${LEFT - 20}" y="${H - 8}" fill="#444" text-anchor="middle" font-size="8" font-family="Segoe UI,sans-serif">open</text>`;
+    html += `<text x="${LEFT - 20}" y="${H - 8}" fill="#888" text-anchor="middle" font-size="8" font-family="Segoe UI,sans-serif">open</text>`;
     // Scale dots — string 1 (high e) → row 0 (top), string 6 (low E) → row 5 (bottom)
     // Open-string notes appear to the LEFT of the nut
+    const rootPc = KEY_PC[_currentKey] ?? 0;
     const sorted = (notes || []).slice().sort((a,b) => a.midi - b.midi);
     sorted.forEach((n, i) => {
       const row = n.string - 1;  // string 1→row 0 (top), string 6→row 5 (bottom)
@@ -815,14 +821,16 @@ async function createSession() {
       const isOpen = n.fret === 0;
       const x = isOpen ? LEFT - 18 : LEFT + (n.fret - 0.5) * fretW;
       const isActive = i === activeIdx;
-      const color = isActive ? PLAYING_COLOR : ACCENT;
-      const r = isActive ? 9 : 7;
-      html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" stroke="#000" stroke-width="1" class="fret-dot${isActive?' playing':''}" data-note-idx="${i}"/>`;
-      // Root label — dynamic per key
-      const rootPc = KEY_PC[_currentKey] ?? 0;
-      if (n.midi % 12 === rootPc) {
-        html += `<text x="${x}" y="${y + 4}" fill="#000" text-anchor="middle" font-size="7" font-weight="bold" font-family="Segoe UI,sans-serif">${_currentKey}</text>`;
-      }
+      const pc = n.midi % 12;
+      const interval = (pc - rootPc + 12) % 12;
+      const dotType = interval === 0 ? 'root' : interval === 4 ? 'third' : interval === 7 ? 'fifth' : 'other';
+      const fill   = isActive ? PLAYING_COLOR : DOT_FILL[dotType];
+      const textFill = isActive ? '#000000' : DOT_TEXT[dotType];
+      const stroke = isActive ? '#000000' : DOT_STROKE[dotType];
+      const r = isActive ? 10 : 9;
+      const noteName = PC_NAMES[pc];
+      html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1" class="fret-dot${isActive?' playing':''}" data-note-idx="${i}"/>`;
+      html += `<text x="${x}" y="${y + 4}" fill="${textFill}" text-anchor="middle" font-size="10" font-weight="bold" font-family="Segoe UI,sans-serif">${noteName}</text>`;
     });
     svg.innerHTML = html;
   };
