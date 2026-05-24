@@ -196,6 +196,8 @@ HTML = r"""
   .scales-header .sub{color:var(--muted);font-size:.82rem}
   .scale-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
   .scale-row label{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .scale-legend{display:flex;gap:14px;align-items:center;margin-left:8px;padding:5px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:20px}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:.78rem;color:#ccc;white-space:nowrap}
   .scale-select{background:#111;border:1px solid var(--border);color:#fff;padding:6px 10px;border-radius:4px;font-size:.85rem;min-width:260px}
   .instructor-box{padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:.88rem;margin-bottom:14px;min-height:38px;line-height:1.5}
   #fretboard-svg{width:100%;max-width:1320px;height:240px;display:block;margin:0 0 16px 0;background:#111;border:1px solid var(--border);border-radius:6px}
@@ -337,7 +339,6 @@ HTML = r"""
 <div id="tab-scales" class="tab-panel" style="display:none">
   <div class="scales-header">
     <h2>🎵 Scales &amp; Arpeggios</h2>
-    <p class="sub">C / G major — 12 (C) · 11 (G) positions — Web Audio playback</p>
   </div>
 
   <div class="scale-row">
@@ -350,6 +351,11 @@ HTML = r"""
     <label>Position
       <select id="scale-position" class="scale-select" onchange="onPositionChange()"></select>
     </label>
+    <span class="scale-legend">
+      <span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#ff0080"/></svg>Root</span>
+      <span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#fb5607"/></svg>3rd</span>
+      <span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#00e5cc"/></svg>5th</span>
+    </span>
   </div>
 
   <div class="instructor-box" id="instructor-phrase">Loading positions…</div>
