@@ -337,7 +337,7 @@ HTML = r"""
 <div id="tab-scales" class="tab-panel" style="display:none">
   <div class="scales-header">
     <h2>🎵 Scales &amp; Arpeggios</h2>
-    <p class="sub">C / G major — all 8 positions — Web Audio playback</p>
+    <p class="sub">C / G major — all 10 positions — Web Audio playback</p>
   </div>
 
   <div class="scale-row">
