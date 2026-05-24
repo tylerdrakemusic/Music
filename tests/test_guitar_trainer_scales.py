@@ -3,13 +3,13 @@ Tests for FR-20260517-guitar-trainer-scale-exercises and
 FR-20260522-guitar-trainer-multi-key.
 
 Covers:
-  - SCALE_POSITIONS structure (2 keys, 10 positions each)
+  - SCALE_POSITIONS structure (C: 12 positions, G: 11 positions)
   - CAGED_POSITIONS backward-compat alias
   - ScaleNote fields validity
   - G major pitch-class validation
   - MIDI_TO_FREQ A440 accuracy
   - get_scale_sequence ascending+descending shape, key='G' variant
-  - /api/scale-positions?key=C and ?key=G return 10 positions each
+  - /api/scale-positions?key=C and ?key=G return 11 positions each
   - /api/scale-positions?key=X returns 400
   - /api/scale-log POST: valid insert, key='G' insert, invalid position, invalid bpm
   - /api/scale-log GET: returns list with key column
@@ -114,15 +114,15 @@ def test_scale_positions_has_c_and_g() -> None:
     assert set(SCALE_POSITIONS.keys()) == {"C", "G"}
 
 
-def test_scale_positions_each_has_10() -> None:
-    """Both C and G must have exactly 10 positions."""
-    for key, positions in SCALE_POSITIONS.items():
-        assert len(positions) == 10, f"SCALE_POSITIONS['{key}'] has {len(positions)} positions, expected 10"
+def test_scale_positions_counts() -> None:
+    """C must have 12 positions; G must have 11 positions."""
+    assert len(SCALE_POSITIONS["C"]) == 12, f"SCALE_POSITIONS['C'] has {len(SCALE_POSITIONS['C'])} positions, expected 12"
+    assert len(SCALE_POSITIONS["G"]) == 11, f"SCALE_POSITIONS['G'] has {len(SCALE_POSITIONS['G'])} positions, expected 11"
 
 
 def test_caged_positions_count() -> None:
-    """CAGED_POSITIONS alias must point to the 10 C major positions."""
-    assert len(CAGED_POSITIONS) == 10
+    """CAGED_POSITIONS alias must point to the 12 C major positions."""
+    assert len(CAGED_POSITIONS) == 12
     assert CAGED_POSITIONS is SCALE_POSITIONS["C"]
 
 
@@ -231,14 +231,14 @@ def test_get_scale_sequence_descending_second_half() -> None:
 def test_get_scale_sequence_invalid_index() -> None:
     """Out-of-range index must raise ValueError."""
     with pytest.raises(ValueError):
-        get_scale_sequence(10)  # 0-9 are valid for C
+        get_scale_sequence(12)  # 0-11 are valid for C
     with pytest.raises(ValueError):
         get_scale_sequence(-1)
 
 
 def test_get_scale_sequence_g_key() -> None:
     """get_scale_sequence with key='G' must return a valid ascending+descending sequence."""
-    for i in range(10):
+    for i in range(11):
         seq = get_scale_sequence(i, key="G")
         assert len(seq) > 1
         mid = len(seq) // 2
@@ -256,22 +256,22 @@ def test_get_scale_sequence_invalid_key() -> None:
 # /api/scale-positions route
 # ---------------------------------------------------------------------------
 
-def test_api_scale_positions_returns_10(client) -> None:
-    """GET /api/scale-positions must return a list of exactly 10 positions (default key=C)."""
+def test_api_scale_positions_returns_12(client) -> None:
+    """GET /api/scale-positions must return a list of exactly 12 positions (default key=C)."""
     resp = client.get("/api/scale-positions")
     assert resp.status_code == 200
     data = resp.get_json()
     assert isinstance(data, list)
-    assert len(data) == 10
+    assert len(data) == 12
 
 
-def test_api_scale_positions_g_returns_10(client) -> None:
-    """GET /api/scale-positions?key=G must return a list of exactly 10 G major positions."""
+def test_api_scale_positions_g_returns_11(client) -> None:
+    """GET /api/scale-positions?key=G must return a list of exactly 11 G major positions."""
     resp = client.get("/api/scale-positions?key=G")
     assert resp.status_code == 200
     data = resp.get_json()
     assert isinstance(data, list)
-    assert len(data) == 10
+    assert len(data) == 11
     assert all("G major" in p["instructor_phrase"] for p in data)
 
 
@@ -347,11 +347,11 @@ def test_scale_log_invalid_position_zero(client) -> None:
     assert j["ok"] is False
 
 
-def test_scale_log_invalid_position_eleven(client) -> None:
-    """Position 11 must be rejected (max is 10)."""
+def test_scale_log_invalid_position_thirteen(client) -> None:
+    """Position 13 must be rejected (max is 12 for C, 11 for G)."""
     resp = client.post(
         "/api/scale-log",
-        data=json.dumps({"scale": "C_major", "position": 11, "bpm": 60, "reps": 1, "key": "C"}),
+        data=json.dumps({"scale": "C_major", "position": 13, "bpm": 60, "reps": 1, "key": "C"}),
         content_type="application/json",
     )
     j = resp.get_json()
@@ -409,8 +409,8 @@ def test_instructor_audio_204_when_no_key(client) -> None:
 
 
 def test_instructor_audio_400_invalid_position(client) -> None:
-    """Invalid position must return 400 (max 10 positions for any key)."""
-    resp = client.get("/api/instructor-audio?position=11")
+    """Invalid position must return 400 (max 12 for C, 11 for G)."""
+    resp = client.get("/api/instructor-audio?position=13")
     assert resp.status_code == 400
 
 
