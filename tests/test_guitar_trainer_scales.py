@@ -485,3 +485,48 @@ def test_html_has_tap_tempo_btn(html: str) -> None:
 def test_html_freq_table_injected(html: str) -> None:
     """Rendered HTML must contain the MIDI frequency table (440 Hz for A4)."""
     assert "440" in html
+
+
+# ---------------------------------------------------------------------------
+# FR-20260525-fretboard-interval-colors — visual enhancement tests
+# ---------------------------------------------------------------------------
+
+def test_fretboard_svg_viewbox_height_220(html: str) -> None:
+    """Fretboard SVG viewBox must be 1320x240 (50% taller than original 160px CSS height)."""
+    assert 'viewBox="0 0 1320 240"' in html
+
+
+def test_fretboard_interval_colors_present(html: str) -> None:
+    """Rendered HTML must contain root, 3rd, and 5th interval color definitions."""
+    assert "#ff0080" in html   # root = vivid electric pink
+    assert "#fb5607" in html   # 3rd = vivid red-orange
+    assert "#00e5cc" in html   # 5th = hot teal
+
+
+def test_fretboard_pc_names_present(html: str) -> None:
+    """Rendered HTML must contain the PC_NAMES pitch-class name array."""
+    assert "PC_NAMES" in html
+
+
+def test_fretboard_standard_fret_markers(html: str) -> None:
+    """Rendered HTML must reference standard guitar fret marker positions (3,5,7,9,12)."""
+    assert "FRET_MARKERS" in html
+    # Standard positions must all appear; non-standard 6 and 18 must not drive the display
+    assert "3, 5, 7, 9, 12" in html or "3,5,7,9,12" in html
+
+
+def test_fretboard_note_labels_logic(html: str) -> None:
+    """Rendered HTML must contain per-dot note-name text rendering."""
+    assert "noteName" in html
+    assert "PC_NAMES[pc]" in html
+
+
+def test_fretboard_old_wrong_fret_logic_removed(html: str) -> None:
+    """Old fret number logic (f===1||f%3===0) must be gone."""
+    assert "f === 1 || f % 3 === 0" not in html
+
+
+def test_fretboard_dot_radius_increased(html: str) -> None:
+    """Non-active dot radius must be 9 (was 7)."""
+    # The radius assignment for non-active dots
+    assert ": 9;" in html or "? 10 : 9" in html
