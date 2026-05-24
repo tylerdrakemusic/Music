@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Colorado Sound — Studio W Sale | Buyer's Guide</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2e3f;
+    --text: #e8eaf0;
+    --muted: #7a7f94;
+    --gold: #d4a843;
+    --hot: #e84545;
+    --good: #3cb371;
+    --warn: #e8a243;
+    --sold-bg: #111318;
+    --sold-text: #444;
+    --neve: #b8860b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 13px; line-height: 1.5; }
+
+  /* ── HEADER ── */
+  .page-header { background: linear-gradient(135deg, #0d0f18 0%, #1e1628 50%, #0d0f18 100%); border-bottom: 2px solid var(--gold); padding: 20px 28px 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .header-left h1 { font-size: 22px; font-weight: 700; color: var(--gold); letter-spacing: 0.5px; }
+  .header-left h1 span { color: #fff; }
+  .header-left .subtitle { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .event-badge { background: var(--surface); border: 1px solid var(--gold); border-radius: 8px; padding: 10px 16px; text-align: right; min-width: 210px; }
+  .event-badge .event-date { font-size: 15px; font-weight: 700; color: var(--gold); }
+  .event-badge .event-detail { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.6; }
+  .event-badge .event-detail strong { color: #ccc; }
+
+  /* ── HOT PICKS BANNER ── */
+  .hot-picks { background: #15101a; border: 1px solid var(--hot); border-radius: 10px; margin: 16px 20px; padding: 14px 18px; }
+  .hot-picks h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--hot); margin-bottom: 10px; }
+  .picks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+  .pick-card { background: #1b1220; border: 1px solid #2e1a2e; border-radius: 7px; padding: 10px 13px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .pick-card .pick-name { font-weight: 600; font-size: 12px; color: #fff; }
+  .pick-card .pick-why { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .pick-card .pick-price { text-align: right; flex-shrink: 0; }
+  .pick-card .pick-price .sale { font-weight: 700; font-size: 14px; color: var(--good); }
+  .pick-card .pick-price .market { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .pick-card.tier1 { border-color: #5a1a1a; }
+  .pick-card.tier2 { border-color: #1a3a2a; }
+  .pick-card.tier3 { border-color: #2a2a1a; }
+  .badge { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.8px; padding: 1px 6px; border-radius: 3px; text-transform: uppercase; margin-right: 5px; }
+  .badge.hot { background: #5a0f0f; color: #ff6b6b; }
+  .badge.good { background: #0f3a1f; color: #5ddb8a; }
+  .badge.studio { background: #1a1a3a; color: #7a9fff; }
+  .badge.live { background: #1a2a1a; color: #7acc7a; }
+  .badge.skip { background: #2a2020; color: #888; }
+  .badge.cond { background: #2a1a0a; color: var(--warn); }
+
+  /* ── SECTIONS ── */
+  .section { margin: 0 20px 20px; }
+  .section-header { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .section-header h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); }
+  .section-header .count { background: var(--border); color: var(--muted); font-size: 10px; padding: 2px 7px; border-radius: 10px; }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); padding: 5px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  thead th.r { text-align: right; }
+  tbody tr { border-bottom: 1px solid #1e2030; transition: background 0.1s; }
+  tbody tr:hover { background: #1e2235; }
+  tbody tr.sold { opacity: 0.4; }
+  tbody tr.sold td { color: var(--sold-text); }
+  td { padding: 6px 8px; vertical-align: middle; }
+  td.name { font-weight: 600; color: #dde0ed; max-width: 220px; }
+  td.name small { display: block; font-size: 10px; font-weight: 400; color: var(--muted); margin-top: 1px; }
+  td.type { color: var(--muted); font-size: 11px; }
+  td.price { font-weight: 700; color: #a8d8a8; text-align: right; white-space: nowrap; }
+  td.market { color: var(--muted); font-size: 11px; text-align: right; white-space: nowrap; }
+  td.value { text-align: center; }
+  td.rel { text-align: center; }
+  td.notes { color: var(--muted); font-size: 11px; max-width: 180px; }
+  td.sold-label { color: #cc3333; font-weight: 700; font-size: 10px; letter-spacing: 0.5px; text-align: center; }
+  .neve-label { color: var(--neve); font-weight: 700; }
+
+  /* ── FOOTER ── */
+  .page-footer { border-top: 1px solid var(--border); margin: 10px 20px 0; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+  .page-footer .terms { font-size: 10px; color: var(--muted); line-height: 1.6; }
+  .page-footer .contact { font-size: 10px; color: var(--muted); text-align: right; }
+  .page-footer .contact strong { color: #ccc; }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #fff !important; color: #111 !important; font-size: 11px; }
+    .page-header { background: #f5f5f5 !important; border-bottom: 2px solid #999 !important; color: #111 !important; }
+    .header-left h1 { color: #333 !important; }
+    .header-left h1 span { color: #111 !important; }
+    .event-badge { border-color: #999 !important; background: #f0f0f0 !important; }
+    .event-badge .event-date { color: #333 !important; }
+    .hot-picks { background: #f8f0f0 !important; border-color: #cc4444 !important; }
+    .pick-card { background: #fff !important; border-color: #ddd !important; }
+    .pick-card .pick-name { color: #111 !important; }
+    .pick-card .pick-price .sale { color: #1a7a3a !important; }
+    .section-header h3 { color: #555 !important; }
+    td.name { color: #111 !important; }
+    td.price { color: #1a7a3a !important; }
+    tbody tr:hover { background: transparent !important; }
+    tbody tr.sold { opacity: 0.5 !important; }
+    .page-footer { color: #555 !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<div class="page-header">
+  <div class="header-left">
+    <h1>Colorado Sound <span>/ Studio W</span> — Gear Sale Buyer's Guide</h1>
+    <div class="subtitle">Internal review · Tyler James Drake + Producer · Generated 2026-05-23</div>
+  </div>
+  <div class="event-badge">
+    <div class="event-date">Sunday, May 24 · 9 AM – 3 PM</div>
+    <div class="event-detail">
+      <strong>3080 W 71st Ave, Westminster CO 80030</strong><br>
+      Cash preferred · Cards accepted (+fee) · No holds<br>
+      First-come, first-served · All sales final
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ HOT PICKS ═══════════════════ -->
+<div class="hot-picks">
+  <h2>🔥 Tyler's Top Picks — Studio Chain Priority (Bloom Album)</h2>
+  <div class="picks-grid">
+
+    <div class="pick-card tier1">
+      <div>
+        <div class="pick-name"><span class="badge hot">🔥 Hot Deal</span>Neve 8803 EQ</div>
+        <div class="pick-why">No hardware EQ in current chain. Neve transformer-coupled character EQ — essential for Bloom tracking. ~45% below used market.</div>
+      </div>
+      <div class="pick-price"><div class="sale">$1,750</div><div class="market">Market $2,500–3,500</div></div>
+    </div>
+
+    <div class="pick-card tier1">
+      <div>
+        <div class="pick-name"><span class="badge hot">🔥 Hot Deal</span>Smart Research C2 Compressor</div>
+        <div class="pick-why">No hardware compressor in chain. Legendary bus/mix compressor. Below market and directly fills the gap.</div>
+      </div>
+      <div class="pick-price"><div class="sale">$2,100</div><div class="market">Market $2,500–4,000</div></div>
+    </div>
+
+    <div class="pick-card tier2">
+      <div>
+        <div class="pick-name"><span class="badge good">✓ Good</span>Midas DL32 Stage Box</div>
+        <div class="pick-why">32-ch Midas mic pres — studio or live. Pairs with any digital console. Live rig upgrade for Copper Creek or studio expansion.</div>
+      </div>
+      <div class="pick-price"><div class="sale">$1,450</div><div class="market">Market $1,500–2,500</div></div>
+    </div>
+
+    <div class="pick-card tier2">
+      <div>
+        <div class="pick-name"><span class="badge good">✓ Good</span>Neve Portico II MBP</div>
+        <div class="pick-why">Neve mastering bus processor (MB compressor + EQ). Adds to studio Neve chain. Slightly below used market.</div>
+      </div>
+      <div class="pick-price"><div class="sale">$3,700</div><div class="market">Market $3,000–4,500</div></div>
+    </div>
+
+    <div class="pick-card tier3">
+      <div>
+        <div class="pick-name"><span class="badge cond">⚡ Verify</span>Grace m802 Full Rig</div>
+        <div class="pick-why">8-ch Grace mic pre + PSU + cases + remote. Game-changer over Scarlett 2i2 for Bloom. Verify unit count, condition, and rack hardware before committing.</div>
+      </div>
+      <div class="pick-price"><div class="sale">$12,000</div><div class="market">Market $10,000–15,000</div></div>
+    </div>
+
+    <div class="pick-card tier3">
+      <div>
+        <div class="pick-name"><span class="badge studio">🏠 Studio</span>Acoustic Tiles (Wood + Foam)</div>
+        <div class="pick-why">Home studio room treatment at $30–60/pc. Wood 2×4 panels at $60 and foam 2×4 at $50 — stack up for real broadband treatment.</div>
+      </div>
+      <div class="pick-price"><div class="sale">$30–60/pc</div><div class="market">Market $40–100+/pc</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ AUDIO ═══════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h3>🎚 Audio</h3>
+    <span class="count">43 items · 10 sold</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:220px">Item</th>
+        <th>Type</th>
+        <th class="r">Sale Price</th>
+        <th class="r">Est. Market (used)</th>
+        <th style="width:70px;text-align:center">Value</th>
+        <th style="width:55px;text-align:center">For</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="name neve-label">Neve 8803 EQ</td>
+        <td class="type">Rack EQ</td>
+        <td class="price">$1,750</td>
+        <td class="market">$2,500–3,500</td>
+        <td class="value"><span class="badge hot">🔥 Hot</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">No hardware EQ in current chain. Neve character, transformer-coupled.</td>
+      </tr>
+      <tr>
+        <td class="name neve-label">Neve Portico II MBP</td>
+        <td class="type">Bus Processor</td>
+        <td class="price">$3,700</td>
+        <td class="market">$3,000–4,500</td>
+        <td class="value"><span class="badge good">✓ Good</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Mix bus processing. Pairs with 8803 for a 2-piece Neve chain.</td>
+      </tr>
+      <tr>
+        <td class="name">Smart Research C2 Compressor</td>
+        <td class="type">Compressor</td>
+        <td class="price">$2,100</td>
+        <td class="market">$2,500–4,000</td>
+        <td class="value"><span class="badge hot">🔥 Hot</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Legendary SSL-style bus compressor. No hardware comp in current chain.</td>
+      </tr>
+      <tr>
+        <td class="name">Grace m802 mic pre + PSU + cases + remote</td>
+        <td class="type">Mic Preamp (8-ch)</td>
+        <td class="price">$12,000</td>
+        <td class="market">$10,000–15,000</td>
+        <td class="value"><span class="badge cond">⚡ Verify</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Confirm all 8 channels, PSU, remote functional. Replaces Scarlett 2i2 preamps entirely for Bloom.</td>
+      </tr>
+      <tr>
+        <td class="name">Grace m902 Headphone Amplifier</td>
+        <td class="type">Headphone Amp</td>
+        <td class="price">$650</td>
+        <td class="market">$500–750</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Good match for DT 770 Pro (250Ω). Reference-grade monitoring.</td>
+      </tr>
+      <tr>
+        <td class="name">SSL Live Recorder RAID w/Monitor</td>
+        <td class="type">Recording RAID</td>
+        <td class="price">$2,500</td>
+        <td class="market">$1,500–3,000</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Backup/redundant recording. Ask what drives are installed.</td>
+      </tr>
+      <tr>
+        <td class="name">RME Madi Converter</td>
+        <td class="type">MADI Converter</td>
+        <td class="price">$1,500</td>
+        <td class="market">$600–900</td>
+        <td class="value"><span class="badge skip">⚠ High</span></td>
+        <td class="rel"><span class="badge skip">Skip</span></td>
+        <td class="notes">Overpriced. Also requires MADI-capable interface — not compatible with Scarlett 2i2.</td>
+      </tr>
+      <tr>
+        <td class="name">TC Electronic M5000</td>
+        <td class="type">Effects Processor</td>
+        <td class="price">$1,000</td>
+        <td class="market">$400–700</td>
+        <td class="value"><span class="badge skip">⚠ High</span></td>
+        <td class="rel"><span class="badge skip">Niche</span></td>
+        <td class="notes">Vintage 1990s digital reverb/effects. Overpriced vs. modern alternatives.</td>
+      </tr>
+      <tr>
+        <td class="name">Dynaudio BM15A Powered Monitors</td>
+        <td class="type">Studio Monitor (pair)</td>
+        <td class="price">$2,500 pair</td>
+        <td class="market">$1,200–1,800</td>
+        <td class="value"><span class="badge skip">⚠ High</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Overpriced for used. Already have HS8. Skip unless condition is exceptional.</td>
+      </tr>
+      <tr>
+        <td class="name">Fostex 6301B Near Field Monitors</td>
+        <td class="type">Near-field Monitor (pair)</td>
+        <td class="price">$200</td>
+        <td class="market">$150–250</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Secondary reference at low volume. Compact check speaker.</td>
+      </tr>
+      <tr>
+        <td class="name">Avastor XR4 RAID 4×2TB</td>
+        <td class="type">Recording RAID</td>
+        <td class="price">$300</td>
+        <td class="market">$200–400</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Affordable session backup. Confirm drives and health.</td>
+      </tr>
+      <tr>
+        <td class="name">Heil PR30 Dynamic Microphone</td>
+        <td class="type">Microphone</td>
+        <td class="price">$225 ea.</td>
+        <td class="market">$150–250</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">1 left. Excellent for guitar amp, horns (trombone), broadcast voice.</td>
+      </tr>
+      <tr>
+        <td class="name">Lewitt MTP 440DM</td>
+        <td class="type">Dynamic Microphone</td>
+        <td class="price">$70</td>
+        <td class="market">$50–100</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">Stage vocal mic. Decent value grab.</td>
+      </tr>
+      <tr>
+        <td class="name">Yamaha MG166cx Mixer</td>
+        <td class="type">Analog Console</td>
+        <td class="price">$200</td>
+        <td class="market">$150–250</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">16-ch analog mixer. Useful as rehearsal or backup console.</td>
+      </tr>
+      <tr>
+        <td class="name">Pro Co HJ4P Headphone Junction Box</td>
+        <td class="type">Headphone Distribution</td>
+        <td class="price">$150 ea. (6 avail)</td>
+        <td class="market">$100–200</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">4-way headphone splits. Useful for Copper Creek tracking sessions.</td>
+      </tr>
+      <tr>
+        <td class="name">Fostex RM-3 Rack Monitor</td>
+        <td class="type">Rack Monitor</td>
+        <td class="price">$500</td>
+        <td class="market">$300–500</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">In-rack near-field speaker for quick reference.</td>
+      </tr>
+      <tr>
+        <td class="name">QSC GX3 Power Amplifier</td>
+        <td class="type">Power Amplifier</td>
+        <td class="price">$250 ea.</td>
+        <td class="market">$200–350</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">JBL 2600 already powered (Denon). Could serve as backup live amp.</td>
+      </tr>
+      <tr>
+        <td class="name">Hafler Trans-nova P3000</td>
+        <td class="type">Power Amplifier</td>
+        <td class="price">$350 ea.</td>
+        <td class="market">$200–350</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">High-current audiophile power amp. Lower priority since JBL is powered.</td>
+      </tr>
+      <tr>
+        <td class="name">UREI Model 6300 Power Amplifier</td>
+        <td class="type">Power Amplifier</td>
+        <td class="price">$400</td>
+        <td class="market">$300–500</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">Vintage UREI — collector value. Low practical priority.</td>
+      </tr>
+      <tr>
+        <td class="name">V-Moda Crossfade M-100</td>
+        <td class="type">Headphones</td>
+        <td class="price">$125</td>
+        <td class="market">$80–150</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Good secondary/portable listening headphones.</td>
+      </tr>
+      <tr>
+        <td class="name">Westone UM Pro 20</td>
+        <td class="type">In-Ear Monitors</td>
+        <td class="price">$200</td>
+        <td class="market">$100–180</td>
+        <td class="value"><span class="badge skip">⚠ High</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">Slightly above used market. Skip unless you need IEMs urgently.</td>
+      </tr>
+      <tr>
+        <td class="name">VOX Kensington Bass Combo</td>
+        <td class="type">Bass Amplifier</td>
+        <td class="price">$350</td>
+        <td class="market">$200–400</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">For Yamaha TRBX or rehearsals. VOX not known for bass — verify tone.</td>
+      </tr>
+      <tr>
+        <td class="name">Fostex RM-2 Rack Monitor</td>
+        <td class="type">Rack Monitor</td>
+        <td class="price">$175</td>
+        <td class="market">$100–200</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Budget rack reference speaker.</td>
+      </tr>
+      <tr>
+        <td class="name">Rack Rider RR-15 Power Conditioner</td>
+        <td class="type">Power Conditioner</td>
+        <td class="price">$135</td>
+        <td class="market">$75–150</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Rack power protection. Useful if expanding rack.</td>
+      </tr>
+      <tr>
+        <td class="name">Presonus HP4 Headphone Amp</td>
+        <td class="type">Headphone Amp</td>
+        <td class="price">$45</td>
+        <td class="market">$30–60</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">4-output headphone amp. Cheap grab for studio sessions.</td>
+      </tr>
+      <tr>
+        <td class="name">Fostex PH-50 Headphone Amp</td>
+        <td class="type">Headphone Amp</td>
+        <td class="price">$65</td>
+        <td class="market">$50–100</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Compact headphone distribution.</td>
+      </tr>
+      <tr>
+        <td class="name">Rack Drawer 4-Space</td>
+        <td class="type">Rack Accessory</td>
+        <td class="price">$75 ea.</td>
+        <td class="market">$40–80</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge studio">Studio</span></td>
+        <td class="notes">Rack storage. Useful if expanding rack.</td>
+      </tr>
+      <!-- SOLD ITEMS -->
+      <tr class="sold">
+        <td class="name">Genelec 1031A Powered Monitors</td>
+        <td class="type">Studio Monitor (pair)</td>
+        <td class="price">$1,500 pair</td>
+        <td class="market">—</td>
+        <td class="value"></td>
+        <td class="rel"></td>
+        <td class="sold-label">SOLD</td>
+      </tr>
+      <tr class="sold">
+        <td class="name">Distressor Compressor</td>
+        <td class="type">Compressor</td>
+        <td class="price">$1,400</td>
+        <td class="market">—</td>
+        <td class="value"></td>
+        <td class="rel"></td>
+        <td class="sold-label">SOLD</td>
+      </tr>
+      <tr class="sold">
+        <td class="name">Grace 801 Mic Pre w/Rackmount</td>
+        <td class="type">Mic Preamp</td>
+        <td class="price">$3,000</td>
+        <td class="market">—</td>
+        <td class="value"></td>
+        <td class="rel"></td>
+        <td class="sold-label">SOLD</td>
+      </tr>
+      <tr class="sold">
+        <td class="name">Ferrofish A32 Pro AD/DA</td>
+        <td class="type">AD/DA Converter</td>
+        <td class="price">$2,500</td>
+        <td class="market">—</td>
+        <td class="value"></td>
+        <td class="rel"></td>
+        <td class="sold-label">SOLD</td>
+      </tr>
+      <tr class="sold">
+        <td class="name">Furman M-8LX Power Conditioner</td>
+        <td class="type">Power Conditioner</td>
+        <td class="price">$100</td>
+        <td class="market">—</td>
+        <td class="value"></td>
+        <td class="rel"></td>
+        <td class="sold-label">SOLD</td>
+      </tr>
+      <tr class="sold">
+        <td class="name">Westone UM Pro 30</td>
+        <td class="type">In-Ear Monitors</td>
+        <td class="price">$220</td>
+        <td class="market">—</td>
+        <td class="value"></td>
+        <td class="rel"></td>
+        <td class="sold-label">SOLD</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════ PA ═══════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h3>🔊 PA System</h3>
+    <span class="count">10 items</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:220px">Item</th>
+        <th>Type</th>
+        <th class="r">Sale Price</th>
+        <th class="r">Est. Market (used)</th>
+        <th style="width:70px;text-align:center">Value</th>
+        <th style="width:55px;text-align:center">For</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="name">Midas DL32 Stage Box</td>
+        <td class="type">32-ch Mic Preamps</td>
+        <td class="price">$1,450</td>
+        <td class="market">$1,500–2,500</td>
+        <td class="value"><span class="badge hot">🔥 Hot</span></td>
+        <td class="rel"><span class="badge live">Live / Studio</span></td>
+        <td class="notes">Midas pre's are world-class. Use with X32 or any console with AES50. Copper Creek upgrade or studio expansion.</td>
+      </tr>
+      <tr>
+        <td class="name">Behringer X32 Mixing Console</td>
+        <td class="type">Digital Console</td>
+        <td class="price">Call / Ask</td>
+        <td class="market">$1,500–2,500</td>
+        <td class="value"><span class="badge cond">⚡ Ask Price</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">No price listed — ask. Pairs directly with Midas DL32 via AES50. Top-tier live console at this budget.</td>
+      </tr>
+      <tr>
+        <td class="name">Turbosound iQ15 2500W Speaker</td>
+        <td class="type">PA Main Speaker</td>
+        <td class="price">$700 ea.</td>
+        <td class="market">$700–900</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">Professional powered main. Good for Copper Creek mid-size venue.</td>
+      </tr>
+      <tr>
+        <td class="name">Turbosound TFM122m Wedge Monitors</td>
+        <td class="type">Stage Monitor (active)</td>
+        <td class="price">$875 ea.</td>
+        <td class="market">$600–1,000</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">Active floor wedge. Copper Creek has Jeff McFarland on sound — ask if he needs these.</td>
+      </tr>
+      <tr>
+        <td class="name">Powersoft K3 2-ch Power Amp</td>
+        <td class="type">Power Amplifier</td>
+        <td class="price">$1,150 ea.</td>
+        <td class="market">$1,200–2,000</td>
+        <td class="value"><span class="badge hot">🔥 Hot</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">Professional touring-grade power amp. Below used market for this caliber.</td>
+      </tr>
+      <tr>
+        <td class="name">Behringer P16 Personal Monitor Mixer</td>
+        <td class="type">IEM Mixer</td>
+        <td class="price">$175 ea.</td>
+        <td class="market">$150–250</td>
+        <td class="value"><span class="badge good">✓ Good</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">Each Copper Creek member gets their own mix. Consider buying multiple for the band.</td>
+      </tr>
+      <tr>
+        <td class="name">Chevin Research A2000 Amplifier</td>
+        <td class="type">Power Amplifier</td>
+        <td class="price">$400 ea.</td>
+        <td class="market">$300–600</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">High-quality linear amp. Good value for subs/fills.</td>
+      </tr>
+      <tr>
+        <td class="name">Dolby Lake DLP LP4D12 Processor</td>
+        <td class="type">Speaker Processor</td>
+        <td class="price">$5,500</td>
+        <td class="market">$3,000–5,000</td>
+        <td class="value"><span class="badge skip">⚠ High</span></td>
+        <td class="rel"><span class="badge skip">Niche</span></td>
+        <td class="notes">Overpriced vs. used market. Only useful with full touring PA system. Skip.</td>
+      </tr>
+      <tr>
+        <td class="name">Chrest Audio Pro9200</td>
+        <td class="type">Unknown</td>
+        <td class="price">$900</td>
+        <td class="market">—</td>
+        <td class="value"><span class="badge cond">⚡ Ask</span></td>
+        <td class="rel">—</td>
+        <td class="notes">Unknown model — ask staff for spec sheet before considering.</td>
+      </tr>
+      <tr>
+        <td class="name">Behringer Powerplay 16 (P16-I)</td>
+        <td class="type">X32 Accessory</td>
+        <td class="price">Call / Ask</td>
+        <td class="market">$150–250</td>
+        <td class="value"><span class="badge cond">⚡ Ask Price</span></td>
+        <td class="rel"><span class="badge live">Live</span></td>
+        <td class="notes">X32 stage input module. Only relevant if buying the X32 console.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════ VIDEO ═══════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h3>🎬 Video / Camera</h3>
+    <span class="count">11 items</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:220px">Item</th>
+        <th>Type</th>
+        <th class="r">Sale Price</th>
+        <th class="r">Est. Market (used)</th>
+        <th style="width:70px;text-align:center">Value</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="name">Blackmagic Pocket Cinema 4K</td>
+        <td class="type">Cinema Camera</td>
+        <td class="price">$750</td>
+        <td class="market">$500–800</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">With rigs included. Good for music video / live capture.</td>
+      </tr>
+      <tr>
+        <td class="name">Sigma 18-35mm f1.8</td>
+        <td class="type">Lens</td>
+        <td class="price">$450</td>
+        <td class="market">$400–600</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Industry-standard video lens, extremely versatile.</td>
+      </tr>
+      <tr>
+        <td class="name">Nikon D3200 w/18-55mm</td>
+        <td class="type">DSLR Camera</td>
+        <td class="price">$250</td>
+        <td class="market">$200–350</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">B-camera / backup for live video.</td>
+      </tr>
+      <tr>
+        <td class="name">Tokina 11-16mm f2.8</td>
+        <td class="type">Wide Lens</td>
+        <td class="price">$150</td>
+        <td class="market">$150–250</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Great wide for venue shots.</td>
+      </tr>
+      <tr>
+        <td class="name">Nikon 55-200mm DX</td>
+        <td class="type">Telephoto Lens</td>
+        <td class="price">$90</td>
+        <td class="market">$80–150</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Stage shots from FOH.</td>
+      </tr>
+      <tr>
+        <td class="name">Chinon 135mm f2.8 (EF)</td>
+        <td class="type">Portrait Lens</td>
+        <td class="price">$140</td>
+        <td class="market">$50–120</td>
+        <td class="value"><span class="badge skip">⚠ High</span></td>
+        <td class="notes">Vintage manual lens. Slight premium over typical used market.</td>
+      </tr>
+      <tr>
+        <td class="name">Glide Gear Teleprompter</td>
+        <td class="type">Teleprompter</td>
+        <td class="price">$40</td>
+        <td class="market">$50–100</td>
+        <td class="value"><span class="badge hot">🔥 Value</span></td>
+        <td class="notes">Below market. Useful for studio promo video or lyric delivery.</td>
+      </tr>
+      <tr>
+        <td class="name">BenQ TK800M 4K Projector</td>
+        <td class="type">Projector</td>
+        <td class="price">$550</td>
+        <td class="market">$500–800</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">4K home/venue projection. Good value if you need projection capability.</td>
+      </tr>
+      <tr>
+        <td class="name">Shanks Motorized Camera Slider</td>
+        <td class="type">Camera Slider</td>
+        <td class="price">Call / Ask</td>
+        <td class="market">$100–300</td>
+        <td class="value"><span class="badge cond">⚡ Ask</span></td>
+        <td class="notes">Ask price — likely a bargain for motorized slider.</td>
+      </tr>
+      <tr>
+        <td class="name">Tokina 24-70mm f2.8</td>
+        <td class="type">Zoom Lens</td>
+        <td class="price">Call / Ask</td>
+        <td class="market">$200–400</td>
+        <td class="value"><span class="badge cond">⚡ Ask</span></td>
+        <td class="notes">Versatile zoom — ask price.</td>
+      </tr>
+      <tr>
+        <td class="name">LG 27" Computer Monitor</td>
+        <td class="type">Monitor</td>
+        <td class="price">Call / Ask</td>
+        <td class="market">$100–250</td>
+        <td class="value"><span class="badge cond">⚡ Ask</span></td>
+        <td class="notes">Studio desk monitor. Ask price.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════ LIGHTING / ACOUSTIC ═══════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h3>💡 Lighting + Acoustic Treatment</h3>
+    <span class="count">15 items</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:220px">Item</th>
+        <th>Type</th>
+        <th class="r">Sale Price</th>
+        <th class="r">Est. Market (used)</th>
+        <th style="width:70px;text-align:center">Value</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="name">Ceiling Tiles Double Wood 2×4 ft</td>
+        <td class="type">Acoustic Treatment</td>
+        <td class="price">$60/pc</td>
+        <td class="market">$60–120/pc</td>
+        <td class="value"><span class="badge hot">🔥 Hot</span></td>
+        <td class="notes">Pro broadband absorption panels. Stack up 6–10 for real room treatment. Studio priority.</td>
+      </tr>
+      <tr>
+        <td class="name">Ceiling Tiles Double Foam 2×4 ft</td>
+        <td class="type">Acoustic Treatment</td>
+        <td class="price">$50/pc</td>
+        <td class="market">$40–100/pc</td>
+        <td class="value"><span class="badge hot">🔥 Hot</span></td>
+        <td class="notes">Mid-high frequency absorption. Pairs with wood panels for balanced treatment.</td>
+      </tr>
+      <tr>
+        <td class="name">Wall Tiles Single Wood 2×2 ft</td>
+        <td class="type">Acoustic Treatment</td>
+        <td class="price">$35/pc</td>
+        <td class="market">$30–60/pc</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Corner and side-wall diffusion/absorption.</td>
+      </tr>
+      <tr>
+        <td class="name">Wall Tiles Single Foam 2×2 ft</td>
+        <td class="type">Acoustic Treatment</td>
+        <td class="price">$30/pc</td>
+        <td class="market">$20–50/pc</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Inexpensive acoustic foam panels.</td>
+      </tr>
+      <tr>
+        <td class="name">ChamSys QuickQ 20 DMX Controller</td>
+        <td class="type">DMX Lighting Console</td>
+        <td class="price">$3,200</td>
+        <td class="market">$2,500–3,500</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Professional DMX controller. Only if Copper Creek needs stage lighting control.</td>
+      </tr>
+      <tr>
+        <td class="name">FOS Pixel Blade 7</td>
+        <td class="type">LED Effect Light</td>
+        <td class="price">$900/pc</td>
+        <td class="market">$600–1,000</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">LED pixel bar. Stage lighting for Copper Creek productions.</td>
+      </tr>
+      <tr>
+        <td class="name">ADJ Mega Bar RGBA</td>
+        <td class="type">LED Bar</td>
+        <td class="price">$165 ea.</td>
+        <td class="market">$100–200</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Full-color LED wash bars. Good live rig value.</td>
+      </tr>
+      <tr>
+        <td class="name">Slimpar 64 LED Lights</td>
+        <td class="type">LED Par Can</td>
+        <td class="price">$70 ea.</td>
+        <td class="market">$60–100</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Workhorse stage par. Stack of 4–6 makes a real rig.</td>
+      </tr>
+      <tr>
+        <td class="name">Slimpar 56 LED Lights</td>
+        <td class="type">LED Par Can</td>
+        <td class="price">$60 ea.</td>
+        <td class="market">$50–90</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Smaller stage par. Budget wash lights.</td>
+      </tr>
+      <tr>
+        <td class="name">BenQ TK800M 4K Projector</td>
+        <td class="type">Projector</td>
+        <td class="price">$550</td>
+        <td class="market">$500–800</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Listed in both Video and Lighting — confirm with staff which tab is accurate.</td>
+      </tr>
+      <tr>
+        <td class="name">Proline Venue LED Lights (Large)</td>
+        <td class="type">LED Stage Light</td>
+        <td class="price">$50 ea.</td>
+        <td class="market">$40–80</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Generic venue wash. Low cost grab for rehearsal space.</td>
+      </tr>
+      <tr>
+        <td class="name">Proline Venue LED Lights (Small)</td>
+        <td class="type">LED Stage Light</td>
+        <td class="price">$40 ea.</td>
+        <td class="market">$30–60</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Compact wash lights.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════ FURNISHINGS ═══════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h3>🪑 Furnishings</h3>
+    <span class="count">Notable items only</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:220px">Item</th>
+        <th>Type</th>
+        <th class="r">Sale Price</th>
+        <th style="width:70px;text-align:center">Value</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="name">Electric Standing Desk</td>
+        <td class="type">Desk</td>
+        <td class="price">Ask</td>
+        <td class="value"><span class="badge cond">⚡ Ask</span></td>
+        <td class="notes">Studio desk upgrade. Ask price — typically $400–1,200 new.</td>
+      </tr>
+      <tr>
+        <td class="name">Fridge – LG 20 cu ft</td>
+        <td class="type">Appliance</td>
+        <td class="price">$499</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Studio green room / lounge.</td>
+      </tr>
+      <tr>
+        <td class="name">Sony TV 55" w/remote</td>
+        <td class="type">TV</td>
+        <td class="price">Ask</td>
+        <td class="value"><span class="badge cond">⚡ Ask</span></td>
+        <td class="notes">Studio client lounge or video playback.</td>
+      </tr>
+      <tr>
+        <td class="name">Pub Height Tables</td>
+        <td class="type">Furniture</td>
+        <td class="price">$75 ea.</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Rehearsal space / studio lounge.</td>
+      </tr>
+      <tr>
+        <td class="name">Couches + Swivel Chair / Ottoman</td>
+        <td class="type">Seating</td>
+        <td class="price">Ask</td>
+        <td class="value"><span class="badge cond">⚡ Ask</span></td>
+        <td class="notes">Studio client lounge seating.</td>
+      </tr>
+      <tr>
+        <td class="name">Rugs (2×6 to 9×12)</td>
+        <td class="type">Rugs</td>
+        <td class="price">$20–$300</td>
+        <td class="value"><span class="badge good">✓ Fair</span></td>
+        <td class="notes">Also serve as passive acoustic treatment — larger rugs help with low-end.</td>
+      </tr>
+      <tr>
+        <td class="name">Coffeemaker – Bunn VPR Series</td>
+        <td class="type">Appliance</td>
+        <td class="price">Ask</td>
+        <td class="value"><span class="badge cond">⚡ Ask</span></td>
+        <td class="notes">Bunn commercial brewer. Worth grabbing if cheap.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<div class="page-footer">
+  <div class="terms">
+    <strong>Sale Rules:</strong> Cash preferred · Credit/debit +fee · No checks · No holds · First-come, first-served · All sales final<br>
+    <strong>Source:</strong> coloradosound.com/studio-w-open-house-sale · Items verified 2026-05-23 · Inventory updated daily — check for additions before Sunday
+  </div>
+  <div class="contact">
+    <strong>colosnd@coloradosound.com</strong><br>
+    303-430-8811<br>
+    Office: Mon–Fri 9AM–5PM
+  </div>
+</div>
+
+</body>
+</html>

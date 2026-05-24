@@ -1,0 +1,23 @@
+{
+  "band": "Copper Creek",
+  "last_updated": "2026-05-23",
+  "notes": "Self-reported equipment data collected from band members over time. Useful for compatibility planning (subs, mixers, monitors, power requirements).",
+  "members": [
+    {
+      "name": "Jim Mann",
+      "role": "Keys, Backing Vocals",
+      "equipment": {
+        "keyboards": [
+          "Yamaha MOX8",
+          "Yamaha MODX7"
+        ],
+        "mixer": "Behringer XR-18 (18-ch digital stage box / mixer)",
+        "monitors": [
+          "EV ZLX-12BT (active, ×2)"
+        ]
+      },
+      "source": "self-reported via text",
+      "date_reported": "2026-05-23"
+    }
+  ]
+}
