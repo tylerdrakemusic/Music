@@ -498,9 +498,9 @@ def test_fretboard_svg_viewbox_height_220(html: str) -> None:
 
 def test_fretboard_interval_colors_present(html: str) -> None:
     """Rendered HTML must contain root, 3rd, and 5th interval color definitions."""
-    assert "#ffffff" in html   # root = white
-    assert "#fbbf24" in html   # 3rd = amber
-    assert "#60a5fa" in html   # 5th = sky-blue
+    assert "#ff0080" in html   # root = vivid electric pink
+    assert "#fb5607" in html   # 3rd = vivid red-orange
+    assert "#00e5cc" in html   # 5th = hot teal
 
 
 def test_fretboard_pc_names_present(html: str) -> None:

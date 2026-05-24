@@ -771,10 +771,10 @@ async function createSession() {
   const PC_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
-  // Interval color map: root=white, major 3rd=amber, perfect 5th=sky-blue, other=grey
-  const DOT_FILL  = { root: '#ffffff', third: '#fbbf24', fifth: '#60a5fa', other: '#555555' };
-  const DOT_TEXT  = { root: '#000000', third: '#000000', fifth: '#000000', other: '#ffffff' };
-  const DOT_STROKE = { root: '#888888', third: '#000000', fifth: '#000000', other: '#333333' };
+  // Interval color map: root=hot-pink, major 3rd=red-orange, perfect 5th=hot-teal, other=grey
+  const DOT_FILL  = { root: '#ff0080', third: '#fb5607', fifth: '#00e5cc', other: '#555555' };
+  const DOT_TEXT  = { root: '#ffffff', third: '#ffffff', fifth: '#000000', other: '#ffffff' };
+  const DOT_STROKE = { root: '#000000', third: '#000000', fifth: '#000000', other: '#333333' };
   const PLAYING_COLOR = '#ffe066';
   window.drawFretboard = function(notes, activeIdx) {
     const svg = document.getElementById('fretboard-svg');
@@ -790,27 +790,27 @@ async function createSession() {
     for (let f = 0; f <= NUM_FRETS; f++) {
       const x = LEFT + f * fretW;
       const w = f === 0 ? 3 : 1;
-      html += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOTTOM}" stroke="${f===0?'#ccc':'#333'}" stroke-width="${w}"/>`;
+      html += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOTTOM}" stroke="${f===0?'#ccc':'#555'}" stroke-width="${w}"/>`;
     }
     // String lines — string 1 (high e) at top, string 6 (low E) at bottom; thickness increases downward
     for (let s = 0; s < NUM_STRINGS; s++) {
       const y = TOP + s * strGap;
-      html += `<line x1="${LEFT}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="#555" stroke-width="${1 + s * 0.3}"/>`;
+      html += `<line x1="${LEFT}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="#999" stroke-width="${1 + s * 0.3}"/>`;
     }
     // Fret numbers — standard guitar marker positions only
     for (let f = 1; f <= NUM_FRETS; f++) {
       if (!FRET_MARKERS.has(f)) continue;
       const x = LEFT + (f - 0.5) * fretW;
-      html += `<text x="${x}" y="${H - 8}" fill="#aaa" text-anchor="middle" font-size="9" font-family="Segoe UI,sans-serif">${f}</text>`;
+      html += `<text x="${x}" y="${H - 8}" fill="#ddd" text-anchor="middle" font-size="9" font-family="Segoe UI,sans-serif">${f}</text>`;
     }
     // String labels — high e at top (row 0) … low E at bottom (row 5)
     const stringLabels = ['e','B','G','D','A','E'];
     for (let s = 0; s < NUM_STRINGS; s++) {
       const y = TOP + s * strGap;
-      html += `<text x="${LEFT - 8}" y="${y + 4}" fill="#aaa" text-anchor="end" font-size="9" font-family="Segoe UI,sans-serif">${stringLabels[s]}</text>`;
+      html += `<text x="${LEFT - 8}" y="${y + 4}" fill="#ddd" text-anchor="end" font-size="9" font-family="Segoe UI,sans-serif">${stringLabels[s]}</text>`;
     }
     // "open" zone label
-    html += `<text x="${LEFT - 20}" y="${H - 8}" fill="#888" text-anchor="middle" font-size="8" font-family="Segoe UI,sans-serif">open</text>`;
+    html += `<text x="${LEFT - 20}" y="${H - 8}" fill="#bbb" text-anchor="middle" font-size="8" font-family="Segoe UI,sans-serif">open</text>`;
     // Scale dots — string 1 (high e) → row 0 (top), string 6 (low E) → row 5 (bottom)
     // Open-string notes appear to the LEFT of the nut
     const rootPc = KEY_PC[_currentKey] ?? 0;
