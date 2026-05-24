@@ -290,6 +290,31 @@ CREATE TABLE IF NOT EXISTS artist_links (
 
 CREATE INDEX IF NOT EXISTS idx_artist_links_category ON artist_links(category);
 CREATE INDEX IF NOT EXISTS idx_artist_links_platform ON artist_links(platform);
+
+-- ── Guitar Scale Templates (FR-20260524-scale-data-sqlite-migration) ──────
+-- Stores the 7 CAGED+ shape templates as compact JSON offset arrays.
+-- note_offsets: JSON [[string_num, fret_delta_from_root_fret], ...]
+-- root_string: the string (1-6) on which root_fret is anchored for computation
+CREATE TABLE IF NOT EXISTS guitar_scale_templates (
+    shape_name   TEXT NOT NULL PRIMARY KEY,
+    root_string  INTEGER NOT NULL,
+    note_offsets TEXT NOT NULL
+);
+
+-- ── Guitar Scale Positions (FR-20260524-scale-data-sqlite-migration) ───────
+-- Per-key position metadata referencing a shape template.
+-- root_fret: fret on the template's root_string used to compute all note frets.
+CREATE TABLE IF NOT EXISTS guitar_scale_positions (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    key_name          TEXT    NOT NULL,
+    position_order    INTEGER NOT NULL,
+    shape_name        TEXT    NOT NULL REFERENCES guitar_scale_templates(shape_name),
+    label             TEXT    NOT NULL,
+    root_string_name  TEXT    NOT NULL,
+    root_fret         INTEGER NOT NULL,
+    instructor_phrase TEXT    NOT NULL,
+    UNIQUE (key_name, position_order)
+);
 """
 
 _SEED_SQL = """

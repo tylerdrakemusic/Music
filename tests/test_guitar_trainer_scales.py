@@ -110,14 +110,15 @@ def client(mem_conn):
 # ---------------------------------------------------------------------------
 
 def test_scale_positions_has_c_and_g() -> None:
-    """SCALE_POSITIONS must have exactly 'C' and 'G' keys."""
-    assert set(SCALE_POSITIONS.keys()) == {"C", "G"}
+    """SCALE_POSITIONS must have exactly 'C', 'G', and 'F' keys."""
+    assert set(SCALE_POSITIONS.keys()) == {"C", "G", "F"}
 
 
 def test_scale_positions_counts() -> None:
-    """C must have 12 positions; G must have 11 positions."""
+    """C must have 12 positions; G must have 11 positions; F must have 12 positions."""
     assert len(SCALE_POSITIONS["C"]) == 12, f"SCALE_POSITIONS['C'] has {len(SCALE_POSITIONS['C'])} positions, expected 12"
     assert len(SCALE_POSITIONS["G"]) == 11, f"SCALE_POSITIONS['G'] has {len(SCALE_POSITIONS['G'])} positions, expected 11"
+    assert len(SCALE_POSITIONS["F"]) == 12, f"SCALE_POSITIONS['F'] has {len(SCALE_POSITIONS['F'])} positions, expected 12"
 
 
 def test_caged_positions_count() -> None:
@@ -164,6 +165,17 @@ def test_g_major_positions_pitch_classes() -> None:
             assert note["midi"] % 12 in G_MAJOR_PCS, (
                 f"G major Position {i+1} note midi={note['midi']} "
                 f"(pc={note['midi'] % 12}) not in G major scale"
+            )
+
+
+def test_f_major_positions_pitch_classes() -> None:
+    """All notes in all F major positions must belong to the F major scale."""
+    F_MAJOR_PCS = {5, 7, 9, 10, 0, 2, 4}  # F G A Bb C D E
+    for i, pos in enumerate(SCALE_POSITIONS["F"]):
+        for note in pos["notes"]:
+            assert note["midi"] % 12 in F_MAJOR_PCS, (
+                f"F major Position {i+1} note midi={note['midi']} "
+                f"(pc={note['midi'] % 12}) not in F major scale"
             )
 
 
@@ -273,6 +285,16 @@ def test_api_scale_positions_g_returns_11(client) -> None:
     assert isinstance(data, list)
     assert len(data) == 11
     assert all("G major" in p["instructor_phrase"] for p in data)
+
+
+def test_api_scale_positions_f_returns_12(client) -> None:
+    """GET /api/scale-positions?key=F must return a list of exactly 12 F major positions."""
+    resp = client.get("/api/scale-positions?key=F")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) == 12
+    assert all("F major" in p["instructor_phrase"] for p in data)
 
 
 def test_api_scale_positions_invalid_key_400(client) -> None:
