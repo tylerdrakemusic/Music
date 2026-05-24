@@ -186,6 +186,34 @@ _pos8_notes = _pos(
     (1, 17), (1, 19), (1, 20),     # e:      A5  B5  C6★
 )
 
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  川 River shape — C major (8th fret)                                    ║
+# ║  Intermediate shape between E shape and D shape; all notes C major.    ║
+# ║  low E: 8,10  A: 7,8,10  D: 7,9,10  G: 7,9,10  B: 8,10  e: 7,8,10    ║
+# ║  Root C3★ = low E fret 8  |  Root C4★ = D fret 10  |  Root C5★ = e fret 8 ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_posRiver_C_notes = _pos(
+    (6, 8), (6, 10),              # low E:  C3★ D3
+    (5, 7), (5, 8), (5, 10),      # A:      E3  F3  G3
+    (4, 7), (4, 9), (4, 10),      # D:      A3  B3  C4★
+    (3, 7), (3, 9), (3, 10),      # G:      D4  E4  F4
+    (2, 8), (2, 10),              # B:      G4  A4
+    (1, 7), (1, 8), (1, 10),      # e:      B4  C5★ D5
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  川 River shape — C major (20th fret, +12 from river low)               ║
+# ║  Root C4★ = low E fret 20  |  Root C5★ = D fret 22  |  Root C6★ = e fret 20 ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_posRiver_C_high_notes = _pos(
+    (6, 20), (6, 22),             # low E:  C4★ D4
+    (5, 19), (5, 20), (5, 22),    # A:      E4  F4  G4
+    (4, 19), (4, 21), (4, 22),    # D:      A4  B4  C5★
+    (3, 19), (3, 21), (3, 22),    # G:      D5  E5  F5
+    (2, 20), (2, 22),             # B:      G5  A5
+    (1, 19), (1, 20), (1, 22),    # e:      B5  C6★ D6
+)
+
 
 # ---------------------------------------------------------------------------
 # G major positions — G A B C D E F#  (midi pc: 7 9 11 0 2 4 6)
@@ -220,6 +248,21 @@ _gpos2_notes = _pos(
     (3, 4), (3, 5),               # G:      B3  C4
     (2, 3), (2, 5), (2, 7),       # B:      D4  E4  F#4
     (1, 3), (1, 5), (1, 7),       # e:      G4★ A4  B4
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  川 River shape — G major (3rd fret)                                    ║
+# ║  Intermediate shape between E shape and D shape; all notes G major.    ║
+# ║  low E: 3,5  A: 2,3,5  D: 2,4,5  G: 2,4,5  B: 3,5  e: 2,3,5          ║
+# ║  Root G2★ = low E fret 3  |  Root G3★ = D fret 5  |  Root G4★ = e fret 3 ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gposRiver_low_notes = _pos(
+    (6, 3), (6, 5),               # low E:  G2★ A2
+    (5, 2), (5, 3), (5, 5),       # A:      B2  C3  D3
+    (4, 2), (4, 4), (4, 5),       # D:      E3  F#3 G3★
+    (3, 2), (3, 4), (3, 5),       # G:      A3  B3  C4
+    (2, 3), (2, 5),               # B:      D4  E4
+    (1, 2), (1, 3), (1, 5),       # e:      F#4 G4★ A4
 )
 
 # ╔══════════════════════════════════════════════════════════════════════════╗
@@ -295,6 +338,19 @@ _gpos7_notes = _pos(
 )
 
 # ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  川 River shape — G major (15th fret, +12 from river low)               ║
+# ║  Root G3★ = low E fret 15  |  Root G4★ = D fret 17  |  Root G5★ = e fret 15 ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+_gposRiver_high_notes = _pos(
+    (6, 15), (6, 17),             # low E:  G3★ A3
+    (5, 14), (5, 15), (5, 17),    # A:      B3  C4  D4
+    (4, 14), (4, 16), (4, 17),    # D:      E4  F#4 G4★
+    (3, 14), (3, 16), (3, 17),    # G:      A4  B4  C5
+    (2, 15), (2, 17),             # B:      D5  E5
+    (1, 14), (1, 15), (1, 17),    # e:      F#5 G5★ A5
+)
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
 # ║  G Pos 8 — D shape (17th fret, +12 from Pos 3)                          ║
 # ║  low E: 15,17,19,20  A: 17,19,21  D: 17,19,21  G: 17,19,21            ║
 # ║  B: 19,20  e: 17,19,20                                                  ║
@@ -345,32 +401,46 @@ SCALE_POSITIONS: dict[str, list[CagedPosition]] = {
         notes=_pos4_notes,
     ),
     CagedPosition(
-        label="Position 5 — D shape (10th fret)",
+        label="Position 5 — 川 River shape (8th fret)",
+        root_string="Low E string",
+        root_fret=8,
+        instructor_phrase="Start on the 8th fret of the low E string — C major 川 River shape.",
+        notes=_posRiver_C_notes,
+    ),
+    CagedPosition(
+        label="Position 6 — D shape (10th fret)",
         root_string="D string",
         root_fret=10,
         instructor_phrase="Start on the 8th fret of the E string — C major D shape.",
         notes=_pos5_notes,
     ),
     CagedPosition(
-        label="Position 6 — C shape (15th fret)",
+        label="Position 7 — C shape (15th fret)",
         root_string="A string",
         root_fret=15,
         instructor_phrase="Start on the 15th fret of the A string — C major C shape one octave up.",
         notes=_pos6_notes,
     ),
     CagedPosition(
-        label="Position 7 — A shape (15th fret)",
+        label="Position 8 — A shape (15th fret)",
         root_string="Low E string",
         root_fret=15,
         instructor_phrase="Start on the 15th fret of the low E string — C major A shape one octave up.",
         notes=_pos7_notes,
     ),
         CagedPosition(
-            label="Position 8 — G shape (20th fret)",
+            label="Position 9 — G shape (20th fret)",
             root_string="Low E string",
             root_fret=20,
             instructor_phrase="Start on the 20th fret of the low E string — C major G shape one octave up.",
             notes=_pos8_notes,
+        ),
+        CagedPosition(
+            label="Position 10 — 川 River shape (20th fret)",
+            root_string="Low E string",
+            root_fret=20,
+            instructor_phrase="Start on the 20th fret of the low E string — C major 川 River shape (high octave).",
+            notes=_posRiver_C_high_notes,
         ),
     ],
     "G": [
@@ -389,42 +459,54 @@ SCALE_POSITIONS: dict[str, list[CagedPosition]] = {
             notes=_gpos2_notes,
         ),
         CagedPosition(
-            label="Position 3 — D shape (5th fret)",
+            label="Position 3 — 川 River shape (3rd fret)",
+            root_string="Low E string",
+            root_fret=3,
+            instructor_phrase="Start on the 3rd fret of the low E string — G major 川 River shape.",
+            notes=_gposRiver_low_notes,
+        ),
+        CagedPosition(
+            label="Position 4 — D shape (5th fret)",
             root_string="Low E string",
             root_fret=3,
             instructor_phrase="Start on the 3rd fret of the low E string — G major D shape.",
             notes=_gpos3_notes,
         ),
         CagedPosition(
-            label="Position 4 — C shape (7th fret)",
+            label="Position 5 — C shape (7th fret)",
             root_string="A string",
             root_fret=10,
             instructor_phrase="Start on the 10th fret of the A string — G major C shape.",
             notes=_gpos4_notes,
         ),
         CagedPosition(
-            label="Position 5 — A shape (10th fret)",
+            label="Position 6 — A shape (10th fret)",
             root_string="A string",
             root_fret=10,
             instructor_phrase="Start on the 10th fret of the A string — G major A shape.",
             notes=_gpos5_notes,
         ),
         CagedPosition(
-            label="Position 6 — G shape (15th fret)",
+            label="Position 7 — G shape (15th fret)",
             root_string="Low E string",
             root_fret=15,
             instructor_phrase="Start on the 15th fret of the low E string — G major G shape one octave up.",
             notes=_gpos6_notes,
         ),
         CagedPosition(
-            label="Position 7 — E shape (15th fret)",
+            label="Position 8 — E shape (15th fret)",
             root_string="Low E string",
             root_fret=15,
             instructor_phrase="Start on the 15th fret of the low E string — G major E shape one octave up.",
             notes=_gpos7_notes,
         ),
-        CagedPosition(
-            label="Position 8 — D shape (17th fret)",
+        CagedPosition(            label="Position 9 — 川 River shape (15th fret)",
+            root_string="Low E string",
+            root_fret=15,
+            instructor_phrase="Start on the 15th fret of the low E string — G major 川 River shape (high octave).",
+            notes=_gposRiver_high_notes,
+        ),
+        CagedPosition(            label="Position 10 — D shape (17th fret)",
             root_string="Low E string",
             root_fret=15,
             instructor_phrase="Start on the 15th fret of the low E string — G major D shape one octave up.",
