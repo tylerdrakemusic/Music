@@ -198,7 +198,7 @@ HTML = r"""
   .scale-row label{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px}
   .scale-select{background:#111;border:1px solid var(--border);color:#fff;padding:6px 10px;border-radius:4px;font-size:.85rem;min-width:260px}
   .instructor-box{padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:.88rem;margin-bottom:14px;min-height:38px;line-height:1.5}
-  #fretboard-svg{width:100%;max-width:1320px;height:160px;display:block;margin:0 0 16px 0;background:#111;border:1px solid var(--border);border-radius:6px}
+  #fretboard-svg{width:100%;max-width:1320px;height:240px;display:block;margin:0 0 16px 0;background:#111;border:1px solid var(--border);border-radius:6px}
   .scale-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
   .scale-ctrl-label{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:5px}
   .scale-ctrl-input{background:#111;border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:.9rem;width:64px;text-align:center}
@@ -355,7 +355,7 @@ HTML = r"""
   <div class="instructor-box" id="instructor-phrase">Loading positions…</div>
   <audio id="instructor-audio" style="display:none"></audio>
 
-  <svg id="fretboard-svg" viewBox="0 0 1320 220" preserveAspectRatio="xMinYMid meet">
+  <svg id="fretboard-svg" viewBox="0 0 1320 240" preserveAspectRatio="xMinYMid meet">
     <text x="460" y="88" fill="#555" text-anchor="middle" font-size="13" font-family="Segoe UI,sans-serif">Loading fretboard…</text>
   </svg>
 
@@ -778,7 +778,7 @@ async function createSession() {
   const PLAYING_COLOR = '#ffe066';
   window.drawFretboard = function(notes, activeIdx) {
     const svg = document.getElementById('fretboard-svg');
-    const W = 1320, H = 220;
+    const W = 1320, H = 240;
     const LEFT = 58, RIGHT = W - 20;  // wider left margin for open-string zone
     const TOP = 20, BOTTOM = H - 30;
     const NUM_STRINGS = 6;

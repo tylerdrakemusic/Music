@@ -492,8 +492,8 @@ def test_html_freq_table_injected(html: str) -> None:
 # ---------------------------------------------------------------------------
 
 def test_fretboard_svg_viewbox_height_220(html: str) -> None:
-    """Fretboard SVG viewBox must be 1320x220 (taller canvas)."""
-    assert 'viewBox="0 0 1320 220"' in html
+    """Fretboard SVG viewBox must be 1320x240 (50% taller than original 160px CSS height)."""
+    assert 'viewBox="0 0 1320 240"' in html
 
 
 def test_fretboard_interval_colors_present(html: str) -> None:
