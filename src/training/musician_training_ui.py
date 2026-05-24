@@ -337,7 +337,7 @@ HTML = r"""
 <div id="tab-scales" class="tab-panel" style="display:none">
   <div class="scales-header">
     <h2>🎵 Scales &amp; Arpeggios</h2>
-    <p class="sub">C / G major — all 8 positions — Web Audio playback</p>
+    <p class="sub">C / G major — all 10 positions — Web Audio playback</p>
   </div>
 
   <div class="scale-row">
@@ -758,9 +758,9 @@ async function createSession() {
     const pos = _positions[_currentPos];
     if (!pos) return;
     document.getElementById('instructor-phrase').textContent = pos.instructor_phrase;
-    // Load instructor audio
+    // Load instructor audio — include phrase as cache-buster so URL changes when phrase changes
     const audio = document.getElementById('instructor-audio');
-    audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}`;
+    audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}&p=${encodeURIComponent(pos.instructor_phrase)}`;
     audio.load();
     audio.play().catch(() => {});
     drawFretboard(pos.notes, -1);
