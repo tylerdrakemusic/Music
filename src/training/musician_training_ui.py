@@ -790,12 +790,12 @@ async function createSession() {
     for (let f = 0; f <= NUM_FRETS; f++) {
       const x = LEFT + f * fretW;
       const w = f === 0 ? 3 : 1;
-      html += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOTTOM}" stroke="${f===0?'#ccc':'#555'}" stroke-width="${w}"/>`;
+      html += `<line x1="${x}" y1="${TOP}" x2="${x}" y2="${BOTTOM}" stroke="${f===0?'#eee':'#888'}" stroke-width="${w}"/>`;
     }
     // String lines — string 1 (high e) at top, string 6 (low E) at bottom; thickness increases downward
     for (let s = 0; s < NUM_STRINGS; s++) {
       const y = TOP + s * strGap;
-      html += `<line x1="${LEFT}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="#999" stroke-width="${1 + s * 0.3}"/>`;
+      html += `<line x1="${LEFT}" y1="${y}" x2="${RIGHT}" y2="${y}" stroke="#bbb" stroke-width="${1 + s * 0.3}"/>`;
     }
     // Fret numbers — standard guitar marker positions only
     for (let f = 1; f <= NUM_FRETS; f++) {
@@ -807,7 +807,7 @@ async function createSession() {
     const stringLabels = ['e','B','G','D','A','E'];
     for (let s = 0; s < NUM_STRINGS; s++) {
       const y = TOP + s * strGap;
-      html += `<text x="${LEFT - 8}" y="${y + 4}" fill="#ddd" text-anchor="end" font-size="9" font-family="Segoe UI,sans-serif">${stringLabels[s]}</text>`;
+      html += `<text x="${LEFT - 8}" y="${y + 4}" fill="#eee" text-anchor="end" font-size="9" font-family="Segoe UI,sans-serif">${stringLabels[s]}</text>`;
     }
     // "open" zone label
     html += `<text x="${LEFT - 20}" y="${H - 8}" fill="#bbb" text-anchor="middle" font-size="8" font-family="Segoe UI,sans-serif">open</text>`;
