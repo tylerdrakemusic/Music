@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS scale_practice_log (
     position INTEGER NOT NULL DEFAULT 1,
     bpm INTEGER NOT NULL DEFAULT 60,
     reps INTEGER NOT NULL DEFAULT 1,
+    duration_minutes INTEGER NOT NULL DEFAULT 0,
     logged_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 """

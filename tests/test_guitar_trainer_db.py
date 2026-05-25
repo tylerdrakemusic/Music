@@ -53,6 +53,10 @@ CREATE TABLE IF NOT EXISTS guitar_training_log (
     seg_start   TEXT NOT NULL DEFAULT '',
     seg_end     TEXT NOT NULL DEFAULT '',
     repetition  INTEGER NOT NULL DEFAULT 1,
+    duration_minutes INTEGER NOT NULL DEFAULT 0,
+    key         TEXT,
+    position    INTEGER,
+    exercise_name TEXT,
     logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 """
