@@ -102,6 +102,9 @@ src/data/backups/
 # practice sessions). They live on disk but must not pollute git state.
 tools/tyJson/exercises/musicTraining/
 
+# Generated dashboards (auto-regenerated with date stamps on each run)
+reports/band_management_panel.html
+
 # scratch/debug tools
 tools/_*.py
 
