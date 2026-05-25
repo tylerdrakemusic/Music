@@ -314,7 +314,7 @@ HTML = r"""
     <summary>Practice Log{% if log %} <span style="font-weight:400;font-size:.8rem;color:var(--muted)">— {{ log|length }} session{{ 's' if log|length != 1 }}</span>{% endif %}</summary>
     {% if log %}
     <div class="log-scroll">
-      {% for entry in log|reverse %}
+      {% for entry in log %}
       {% if loop.index <= 20 %}
       <div class="log-entry">
         <span>{{ entry.timestamp }}</span> —
