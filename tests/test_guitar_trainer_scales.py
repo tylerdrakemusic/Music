@@ -110,15 +110,17 @@ def client(mem_conn):
 # ---------------------------------------------------------------------------
 
 def test_scale_positions_has_c_and_g() -> None:
-    """SCALE_POSITIONS must have exactly 'C', 'G', and 'F' keys."""
-    assert set(SCALE_POSITIONS.keys()) == {"C", "G", "F"}
+    """SCALE_POSITIONS must contain C, G, F, D, Bb, and the A# alias."""
+    assert {"C", "G", "F", "D", "Bb", "A#"}.issubset(set(SCALE_POSITIONS.keys()))
 
 
 def test_scale_positions_counts() -> None:
-    """C must have 12 positions; G must have 11 positions; F must have 12 positions."""
+    """C must have 12 positions; G, D, and Bb must have 11; F must have 12."""
     assert len(SCALE_POSITIONS["C"]) == 12, f"SCALE_POSITIONS['C'] has {len(SCALE_POSITIONS['C'])} positions, expected 12"
     assert len(SCALE_POSITIONS["G"]) == 11, f"SCALE_POSITIONS['G'] has {len(SCALE_POSITIONS['G'])} positions, expected 11"
     assert len(SCALE_POSITIONS["F"]) == 12, f"SCALE_POSITIONS['F'] has {len(SCALE_POSITIONS['F'])} positions, expected 12"
+    assert len(SCALE_POSITIONS["D"]) == 11, f"SCALE_POSITIONS['D'] has {len(SCALE_POSITIONS['D'])} positions, expected 11"
+    assert len(SCALE_POSITIONS["Bb"]) == 11, f"SCALE_POSITIONS['Bb'] has {len(SCALE_POSITIONS['Bb'])} positions, expected 11"
 
 
 def test_caged_positions_count() -> None:
@@ -177,6 +179,33 @@ def test_f_major_positions_pitch_classes() -> None:
                 f"F major Position {i+1} note midi={note['midi']} "
                 f"(pc={note['midi'] % 12}) not in F major scale"
             )
+
+
+def test_d_major_positions_pitch_classes() -> None:
+    """All notes in all D major positions must belong to the D major scale."""
+    D_MAJOR_PCS = {2, 4, 6, 7, 9, 11, 1}  # D E F# G A B C#
+    for i, pos in enumerate(SCALE_POSITIONS["D"]):
+        for note in pos["notes"]:
+            assert note["midi"] % 12 in D_MAJOR_PCS, (
+                f"D major Position {i+1} note midi={note['midi']} "
+                f"(pc={note['midi'] % 12}) not in D major scale"
+            )
+
+
+def test_bb_major_positions_pitch_classes() -> None:
+    """All notes in all Bb major positions must belong to the Bb major scale."""
+    BB_MAJOR_PCS = {10, 0, 2, 3, 5, 7, 9}  # Bb C D Eb F G A
+    for i, pos in enumerate(SCALE_POSITIONS["Bb"]):
+        for note in pos["notes"]:
+            assert note["midi"] % 12 in BB_MAJOR_PCS, (
+                f"Bb major Position {i+1} note midi={note['midi']} "
+                f"(pc={note['midi'] % 12}) not in Bb major scale"
+            )
+
+
+def test_a_sharp_alias_matches_bb() -> None:
+    """SCALE_POSITIONS['A#'] must be the identical list object as SCALE_POSITIONS['Bb']."""
+    assert SCALE_POSITIONS["A#"] is SCALE_POSITIONS["Bb"]
 
 
 def test_caged_positions_have_instructor_phrases() -> None:
@@ -295,6 +324,35 @@ def test_api_scale_positions_f_returns_12(client) -> None:
     assert isinstance(data, list)
     assert len(data) == 12
     assert all("F major" in p["instructor_phrase"] for p in data)
+
+
+def test_api_scale_positions_d_returns_11(client) -> None:
+    """GET /api/scale-positions?key=D must return a list of exactly 11 D major positions."""
+    resp = client.get("/api/scale-positions?key=D")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) == 11
+    assert all("D major" in p["instructor_phrase"] for p in data)
+
+
+def test_api_scale_positions_bb_returns_11(client) -> None:
+    """GET /api/scale-positions?key=Bb must return a list of exactly 11 Ay-Sharp major positions."""
+    resp = client.get("/api/scale-positions?key=Bb")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) == 11
+    assert all("Ay-Sharp major" in p["instructor_phrase"] for p in data)
+
+
+def test_api_scale_positions_a_sharp_alias_returns_11(client) -> None:
+    """GET /api/scale-positions?key=A%23 must return the same 11 A Sharp positions via alias."""
+    resp = client.get("/api/scale-positions?key=A%23")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) == 11
 
 
 def test_api_scale_positions_invalid_key_400(client) -> None:
