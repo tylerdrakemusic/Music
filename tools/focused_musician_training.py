@@ -8,6 +8,19 @@ import tempfile
 from datetime import datetime
 import numpy as np
 import librosa
+import sqlite3
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# DB path / key (mirrors utils/init_db.py — direct sqlite3 since this script
+# runs as a subprocess outside the Flask context)
+# ---------------------------------------------------------------------------
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_DB_PATH = _PROJECT_ROOT / "src" / "data" / "heartmusic.db"
+
+# Module-level exercise id set by main() once we know which _run_<id>.json
+# we are executing.  None = migrated / manual session (exercise_id IS NULL).
+_exercise_id: int | None = None
 
 def change_speed(sound, speed=1.0):
     """Change playback speed of the audio segment without affecting pitch."""
@@ -52,41 +65,39 @@ def parse_timecode(time_str):
         sys.exit(1)
 
 def log_practice_session(log_path, song_path, segment):
-    """Log the practice session details to trainingLog.json."""
-    log_entry = {
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "songPath": song_path,
-        "segment": {
-            "start": segment.get("start"),
-            "end": segment.get("end"),
-            "repetition": segment.get("repetition", 1)
-        }
-    }
-    
-    # Check if the log file exists
-    if os.path.isfile(log_path):
-        try:
-            with open(log_path, 'r') as f:
-                logs = json.load(f)
-            if not isinstance(logs, list):
-                print(f"Invalid log format in '{log_path}'. Expected a list of log entries.")
-                logs = []
-        except json.JSONDecodeError:
-            print(f"Corrupted JSON in '{log_path}'. Initializing a new log file.")
-            logs = []
-    else:
-        logs = []
-    
-    # Append the new log entry
-    logs.append(log_entry)
-    
-    # Write back to the log file
+    """Log the practice session to guitar_training_log in heartmusic.db."""
+    seg_start = str(segment.get("start", ""))
+    seg_end = str(segment.get("end", ""))
+    repetition = int(segment.get("repetition", 1))
+    logged_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    db_key = os.environ.get("HEARTMUSIC_DB_KEY", "")
+    if not db_key:
+        print("WARNING: HEARTMUSIC_DB_KEY not set — practice session not logged.")
+        return
+
     try:
-        with open(log_path, 'w') as f:
-            json.dump(logs, f, indent=4)
-        print(f"Logged practice session to '{log_path}'.")
-    except Exception as e:
-        print(f"Failed to write to log file '{log_path}': {e}")
+        import sqlcipher3  # noqa: PLC0415
+        conn = sqlcipher3.connect(str(_DB_PATH))
+        # hex-encoded key (matches init_db._try_open_with_key logic)
+        key_hex = db_key.encode().hex()
+        conn.execute(f"PRAGMA key=\"x'{key_hex}'\"")  # nosec B608
+        conn.execute("PRAGMA cipher_page_size=4096")
+        conn.execute("PRAGMA kdf_iter=256000")
+        conn.execute("PRAGMA cipher_hmac_algorithm=HMAC_SHA512")
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute(
+            "INSERT INTO guitar_training_log "
+            "(exercise_id, song_path, seg_start, seg_end, repetition, logged_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (_exercise_id, song_path, seg_start, seg_end, repetition, logged_at),
+        )
+        conn.commit()
+        conn.close()
+        print(f"Logged practice session to heartmusic.db (exercise_id={_exercise_id}).")
+    except Exception as exc:
+        print(f"Failed to write practice log to DB: {exc}")
 
 def loop_segment(file_path, start_time, end_time, repetition, speed_factor, log_path, *, manage_pygame=True):
     """Loop a section of the audio file a specified number of times and log the session."""
@@ -193,7 +204,13 @@ def main():
     json_file = args.json_file
     json_path = os.path.join(default_directory, json_file)
 
-    # Define the path to the training log
+    # Parse exercise_id from filename pattern _run_<id>.json
+    global _exercise_id
+    import re as _re
+    _m = _re.match(r"_run_(\d+)\.json$", os.path.basename(json_file))
+    _exercise_id = int(_m.group(1)) if _m else None
+
+    # Define the path to the training log (kept for compatibility; not written to)
     log_file = "trainingLog.json"
     log_path = os.path.join(default_directory, log_file)
 
