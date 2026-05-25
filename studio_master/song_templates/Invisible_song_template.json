@@ -1,0 +1,64 @@
+{
+  "title": "Invisible",
+  "artist": "Tyler James Drake",
+  "key": "A Minor",
+  "bpm": "113",
+  "arrangement_notes": "",
+  "sections": [
+    {
+      "name": "Verse 1",
+      "backing_vocals": "Invisible!",
+      "lines": [
+        { "chords": "Am11 F C Gsus C G", "lyrics": "Broken records spin my head.  Without a pilot" },
+        { "chords": "Am11 F C Gsus C G", "lyrics": "Toss and turning in my bed.  In a spiral" },
+        { "chords": "Am11 F C Gsus C G", "lyrics": "Feeling bitten muffled anger, it's all held inside" },
+        { "chords": "Am11 F C Gsus C G", "lyrics": "Glancing over sweeping under, I hold my tongue and hide.", "backing_vocals": "Invisible!" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Am11 Dm9 G13 Cmaj7", "lyrics": "Feels like I'm disappearing, fading from my core", "backing_vocals": "Am I conceivable?" },
+        { "chords": "Am11 Dm9 G13 Cmaj7", "lyrics": "Like a falling tree that never hits the forest floor", "backing_vocals": "Invisible!" },
+        { "chords": "Am11 Dm9 G13 Cmaj7", "lyrics": "Nobody hears me scream alone inside my head", "backing_vocals": "Am I invisible?" },
+        { "chords": "Am11 Dm9 G13 Cmaj7 G7", "lyrics": "Or am I just hiding from the world instead?", "backing_vocals": "Invisible!" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Am11 F C Gsus C G", "lyrics": "Can't control the feet I'm under, in the art of war" },
+        { "chords": "Am11 F C Gsus C G", "lyrics": "The politics that steal my thunder, always keeping score" },
+        { "chords": "Am11 F C Gsus C G", "lyrics": "There's no honor in deception, cause you're looking good" },
+        { "chords": "Am11 F C Gsus C G", "lyrics": "In your world there's no perception.  I'm misunderstood" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Am11 Dm9 G13 Cmaj7", "lyrics": "Feels like I'm disappearing, fading from my core", "backing_vocals": "Am I conceivable?" },
+        { "chords": "Am11 Dm9 G13 Cmaj7", "lyrics": "Like a falling tree that never hits the forest floor", "backing_vocals": "Invisible!" },
+        { "chords": "Am11 Dm9 G13 Cmaj7", "lyrics": "Nobody hears me scream alone inside my head", "backing_vocals": "Am I invisible?" },
+        { "chords": "Am11 Dm9 G13 Cmaj7 G7", "lyrics": "Or am I just hiding from the world instead?", "backing_vocals": "Invisible!" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "Am G F E E/G#", "lyrics": "Can you see me in this moment?  Every moment you reject!" },
+        { "chords": "Am G F G G#dim7", "lyrics": "I can feel your apprehension, I have boundaries don't misstep!" },
+        { "chords": "Dm E7 E/G# Am Am", "lyrics": "Can you heal me when I'm not feeling good enough?" },
+        { "chords": "Am G F G E7", "lyrics": "There's no amount of success that brings the recognition I expect.", "backing_vocals": "I'm not invisible!" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Am11 Dm9 G13 Cmaj7", "lyrics": "Feels like I'm disappearing, fading from my core", "backing_vocals": "Am I conceivable?" },
+        { "chords": "Am11 Dm9 G13 Cmaj7", "lyrics": "Like a falling tree that never hits the forest floor", "backing_vocals": "Invisible!" },
+        { "chords": "Am11 Dm9 G13 Cmaj7", "lyrics": "Nobody hears me scream alone inside my head", "backing_vocals": "Am I invisible?" },
+        { "chords": "Am11 Dm9 G13 Cmaj7 G7", "lyrics": "Or am I just hiding from the world instead?", "backing_vocals": "Invisible!" }
+      ]
+    }
+  ]
+}
