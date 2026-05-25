@@ -245,24 +245,29 @@ CREATE TABLE IF NOT EXISTS guitar_exercises (
 
 -- Guitar Trainer: practice log (append-only)
 CREATE TABLE IF NOT EXISTS guitar_training_log (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    exercise_id INTEGER REFERENCES guitar_exercises(id) ON DELETE SET NULL,
-    song_path   TEXT NOT NULL DEFAULT '',
-    seg_start   TEXT NOT NULL DEFAULT '',
-    seg_end     TEXT NOT NULL DEFAULT '',
-    repetition  INTEGER NOT NULL DEFAULT 1,
-    logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    exercise_id      INTEGER REFERENCES guitar_exercises(id) ON DELETE SET NULL,
+    song_path        TEXT NOT NULL DEFAULT '',
+    seg_start        TEXT NOT NULL DEFAULT '',
+    seg_end          TEXT NOT NULL DEFAULT '',
+    repetition       INTEGER NOT NULL DEFAULT 1,
+    duration_minutes INTEGER NOT NULL DEFAULT 0,
+    key              TEXT,
+    position         INTEGER,
+    exercise_name    TEXT,
+    logged_at        TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Scale & Arpeggio practice log (FR-20260517-guitar-trainer-scale-exercises)
 CREATE TABLE IF NOT EXISTS scale_practice_log (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    key         TEXT NOT NULL DEFAULT 'C',   -- musical key (FR-20260522-guitar-trainer-multi-key)
-    scale       TEXT NOT NULL DEFAULT 'C_major',
-    position    INTEGER NOT NULL DEFAULT 1,
-    bpm         INTEGER NOT NULL DEFAULT 60,
-    reps        INTEGER NOT NULL DEFAULT 1,
-    logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    key              TEXT NOT NULL DEFAULT 'C',   -- musical key (FR-20260522-guitar-trainer-multi-key)
+    scale            TEXT NOT NULL DEFAULT 'C_major',
+    position         INTEGER NOT NULL DEFAULT 1,
+    bpm              INTEGER NOT NULL DEFAULT 60,
+    reps             INTEGER NOT NULL DEFAULT 1,
+    duration_minutes INTEGER NOT NULL DEFAULT 0,
+    logged_at        TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ── Gig Inventory ─────────────────────────────────────────────────────────
@@ -405,6 +410,26 @@ def init_db(*, seed: bool = True) -> None:
     try:
         conn.execute(
             "ALTER TABLE scale_practice_log ADD COLUMN key TEXT NOT NULL DEFAULT 'C'"
+        )
+        conn.commit()
+    except Exception:
+        pass  # column already exists
+    # FR-20260525: add duration/context columns to guitar_training_log
+    for _col_sql in [
+        "ALTER TABLE guitar_training_log ADD COLUMN duration_minutes INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE guitar_training_log ADD COLUMN key TEXT",
+        "ALTER TABLE guitar_training_log ADD COLUMN position INTEGER",
+        "ALTER TABLE guitar_training_log ADD COLUMN exercise_name TEXT",
+    ]:
+        try:
+            conn.execute(_col_sql)
+            conn.commit()
+        except Exception:
+            pass  # column already exists
+    # FR-20260525: add duration_minutes to scale_practice_log
+    try:
+        conn.execute(
+            "ALTER TABLE scale_practice_log ADD COLUMN duration_minutes INTEGER NOT NULL DEFAULT 0"
         )
         conn.commit()
     except Exception:
