@@ -345,8 +345,10 @@ HTML = r"""
     <label>Key
       <select id="scale-key" class="scale-select" onchange="onKeyChange()">
         <option value="C">C major</option>
-        <option value="G">G major</option>
+        <option value="D">D major</option>
         <option value="F">F major</option>
+        <option value="G">G major</option>
+        <option value="Bb">A&#x23; / Bb major</option>
       </select>
     </label>
     <label>Position
@@ -359,7 +361,7 @@ HTML = r"""
     </span>
   </div>
 
-  <div class="instructor-box" id="instructor-phrase">Loading positions…</div>
+  <div class="instructor-box" id="instructor-phrase" style="display:none"></div>
   <audio id="instructor-audio" style="display:none"></audio>
 
   <svg id="fretboard-svg" viewBox="0 0 1320 240" preserveAspectRatio="xMinYMid meet">
@@ -764,9 +766,12 @@ async function createSession() {
     _currentPos = parseInt(document.getElementById('scale-position').value) || 0;
     const pos = _positions[_currentPos];
     if (!pos) return;
-    document.getElementById('instructor-phrase').textContent = pos.instructor_phrase;
+    const phraseBox = document.getElementById('instructor-phrase');
+    phraseBox.textContent = pos.instructor_phrase;
+    phraseBox.style.display = 'none';
     // Load instructor audio — include phrase as cache-buster so URL changes when phrase changes
     const audio = document.getElementById('instructor-audio');
+    audio.onerror = () => { phraseBox.style.display = ''; };
     audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}&p=${encodeURIComponent(pos.instructor_phrase)}`;
     audio.load();
     audio.play().catch(() => {});
@@ -774,7 +779,7 @@ async function createSession() {
   };
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
-  const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11};
+  const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11, Bb:10, 'A#':10};
   const PC_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
@@ -1162,7 +1167,7 @@ def delete_session():
 @app.route("/api/scale-positions")
 def api_scale_positions():
     """Return positions for the given key as JSON. Query param: ?key=C (default) or ?key=G."""
-    key = request.args.get("key", "C").strip().upper()
+    key = request.args.get("key", "C").strip()
     positions = SCALE_POSITIONS.get(key)
     if positions is None:
         abort(400)
@@ -1197,7 +1202,7 @@ def api_scale_log():
     position = data.get("position")
     bpm = data.get("bpm")
     reps = data.get("reps")
-    key = str(data.get("key") or "C").strip().upper()
+    key = str(data.get("key") or "C").strip()
 
     # Validate
     if not scale:
@@ -1241,7 +1246,7 @@ def api_instructor_audio():
 
     Returns 204 No Content when TTS is unavailable (no key, network error, etc.)
     """
-    key = request.args.get("key", "C").strip().upper()
+    key = request.args.get("key", "C").strip()
     key_positions = SCALE_POSITIONS.get(key)
     if key_positions is None:
         abort(400)

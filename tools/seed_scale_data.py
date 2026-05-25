@@ -82,6 +82,13 @@ _TEMPLATES: dict[str, tuple[int, list[list[int]]]] = {
         [2,  0], [2,  2],
         [1, -1], [1,  0], [1,  2],
     ]),
+    "D_shape_open": (4, [
+        [5,  0], [5,  2], [5,  4],
+        [4,  0], [4,  2], [4,  4],
+        [3,  0], [3,  2], [3,  4],
+        [2,  2], [2,  3],
+        [1,  0], [1,  2], [1,  3],
+    ]),
 }
 
 # ---------------------------------------------------------------------------
@@ -130,6 +137,33 @@ _POSITIONS: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("C_shape", 20, "Position 11 — C shape (20th fret)",        "A string",     "Start on the 20th fret of the A string — F major C shape (high octave)."),
         ("rock",    20, "Position 12 — 石 Rock shape (20th fret)",  "A string",     "Start on the 20th fret of the A string for F major 石 Rock shape (high octave)."),
     ],
+    # FR-20260524-guitar-trainer-d-bb-major
+    "D": [
+        ("D_shape_open", 0, "Position 1 — D shape (open)",              "D string",     "Open strings — start on the open D string — D major open D shape."),
+        ("C_shape", 5,  "Position 2 — C shape (5th fret)",           "A string",     "Start on the 5th fret of the A string — D major C shape."),
+        ("rock",    5,  "Position 3 — 石 Rock shape (5th fret)",     "A string",     "Start on the 5th fret of the A string for D major 石 Rock shape."),
+        ("A_shape", 5,  "Position 4 — A shape (5th fret)",           "A string",     "Start on the 5th fret of the A string — D major A shape."),
+        ("G_shape", 10, "Position 5 — G shape (10th fret)",          "Low E string", "Start on the 10th fret of the low E string — D major G shape."),
+        ("river",   10, "Position 6 — 川 River shape (10th fret)",   "Low E string", "Start on the 10th fret of the low E string — D major 川 River shape."),
+        ("E_shape", 10, "Position 7 — E shape (10th fret)",          "Low E string", "Start on the 10th fret of the low E string — D major E shape."),
+        ("D_shape", 10, "Position 8 — D shape (10th fret)",          "Low E string", "Start on the 10th fret of the low E string — D major D shape."),
+        ("C_shape", 17, "Position 9 — C shape (17th fret)",          "A string",     "Start on the 17th fret of the A string — D major C shape one octave up."),
+        ("rock",    17, "Position 10 — 石 Rock shape (17th fret)",   "A string",     "Start on the 17th fret of the A string for D major 石 Rock shape (high octave)."),
+        ("A_shape", 17, "Position 11 — A shape (17th fret)",         "A string",     "Start on the 17th fret of the A string — D major A shape one octave up."),
+    ],
+    "Bb": [
+        ("A_shape", 1,  "Position 1 — A shape (1st fret)",           "A string",     "Start on the 1st fret of the A string — Ay-Sharp major A shape."),
+        ("G_shape", 6,  "Position 2 — G shape (6th fret)",           "Low E string", "Start on the 6th fret of the low E string — Ay-Sharp major G shape."),
+        ("river",   6,  "Position 3 — 川 River shape (6th fret)",    "Low E string", "Start on the 6th fret of the low E string — Ay-Sharp major 川 River shape."),
+        ("E_shape", 6,  "Position 4 — E shape (6th fret)",           "Low E string", "Start on the 6th fret of the low E string — Ay-Sharp major E shape."),
+        ("D_shape", 6,  "Position 5 — D shape (6th fret)",           "Low E string", "Start on the 6th fret of the low E string — Ay-Sharp major D shape."),
+        ("C_shape", 13, "Position 6 — C shape (13th fret)",          "A string",     "Start on the 13th fret of the A string — Ay-Sharp major C shape."),
+        ("rock",    13, "Position 7 — 石 Rock shape (13th fret)",    "A string",     "Start on the 13th fret of the A string for Ay-Sharp major 石 Rock shape."),
+        ("A_shape", 13, "Position 8 — A shape (13th fret)",          "A string",     "Start on the 13th fret of the A string — Ay-Sharp major A shape one octave up."),
+        ("G_shape", 18, "Position 9 — G shape (18th fret)",          "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major G shape one octave up."),
+        ("river",   18, "Position 10 — 川 River shape (18th fret)",  "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major 川 River shape (high octave)."),
+        ("E_shape", 18, "Position 11 — E shape (18th fret)",         "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major E shape (high octave)."),
+    ],
 }
 
 # Expected pitch-class sets for quick verification
@@ -137,6 +171,8 @@ _PITCH_CLASSES: dict[str, set[int]] = {
     "C": {0, 2, 4, 5, 7, 9, 11},   # C D E F G A B
     "G": {7, 9, 11, 0, 2, 4, 6},   # G A B C D E F#
     "F": {5, 7, 9, 10, 0, 2, 4},   # F G A Bb C D E
+    "D": {2, 4, 6, 7, 9, 11, 1},   # D E F# G A B C#
+    "Bb": {10, 0, 2, 3, 5, 7, 9},  # Bb C D Eb F G A
 }
 
 _OPEN_MIDI: dict[int, int] = {

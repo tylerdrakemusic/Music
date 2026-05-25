@@ -107,6 +107,15 @@ _TEMPLATES: dict[str, tuple[int, list[list[int]]]] = {
         [2,  0], [2,  2],
         [1, -1], [1,  0], [1,  2],
     ]),
+    # Open D-string anchor; string 6 omitted (muted — no D below open D string).
+    # Notes are the standard D_shape pattern shifted -2 frets to land at open position.
+    "D_shape_open": (4, [
+        [5,  0], [5,  2], [5,  4],   # A:  open A(5th),  B(6th),  C#(7th)
+        [4,  0], [4,  2], [4,  4],   # D:  open D(root), E(2nd),  F#(3rd)
+        [3,  0], [3,  2], [3,  4],   # G:  open G(4th),  A(5th),  B(6th)
+        [2,  2], [2,  3],             # B:  C#(7th),      D(root)
+        [1,  0], [1,  2], [1,  3],   # e:  open E(2nd),  F#(3rd), G(4th)
+    ]),
 }
 
 # ---------------------------------------------------------------------------
@@ -156,6 +165,33 @@ _POSITION_DATA: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("D_shape", 13, "Position 10 — D shape (13th fret)",        "Low E string", "Start on the 13th fret of the low E string — F major D shape (high octave)."),
         ("C_shape", 20, "Position 11 — C shape (20th fret)",        "A string",     "Start on the 20th fret of the A string — F major C shape (high octave)."),
         ("rock",    20, "Position 12 — 石 Rock shape (20th fret)",  "A string",     "Start on the 20th fret of the A string for F major 石 Rock shape (high octave)."),
+    ],
+    # FR-20260524-guitar-trainer-d-bb-major
+    "D": [
+        ("D_shape_open", 0, "Position 1 — D shape (open)",              "D string",     "Open strings — start on the open D string — D major open D shape."),
+        ("C_shape", 5,  "Position 2 — C shape (5th fret)",           "A string",     "Start on the 5th fret of the A string — D major C shape."),
+        ("rock",    5,  "Position 3 — 石 Rock shape (5th fret)",     "A string",     "Start on the 5th fret of the A string for D major 石 Rock shape."),
+        ("A_shape", 5,  "Position 4 — A shape (5th fret)",           "A string",     "Start on the 5th fret of the A string — D major A shape."),
+        ("G_shape", 10, "Position 5 — G shape (10th fret)",          "Low E string", "Start on the 10th fret of the low E string — D major G shape."),
+        ("river",   10, "Position 6 — 川 River shape (10th fret)",   "Low E string", "Start on the 10th fret of the low E string — D major 川 River shape."),
+        ("E_shape", 10, "Position 7 — E shape (10th fret)",          "Low E string", "Start on the 10th fret of the low E string — D major E shape."),
+        ("D_shape", 10, "Position 8 — D shape (10th fret)",          "Low E string", "Start on the 10th fret of the low E string — D major D shape."),
+        ("C_shape", 17, "Position 9 — C shape (17th fret)",          "A string",     "Start on the 17th fret of the A string — D major C shape one octave up."),
+        ("rock",    17, "Position 10 — 石 Rock shape (17th fret)",   "A string",     "Start on the 17th fret of the A string for D major 石 Rock shape (high octave)."),
+        ("A_shape", 17, "Position 11 — A shape (17th fret)",         "A string",     "Start on the 17th fret of the A string — D major A shape one octave up."),
+    ],
+    "Bb": [
+        ("A_shape", 1,  "Position 1 — A shape (1st fret)",           "A string",     "Start on the 1st fret of the A string — Ay-Sharp major A shape."),
+        ("G_shape", 6,  "Position 2 — G shape (6th fret)",           "Low E string", "Start on the 6th fret of the low E string — Ay-Sharp major G shape."),
+        ("river",   6,  "Position 3 — 川 River shape (6th fret)",    "Low E string", "Start on the 6th fret of the low E string — Ay-Sharp major 川 River shape."),
+        ("E_shape", 6,  "Position 4 — E shape (6th fret)",           "Low E string", "Start on the 6th fret of the low E string — Ay-Sharp major E shape."),
+        ("D_shape", 6,  "Position 5 — D shape (6th fret)",           "Low E string", "Start on the 6th fret of the low E string — Ay-Sharp major D shape."),
+        ("C_shape", 13, "Position 6 — C shape (13th fret)",          "A string",     "Start on the 13th fret of the A string — Ay-Sharp major C shape."),
+        ("rock",    13, "Position 7 — 石 Rock shape (13th fret)",    "A string",     "Start on the 13th fret of the A string for Ay-Sharp major 石 Rock shape."),
+        ("A_shape", 13, "Position 8 — A shape (13th fret)",          "A string",     "Start on the 13th fret of the A string — Ay-Sharp major A shape one octave up."),
+        ("G_shape", 18, "Position 9 — G shape (18th fret)",          "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major G shape one octave up."),
+        ("river",   18, "Position 10 — 川 River shape (18th fret)",  "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major 川 River shape (high octave)."),
+        ("E_shape", 18, "Position 11 — E shape (18th fret)",         "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major E shape (high octave)."),
     ],
 }
 
@@ -249,19 +285,30 @@ def _build_from_conn(conn) -> dict[str, list[CagedPosition]]:
 
 
 def _load() -> dict[str, list[CagedPosition]]:
-    """Load SCALE_POSITIONS — DB first, Python fallback on any error."""
+    """Load SCALE_POSITIONS — templates as baseline, DB overlays where seeded.
+
+    Using templates as the baseline ensures keys added to _POSITION_DATA are
+    always available even before seed_scale_data.py has been re-run.
+    """
+    base = _generate_from_templates()
     try:
         from utils.init_db import get_connection  # noqa: PLC0415
         conn = get_connection()
-        return _build_from_conn(conn)
+        db_result = _build_from_conn(conn)
+        if db_result:
+            base.update(db_result)
     except Exception:
-        return _generate_from_templates()
+        pass
+    return base
 
 
 # ---------------------------------------------------------------------------
 # Module-level singletons (populated once at import time)
 # ---------------------------------------------------------------------------
 SCALE_POSITIONS: dict[str, list[CagedPosition]] = _load()
+
+# A# is enharmonically identical to Bb — expose as a transparent alias
+SCALE_POSITIONS["A#"] = SCALE_POSITIONS["Bb"]
 
 # Backward-compat alias — C major positions
 CAGED_POSITIONS: list[CagedPosition] = SCALE_POSITIONS["C"]
