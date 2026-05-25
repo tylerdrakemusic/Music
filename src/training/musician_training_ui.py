@@ -18,6 +18,7 @@ _SRC = Path(__file__).resolve().parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 from utils.init_db import get_connection  # noqa: E402
+from training.practice_stats import get_practice_stats  # noqa: E402
 from training.scale_data import SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence  # noqa: E402
 from training.scale_tts import get_instructor_audio  # noqa: E402
 
@@ -104,13 +105,24 @@ def _load_log() -> list[dict]:
     ]
 
 
-def _append_log(exercise_id: int | None, song_path: str, seg_start: str, seg_end: str, repetition: int) -> None:
+def _append_log(
+    exercise_id: int | None,
+    song_path: str,
+    seg_start: str,
+    seg_end: str,
+    repetition: int,
+    duration_minutes: int = 0,
+    key: str | None = None,
+    position: int | None = None,
+    exercise_name: str | None = None,
+) -> None:
     """Append a practice log entry to guitar_training_log."""
     conn = get_connection()
     conn.execute(
-        "INSERT INTO guitar_training_log (exercise_id, song_path, seg_start, seg_end, repetition) "
-        "VALUES (?, ?, ?, ?, ?)",
-        (exercise_id, song_path, seg_start, seg_end, repetition),
+        "INSERT INTO guitar_training_log "
+        "(exercise_id, song_path, seg_start, seg_end, repetition, duration_minutes, key, position, exercise_name) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (exercise_id, song_path, seg_start, seg_end, repetition, duration_minutes, key, position, exercise_name),
     )
     conn.commit()
     conn.close()
@@ -225,7 +237,12 @@ HTML = r"""
   <button class="tab-btn" id="tab-btn-scales" onclick="switchTab('scales')">🎵 Scales</button>
 </div>
 
-<div id="tab-exercises" class="tab-panel">
+<div id="tab-exercises" class="tab-panel" style="position:relative">
+<div class="streak-badge" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 16px;font-size:0.85rem;text-align:center;min-width:160px;">
+  <div style="font-size:1.4rem;font-weight:700;">🔥 {{ stats.streak_days }} day{{ 's' if stats.streak_days != 1 else '' }}</div>
+  <div style="opacity:0.7;margin-top:2px;">{{ stats.week_minutes }} min this week</div>
+  <div style="opacity:0.5;margin-top:2px;font-size:0.75rem;">Last: {{ stats.last_practiced or 'never' }}</div>
+</div>
 <!-- Metronome (FR-20260425-guitar-trainer-metronome) -->
 <div class="metronome" id="metro-panel">
   <span class="metro-title">🥁 Metro</span>
@@ -312,6 +329,22 @@ HTML = r"""
 <div class="log-section">
   <details>
     <summary>Practice Log{% if log %} <span style="font-weight:400;font-size:.8rem;color:var(--muted)">— {{ log|length }} session{{ 's' if log|length != 1 }}</span>{% endif %}</summary>
+    <form id="manual-log-form" style="margin:10px 0 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+      <label style="font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:3px">
+        Duration (min)<input id="log-duration" type="number" value="0" min="0" style="width:70px;background:#111;border:1px solid var(--border);color:#fff;padding:3px 6px;border-radius:3px;font-size:.8rem">
+      </label>
+      <label style="font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:3px">
+        Key<input id="log-key" type="text" placeholder="e.g. G" style="width:52px;background:#111;border:1px solid var(--border);color:#fff;padding:3px 6px;border-radius:3px;font-size:.8rem">
+      </label>
+      <label style="font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:3px">
+        Position<input id="log-position" type="number" min="1" placeholder="1" style="width:52px;background:#111;border:1px solid var(--border);color:#fff;padding:3px 6px;border-radius:3px;font-size:.8rem">
+      </label>
+      <label style="font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:3px">
+        Exercise<input id="log-exercise-name" type="text" placeholder="optional" style="width:120px;background:#111;border:1px solid var(--border);color:#fff;padding:3px 6px;border-radius:3px;font-size:.8rem">
+      </label>
+      <button type="button" class="btn btn-ghost" onclick="manualLogEntry()" style="padding:5px 12px;font-size:.8rem">+ Log</button>
+      <span id="log-form-status" style="font-size:.75rem;color:#6fdc6f;align-self:center"></span>
+    </form>
     {% if log %}
     <div class="log-scroll">
       {% for entry in log %}
@@ -375,6 +408,9 @@ HTML = r"""
     <button class="btn-scale-tap" onclick="scaleTap()">Tap</button>
     <label class="scale-ctrl-label">Reps
       <input id="scale-reps" class="scale-ctrl-input" type="number" value="4" min="1" max="20">
+    </label>
+    <label class="scale-ctrl-label">Duration (min)
+      <input id="scale-duration" class="scale-ctrl-input" type="number" value="0" min="0" max="300">
     </label>
     <button class="btn-scale-play" id="scale-play-btn" onclick="scaleToggle()">▶ Play</button>
   </div>
@@ -946,10 +982,12 @@ async function createSession() {
 
   async function logScaleSession(scale, position, bpm, reps, key) {
     try {
+      const durEl = document.getElementById('scale-duration');
+      const duration_minutes = durEl ? (parseInt(durEl.value) || 0) : 0;
       const r = await fetch('/api/scale-log', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({scale, position, bpm, reps, key: key || 'C'}),
+        body: JSON.stringify({scale, position, bpm, reps, key: key || 'C', duration_minutes}),
       });
       if ((await r.json()).ok) loadScaleLog();
     } catch (e) { console.warn('scale log failed', e); }
@@ -966,7 +1004,33 @@ async function createSession() {
       ).join('');
     } catch(e) { console.warn('scale log load failed', e); }
   }
-})();</script>
+})();
+
+// ---------------------------------------------------------------------------
+// Manual guitar practice log entry (FR-20260525-practice-streak-badge)
+// ---------------------------------------------------------------------------
+window.manualLogEntry = async function() {
+  const duration_minutes = parseInt(document.getElementById('log-duration').value) || 0;
+  const key = (document.getElementById('log-key').value || '').trim() || null;
+  const posRaw = document.getElementById('log-position').value;
+  const position = posRaw ? (parseInt(posRaw) || null) : null;
+  const exercise_name = (document.getElementById('log-exercise-name').value || '').trim() || null;
+  const statusEl = document.getElementById('log-form-status');
+  try {
+    const r = await fetch('/api/log', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({song_path: '', seg_start: '', seg_end: '', repetition: 1,
+                            duration_minutes, key, position, exercise_name}),
+    });
+    const j = await r.json();
+    statusEl.textContent = j.ok ? '\u2713 Logged' : '\u2717 ' + j.error;
+    statusEl.style.color = j.ok ? '#6fdc6f' : '#f55';
+  } catch(e) {
+    statusEl.textContent = '\u2717 Error';
+    statusEl.style.color = '#f55';
+  }
+};</script>
 </body>
 </html>
 """
@@ -1048,7 +1112,8 @@ def click_audio(filename: str) -> Response:
 def index():
     sessions = _list_sessions()
     log = _load_log()
-    return render_template_string(HTML, sessions=sessions, log=log, freq_table=MIDI_TO_FREQ)
+    stats = get_practice_stats()
+    return render_template_string(HTML, sessions=sessions, log=log, freq_table=MIDI_TO_FREQ, stats=stats)
 
 
 @app.route("/save", methods=["POST"])
@@ -1140,9 +1205,38 @@ def api_sessions():
     return jsonify(_list_sessions())
 
 
-@app.route("/api/log")
+@app.route("/api/log", methods=["GET", "POST"])
 def api_log():
-    return jsonify(_load_log())
+    if request.method == "GET":
+        return jsonify(_load_log())
+    # POST — log a guitar training session manually
+    data = request.get_json(force=True) or {}
+    song_path = str(data.get("song_path") or "").strip()
+    seg_start = str(data.get("seg_start") or "").strip()
+    seg_end = str(data.get("seg_end") or "").strip()
+    try:
+        repetition = int(data.get("repetition") or 1)
+    except (TypeError, ValueError):
+        repetition = 1
+    try:
+        duration_minutes = max(0, int(data.get("duration_minutes") or 0))
+    except (TypeError, ValueError):
+        duration_minutes = 0
+    key = str(data.get("key") or "").strip() or None
+    try:
+        position_val = data.get("position")
+        position = int(position_val) if position_val is not None else None
+    except (TypeError, ValueError):
+        position = None
+    exercise_name = str(data.get("exercise_name") or "").strip() or None
+    exercise_id_raw = data.get("exercise_id")
+    exercise_id = int(exercise_id_raw) if isinstance(exercise_id_raw, (int, float)) else None
+    try:
+        _append_log(exercise_id, song_path, seg_start, seg_end, repetition,
+                    duration_minutes, key, position, exercise_name)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
 
 
 @app.route("/delete", methods=["POST"])
@@ -1203,6 +1297,10 @@ def api_scale_log():
     bpm = data.get("bpm")
     reps = data.get("reps")
     key = str(data.get("key") or "C").strip()
+    try:
+        duration_minutes = max(0, int(data.get("duration_minutes") or 0))
+    except (TypeError, ValueError):
+        duration_minutes = 0
 
     # Validate
     if not scale:
@@ -1231,8 +1329,8 @@ def api_scale_log():
     try:
         with get_connection() as conn:
             conn.execute(
-                "INSERT INTO scale_practice_log (key, scale, position, bpm, reps) VALUES (?,?,?,?,?)",
-                (key, scale, position, bpm, reps),
+                "INSERT INTO scale_practice_log (key, scale, position, bpm, reps, duration_minutes) VALUES (?,?,?,?,?,?)",
+                (key, scale, position, bpm, reps, duration_minutes),
             )
             conn.commit()
         return jsonify({"ok": True})
