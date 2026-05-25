@@ -228,8 +228,17 @@ HTML = r"""
 </style>
 </head>
 <body>
-<h1>🎸 Lead Guitar Trainer</h1>
-<p class="sub">Focused interval training — loop lead parts, control speed, build muscle memory</p>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+  <div>
+    <h1>🎸 Lead Guitar Trainer</h1>
+    <p class="sub">Focused interval training — loop lead parts, control speed, build muscle memory</p>
+  </div>
+  <div class="streak-badge" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 16px;font-size:0.85rem;text-align:center;min-width:160px;flex-shrink:0">
+    <div style="font-size:1.4rem;font-weight:700;">🔥 {{ stats.streak_days }} day{{ 's' if stats.streak_days != 1 else '' }}</div>
+    <div style="opacity:0.7;margin-top:2px;">{{ stats.week_minutes }} min this week</div>
+    <div style="opacity:0.5;margin-top:2px;font-size:0.75rem;">Last: {{ stats.last_practiced or 'never' }}</div>
+  </div>
+</div>
 
 <!-- Tab navigation (FR-20260517-guitar-trainer-scale-exercises) -->
 <div class="tab-nav" id="tab-nav">
@@ -237,12 +246,7 @@ HTML = r"""
   <button class="tab-btn" id="tab-btn-scales" onclick="switchTab('scales')">🎵 Scales</button>
 </div>
 
-<div id="tab-exercises" class="tab-panel" style="position:relative">
-<div class="streak-badge" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 16px;font-size:0.85rem;text-align:center;min-width:160px;">
-  <div style="font-size:1.4rem;font-weight:700;">🔥 {{ stats.streak_days }} day{{ 's' if stats.streak_days != 1 else '' }}</div>
-  <div style="opacity:0.7;margin-top:2px;">{{ stats.week_minutes }} min this week</div>
-  <div style="opacity:0.5;margin-top:2px;font-size:0.75rem;">Last: {{ stats.last_practiced or 'never' }}</div>
-</div>
+<div id="tab-exercises" class="tab-panel">
 <!-- Metronome (FR-20260425-guitar-trainer-metronome) -->
 <div class="metronome" id="metro-panel">
   <span class="metro-title">🥁 Metro</span>
@@ -329,22 +333,6 @@ HTML = r"""
 <div class="log-section">
   <details>
     <summary>Practice Log{% if log %} <span style="font-weight:400;font-size:.8rem;color:var(--muted)">— {{ log|length }} session{{ 's' if log|length != 1 }}</span>{% endif %}</summary>
-    <form id="manual-log-form" style="margin:10px 0 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
-      <label style="font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:3px">
-        Duration (min)<input id="log-duration" type="number" value="0" min="0" style="width:70px;background:#111;border:1px solid var(--border);color:#fff;padding:3px 6px;border-radius:3px;font-size:.8rem">
-      </label>
-      <label style="font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:3px">
-        Key<input id="log-key" type="text" placeholder="e.g. G" style="width:52px;background:#111;border:1px solid var(--border);color:#fff;padding:3px 6px;border-radius:3px;font-size:.8rem">
-      </label>
-      <label style="font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:3px">
-        Position<input id="log-position" type="number" min="1" placeholder="1" style="width:52px;background:#111;border:1px solid var(--border);color:#fff;padding:3px 6px;border-radius:3px;font-size:.8rem">
-      </label>
-      <label style="font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:3px">
-        Exercise<input id="log-exercise-name" type="text" placeholder="optional" style="width:120px;background:#111;border:1px solid var(--border);color:#fff;padding:3px 6px;border-radius:3px;font-size:.8rem">
-      </label>
-      <button type="button" class="btn btn-ghost" onclick="manualLogEntry()" style="padding:5px 12px;font-size:.8rem">+ Log</button>
-      <span id="log-form-status" style="font-size:.75rem;color:#6fdc6f;align-self:center"></span>
-    </form>
     {% if log %}
     <div class="log-scroll">
       {% for entry in log %}
@@ -1005,32 +993,7 @@ async function createSession() {
     } catch(e) { console.warn('scale log load failed', e); }
   }
 })();
-
-// ---------------------------------------------------------------------------
-// Manual guitar practice log entry (FR-20260525-practice-streak-badge)
-// ---------------------------------------------------------------------------
-window.manualLogEntry = async function() {
-  const duration_minutes = parseInt(document.getElementById('log-duration').value) || 0;
-  const key = (document.getElementById('log-key').value || '').trim() || null;
-  const posRaw = document.getElementById('log-position').value;
-  const position = posRaw ? (parseInt(posRaw) || null) : null;
-  const exercise_name = (document.getElementById('log-exercise-name').value || '').trim() || null;
-  const statusEl = document.getElementById('log-form-status');
-  try {
-    const r = await fetch('/api/log', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({song_path: '', seg_start: '', seg_end: '', repetition: 1,
-                            duration_minutes, key, position, exercise_name}),
-    });
-    const j = await r.json();
-    statusEl.textContent = j.ok ? '\u2713 Logged' : '\u2717 ' + j.error;
-    statusEl.style.color = j.ok ? '#6fdc6f' : '#f55';
-  } catch(e) {
-    statusEl.textContent = '\u2717 Error';
-    statusEl.style.color = '#f55';
-  }
-};</script>
+</script>
 </body>
 </html>
 """
