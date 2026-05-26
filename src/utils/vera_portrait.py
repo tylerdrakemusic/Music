@@ -244,6 +244,38 @@ def _try_huggingface(
         return None
 
 
+def _try_hf_spaces(prompt: str, save_dir: Path) -> Path | None:
+    """Attempt to generate via HF Spaces FLUX.1-schnell (ZeroGPU). Returns Path or None."""
+    try:
+        mod = _load_workspace_module(
+            "_ws_hf_spaces_client",
+            "src/integrations/huggingface/spaces_client.py",
+        )
+        if mod is None:
+            return None
+        client = mod.HFSpacesImageClient()
+        path = client.generate_image(prompt, output_dir=save_dir, width=1024, height=1024)
+        return path
+    except Exception:
+        return None
+
+
+def _try_pollinations(prompt: str, save_dir: Path) -> Path | None:
+    """Attempt to generate via Pollinations.AI (free, photorealistic, no API key). Returns Path or None."""
+    try:
+        mod = _load_workspace_module(
+            "_ws_pollinations_client",
+            "src/integrations/pollinations/client.py",
+        )
+        if mod is None:
+            return None
+        client = mod.PollinationsClient()
+        path = client.generate_image(prompt, output_dir=save_dir, width=1024, height=1024)
+        return path
+    except Exception:
+        return None
+
+
 def _svg_fallback_path(mode: str) -> Path:
     """Write inline SVG to a dated .svg file and return its path."""
     _IMAGE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -261,8 +293,10 @@ def get_daily_portrait(mode: str | None = None) -> Path:
     1. Determine gig-awareness mode (or use provided mode).
     2. Return cached portrait if already generated today for this mode.
     3. Try DALL-E 3 (requires ``OPENAPI_TOKEN``).
-    4. Fall back to HuggingFace Inference (requires ``HF_TOKEN``).
-    5. Fall back to inline SVG silhouette (always succeeds).
+    4. Fall back to HuggingFace Inference API (requires ``HF_TOKEN`` with credits).
+    5. Try HuggingFace Spaces FLUX.1-schnell (free, ZeroGPU quota).
+    6. Try Pollinations.AI (free, photorealistic, no API key required).
+    7. Fall back to inline SVG silhouette (always succeeds).
 
     Parameters
     ----------
@@ -293,14 +327,28 @@ def get_daily_portrait(mode: str | None = None) -> Path:
         _prune_old_portraits()
         return today_path
 
-    # 2. HuggingFace (fallback)
+    # 2. HuggingFace Inference API (requires HF_TOKEN with credits)
     result = _try_huggingface(positive_prompt, save_dir, negative_prompt=negative_prompt)
     if result and result.exists():
         result.rename(today_path)
         _prune_old_portraits()
         return today_path
 
-    # 3. SVG silhouette fallback (always works)
+    # 3. HuggingFace Spaces FLUX.1-schnell (free, ZeroGPU quota)
+    result = _try_hf_spaces(positive_prompt, save_dir)
+    if result and result.exists():
+        result.rename(today_path)
+        _prune_old_portraits()
+        return today_path
+
+    # 4. Pollinations.AI (free, photorealistic, no API key)
+    result = _try_pollinations(positive_prompt, save_dir)
+    if result and result.exists():
+        result.rename(today_path)
+        _prune_old_portraits()
+        return today_path
+
+    # 5. SVG silhouette fallback (always works)
     return _svg_fallback_path(mode)
 
 
