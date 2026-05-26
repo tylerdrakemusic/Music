@@ -420,7 +420,7 @@ def test_api_scale_positions_eb_returns_10(client) -> None:
     data = resp.get_json()
     assert isinstance(data, list)
     assert len(data) == 10
-    assert all("E-flat major" in p["instructor_phrase"] for p in data)
+    assert all("D-Sharp major" in p["instructor_phrase"] for p in data)
 
 
 def test_api_scale_positions_d_sharp_alias_returns_10(client) -> None:

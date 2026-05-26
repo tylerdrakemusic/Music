@@ -6,7 +6,8 @@ FR-20260524-scale-data-sqlite-migration
 Run from f:\\❤Music:
     $env:PYTHONUTF8="1"; C:\\G\\python.exe tools/seed_scale_data.py
 
-Idempotent — uses INSERT OR IGNORE throughout.
+Idempotent — templates use INSERT OR IGNORE; positions use upsert so phrase
+edits in source code propagate on re-run.
 """
 from __future__ import annotations
 
@@ -258,13 +259,18 @@ def seed(conn) -> None:
             (shape_name, root_string, json.dumps(offsets)),
         )
 
-    # Seed positions
+    # Seed positions — upsert so phrase edits in source propagate on re-run
     for key_name, positions in _POSITIONS.items():
         for order, (shape_name, root_fret, label, rsn, phrase) in enumerate(positions):
             conn.execute(
-                "INSERT OR IGNORE INTO guitar_scale_positions "
+                "INSERT INTO guitar_scale_positions "
                 "(key_name, position_order, shape_name, label, root_string_name, "
-                "root_fret, instructor_phrase) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "root_fret, instructor_phrase) VALUES (?, ?, ?, ?, ?, ?, ?) "
+                "ON CONFLICT(key_name, position_order) DO UPDATE SET "
+                "shape_name=excluded.shape_name, label=excluded.label, "
+                "root_string_name=excluded.root_string_name, "
+                "root_fret=excluded.root_fret, "
+                "instructor_phrase=excluded.instructor_phrase",
                 (key_name, order, shape_name, label, rsn, root_fret, phrase),
             )
 
