@@ -367,9 +367,11 @@ HTML = r"""
       <select id="scale-key" class="scale-select" onchange="onKeyChange()">
         <option value="C">C major</option>
         <option value="D">D major</option>
+        <option value="Eb">D&#x23; / Eb major</option>
         <option value="F">F major</option>
         <option value="G">G major</option>
         <option value="Bb">A&#x23; / Bb major</option>
+        <option value="B">B major</option>
       </select>
     </label>
     <label>Position
@@ -803,7 +805,7 @@ async function createSession() {
   };
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
-  const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11, Bb:10, 'A#':10};
+  const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11, Bb:10, 'A#':10, Eb:3, 'D#':3};
   const PC_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
