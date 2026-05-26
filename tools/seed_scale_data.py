@@ -6,7 +6,8 @@ FR-20260524-scale-data-sqlite-migration
 Run from f:\\❤Music:
     $env:PYTHONUTF8="1"; C:\\G\\python.exe tools/seed_scale_data.py
 
-Idempotent — uses INSERT OR IGNORE throughout.
+Idempotent — templates use INSERT OR IGNORE; positions use upsert so phrase
+edits in source code propagate on re-run.
 """
 from __future__ import annotations
 
@@ -164,15 +165,43 @@ _POSITIONS: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("river",   18, "Position 10 — 川 River shape (18th fret)",  "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major 川 River shape (high octave)."),
         ("E_shape", 18, "Position 11 — E shape (18th fret)",         "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major E shape (high octave)."),
     ],
+    # FR-20260525-guitar-trainer-b-eb-major
+    "B": [
+        ("rock",         2,  "Position 1 — 石 Rock shape (2nd fret)",    "A string",     "Start on the 2nd fret of the A string for B major 石 Rock shape."),
+        ("A_shape",      2,  "Position 2 — A shape (2nd fret)",          "A string",     "Start on the 2nd fret of the A string — B major A shape."),
+        ("G_shape",      7,  "Position 3 — G shape (7th fret)",          "Low E string", "Start on the 7th fret of the low E string — B major G shape."),
+        ("river",        7,  "Position 4 — 川 River shape (7th fret)",   "Low E string", "Start on the 7th fret of the low E string — B major 川 River shape."),
+        ("E_shape",      7,  "Position 5 — E shape (7th fret)",          "Low E string", "Start on the 7th fret of the low E string — B major E shape."),
+        ("D_shape",      7,  "Position 6 — D shape (7th fret)",          "Low E string", "Start on the 7th fret of the low E string — B major D shape."),
+        ("C_shape",      14, "Position 7 — C shape (14th fret)",         "A string",     "Start on the 14th fret of the A string — B major C shape."),
+        ("rock",         14, "Position 8 — 石 Rock shape (14th fret)",   "A string",     "Start on the 14th fret of the A string for B major 石 Rock shape (high octave)."),
+        ("A_shape",      14, "Position 9 — A shape (14th fret)",         "A string",     "Start on the 14th fret of the A string — B major A shape one octave up."),
+        ("G_shape",      19, "Position 10 — G shape (19th fret)",        "Low E string", "Start on the 19th fret of the low E string — B major G shape one octave up."),
+        ("river",        19, "Position 11 — 川 River shape (19th fret)", "Low E string", "Start on the 19th fret of the low E string — B major 川 River shape (high octave)."),
+    ],
+    "Eb": [
+        ("D_shape_open", 1,  "Position 1 — D shape (1st fret)",          "D string",     "Start on the 1st fret of the D string — D-Sharp major D shape."),
+        ("C_shape",      6,  "Position 2 — C shape (6th fret)",          "A string",     "Start on the 6th fret of the A string — D-Sharp major C shape."),
+        ("rock",         6,  "Position 3 — 石 Rock shape (6th fret)",    "A string",     "Start on the 6th fret of the A string for D-Sharp major 石 Rock shape."),
+        ("A_shape",      6,  "Position 4 — A shape (6th fret)",          "A string",     "Start on the 6th fret of the A string — D-Sharp major A shape."),
+        ("G_shape",      11, "Position 5 — G shape (11th fret)",         "Low E string", "Start on the 11th fret of the low E string — D-Sharp major G shape."),
+        ("river",        11, "Position 6 — 川 River shape (11th fret)",  "Low E string", "Start on the 11th fret of the low E string — D-Sharp major 川 River shape."),
+        ("E_shape",      11, "Position 7 — E shape (11th fret)",         "Low E string", "Start on the 11th fret of the low E string — D-Sharp major E shape."),
+        ("D_shape",      11, "Position 8 — D shape (11th fret)",         "Low E string", "Start on the 11th fret of the low E string — D-Sharp major D shape."),
+        ("C_shape",      18, "Position 9 — C shape (18th fret)",         "A string",     "Start on the 18th fret of the A string — D-Sharp major C shape one octave up."),
+        ("rock",         18, "Position 10 — 石 Rock shape (18th fret)",  "A string",     "Start on the 18th fret of the A string for D-Sharp major 石 Rock shape (high octave)."),
+    ],
 }
 
 # Expected pitch-class sets for quick verification
 _PITCH_CLASSES: dict[str, set[int]] = {
-    "C": {0, 2, 4, 5, 7, 9, 11},   # C D E F G A B
-    "G": {7, 9, 11, 0, 2, 4, 6},   # G A B C D E F#
-    "F": {5, 7, 9, 10, 0, 2, 4},   # F G A Bb C D E
-    "D": {2, 4, 6, 7, 9, 11, 1},   # D E F# G A B C#
-    "Bb": {10, 0, 2, 3, 5, 7, 9},  # Bb C D Eb F G A
+    "C":  {0, 2, 4, 5, 7, 9, 11},   # C D E F G A B
+    "G":  {7, 9, 11, 0, 2, 4, 6},   # G A B C D E F#
+    "F":  {5, 7, 9, 10, 0, 2, 4},   # F G A Bb C D E
+    "D":  {2, 4, 6, 7, 9, 11, 1},   # D E F# G A B C#
+    "Bb": {10, 0, 2, 3, 5, 7, 9},   # Bb C D Eb F G A
+    "B":  {11, 1, 3, 4, 6, 8, 10},  # B C# D# E F# G# A#
+    "Eb": {3, 5, 7, 8, 10, 0, 2},   # Eb F G Ab Bb C D
 }
 
 _OPEN_MIDI: dict[int, int] = {
@@ -230,13 +259,18 @@ def seed(conn) -> None:
             (shape_name, root_string, json.dumps(offsets)),
         )
 
-    # Seed positions
+    # Seed positions — upsert so phrase edits in source propagate on re-run
     for key_name, positions in _POSITIONS.items():
         for order, (shape_name, root_fret, label, rsn, phrase) in enumerate(positions):
             conn.execute(
-                "INSERT OR IGNORE INTO guitar_scale_positions "
+                "INSERT INTO guitar_scale_positions "
                 "(key_name, position_order, shape_name, label, root_string_name, "
-                "root_fret, instructor_phrase) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "root_fret, instructor_phrase) VALUES (?, ?, ?, ?, ?, ?, ?) "
+                "ON CONFLICT(key_name, position_order) DO UPDATE SET "
+                "shape_name=excluded.shape_name, label=excluded.label, "
+                "root_string_name=excluded.root_string_name, "
+                "root_fret=excluded.root_fret, "
+                "instructor_phrase=excluded.instructor_phrase",
                 (key_name, order, shape_name, label, rsn, root_fret, phrase),
             )
 

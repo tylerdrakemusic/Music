@@ -193,6 +193,32 @@ _POSITION_DATA: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("river",   18, "Position 10 — 川 River shape (18th fret)",  "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major 川 River shape (high octave)."),
         ("E_shape", 18, "Position 11 — E shape (18th fret)",         "Low E string", "Start on the 18th fret of the low E string — Ay-Sharp major E shape (high octave)."),
     ],
+    # FR-20260525-guitar-trainer-b-eb-major
+    "B": [
+        ("rock",         2,  "Position 1 — 石 Rock shape (2nd fret)",    "A string",     "Start on the 2nd fret of the A string for B major 石 Rock shape."),
+        ("A_shape",      2,  "Position 2 — A shape (2nd fret)",          "A string",     "Start on the 2nd fret of the A string — B major A shape."),
+        ("G_shape",      7,  "Position 3 — G shape (7th fret)",          "Low E string", "Start on the 7th fret of the low E string — B major G shape."),
+        ("river",        7,  "Position 4 — 川 River shape (7th fret)",   "Low E string", "Start on the 7th fret of the low E string — B major 川 River shape."),
+        ("E_shape",      7,  "Position 5 — E shape (7th fret)",          "Low E string", "Start on the 7th fret of the low E string — B major E shape."),
+        ("D_shape",      7,  "Position 6 — D shape (7th fret)",          "Low E string", "Start on the 7th fret of the low E string — B major D shape."),
+        ("C_shape",      14, "Position 7 — C shape (14th fret)",         "A string",     "Start on the 14th fret of the A string — B major C shape."),
+        ("rock",         14, "Position 8 — 石 Rock shape (14th fret)",   "A string",     "Start on the 14th fret of the A string for B major 石 Rock shape (high octave)."),
+        ("A_shape",      14, "Position 9 — A shape (14th fret)",         "A string",     "Start on the 14th fret of the A string — B major A shape one octave up."),
+        ("G_shape",      19, "Position 10 — G shape (19th fret)",        "Low E string", "Start on the 19th fret of the low E string — B major G shape one octave up."),
+        ("river",        19, "Position 11 — 川 River shape (19th fret)", "Low E string", "Start on the 19th fret of the low E string — B major 川 River shape (high octave)."),
+    ],
+    "Eb": [
+        ("D_shape_open", 1,  "Position 1 — D shape (1st fret)",          "D string",     "Start on the 1st fret of the D string — D-Sharp major D shape."),
+        ("C_shape",      6,  "Position 2 — C shape (6th fret)",          "A string",     "Start on the 6th fret of the A string — D-Sharp major C shape."),
+        ("rock",         6,  "Position 3 — 石 Rock shape (6th fret)",    "A string",     "Start on the 6th fret of the A string for D-Sharp major 石 Rock shape."),
+        ("A_shape",      6,  "Position 4 — A shape (6th fret)",          "A string",     "Start on the 6th fret of the A string — D-Sharp major A shape."),
+        ("G_shape",      11, "Position 5 — G shape (11th fret)",         "Low E string", "Start on the 11th fret of the low E string — D-Sharp major G shape."),
+        ("river",        11, "Position 6 — 川 River shape (11th fret)",  "Low E string", "Start on the 11th fret of the low E string — D-Sharp major 川 River shape."),
+        ("E_shape",      11, "Position 7 — E shape (11th fret)",         "Low E string", "Start on the 11th fret of the low E string — D-Sharp major E shape."),
+        ("D_shape",      11, "Position 8 — D shape (11th fret)",         "Low E string", "Start on the 11th fret of the low E string — D-Sharp major D shape."),
+        ("C_shape",      18, "Position 9 — C shape (18th fret)",         "A string",     "Start on the 18th fret of the A string — D-Sharp major C shape one octave up."),
+        ("rock",         18, "Position 10 — 石 Rock shape (18th fret)",  "A string",     "Start on the 18th fret of the A string for D-Sharp major 石 Rock shape (high octave)."),
+    ],
 }
 
 
@@ -309,6 +335,9 @@ SCALE_POSITIONS: dict[str, list[CagedPosition]] = _load()
 
 # A# is enharmonically identical to Bb — expose as a transparent alias
 SCALE_POSITIONS["A#"] = SCALE_POSITIONS["Bb"]
+
+# D# is enharmonically identical to Eb — expose as a transparent alias
+SCALE_POSITIONS["D#"] = SCALE_POSITIONS["Eb"]
 
 # Backward-compat alias — C major positions
 CAGED_POSITIONS: list[CagedPosition] = SCALE_POSITIONS["C"]
