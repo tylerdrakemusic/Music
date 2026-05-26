@@ -367,9 +367,11 @@ HTML = r"""
       <select id="scale-key" class="scale-select" onchange="onKeyChange()">
         <option value="C">C major</option>
         <option value="D">D major</option>
+        <option value="Eb">D&#x23; / Eb major</option>
         <option value="F">F major</option>
         <option value="G">G major</option>
         <option value="Bb">A&#x23; / Bb major</option>
+        <option value="B">B major</option>
       </select>
     </label>
     <label>Position
