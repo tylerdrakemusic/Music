@@ -805,7 +805,7 @@ async function createSession() {
   };
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
-  const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11, Bb:10, 'A#':10};
+  const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11, Bb:10, 'A#':10, Eb:3, 'D#':3};
   const PC_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);

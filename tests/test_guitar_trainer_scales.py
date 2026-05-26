@@ -624,6 +624,16 @@ def test_html_key_select_has_eb_option(html: str) -> None:
     assert 'value="Eb"' in html
 
 
+def test_html_key_pc_map_has_eb(html: str) -> None:
+    """KEY_PC JavaScript map must have an Eb entry (pitch class 3) for correct root coloring."""
+    assert "Eb:3" in html
+
+
+def test_html_key_pc_map_has_dsharp(html: str) -> None:
+    """KEY_PC JavaScript map must have a D# entry (pitch class 3) for correct root coloring."""
+    assert "'D#':3" in html
+
+
 def test_html_has_scale_position_select(html: str) -> None:
     """Rendered HTML must contain the scale position dropdown."""
     assert 'id="scale-position"' in html
