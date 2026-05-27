@@ -23,6 +23,7 @@ FR-20260526-bpm-key-auto-tagger
 from __future__ import annotations
 
 import argparse
+import html
 import random
 import sys
 from datetime import datetime
@@ -382,17 +383,19 @@ def generate_report(
             else "?"
         )
         bpm = str(row["bpm"]) if row.get("bpm") is not None else "—"
-        key = row.get("key") or "—"
-        bsrc = row.get("bpm_source", "unknown")
-        ksrc = row.get("key_source", "unknown")
-        err = row.get("error") or ""
+        key = html.escape(row.get("key") or "—")
+        bsrc = html.escape(row.get("bpm_source", "unknown"))
+        ksrc = html.escape(row.get("key_source", "unknown"))
+        err = html.escape(row.get("error") or "")
+        p_name = html.escape(p.name)
+        p_str = html.escape(str(p))
         integrity = row.get("integrity", False)
         db_upd = row.get("db_updated", False)
         id3_wr = row.get("id3_written", False)
 
         rows_html.append(
             f"        <tr>"
-            f'<td class="filename" title="{p}">{p.name}</td>'
+            f'<td class="filename" title="{p_str}">{p_name}</td>'
             f"<td>{size_mb}</td>"
             f'<td class="{"pass" if integrity else "fail"}">{"PASS" if integrity else "FAIL"}</td>'
             f"<td>{bpm}</td>"
