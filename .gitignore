@@ -110,3 +110,6 @@ tools/_*.py
 
 # temp directory
 tmp/
+
+# Workspace-local git worktrees (FR-20260511-worktree-local-migration)
+.worktrees/
