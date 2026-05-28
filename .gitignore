@@ -113,3 +113,9 @@ tmp/
 
 # Workspace-local git worktrees (FR-20260511-worktree-local-migration)
 .worktrees/
+
+# Workspace-local git worktrees
+.worktrees/
+
+# Workspace-local git worktrees
+.worktrees/
