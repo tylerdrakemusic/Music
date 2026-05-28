@@ -105,6 +105,13 @@ tools/tyJson/exercises/musicTraining/
 # Generated dashboards (auto-regenerated with date stamps on each run)
 reports/band_management_panel.html
 
+# Proof / QA screenshots (ephemeral QA artifacts — not committed to git)
+proof/**/*.png
+proof/**/*.jpg
+proof/**/*.jpeg
+proof/**/*.webp
+proof/**/*.gif
+
 # scratch/debug tools
 tools/_*.py
 
