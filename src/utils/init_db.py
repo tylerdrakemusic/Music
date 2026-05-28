@@ -320,6 +320,21 @@ CREATE TABLE IF NOT EXISTS guitar_scale_positions (
     instructor_phrase TEXT    NOT NULL,
     UNIQUE (key_name, position_order)
 );
+
+-- ── Duplicate audio file groups (FR-20260527-catalog-dedup-scan) ──────────
+-- One row per (canonical, duplicate) sig pair sharing the same sha256.
+CREATE TABLE IF NOT EXISTS duplicate_groups (
+    id                         INTEGER PRIMARY KEY AUTOINCREMENT,
+    sha256                     TEXT NOT NULL,
+    canonical_sig_id           INTEGER REFERENCES release_signatures(id),
+    duplicate_sig_id           INTEGER REFERENCES release_signatures(id),
+    provenance_score_canonical INTEGER,
+    provenance_score_duplicate INTEGER,
+    detected_at                TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(sha256, duplicate_sig_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dup_groups_sha256 ON duplicate_groups(sha256);
 """
 
 _SEED_SQL = """
