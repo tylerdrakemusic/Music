@@ -370,7 +370,7 @@ HTML = r"""
         <option value="Eb">Eb / D&#x23; major</option>
         <option value="F">F major</option>
         <option value="G">G major</option>
-        <option value="Bb">A&#x23; / Bb major</option>
+        <option value="Bb">Bb / A&#x23; major</option>
         <option value="B">B major</option>
       </select>
     </label>
