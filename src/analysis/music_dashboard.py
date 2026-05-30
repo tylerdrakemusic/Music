@@ -1162,10 +1162,18 @@ let signaturesLoaded = false;
 let releaseOpsLoaded = false;
 
 async function loadSignatures() {
-  const res = await fetch('/api/signatures');
-  signatures = await res.json();
-  signaturesLoaded = true;
-  renderSignatures();
+  try {
+    const res = await fetch('/api/signatures');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    signatures = await res.json();
+    signaturesLoaded = true;
+    renderSignatures();
+  } catch (err) {
+    signaturesLoaded = false;
+    const sigGrid = document.getElementById('sigGrid');
+    if (sigGrid) sigGrid.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div>Failed to load signatures — check server logs</div>';
+    console.error('loadSignatures error:', err);
+  }
 }
 
 function renderSignatures() {
@@ -1696,17 +1704,20 @@ def api_tracks():
 
 @app.route("/api/signatures")
 def api_signatures():
-    with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT rs.*, t.title AS track_title, a.title AS album_title
-            FROM release_signatures rs
-            LEFT JOIN tracks t ON t.id = rs.track_id
-            LEFT JOIN albums a ON a.id = t.album_id
-            ORDER BY rs.analyzed_at DESC
-            """
-        ).fetchall()
-    return jsonify([dict(r) for r in rows])
+    try:
+        with get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT rs.*, t.title AS track_title, a.title AS album_title
+                FROM release_signatures rs
+                LEFT JOIN tracks t ON t.id = rs.track_id
+                LEFT JOIN albums a ON a.id = t.album_id
+                ORDER BY rs.analyzed_at DESC
+                """
+            ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 def _table_exists(conn, table_name: str) -> bool:
