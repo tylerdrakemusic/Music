@@ -192,13 +192,20 @@ def _parse_stem(stem: str) -> tuple[str, str, str]:
             artist = _resolve_artist(artist_raw.replace(" ", "-").lower()) or _smart_title(artist_raw)
             return title, artist, final_variant
 
-    # --- Strategy B: "Title - Artist" (space-dash-space) ---
+    # --- Strategy B: "Artist - Title" (canonical) or legacy "Title - Artist" ---
     if " - " in stem:
-        title_part, artist_part = stem.split(" - ", 1)
-        title  = title_part.strip()
-        artist = artist_part.strip()
-        # artist_part might itself be hyphenated (legacy); normalise
-        artist = _resolve_artist(artist.replace(" ", "-").lower()) or artist
+        part_a, part_b = stem.split(" - ", 1)
+        part_a = part_a.strip()
+        part_b = part_b.strip()
+        # Check if first part is a known artist (new canonical "Artist - Title" format)
+        artist_from_a = _resolve_artist(part_a.replace(" ", "-").lower())
+        if artist_from_a:
+            title  = part_b
+            artist = artist_from_a
+        else:
+            # Legacy or unknown artist: treat second part as artist
+            title  = part_a
+            artist = _resolve_artist(part_b.replace(" ", "-").lower()) or part_b
         return title, artist, variant
 
     # --- Strategy C: all-hyphen "Artist-Name-Song-Title" ---
