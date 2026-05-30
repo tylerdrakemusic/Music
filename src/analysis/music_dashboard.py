@@ -1409,6 +1409,8 @@ async function pollRadio() {
       hEl.innerHTML = hist.map(h =>
         `<div class="rh-item"><div><span class="rh-title">${esc(h.title)}</span><br><span class="rh-album">${esc(h.album)}</span></div><span class="rh-time">${esc(h.started_at)}</span></div>`
       ).join('');
+    } else {
+      hEl.innerHTML = '<div style="color:var(--text-dim);padding:12px;">Nothing played yet</div>';
     }
   } catch(e) {
     document.getElementById('radioDot').className = 'radio-dot offline';
