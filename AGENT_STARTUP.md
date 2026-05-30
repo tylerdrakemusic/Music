@@ -127,3 +127,72 @@ C:\G\python.exe src/analysis/music_dashboard.py --port 5050 --no-open
 Integration notes:
 - The dashboard Radio tab consumes `http://localhost:8100/api/now_playing` and `http://localhost:8100/api/playlist` via proxy routes.
 - If the radio process is down, the Radio tab shows offline status but the rest of the dashboard still works.
+
+## 9. Google Drive Integration (FR-20260530-gdrive-integration)
+
+### GDRIVE_SA_KEY Environment Variable
+
+**What it is:**
+`GDRIVE_SA_KEY` is a Windows System environment variable containing the
+**base64-encoded** contents of a Google service account JSON key file.  The
+integration in `⊕Workspace/src/integrations/gdrive/` reads this variable at
+runtime to authenticate against the Google Drive API.  It is **never written
+to disk** and must **never appear in any committed file**.
+
+**How to create:**
+
+1. In the Google Cloud Console, create a service account with Drive read-only
+   access and download its JSON key file (e.g. `gdrive-sa-key.json`).
+
+2. In PowerShell, base64-encode the file:
+   ```powershell
+   $b64 = [System.Convert]::ToBase64String(
+       [System.IO.File]::ReadAllBytes("C:\path\to\gdrive-sa-key.json")
+   )
+   $b64  # copy this value
+   ```
+
+3. Set it as a **Windows System** environment variable (not user-level, not
+   .env file):
+   ```powershell
+   # Run as Administrator:
+   [System.Environment]::SetEnvironmentVariable(
+       "GDRIVE_SA_KEY", $b64, "Machine"
+   )
+   ```
+   Restart any open terminals after setting.
+
+4. Verify:
+   ```powershell
+   $env:GDRIVE_SA_KEY.Substring(0, 20)  # should show first 20 chars of base64
+   ```
+
+**Security rules:**
+- ❌ NEVER commit the raw `.json` key file to any repository
+- ❌ NEVER commit the decoded JSON or the base64 string to any file
+- ❌ NEVER put `GDRIVE_SA_KEY` in `.env` files that are committed
+- ✅ Set it as a Windows System environment variable only
+- ✅ The `.gitignore` must list `*.json` and `gdrive-sa-key*` patterns
+
+**Using the integration:**
+```python
+from integrations.gdrive import GDriveClient
+
+client = GDriveClient()  # reads GDRIVE_SA_KEY from env at construction
+pdf_files = client.list_files(mime_types=["application/pdf"])
+```
+
+**Running the ingest scripts:**
+```powershell
+# 1. Create the sheet_music table (idempotent)
+$env:PYTHONUTF8="1"
+cd "f:\❤Music"
+C:\G\python.exe src/scripts/migrate_sheet_music_table.py
+
+# 2. Backfill local catalog/sheet_music/ files
+C:\G\python.exe src/scripts/backfill_local_sheet_music.py
+
+# 3. Ingest metadata from Google Drive (requires GDRIVE_SA_KEY)
+C:\G\python.exe src/scripts/ingest_sheet_music_gdrive.py
+```
+
