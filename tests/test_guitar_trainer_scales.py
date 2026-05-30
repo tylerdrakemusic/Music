@@ -385,13 +385,13 @@ def test_api_scale_positions_d_returns_11(client) -> None:
 
 
 def test_api_scale_positions_bb_returns_11(client) -> None:
-    """GET /api/scale-positions?key=Bb must return a list of exactly 11 Ay-Sharp major positions."""
+    """GET /api/scale-positions?key=Bb must return a list of exactly 11 B-flat major positions."""
     resp = client.get("/api/scale-positions?key=Bb")
     assert resp.status_code == 200
     data = resp.get_json()
     assert isinstance(data, list)
     assert len(data) == 11
-    assert all("Ay-Sharp major" in p["instructor_phrase"] for p in data)
+    assert all("B-flat major" in p["instructor_phrase"] for p in data)
 
 
 def test_api_scale_positions_a_sharp_alias_returns_11(client) -> None:
