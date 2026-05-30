@@ -971,6 +971,8 @@ async function pollMeta() {
           <span class="time">${h.started_at}</span>
         </div>`
       ).join('');
+    } else {
+      hEl.innerHTML = '<div class="history-item" style="color:var(--dim)">Nothing played yet</div>';
     }
   } catch(e) {}
 }
