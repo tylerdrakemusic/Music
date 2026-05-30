@@ -1079,6 +1079,18 @@ def _serve_mode(host: str = "127.0.0.1", port: int = 8765) -> None:
             else:
                 self.send_error(404)
 
+        def do_HEAD(self) -> None:
+            """Return 405 for known API paths so _veraCheckApi() can detect serve mode."""
+            parsed = urlparse(self.path)
+            path = parsed.path.rstrip("/") or "/"
+            if path == "/vera/prompt":
+                self.send_response(405)
+                self.send_header("Allow", "GET, POST")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+            else:
+                self.send_error(404)
+
         def do_POST(self) -> None:
             parsed = urlparse(self.path)
             path = parsed.path.rstrip("/")
