@@ -378,7 +378,7 @@ class RadioBroadcast:
                 "title": track["title"],
                 "album": track["album"],
                 "format": track["format"],
-                "started_at": time.strftime("%H:%M:%S"),
+                "started_at": time.strftime("%I:%M %p"),
             })
             print(f"[RADIO] ▶ Now playing: {track['title']} ({track['album']})")
 
@@ -664,7 +664,7 @@ class RadioBroadcastV2:
                 "title": track["title"],
                 "album": track["album"],
                 "format": track["format"],
-                "started_at": time.strftime("%H:%M:%S"),
+                "started_at": time.strftime("%I:%M %p"),
             })
             print(f"[RADIO] ▶ Now playing: {track['title']} ({track['album']})")
 
@@ -1017,7 +1017,7 @@ def _poll_icecast_history() -> None:
                         "title": _icecast_current_title,
                         "album": _icecast_current_artist or "Muzic",
                         "format": "icecast-mp3",
-                        "started_at": time.strftime("%H:%M:%S", time.localtime(_icecast_started_at)),
+                        "started_at": time.strftime("%I:%M %p", time.localtime(_icecast_started_at)),
                     })
                 _icecast_current_title = title
                 _icecast_current_artist = artist
