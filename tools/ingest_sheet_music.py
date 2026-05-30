@@ -32,9 +32,10 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-COVERS_DIR   = PROJECT_ROOT / "catalog" / "sheet_music" / "covers"
-DEFAULT_TMP  = Path(r"C:\Users\tyler\Desktop\tmp")
+PROJECT_ROOT  = Path(__file__).resolve().parents[1]
+COVERS_DIR    = PROJECT_ROOT / "catalog" / "sheet_music" / "covers"
+ORIGINALS_DIR = PROJECT_ROOT / "catalog" / "sheet_music" / "originals"
+DEFAULT_TMP   = Path(r"C:\Users\tyler\Desktop\sheet music ingest")
 
 # ---------------------------------------------------------------------------
 # Known multi-word artists that appear as hyphenated prefixes in legacy filenames.
@@ -79,10 +80,43 @@ _ARTIST_TABLE: dict[str, str] = {
     "tyler-drake":          "Tyler James Drake",
     "van-halen":            "Van Halen",
     "lynyrd-skynyrd":       "Lynyrd Skynyrd",
-    "chris-isaak":          "Chris Isaak",
-    "tg":                   "TG",   # band abbreviation in Copper Creek setlists
-    "tamala-cameron":       "Tamala Cameron & Gene Ngo",
-    "tamala-and-gene":      "Tamala Cameron & Gene Ngo",
+    "tg":                        "TG",
+    "tamala-cameron":            "Tamala Cameron & Gene Ngo",
+    "tamala-and-gene":           "Tamala Cameron & Gene Ngo",
+    # --- extended artist table for covers/ normalization ---
+    "alicia-keys":               "Alicia Keys",
+    "average-white-band":        "Average White Band",
+    "beabadoobee":               "Beabadoobee",
+    "big-thief":                 "Big Thief",
+    "bing-crosby":               "Bing Crosby",
+    "bob-seger":                 "Bob Seger",
+    "boston":                    "Boston",
+    "christina-aguilera":        "Christina Aguilera",
+    "chris-isaak":               "Chris Isaak",
+    "david-bowie":               "David Bowie",
+    "delain":                    "Delain",
+    "dolly-parton":              "Dolly Parton",
+    "donna-summer":              "Donna Summer",
+    "floor-jansen":              "Floor Jansen",
+    "guthrie-govan":             "Guthrie Govan",
+    "inxs":                      "INXS",
+    "jelly-roll":                "Jelly Roll",
+    "jocelyn-and-chris-arndt":   "Jocelyn and Chris Arndt",
+    "john-lennon":               "John Lennon",
+    "keyshia-cole":              "Keyshia Cole",
+    "kool-the-gang":             "Kool & The Gang",
+    "kool-and-the-gang":         "Kool & The Gang",
+    "lainey-wilson":             "Lainey Wilson",
+    "lana-del-rey":              "Lana Del Rey",
+    "letters-to-cleo":           "Letters to Cleo",
+    "luke-combs":                "Luke Combs",
+    "mariah-carey":              "Mariah Carey",
+    "rihanna":                   "Rihanna",
+    "stevie-wonder":             "Stevie Wonder",
+    "tata-young":                "Tata Young",
+    "the-trammps":               "The Trammps",
+    "wild-cherry":               "Wild Cherry",
+    "zz-top":                    "ZZ Top",
 }
 
 # Single-word artists that appear in the tmp hyphenated filenames.
@@ -139,7 +173,8 @@ def _smart_title(s: str) -> str:
 
 
 def _canonical_name(title: str, artist: str, variant: str, ext: str) -> str:
-    name = f"{title} - {artist}" if artist else title
+    """Return standardised filename: 'Artist - Title (Descriptor).ext'."""
+    name = f"{artist} - {title}" if artist else title
     if variant:
         name += f" ({variant})"
     return name + ext
@@ -167,30 +202,42 @@ def _parse_stem(stem: str) -> tuple[str, str, str]:
         variant = vm.group(1).strip()
         stem = stem[: vm.start()].strip()
 
-    # --- Strategy A: underscore-delimited "Title_Artist_Key_X" ---
+    # --- Strategy A: underscore-delimited "Title_Artist_Key_X" or "Artist_Title_Key_X" ---
     if "_" in stem:
         parts = [p.strip() for p in stem.split("_")]
-        # Expect at least title_artist; optional Key_X at end
+        # Expect at least two segments; optional Key_X at end
         if len(parts) >= 2:
-            title_raw  = parts[0].replace("-", " ")
-            artist_raw = parts[1].replace("-", " ")
+            # Detect artist-first ordering (e.g. old-style "Tyler James Drake_Invisible_Key_A Minor")
+            p0_key = parts[0].replace(" ", "-").lower()
+            if _resolve_artist(p0_key):
+                artist_raw = parts[0].replace("-", " ")
+                title_raw  = parts[1].replace("-", " ")
+            else:
+                title_raw  = parts[0].replace("-", " ")
+                artist_raw = parts[1].replace("-", " ")
             key_variant = ""
             if len(parts) >= 4 and parts[2].lower() == "key":
-                key_variant = f"Key {parts[3]}"
+                key_variant = f"Key {' '.join(parts[3:])}"
             elif len(parts) == 3 and re.match(r"^key$", parts[2], re.I):
-                key_variant = f"Key {parts[3]}" if len(parts) > 3 else ""
+                key_variant = ""
             final_variant = key_variant or variant
             title  = _smart_title(title_raw)
             artist = _resolve_artist(artist_raw.replace(" ", "-").lower()) or _smart_title(artist_raw)
             return title, artist, final_variant
 
-    # --- Strategy B: "Title - Artist" (space-dash-space) ---
+    # --- Strategy B: "Title - Artist" or "Artist - Title" (space-dash-space) ---
     if " - " in stem:
-        title_part, artist_part = stem.split(" - ", 1)
-        title  = title_part.strip()
-        artist = artist_part.strip()
-        # artist_part might itself be hyphenated (legacy); normalise
-        artist = _resolve_artist(artist.replace(" ", "-").lower()) or artist
+        left, right = stem.split(" - ", 1)
+        left  = left.strip()
+        right = right.strip()
+        # Detect artist-first ordering (already-canonical form: 'Steely Dan - Josie')
+        left_artist = _resolve_artist(left.replace(" ", "-").lower())
+        if left_artist:
+            title  = right
+            artist = left_artist
+        else:
+            title  = left
+            artist = _resolve_artist(right.replace(" ", "-").lower()) or right
         return title, artist, variant
 
     # --- Strategy C: all-hyphen "Artist-Name-Song-Title" ---
@@ -239,6 +286,12 @@ def _resolve_artist(hyphen_lower: str) -> str:
     return ""
 
 
+def _is_tyler_original(stem: str) -> bool:
+    """Return True if the file stem belongs to a Tyler James Drake original."""
+    normalised = stem.lower().replace("-", " ").replace("_", " ")
+    return "tyler james drake" in normalised or "tyler drake" in normalised
+
+
 # ---------------------------------------------------------------------------
 # Covers index
 # ---------------------------------------------------------------------------
@@ -261,22 +314,39 @@ def _similarity(a: str, b: str) -> float:
 SEMANTIC_THRESHOLD = 0.80  # fuzzy match score to treat as same song
 
 
-def main(tmp_dir: Path = DEFAULT_TMP, apply: bool = False) -> None:
+def main(
+    tmp_dir: Path = DEFAULT_TMP,
+    apply: bool = False,
+    covers_dir: Path = COVERS_DIR,
+    originals_dir: Path = ORIGINALS_DIR,
+) -> None:
     if not tmp_dir.exists():
         print(f"ERROR: tmp dir not found: {tmp_dir}")
         sys.exit(1)
-    if not COVERS_DIR.exists():
-        print(f"ERROR: covers dir not found: {COVERS_DIR}")
+    if not covers_dir.exists():
+        print(f"ERROR: covers dir not found: {covers_dir}")
+        sys.exit(1)
+    if not originals_dir.exists():
+        print(f"ERROR: originals dir not found: {originals_dir}")
         sys.exit(1)
 
     # ── Index existing covers ─────────────────────────────────────────────
     covers_by_hash: dict[str, Path] = {}
     covers_by_key:  dict[str, Path] = {}   # normalised_key → path
-    for f in sorted(COVERS_DIR.iterdir()):
+    for f in sorted(covers_dir.iterdir()):
         if f.is_file():
             covers_by_hash[_sha256(f)] = f
             key = _covers_key(f.stem)
             covers_by_key[key] = f
+
+    # ── Index existing originals ──────────────────────────────────────────
+    originals_by_hash: dict[str, Path] = {}
+    originals_by_key:  dict[str, Path] = {}
+    for f in sorted(originals_dir.iterdir()):
+        if f.is_file():
+            originals_by_hash[_sha256(f)] = f
+            key = _covers_key(f.stem)
+            originals_by_key[key] = f
 
     # ── Hash tmp files; group exact dupes together ────────────────────────
     tmp_by_hash: dict[str, list[Path]] = {}
@@ -298,11 +368,17 @@ def main(tmp_dir: Path = DEFAULT_TMP, apply: bool = False) -> None:
         dupes = group_sorted[1:]
 
         for d in dupes:
-            actions.append(("SKIP_TMP_DUP", d, "", f"exact dup of → {rep.name}"))
+            actions.append(("SKIP_TMP_DUP", d, "", f"exact dup of → {rep.name}", covers_dir))
 
-        # Exact match against existing cover
-        if h in covers_by_hash:
-            actions.append(("SKIP_EXACT_DUP", rep, "", f"hash match → {covers_by_hash[h].name}"))
+        # Route Tyler originals to originals/, everything else to covers/
+        is_original = _is_tyler_original(rep.stem)
+        target_dir       = originals_dir if is_original else covers_dir
+        target_by_hash   = originals_by_hash if is_original else covers_by_hash
+        target_by_key    = originals_by_key  if is_original else covers_by_key
+
+        # Exact match against existing file in target dir
+        if h in target_by_hash:
+            actions.append(("SKIP_EXACT_DUP", rep, "", f"hash match → {target_by_hash[h].name}", target_dir))
             continue
 
         # Parse filename
@@ -310,26 +386,27 @@ def main(tmp_dir: Path = DEFAULT_TMP, apply: bool = False) -> None:
         ext = rep.suffix.lower()
 
         if not title:
-            actions.append(("MANUAL_REVIEW", rep, rep.name, "could not parse title from filename"))
+            actions.append(("MANUAL_REVIEW", rep, rep.name, "could not parse title from filename", target_dir))
             continue
 
         dest_name = _canonical_name(title, artist, variant, ext)
 
-        # Semantic duplicate check
+        # Semantic duplicate check against target dir
         query_key = _covers_key(f"{title} {artist}".strip())
         best_score, best_key = 0.0, ""
-        for ck in covers_by_key:
+        for ck in target_by_key:
             s = _similarity(query_key, ck)
             if s > best_score:
                 best_score, best_key = s, ck
 
         if best_score >= SEMANTIC_THRESHOLD:
-            existing = covers_by_key[best_key]
+            existing = target_by_key[best_key]
             if existing.suffix.lower() == ext:
                 actions.append((
                     "SKIP_SEMANTIC",
                     rep, dest_name,
                     f"fuzzy {best_score:.2f} → {existing.name}",
+                    target_dir,
                 ))
                 continue
             else:
@@ -338,15 +415,16 @@ def main(tmp_dir: Path = DEFAULT_TMP, apply: bool = False) -> None:
                     "COPY_NEW_FORMAT",
                     rep, dest_name,
                     f"new format vs {existing.name} ({best_score:.2f})",
+                    target_dir,
                 ))
                 continue
 
         # Check if dest name already exists
-        if (COVERS_DIR / dest_name).exists():
-            actions.append(("SKIP_NAME_EXISTS", rep, dest_name, "dest already exists"))
+        if (target_dir / dest_name).exists():
+            actions.append(("SKIP_NAME_EXISTS", rep, dest_name, "dest already exists", target_dir))
             continue
 
-        actions.append(("COPY_NEW", rep, dest_name, ""))
+        actions.append(("COPY_NEW", rep, dest_name, "", target_dir))
 
     # ── Print report ──────────────────────────────────────────────────────
     _ICONS = {
@@ -361,9 +439,10 @@ def main(tmp_dir: Path = DEFAULT_TMP, apply: bool = False) -> None:
 
     print(f"\n{'═'*72}")
     print(f"  Sheet Music Ingest")
-    print(f"  Source : {tmp_dir}")
-    print(f"  Dest   : {COVERS_DIR}")
-    print(f"  Mode   : {'★ APPLY' if apply else '○ DRY RUN (pass --apply to copy)'}")
+    print(f"  Source   : {tmp_dir}")
+    print(f"  Covers   : {covers_dir}")
+    print(f"  Originals: {originals_dir}")
+    print(f"  Mode     : {'★ APPLY' if apply else '○ DRY RUN (pass --apply to copy)'}")
     print(f"{'═'*72}\n")
 
     # Group output by action for readability
@@ -379,8 +458,9 @@ def main(tmp_dir: Path = DEFAULT_TMP, apply: bool = False) -> None:
         if not rows:
             continue
         icon = _ICONS.get(action_key, action_key)
-        for action, src, dest, reason in rows:
-            print(f"  {icon}  {src.name}")
+        for action, src, dest, reason, dest_dir in rows:
+            label = "[orig]" if dest_dir == originals_dir else "[cov] "
+            print(f"  {icon} {label}  {src.name}")
             if dest and dest != src.name:
                 print(f"               → {dest}")
             if reason:
@@ -402,23 +482,119 @@ def main(tmp_dir: Path = DEFAULT_TMP, apply: bool = False) -> None:
     # ── Apply ─────────────────────────────────────────────────────────────
     if apply:
         copied = 0
-        for action, src, dest, _ in actions:
+        for action, src, dest, _, dest_dir in actions:
             if action in ("COPY_NEW", "COPY_NEW_FORMAT"):
-                dest_path = COVERS_DIR / dest
+                dest_path = dest_dir / dest
                 if dest_path.exists():
                     print(f"  SKIP (already exists): {dest}")
                     continue
                 shutil.copy2(src, dest_path)
-                print(f"  COPIED: {dest}")
+                folder = "originals" if dest_dir == originals_dir else "covers"
+                print(f"  COPIED [{folder}]: {dest}")
                 copied += 1
-        print(f"\n  Done — {copied} file(s) copied to covers/")
+        print(f"\n  Done — {copied} file(s) copied")
     else:
-        print("  Run with --apply to copy files to covers/.")
+        print("  Run with --apply to copy files.")
+
+
+def normalize(
+    covers_dir: Path = COVERS_DIR,
+    originals_dir: Path = ORIGINALS_DIR,
+    apply: bool = False,
+) -> list[dict]:
+    """
+    Rename all files in covers/ and originals/ to the canonical format:
+        Artist - Song Title (Descriptor).ext
+
+    Returns a list of dicts with keys: from, to, action, reason.
+    action values:
+        'rename'                  — file will be / was renamed
+        'no_change'               — already canonical
+        'manual_review'           — could not parse filename
+        'manual_review_collision' — two files normalise to the same target name
+    """
+    # ── Collect intended renames ─────────────────────────────────────────
+    entries: list[dict] = []   # {from, to, action, reason, path_obj}
+    for folder in (covers_dir, originals_dir):
+        for f in sorted(folder.iterdir()):
+            if not f.is_file():
+                continue
+            title, artist, variant = _parse_stem(f.stem)
+            if not title:
+                entries.append({
+                    "from": f.name, "to": f.name,
+                    "action": "manual_review",
+                    "reason": "could not parse filename",
+                    "_path": f,
+                })
+                continue
+            canonical = _canonical_name(title, artist, variant, f.suffix.lower())
+            if canonical == f.name:
+                entries.append({
+                    "from": f.name, "to": f.name,
+                    "action": "no_change",
+                    "reason": "",
+                    "_path": f,
+                })
+            else:
+                entries.append({
+                    "from": f.name, "to": canonical,
+                    "action": "rename",
+                    "reason": "",
+                    "_path": f,
+                })
+
+    # ── Detect rename collisions (different sources → same target) ───────
+    target_counts: dict[str, list[int]] = {}
+    for i, e in enumerate(entries):
+        if e["action"] == "rename":
+            target_counts.setdefault(e["to"], []).append(i)
+
+    for target, idxs in target_counts.items():
+        if len(idxs) > 1:
+            for idx in idxs:
+                entries[idx]["action"] = "manual_review_collision"
+                entries[idx]["reason"] = f"collision: {len(idxs)} files → {target}"
+
+    # ── Apply ─────────────────────────────────────────────────────────────
+    if apply:
+        for e in entries:
+            if e["action"] == "rename":
+                src_path = e["_path"]
+                dst_path = src_path.parent / e["to"]
+                if dst_path.exists():
+                    e["action"] = "manual_review_collision"
+                    e["reason"] = f"dest already exists: {e['to']}"
+                    continue
+                src_path.rename(dst_path)
+
+    # Strip internal _path key before returning
+    return [{k: v for k, v in e.items() if k != "_path"} for e in entries]
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Ingest sheet music from tmp folder.")
-    ap.add_argument("--apply", action="store_true", help="Actually copy files (default: dry run)")
+    ap.add_argument("--apply", action="store_true", help="Actually copy/rename files (default: dry run)")
     ap.add_argument("--tmp", type=Path, default=DEFAULT_TMP, help="Source tmp folder")
+    ap.add_argument("--normalize", action="store_true", help="Rename all existing covers/ and originals/ to canonical format")
     args = ap.parse_args()
-    main(tmp_dir=args.tmp, apply=args.apply)
+    if args.normalize:
+        results = normalize(apply=args.apply)
+        renames   = [r for r in results if r["action"] == "rename"]
+        reviews   = [r for r in results if "manual_review" in r["action"]]
+        no_change = [r for r in results if r["action"] == "no_change"]
+        print(f"\n{'═'*72}")
+        print(f"  Sheet Music Normalize")
+        print(f"  Mode: {'★ APPLY' if args.apply else '○ DRY RUN (pass --apply to rename)'}")
+        print(f"{'═'*72}\n")
+        for r in renames:
+            print(f"  RENAME  {r['from']}")
+            print(f"       →  {r['to']}")
+        for r in reviews:
+            print(f"  REVIEW  {r['from']}  ({r['reason']})")
+        print(f"\n  {'─'*68}")
+        print(f"  Renames   : {len(renames)}")
+        print(f"  No change : {len(no_change)}")
+        print(f"  Review    : {len(reviews)}")
+    else:
+        main(tmp_dir=args.tmp, apply=args.apply)
