@@ -8,6 +8,7 @@ Covers:
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
 import sys
 from pathlib import Path
@@ -61,15 +62,21 @@ class TestAudioUrlHelper:
     def test_uri_contains_g_drive(self) -> None:
         result = self.mod._audio_url("song.mp3")
         assert result is not None
-        # Should point to G:/Muzic or G:\Muzic depending on OS normalisation
+        # Should point to G:/Muzic or G:\\Muzic depending on OS normalisation
         assert "G" in result or "g" in result
 
 
 # ---------------------------------------------------------------------------
 # export_catalog.py — DB integration (requires heartmusic.db)
 # ---------------------------------------------------------------------------
-_DB_PRESENT = (PROJECT_ROOT / "src" / "data" / "heartmusic.db").exists()
-requires_db = pytest.mark.skipif(not _DB_PRESENT, reason="heartmusic.db not present (CI)")
+_DB_PRESENT = (
+    (PROJECT_ROOT / "src" / "data" / "heartmusic.db").exists()
+    and bool(os.environ.get("HEARTMUSIC_DB_KEY"))
+)
+requires_db = pytest.mark.skipif(
+    not _DB_PRESENT,
+    reason="heartmusic.db not present or HEARTMUSIC_DB_KEY not set (CI)",
+)
 
 
 @requires_db

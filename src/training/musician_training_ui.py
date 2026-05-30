@@ -367,7 +367,7 @@ HTML = r"""
       <select id="scale-key" class="scale-select" onchange="onKeyChange()">
         <option value="C">C major</option>
         <option value="D">D major</option>
-        <option value="Eb">D&#x23; / Eb major</option>
+        <option value="Eb">Eb / D&#x23; major</option>
         <option value="F">F major</option>
         <option value="G">G major</option>
         <option value="Bb">A&#x23; / Bb major</option>
@@ -806,7 +806,9 @@ async function createSession() {
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
   const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11, Bb:10, 'A#':10, Eb:3, 'D#':3};
-  const PC_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const PC_NAMES      = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const PC_NAMES_FLAT = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+  const FLAT_KEYS     = new Set(['F','Bb','Eb','Ab','Db','Gb']);
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
   // Interval color map: root=hot-pink, major 3rd=red-orange, perfect 5th=hot-teal, other=grey
@@ -852,6 +854,7 @@ async function createSession() {
     // Scale dots — string 1 (high e) → row 0 (top), string 6 (low E) → row 5 (bottom)
     // Open-string notes appear to the LEFT of the nut
     const rootPc = KEY_PC[_currentKey] ?? 0;
+    const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
     const sorted = (notes || []).slice().sort((a,b) => a.midi - b.midi);
     sorted.forEach((n, i) => {
       const row = n.string - 1;  // string 1→row 0 (top), string 6→row 5 (bottom)
@@ -866,7 +869,7 @@ async function createSession() {
       const textFill = isActive ? '#000000' : DOT_TEXT[dotType];
       const stroke = isActive ? '#000000' : DOT_STROKE[dotType];
       const r = isActive ? 10 : 9;
-      const noteName = PC_NAMES[pc];
+      const noteName = noteNames[pc];
       html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1" class="fret-dot${isActive?' playing':''}" data-note-idx="${i}"/>`;
       html += `<text x="${x}" y="${y + 4}" fill="${textFill}" text-anchor="middle" font-size="10" font-weight="bold" font-family="Segoe UI,sans-serif">${noteName}</text>`;
     });

@@ -414,13 +414,13 @@ def test_api_scale_positions_b_returns_11(client) -> None:
 
 
 def test_api_scale_positions_eb_returns_10(client) -> None:
-    """GET /api/scale-positions?key=Eb must return a list of exactly 10 Eb major positions."""
+    """GET /api/scale-positions?key=Eb must return a list of exactly 10 E-flat major positions."""
     resp = client.get("/api/scale-positions?key=Eb")
     assert resp.status_code == 200
     data = resp.get_json()
     assert isinstance(data, list)
     assert len(data) == 10
-    assert all("D-Sharp major" in p["instructor_phrase"] for p in data)
+    assert all("E-flat major" in p["instructor_phrase"] for p in data)
 
 
 def test_api_scale_positions_d_sharp_alias_returns_10(client) -> None:
@@ -695,7 +695,7 @@ def test_fretboard_standard_fret_markers(html: str) -> None:
 def test_fretboard_note_labels_logic(html: str) -> None:
     """Rendered HTML must contain per-dot note-name text rendering."""
     assert "noteName" in html
-    assert "PC_NAMES[pc]" in html
+    assert "noteNames[pc]" in html
 
 
 def test_fretboard_old_wrong_fret_logic_removed(html: str) -> None:
