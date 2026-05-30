@@ -80,10 +80,44 @@ _ARTIST_TABLE: dict[str, str] = {
     "tyler-drake":          "Tyler James Drake",
     "van-halen":            "Van Halen",
     "lynyrd-skynyrd":       "Lynyrd Skynyrd",
-    "chris-isaak":          "Chris Isaak",
-    "tg":                   "TG",   # band abbreviation in Copper Creek setlists
-    "tamala-cameron":       "Tamala Cameron & Gene Ngo",
-    "tamala-and-gene":      "Tamala Cameron & Gene Ngo",
+    "tg":                        "TG",
+    "tamala-cameron":            "Tamala Cameron & Gene Ngo",
+    "tamala-and-gene":           "Tamala Cameron & Gene Ngo",
+    # --- extended artist table for covers/ normalization ---
+    "alicia-keys":               "Alicia Keys",
+    "average-white-band":        "Average White Band",
+    "beabadoobee":               "Beabadoobee",
+    "big-thief":                 "Big Thief",
+    "bing-crosby":               "Bing Crosby",
+    "bob-seger":                 "Bob Seger",
+    "boston":                    "Boston",
+    "christina-aguilera":        "Christina Aguilera",
+    "chris-isaak":               "Chris Isaak",
+    "david-bowie":               "David Bowie",
+    "delain":                    "Delain",
+    "dolly-parton":              "Dolly Parton",
+    "donna-summer":              "Donna Summer",
+    "floor-jansen":              "Floor Jansen",
+    "ghost-embrace":             "Ghost Embrace",
+    "guthrie-govan":             "Guthrie Govan",
+    "inxs":                      "INXS",
+    "jelly-roll":                "Jelly Roll",
+    "jocelyn-and-chris-arndt":   "Jocelyn and Chris Arndt",
+    "john-lennon":               "John Lennon",
+    "keyshia-cole":              "Keyshia Cole",
+    "kool-the-gang":             "Kool & The Gang",
+    "kool-and-the-gang":         "Kool & The Gang",
+    "lainey-wilson":             "Lainey Wilson",
+    "lana-del-rey":              "Lana Del Rey",
+    "letters-to-cleo":           "Letters to Cleo",
+    "luke-combs":                "Luke Combs",
+    "mariah-carey":              "Mariah Carey",
+    "rihanna":                   "Rihanna",
+    "stevie-wonder":             "Stevie Wonder",
+    "tata-young":                "Tata Young",
+    "the-trammps":               "The Trammps",
+    "wild-cherry":               "Wild Cherry",
+    "zz-top":                    "ZZ Top",
 }
 
 # Single-word artists that appear in the tmp hyphenated filenames.
@@ -192,20 +226,19 @@ def _parse_stem(stem: str) -> tuple[str, str, str]:
             artist = _resolve_artist(artist_raw.replace(" ", "-").lower()) or _smart_title(artist_raw)
             return title, artist, final_variant
 
-    # --- Strategy B: "Artist - Title" (canonical) or legacy "Title - Artist" ---
+    # --- Strategy B: "Title - Artist" or "Artist - Title" (space-dash-space) ---
     if " - " in stem:
-        part_a, part_b = stem.split(" - ", 1)
-        part_a = part_a.strip()
-        part_b = part_b.strip()
-        # Check if first part is a known artist (new canonical "Artist - Title" format)
-        artist_from_a = _resolve_artist(part_a.replace(" ", "-").lower())
-        if artist_from_a:
-            title  = part_b
-            artist = artist_from_a
+        left, right = stem.split(" - ", 1)
+        left  = left.strip()
+        right = right.strip()
+        # Detect artist-first ordering (already-canonical form: 'Steely Dan - Josie')
+        left_artist = _resolve_artist(left.replace(" ", "-").lower())
+        if left_artist:
+            title  = right
+            artist = left_artist
         else:
-            # Legacy or unknown artist: treat second part as artist
-            title  = part_a
-            artist = _resolve_artist(part_b.replace(" ", "-").lower()) or part_b
+            title  = left
+            artist = _resolve_artist(right.replace(" ", "-").lower()) or right
         return title, artist, variant
 
     # --- Strategy C: all-hyphen "Artist-Name-Song-Title" ---
