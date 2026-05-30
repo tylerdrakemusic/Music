@@ -997,12 +997,13 @@ playlist_snapshot: list[dict] = []
 # Server-side history for icecast backend (Icecast status API exposes only current track)
 _icecast_history: collections.deque = collections.deque(maxlen=20)
 _icecast_current_title: str = ""
+_icecast_current_artist: str = ""
 _icecast_started_at: float = 0.0
 
 
 def _poll_icecast_history() -> None:
     """Background thread: poll Icecast status and maintain a server-side play history."""
-    global _icecast_current_title, _icecast_started_at
+    global _icecast_current_title, _icecast_current_artist, _icecast_started_at
     while True:
         try:
             source = fetch_icecast_source(icecast_status_url)
@@ -1010,14 +1011,17 @@ def _poll_icecast_history() -> None:
             raw_artist = str(source.get("artist", ""))
             title, artist = normalize_icecast_metadata(raw_title, raw_artist)
             if title and title != _icecast_current_title:
+                # The previous track just finished — record it before updating current
+                if _icecast_current_title:
+                    _icecast_history.append({
+                        "title": _icecast_current_title,
+                        "album": _icecast_current_artist or "Muzic",
+                        "format": "icecast-mp3",
+                        "started_at": time.strftime("%H:%M:%S", time.localtime(_icecast_started_at)),
+                    })
                 _icecast_current_title = title
+                _icecast_current_artist = artist
                 _icecast_started_at = time.time()
-                _icecast_history.append({
-                    "title": title,
-                    "album": artist or "Muzic",
-                    "format": "icecast-mp3",
-                    "started_at": time.strftime("%H:%M:%S"),
-                })
         except Exception:
             pass
         time.sleep(5)
@@ -1075,11 +1079,7 @@ def now_playing():
         )
         listeners = int(source.get("listeners", 0) or 0)
         uptime = time.time() - _icecast_started_at if _icecast_started_at else 0.0
-        # Exclude the currently-playing track from history (it's shown as now-playing)
-        history = [
-            h for h in list(_icecast_history)
-            if h["title"] != (title or "")
-        ]
+        history = list(_icecast_history)
         return jsonify({
             "title": title or "Starting...",
             "album": "",
