@@ -98,6 +98,7 @@ _ARTIST_TABLE: dict[str, str] = {
     "dolly-parton":              "Dolly Parton",
     "donna-summer":              "Donna Summer",
     "floor-jansen":              "Floor Jansen",
+    "ghost-embrace":             "Ghost Embrace",
     "guthrie-govan":             "Guthrie Govan",
     "inxs":                      "INXS",
     "jelly-roll":                "Jelly Roll",
