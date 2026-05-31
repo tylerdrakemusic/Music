@@ -786,6 +786,7 @@ async function createSession() {
       `<option value="${i}">${p.label}</option>`
     ).join('');
     onPositionChange();
+    drawStaves(key, -1);
   }
 
   window.onKeyChange = function() {
