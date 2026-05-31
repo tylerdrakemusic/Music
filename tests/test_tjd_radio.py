@@ -361,6 +361,114 @@ class TestNoRepeatAcrossShuffleBoundary:
         assert next_track["title"] != "C"
 
 
+class TestQuantumShuffleWiring:
+    """BFX-20260531-radio-quantum-shuffle — prefer_quantum flows through build functions."""
+
+    def test_build_playlist_passes_prefer_quantum_true_to_shuffle(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """build_playlist(prefer_quantum=True) must call _shuffle_tracks_with_variance with prefer_quantum=True."""
+        d = tmp_path / "tracks"
+        d.mkdir()
+        _make_fake_audio_file(d, "Zebra Song.mp3")
+        _make_fake_audio_file(d, "Apple Song.mp3")
+
+        calls: list[bool] = []
+
+        import radio.tjd_radio as tjd
+
+        orig = tjd._shuffle_tracks_with_variance
+
+        def spy(tracks, prefer_quantum=True):
+            calls.append(prefer_quantum)
+            return orig(tracks, prefer_quantum=prefer_quantum)
+
+        monkeypatch.setattr(tjd, "_shuffle_tracks_with_variance", spy)
+
+        from radio.tjd_radio import build_playlist
+        build_playlist([d], shuffle=True, prefer_quantum=True)
+
+        assert calls, "shuffle was not called"
+        assert calls[0] is True, f"Expected prefer_quantum=True, got {calls[0]}"
+
+    def test_build_playlist_passes_prefer_quantum_false_by_default(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """build_playlist default still uses prefer_quantum=False (backward-compat)."""
+        d = tmp_path / "tracks"
+        d.mkdir()
+        _make_fake_audio_file(d, "Alpha.mp3")
+
+        calls: list[bool] = []
+
+        import radio.tjd_radio as tjd
+
+        orig = tjd._shuffle_tracks_with_variance
+
+        def spy(tracks, prefer_quantum=True):
+            calls.append(prefer_quantum)
+            return orig(tracks, prefer_quantum=prefer_quantum)
+
+        monkeypatch.setattr(tjd, "_shuffle_tracks_with_variance", spy)
+
+        from radio.tjd_radio import build_playlist
+        build_playlist([d], shuffle=True)
+
+        assert calls, "shuffle was not called"
+        assert calls[0] is False, f"Expected prefer_quantum=False by default, got {calls[0]}"
+
+    def test_build_deduped_playlist_passes_prefer_quantum_true(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """build_deduped_playlist(prefer_quantum=True) must call shuffle with prefer_quantum=True."""
+        primary = tmp_path / "primary"
+        primary.mkdir()
+        _make_fake_audio_file(primary, "Zebra Song.mp3")
+        _make_fake_audio_file(primary, "Apple Song.mp3")
+
+        calls: list[bool] = []
+
+        import radio.tjd_radio as tjd
+
+        orig = tjd._shuffle_tracks_with_variance
+
+        def spy(tracks, prefer_quantum=True):
+            calls.append(prefer_quantum)
+            return orig(tracks, prefer_quantum=prefer_quantum)
+
+        monkeypatch.setattr(tjd, "_shuffle_tracks_with_variance", spy)
+
+        from radio.tjd_radio import build_deduped_playlist
+        build_deduped_playlist(primary_roots=[primary], secondary_roots=[], prefer_quantum=True)
+
+        assert any(c is True for c in calls), (
+            f"Expected at least one shuffle call with prefer_quantum=True, got: {calls}"
+        )
+
+    def test_build_deduped_playlist_uses_quantum_shuffle_when_available(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """When prefer_quantum=True and quuffle is available, quuffle must be called."""
+        primary = tmp_path / "primary"
+        primary.mkdir()
+        for name in ("Apple.mp3", "Mango.mp3", "Zebra.mp3"):
+            _make_fake_audio_file(primary, name)
+
+        quuffle_calls: list[int] = []
+
+        import radio.tjd_radio as tjd
+
+        monkeypatch.setattr(tjd, "HAS_QUANTUM_ENTROPY", True)
+
+        real_quuffle = tjd.quuffle
+
+        def spy_quuffle(lst):
+            quuffle_calls.append(len(lst))
+            import random
+            random.shuffle(lst)  # use classical as stand-in so list is valid
+
+        monkeypatch.setattr(tjd, "quuffle", spy_quuffle)
+
+        from radio.tjd_radio import build_deduped_playlist
+        build_deduped_playlist(primary_roots=[primary], secondary_roots=[], prefer_quantum=True)
+
+        assert quuffle_calls, "quuffle was never called despite prefer_quantum=True and HAS_QUANTUM_ENTROPY=True"
+
+
 class TestVarianceMetrics:
     def test_compute_recent_variance_detects_repeats(self):
         history = [
