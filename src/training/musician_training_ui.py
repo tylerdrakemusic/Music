@@ -387,6 +387,12 @@ HTML = r"""
   <div class="instructor-box" id="instructor-phrase" style="display:none"></div>
   <audio id="instructor-audio" style="display:none"></audio>
 
+  <!-- Staff notation (FR-20260530-guitar-trainer-staff-notation) -->
+  <div id="staff-container" style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px;justify-content:flex-start;max-width:1320px">
+    <svg id="staff-treble-svg" viewBox="0 0 500 120" style="flex:1 1 0;min-width:280px;background:#111;border-radius:6px"></svg>
+    <svg id="staff-bass-svg"   viewBox="0 0 500 120" style="flex:1 1 0;min-width:280px;background:#111;border-radius:6px"></svg>
+  </div>
+
   <svg id="fretboard-svg" viewBox="0 0 1320 240" preserveAspectRatio="xMinYMid meet">
     <text x="460" y="88" fill="#555" text-anchor="middle" font-size="13" font-family="Segoe UI,sans-serif">Loading fretboard…</text>
   </svg>
@@ -780,12 +786,14 @@ async function createSession() {
       `<option value="${i}">${p.label}</option>`
     ).join('');
     onPositionChange();
+    drawStaves(key, -1);
   }
 
   window.onKeyChange = function() {
     _currentKey = document.getElementById('scale-key').value || 'C';
     _positions = [];
     loadScalePositions(_currentKey);
+    drawStaves(_currentKey, -1);
   };
 
   window.onPositionChange = function() {
@@ -876,6 +884,94 @@ async function createSession() {
     svg.innerHTML = html;
   };
 
+  // ── Staff notation renderer (FR-20260530-guitar-trainer-staff-notation) ──
+  const MAJOR_INTERVALS = [0, 2, 4, 5, 7, 9, 11, 12];
+  const STAFF_COLORS = { root: '#ff0080', third: '#fb5607', fifth: '#00e5cc', other: '#555555' };
+  const STAFF_TEXT   = { root: '#fff',    third: '#fff',    fifth: '#000',    other: '#fff'    };
+  // Key signature accidental counts (positive = sharps, negative = flats)
+  const KEY_SIGS = { C: 0, D: 2, Eb: -3, F: -1, G: 1, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
+  const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
+  const FLAT_ORDER  = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
+  // Y positions for accidentals on treble/bass clef (per accidental order slot)
+  // Staff lines at Y=30(F5),40(D5),50(B4),60(G4),70(E4) — treble; Y=30(A3),40(F3),50(D3),60(B2),70(G2) — bass
+  const SHARP_TREBLE_Y = [30, 45, 25, 40, 55, 35, 50]; // F C G D A E B → F5 C5 G5 D5 A4 E5 B4
+  const FLAT_TREBLE_Y  = [50, 35, 55, 40, 60, 45, 30]; // B E A D G C F → B4 E5 A4 D5 G4 C5 F5
+  const SHARP_BASS_Y   = [40, 55, 35, 50, 65, 45, 60]; // F C G D A E B → F3 C3 G3 D3 A2 E3 B2
+  const FLAT_BASS_Y    = [60, 45, 65, 50, 70, 55, 40]; // B E A D G C F → B2 E3 A2 D3 G2 C3 F3
+  // Treble clef: C4 sits one ledger line below staff (Y=80); each diatonic step = -5px upward
+  // Lines at Y=30,40,50,60,70 (top to bottom): F5,D5,B4,G4,E4
+  const DIATONIC_STEP_FROM_C = { C: 0, D: 1, Eb: 2, F: 3, G: 4, A: 5, Bb: 6, B: 6, 'A#': 6, 'D#': 2 };
+  // Bass clef: G2 at bottom line (Y=70); each diatonic step = -5px upward
+  const BASS_STEP_FROM_G2 = { C: 3, D: 4, Eb: 5, F: 6, G: 0, A: 1, Bb: 2, B: 2, 'A#': 2, 'D#': 5 };
+
+  window.drawStaves = function(key, highlightMidi) {
+    const rootPc   = KEY_PC[key] ?? 0;
+    const useFlats = FLAT_KEYS.has(key);
+    const noteNames = useFlats ? PC_NAMES_FLAT : PC_NAMES;
+    drawSingleStaff('staff-treble-svg', key, 'treble', rootPc, noteNames, highlightMidi);
+    drawSingleStaff('staff-bass-svg',   key, 'bass',   rootPc, noteNames, highlightMidi);
+  };
+
+  function drawSingleStaff(svgId, key, clef, rootPc, noteNames, highlightMidi) {
+    const svg = document.getElementById(svgId);
+    if (!svg) return;
+    const W = 500, H = 120;
+    const sigCount = KEY_SIGS[key] ?? 0;
+    const absSig   = Math.abs(sigCount);
+    const sigY_arr = clef === 'treble'
+      ? (sigCount > 0 ? SHARP_TREBLE_Y : FLAT_TREBLE_Y)
+      : (sigCount > 0 ? SHARP_BASS_Y   : FLAT_BASS_Y);
+    const sigSymbol = sigCount > 0 ? '\u266f' : '\u266d';
+    // Staff lines (5 lines, 10px spacing)
+    const lineYs = [30, 40, 50, 60, 70];
+    // Root base-Y on the staff
+    const rootStep = DIATONIC_STEP_FROM_C[key] ?? 0;
+    const TREBLE_C4_Y = 80;
+    const baseY = clef === 'treble'
+      ? TREBLE_C4_Y - rootStep * 5
+      : 70 - (BASS_STEP_FROM_G2[key] ?? 0) * 5;
+    // X layout: leave room for clef symbol (55px) + key signature
+    const CLEF_W = 55;
+    const SIG_W  = Math.max(0, absSig) * 12;
+    const noteXStart = CLEF_W + SIG_W + 8;
+    const noteXSpacing = (W - noteXStart - 15) / 7;
+    let html = '';
+    // Draw staff lines
+    for (const ly of lineYs) {
+      html += `<line x1="18" y1="${ly}" x2="${W - 8}" y2="${ly}" stroke="#888" stroke-width="1"/>`;
+    }
+    // Clef label
+    const clefChar = clef === 'treble' ? '\u{1D11E}' : '\u{1D122}';
+    const clefY = clef === 'treble' ? 66 : 54;
+    html += `<text x="20" y="${clefY}" fill="#ccc" font-size="38" font-family="serif">${clefChar}</text>`;
+    // Key signature accidentals
+    for (let k = 0; k < absSig; k++) {
+      const sx = 56 + k * 12;
+      const sy = sigY_arr[k] ?? 50;
+      html += `<text x="${sx}" y="${sy}" fill="#aaa" font-size="14" font-family="serif" dominant-baseline="central" data-keysig="${clef}">${sigSymbol}</text>`;
+    }
+    // Draw 8 diatonic note circles
+    for (let idx = 0; idx < MAJOR_INTERVALS.length; idx++) {
+      const interval = MAJOR_INTERVALS[idx];
+      const pc       = (rootPc + interval) % 12;
+      const noteName = noteNames[pc];
+      const noteY    = baseY - idx * 5;
+      const noteX    = noteXStart + idx * noteXSpacing;
+      const degInterval = (pc - rootPc + 12) % 12;
+      const colorKey = degInterval === 0 ? 'root' : degInterval === 4 ? 'third' : degInterval === 7 ? 'fifth' : 'other';
+      const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
+      const noteFill  = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
+      const textFill  = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
+      // Ledger line if note is above/below staff
+      if (noteY < lineYs[0] - 3 || noteY > lineYs[4] + 3) {
+        html += `<line x1="${noteX - 10}" y1="${noteY}" x2="${noteX + 10}" y2="${noteY}" stroke="#888" stroke-width="1"/>`;
+      }
+      html += `<circle cx="${noteX}" cy="${noteY}" r="8" fill="${noteFill}" stroke="#000" stroke-width="1" data-staff="${clef}" data-degree="${idx}"/>`;
+      html += `<text x="${noteX}" y="${noteY + 4}" fill="${textFill}" text-anchor="middle" font-size="9" font-weight="bold" font-family="Segoe UI,sans-serif">${noteName}</text>`;
+    }
+    svg.innerHTML = html;
+  }
+
   // ── Web Audio oscillator playback ────────────────────────────────────────
   let _audioCtx = null;
   function getAudioCtx() {
@@ -938,6 +1034,7 @@ async function createSession() {
       for (let i = 0; i < sequence.length && !_scaleStopFlag; i++) {
         status.textContent = `Rep ${rep + 1}/${reps} — note ${i + 1}/${sequence.length}`;
         drawFretboard(pos.notes, allAsc.indexOf(sequence[i]));
+        drawStaves(_currentKey, sequence[i].midi);
         await playNote(sequence[i].midi, noteDurationMs * 0.85);
         await sleep(noteDurationMs);
       }
@@ -946,6 +1043,7 @@ async function createSession() {
     _scaleStopFlag = false;
     btn.textContent = '▶ Play';
     drawFretboard(pos.notes, -1);
+    drawStaves(_currentKey, -1);
     status.textContent = _scaleStopFlag ? '' : '✓ Complete';
     if (!_scaleStopFlag) {
       logScaleSession(_currentKey + '_major', _currentPos + 1, _scaleBpm, reps, _currentKey);
