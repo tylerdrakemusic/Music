@@ -141,7 +141,7 @@ _TYLER_ARTIST = "Tyler James Drake"
 _TYLER_ORIGINALS = {
     "fly away", "bitten", "marigolds", "lighthouse", "invisible",
     "same thing", "you already know", "abbey's song", "abbeys song",
-    "what i do", "let it fade",
+    "what i do", "let it fade", "is it real",
 }
 
 
