@@ -26,20 +26,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 # Source: coppercreekofficial.com/charts/  (scraped 2026-05-31)
 # ---------------------------------------------------------------------------
 SONGS_TO_ADD: list[dict] = [
-    {"title": "Breakdown",            "artist": "Tom Petty",        "key_sig": "Am",  "bpm": 114},
-    {"title": "Change The World",     "artist": "Eric Clapton",     "key_sig": "A",   "bpm": 97},
-    {"title": "Josie",                "artist": "Jim Mann",         "key_sig": "E",   "bpm": 122},
-    {"title": "Livin' On A Prayer",   "artist": "Bon Jovi",         "key_sig": "Em",  "bpm": 123},
-    {"title": "Love Shack",           "artist": "B-52's",           "key_sig": "C",   "bpm": 134},
-    {"title": "Natural Woman",        "artist": "Carole King",      "key_sig": "Bb",  "bpm": 111},
-    {"title": "Rocky Mountain Way",   "artist": "Joe Walsh",        "key_sig": "E",   "bpm": 86},
-    {"title": "Separate Ways",        "artist": "Journey",          "key_sig": "Em",  "bpm": 131},
-    {"title": "Sweet Home Alabama",   "artist": "Lynyrd Skynyrd",   "key_sig": "G",   "bpm": 100},
-    {"title": "Tequila",              "artist": "The Champs",       "key_sig": "F",   "bpm": 90},
-    {"title": "Thrill Is Gone",       "artist": "BB King",          "key_sig": "Bm",  "bpm": 90},
-    {"title": "Wicked Games",         "artist": "Chris Isaak",      "key_sig": "Bm",  "bpm": 112},
-    {"title": "Wonderful Tonight",    "artist": "Eric Clapton",     "key_sig": "G",   "bpm": 95},
-    {"title": "You're So Vain",       "artist": "Carly Simon",      "key_sig": "Am",  "bpm": 106},
+    {"title": "Breakdown",            "artist": "Tom Petty",       "key_sig": "Am",  "bpm": 114, "source_file": "Breakdown - Tom Petty and the Heartbreakers.m4a"},
+    {"title": "Change The World",     "artist": "Eric Clapton",    "key_sig": "A",   "bpm": 97,  "source_file": "Change the World - Eric Clapton.m4a"},
+    {"title": "Josie",                "artist": "Jim Mann",        "key_sig": "E",   "bpm": 122, "source_file": "Josie - Steely Dan.mp3"},
+    {"title": "Livin' On A Prayer",   "artist": "Bon Jovi",        "key_sig": "Em",  "bpm": 123, "source_file": "Livin' On a Prayer - Bon Jovi.mp3"},
+    {"title": "Love Shack",           "artist": "B-52's",          "key_sig": "C",   "bpm": 134, "source_file": "Love Shack - The B-52's.mp3"},
+    {"title": "Natural Woman",        "artist": "Carole King",     "key_sig": "Bb",  "bpm": 111, "source_file": "You Make Me Feel Like a Natural Woman - Carole King.mp3"},
+    {"title": "Rocky Mountain Way",   "artist": "Joe Walsh",       "key_sig": "E",   "bpm": 86,  "source_file": "Rocky Mountain Way - Joe Walsh.mp3"},
+    {"title": "Separate Ways",        "artist": "Journey",         "key_sig": "Em",  "bpm": 131, "source_file": "Separate Ways - Journey.mp3"},
+    {"title": "Sweet Home Alabama",   "artist": "Lynyrd Skynyrd",  "key_sig": "G",   "bpm": 100, "source_file": "Sweet Home Alabama - Lynyrd Skynyrd.mp3"},
+    {"title": "Tequila",              "artist": "The Champs",      "key_sig": "F",   "bpm": 90,  "source_file": "Tequila - The Champs.mp3"},
+    {"title": "Thrill Is Gone",       "artist": "BB King",         "key_sig": "Bm",  "bpm": 90,  "source_file": "The Thrill Is Gone - B.B. King.mp3"},
+    {"title": "Wicked Games",         "artist": "Chris Isaak",     "key_sig": "Bm",  "bpm": 112, "source_file": None},
+    {"title": "Wonderful Tonight",    "artist": "Eric Clapton",    "key_sig": "G",   "bpm": 95,  "source_file": "Wonderful Tonight - Eric Clapton.mp3"},
+    {"title": "You're So Vain",       "artist": "Carly Simon",     "key_sig": "Am",  "bpm": 106, "source_file": "You're So Vain - Carly Simon.mp3"},
 ]
 
 BAND_NAME = "Copper Creek"
@@ -74,13 +74,19 @@ def sync(conn: "sqlite3.Connection", *, dry_run: bool = False) -> tuple[int, int
 
         if existing:
             catalog_id = existing[0]
+            # Back-fill source_file if it was added without one
+            if song.get("source_file") and not dry_run:
+                conn.execute(
+                    "UPDATE catalog_songs SET source_file=?, updated_at=datetime('now') WHERE id=? AND source_file IS NULL",
+                    (song["source_file"], catalog_id),
+                )
         else:
             if not dry_run:
                 cur = conn.execute(
                     """INSERT INTO catalog_songs
-                           (title, artist, key_sig, bpm, bpm_source)
-                       VALUES (?, ?, ?, ?, 'website')""",
-                    (song["title"], song["artist"], song["key_sig"], song["bpm"]),
+                           (title, artist, key_sig, bpm, bpm_source, source_file)
+                       VALUES (?, ?, ?, ?, 'website', ?)""",
+                    (song["title"], song["artist"], song["key_sig"], song["bpm"], song.get("source_file")),
                 )
                 catalog_id = cur.lastrowid
             else:
