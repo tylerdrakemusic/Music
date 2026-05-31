@@ -698,6 +698,90 @@ def test_fretboard_note_labels_logic(html: str) -> None:
     assert "noteNames[pc]" in html
 
 
+# ---------------------------------------------------------------------------
+# FR-20260530-guitar-trainer-staff-notation — Staff SVG tests
+# ---------------------------------------------------------------------------
+
+def test_staff_svgs_present_before_fretboard(html: str) -> None:
+    """staff-treble-svg and staff-bass-svg must appear before fretboard-svg in HTML."""
+    assert 'id="staff-treble-svg"' in html, "staff-treble-svg must be present in HTML"
+    assert 'id="staff-bass-svg"' in html, "staff-bass-svg must be present in HTML"
+    treble_idx = html.index('id="staff-treble-svg"')
+    bass_idx = html.index('id="staff-bass-svg"')
+    fretboard_idx = html.index('id="fretboard-svg"')
+    assert treble_idx < fretboard_idx, "staff-treble-svg must appear before fretboard-svg"
+    assert bass_idx < fretboard_idx, "staff-bass-svg must appear before fretboard-svg"
+
+
+def test_staff_svgs_below_key_dropdown(html: str) -> None:
+    """Staff SVGs must appear after the scale-key and scale-position dropdowns in HTML."""
+    key_dropdown_idx = html.index('id="scale-key"')
+    treble_idx = html.index('id="staff-treble-svg"')
+    bass_idx = html.index('id="staff-bass-svg"')
+    assert key_dropdown_idx < treble_idx, "staff-treble-svg must appear after scale-key dropdown"
+    assert key_dropdown_idx < bass_idx, "staff-bass-svg must appear after scale-key dropdown"
+
+
+def test_no_external_notation_libraries(html: str) -> None:
+    """HTML must not reference vexflow, abcjs, or cdn.jsdelivr — pure inline SVG only."""
+    assert "vexflow" not in html.lower()
+    assert "abcjs" not in html.lower()
+    assert "cdn.jsdelivr" not in html.lower()
+
+
+def test_staff_js_generates_eight_note_circles(html: str) -> None:
+    """JS must use 8-interval major scale array and data-staff attribute for note circles."""
+    assert "MAJOR_INTERVALS" in html, "MAJOR_INTERVALS constant must be defined in JS"
+    # Remove whitespace variants to match [0,2,4,5,7,9,11,12]
+    html_compact = html.replace(" ", "").replace("\n", "")
+    assert "[0,2,4,5,7,9,11,12]" in html_compact, \
+        "MAJOR_INTERVALS must contain exactly the 8 diatonic intervals [0,2,4,5,7,9,11,12]"
+    assert "data-staff=" in html, "note circles must have data-staff attribute"
+
+
+def test_staff_keysig_attributes_present(html: str) -> None:
+    """JS must render key signature elements with data-keysig attribute on both clefs."""
+    assert "data-keysig=" in html, "key signature elements must use data-keysig attribute"
+
+
+def test_staff_note_colors_other_matches_fretboard(html: str) -> None:
+    """Staff note circles must use #555555 for non-root/3rd/5th degrees, matching fretboard gray."""
+    assert "#555555" in html.lower(), \
+        "Staff must define #555555 as the color for non-root/3rd/5th interval degrees (matches fretboard)"
+
+
+def test_on_key_change_calls_draw_staves(html: str) -> None:
+    """onKeyChange() JS function must call drawStaves to update staves when key changes."""
+    assert "drawStaves" in html, "drawStaves function must be defined in JS"
+    # Locate the onKeyChange function body (between window.onKeyChange and its closing };)
+    fn_start = html.index("window.onKeyChange")
+    fn_end = html.index("};", fn_start)
+    fn_body = html[fn_start:fn_end]
+    assert "drawStaves" in fn_body, "drawStaves must be called inside onKeyChange"
+
+
+def test_playback_loop_calls_draw_staves(html: str) -> None:
+    """The scale playback loop must call drawStaves alongside drawFretboard for staff sync."""
+    playback_marker = "allAsc.indexOf(sequence[i])"
+    assert playback_marker in html, "playback loop marker not found in HTML"
+    loop_idx = html.index(playback_marker)
+    # drawStaves must be within 400 chars of the drawFretboard call inside the loop
+    window = html[max(0, loop_idx - 400):loop_idx + 400]
+    assert "drawStaves" in window, \
+        "drawStaves must be called inside the playback loop near drawFretboard"
+
+
+def test_staff_container_flex_layout(html: str) -> None:
+    """Staff container must use display:flex and flex-wrap:wrap for responsive layout."""
+    assert 'id="staff-container"' in html, "staff-container div must be present"
+    container_idx = html.index('id="staff-container"')
+    # Check the surrounding HTML for the flex styles (within the opening tag)
+    window = html[max(0, container_idx - 10):container_idx + 300]
+    compact = window.replace(" ", "").replace('"', "").replace("'", "")
+    assert "display:flex" in compact, "staff-container must use display:flex"
+    assert "flex-wrap:wrap" in compact, "staff-container must use flex-wrap:wrap"
+
+
 def test_fretboard_old_wrong_fret_logic_removed(html: str) -> None:
     """Old fret number logic (f===1||f%3===0) must be gone."""
     assert "f === 1 || f % 3 === 0" not in html
