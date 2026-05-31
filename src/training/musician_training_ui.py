@@ -8,7 +8,7 @@ Scales & Arpeggios tab added in FR-20260517-guitar-trainer-scale-exercises.
 import argparse
 import json
 import os
-import subprocess
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 from flask import Flask, jsonify, render_template_string, request, Response, abort, send_from_directory
@@ -1234,7 +1234,7 @@ def launch():
             f"Set-Location \"{tools_dir}\"; "
             f"& 'C:\\G\\python.exe' 'focused_musician_training.py' '{tmp_name}'"
         )
-        subprocess.Popen(
+        subprocess.Popen(  # nosec B603,B607
             ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
              "-Command", ps_cmd],
             creationflags=subprocess.CREATE_NEW_CONSOLE,

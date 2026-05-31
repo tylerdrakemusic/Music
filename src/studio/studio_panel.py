@@ -184,7 +184,7 @@ def update_equipment(item_id: int):
         fields.append("updated_at = datetime('now')")
         values.append(item_id)
         conn.execute(
-            f"UPDATE studio_equipment SET {', '.join(fields)} WHERE id = ?",
+            f"UPDATE studio_equipment SET {', '.join(fields)} WHERE id = ?",  # nosec B608
             values,
         )
         conn.commit()

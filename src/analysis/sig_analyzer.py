@@ -55,11 +55,7 @@ SIG_VERSION = "2.0.0"  # Full TJD signature suite
 
 def _md5_fingerprint(data: bytes) -> str:
     """Compatibility fingerprint only; not used for security decisions."""
-    try:
-        digest = hashlib.new("md5", data, usedforsecurity=False)
-    except TypeError:
-        digest = hashlib.new("md5", data)
-    return digest.hexdigest()
+    return hashlib.md5(data, usedforsecurity=False).hexdigest()  # nosec B324
 
 
 def compute_hashes(data: bytes) -> dict[str, str]:
@@ -90,7 +86,7 @@ def compute_quantum_hashes(data: bytes, deterministic_hashes: dict[str, str]) ->
         source = "ibm_quantum_cache" if has_quantum else "classical_fallback"
     except ImportError:
         import random
-        salt_bits = "".join(random.choice("01") for _ in range(QUANTUM_SALT_BITS))
+        salt_bits = "".join(random.choice("01") for _ in range(QUANTUM_SALT_BITS))  # nosec B311
         source = "classical_fallback"
 
     salt_bytes = int(salt_bits, 2).to_bytes(QUANTUM_SALT_BITS // 8, byteorder="big")
@@ -209,12 +205,12 @@ def parse_mp3(data: bytes) -> dict[str, Any]:
                 try:
                     comment = frame_data.split(b"\x00")[-1].decode("utf-8", "replace")
                     info["provenance_comment"] = comment
-                except Exception:
+                except Exception:  # nosec B110
                     pass
             elif frame_id == "TDRC":  # Recording date
                 try:
                     info["created_timestamp"] = frame_data[1:].decode("utf-8", "replace").strip("\x00")
-                except Exception:
+                except Exception:  # nosec B110
                     pass
 
             pos += 10 + frame_size

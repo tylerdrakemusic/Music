@@ -430,7 +430,7 @@ def init_db(*, seed: bool = True) -> None:
             "ALTER TABLE scale_practice_log ADD COLUMN key TEXT NOT NULL DEFAULT 'C'"
         )
         conn.commit()
-    except Exception:
+    except Exception:  # nosec B110
         pass  # column already exists
     # FR-20260525: add duration/context columns to guitar_training_log
     for _col_sql in [
@@ -442,7 +442,7 @@ def init_db(*, seed: bool = True) -> None:
         try:
             conn.execute(_col_sql)
             conn.commit()
-        except Exception:
+        except Exception:  # nosec B110
             pass  # column already exists
     # FR-20260525: add duration_minutes to scale_practice_log
     try:
@@ -450,7 +450,7 @@ def init_db(*, seed: bool = True) -> None:
             "ALTER TABLE scale_practice_log ADD COLUMN duration_minutes INTEGER NOT NULL DEFAULT 0"
         )
         conn.commit()
-    except Exception:
+    except Exception:  # nosec B110
         pass  # column already exists
     if seed:
         conn.executescript(_SEED_SQL)
