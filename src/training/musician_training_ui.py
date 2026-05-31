@@ -388,9 +388,9 @@ HTML = r"""
   <audio id="instructor-audio" style="display:none"></audio>
 
   <!-- Staff notation (FR-20260530-guitar-trainer-staff-notation) -->
-  <div id="staff-container" style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px;justify-content:center">
-    <svg id="staff-treble-svg" viewBox="0 0 500 120" style="width:100%;max-width:480px;background:#111;border-radius:6px"></svg>
-    <svg id="staff-bass-svg"   viewBox="0 0 500 120" style="width:100%;max-width:480px;background:#111;border-radius:6px"></svg>
+  <div id="staff-container" style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px;justify-content:flex-start;max-width:1320px">
+    <svg id="staff-treble-svg" viewBox="0 0 500 120" style="flex:1 1 0;min-width:280px;background:#111;border-radius:6px"></svg>
+    <svg id="staff-bass-svg"   viewBox="0 0 500 120" style="flex:1 1 0;min-width:280px;background:#111;border-radius:6px"></svg>
   </div>
 
   <svg id="fretboard-svg" viewBox="0 0 1320 240" preserveAspectRatio="xMinYMid meet">
@@ -886,17 +886,18 @@ async function createSession() {
 
   // ── Staff notation renderer (FR-20260530-guitar-trainer-staff-notation) ──
   const MAJOR_INTERVALS = [0, 2, 4, 5, 7, 9, 11, 12];
-  const STAFF_COLORS = { root: '#ff0080', third: '#fb5607', fifth: '#00e5cc', other: '#4da6ff' };
+  const STAFF_COLORS = { root: '#ff0080', third: '#fb5607', fifth: '#00e5cc', other: '#555555' };
   const STAFF_TEXT   = { root: '#fff',    third: '#fff',    fifth: '#000',    other: '#fff'    };
   // Key signature accidental counts (positive = sharps, negative = flats)
   const KEY_SIGS = { C: 0, D: 2, Eb: -3, F: -1, G: 1, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
   const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
   const FLAT_ORDER  = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
   // Y positions for accidentals on treble/bass clef (per accidental order slot)
-  const SHARP_TREBLE_Y = [44, 24, 54, 34, 64, 44, 74];
-  const FLAT_TREBLE_Y  = [74, 44, 84, 54, 94, 64, 94];
-  const SHARP_BASS_Y   = [24, 44, 14, 34, 54, 24, 44];
-  const FLAT_BASS_Y    = [54, 24, 64, 34, 74, 44, 84];
+  // Staff lines at Y=30(F5),40(D5),50(B4),60(G4),70(E4) — treble; Y=30(A3),40(F3),50(D3),60(B2),70(G2) — bass
+  const SHARP_TREBLE_Y = [30, 45, 25, 40, 55, 35, 50]; // F C G D A E B → F5 C5 G5 D5 A4 E5 B4
+  const FLAT_TREBLE_Y  = [50, 35, 55, 40, 60, 45, 30]; // B E A D G C F → B4 E5 A4 D5 G4 C5 F5
+  const SHARP_BASS_Y   = [40, 55, 35, 50, 65, 45, 60]; // F C G D A E B → F3 C3 G3 D3 A2 E3 B2
+  const FLAT_BASS_Y    = [60, 45, 65, 50, 70, 55, 40]; // B E A D G C F → B2 E3 A2 D3 G2 C3 F3
   // Treble clef: C4 sits one ledger line below staff (Y=80); each diatonic step = -5px upward
   // Lines at Y=30,40,50,60,70 (top to bottom): F5,D5,B4,G4,E4
   const DIATONIC_STEP_FROM_C = { C: 0, D: 1, Eb: 2, F: 3, G: 4, A: 5, Bb: 6, B: 6, 'A#': 6, 'D#': 2 };

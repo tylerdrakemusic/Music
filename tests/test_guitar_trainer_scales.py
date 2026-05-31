@@ -744,10 +744,10 @@ def test_staff_keysig_attributes_present(html: str) -> None:
     assert "data-keysig=" in html, "key signature elements must use data-keysig attribute"
 
 
-def test_staff_note_colors_include_other_blue(html: str) -> None:
-    """Staff note circles must use #4da6ff for non-root/3rd/5th degrees."""
-    assert "#4da6ff" in html.lower(), \
-        "Staff must define #4da6ff as the color for non-root/3rd/5th interval degrees"
+def test_staff_note_colors_other_matches_fretboard(html: str) -> None:
+    """Staff note circles must use #555555 for non-root/3rd/5th degrees, matching fretboard gray."""
+    assert "#555555" in html.lower(), \
+        "Staff must define #555555 as the color for non-root/3rd/5th interval degrees (matches fretboard)"
 
 
 def test_on_key_change_calls_draw_staves(html: str) -> None:
