@@ -9,6 +9,7 @@ Covers:
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from pathlib import Path
 
@@ -18,6 +19,15 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SYNC_PY = PROJECT_ROOT / "tools" / "sync_cc_charts_catalog.py"
 
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+_DB_AVAILABLE = (
+    (PROJECT_ROOT / "src" / "data" / "heartmusic.db").exists()
+    and bool(os.environ.get("HEARTMUSIC_DB_KEY"))
+)
+requires_db = pytest.mark.skipif(
+    not _DB_AVAILABLE,
+    reason="heartmusic.db not present or HEARTMUSIC_DB_KEY not set (CI)",
+)
 
 
 def _load_sync_module():
@@ -29,6 +39,7 @@ def _load_sync_module():
 
 @pytest.fixture(scope="module")
 def conn():
+    """Live DB connection — skipped in CI when key is absent."""
     from utils.init_db import get_connection as _gc
     c = _gc()
     c.execute("PRAGMA foreign_keys=ON")
@@ -71,6 +82,11 @@ class TestSongsToAdd:
         titles = {s["title"] for s in self.mod.SONGS_TO_ADD}
         assert "Something To Talk About" in titles
 
+    def test_fly_away_excluded(self) -> None:
+        """Fly Away (Tyler Drake) must remain excluded — already in catalog via seed_catalog.py."""
+        titles = {s["title"] for s in self.mod.SONGS_TO_ADD}
+        assert "Fly Away" not in titles, "Fly Away must remain excluded (seeded separately)"
+
     def test_no_vetoed_songs(self) -> None:
         """Vetoed songs (Ain't It Fun, Smoke On The Water, etc.) must not appear."""
         vetoed = {"Ain't It Fun", "Smoke On The Water", "Man I Feel Like A Woman", "Lady Marmalade"}
@@ -86,6 +102,7 @@ class TestSongsToAdd:
 # sync() — inserts into live DB
 # ---------------------------------------------------------------------------
 
+@requires_db
 class TestSync:
     def setup_method(self) -> None:
         self.mod = _load_sync_module()
