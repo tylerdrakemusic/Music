@@ -129,7 +129,7 @@ def fetch_icecast_source(status_url: str, timeout_seconds: float = 3.0) -> dict:
     return source or {}
 
 
-def build_playlist(roots: list[Path], shuffle: bool = True) -> list[dict]:
+def build_playlist(roots: list[Path], shuffle: bool = True, prefer_quantum: bool = False) -> list[dict]:
     """Scan directories for audio files and build a playlist."""
     tracks = []
     for root in roots:
@@ -148,7 +148,7 @@ def build_playlist(roots: list[Path], shuffle: bool = True) -> list[dict]:
                     "format": f.suffix.lower().lstrip("."),
                 })
     if shuffle:
-        _shuffle_tracks_with_variance(tracks, prefer_quantum=False)
+        _shuffle_tracks_with_variance(tracks, prefer_quantum=prefer_quantum)
     return tracks
 
 
@@ -163,6 +163,7 @@ def build_deduped_playlist(
     primary_roots: list[Path],
     secondary_roots: list[Path],
     shuffle: bool = True,
+    prefer_quantum: bool = False,
 ) -> list[dict]:
     """Build a playlist from primary and secondary roots, deduplicating by title.
 
@@ -193,7 +194,7 @@ def build_deduped_playlist(
 
     merged = primary_tracks + secondary_tracks
     if shuffle:
-        _shuffle_tracks_with_variance(merged, prefer_quantum=False)
+        _shuffle_tracks_with_variance(merged, prefer_quantum=prefer_quantum)
     return merged
 
 
@@ -1160,11 +1161,19 @@ def main():
         if extra_root.exists():
             fallback_roots.append(extra_root)
 
+    prefer_quantum_variance = args.variance_source in {"auto", "quantum"}
+    if args.variance_source == "quantum" and not HAS_QUANTUM_ENTROPY:
+        print("[RADIO] WARNING: Quantum entropy requested, but quantum_rt is unavailable. Falling back to classical shuffle.")
+
     if primary_roots:
-        playlist = build_deduped_playlist(primary_roots=primary_roots, secondary_roots=fallback_roots)
+        playlist = build_deduped_playlist(
+            primary_roots=primary_roots,
+            secondary_roots=fallback_roots,
+            prefer_quantum=prefer_quantum_variance,
+        )
     else:
         print("[RADIO] WARNING: Muzic root missing; using Tyler-owned catalog fallback only")
-        playlist = build_playlist(fallback_roots)
+        playlist = build_playlist(fallback_roots, prefer_quantum=prefer_quantum_variance)
 
     playlist_snapshot = playlist
 
@@ -1178,9 +1187,6 @@ def main():
         playlist = mp3s
 
     if active_backend == "local":
-        prefer_quantum_variance = args.variance_source in {"auto", "quantum"}
-        if args.variance_source == "quantum" and not HAS_QUANTUM_ENTROPY:
-            print("[RADIO] WARNING: Quantum entropy requested, but quantum_rt is unavailable. Falling back to classical shuffle.")
 
         # Load bumpers / station IDs
         bumpers = load_bumpers(Path(args.bumper_dir))
