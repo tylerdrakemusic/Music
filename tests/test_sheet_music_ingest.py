@@ -22,6 +22,22 @@ _WORKTREE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_WORKTREE_ROOT / "src"))
 
 # ---------------------------------------------------------------------------
+# Resolve ⊕Workspace src/ — try production path first, fall back to the peer
+# worktree (same branch name) so tests work both pre-merge and post-merge.
+# ---------------------------------------------------------------------------
+_BRANCH_NAME = _WORKTREE_ROOT.name  # e.g. "fr-gdrive-integration"
+_WORKSPACE_SRC_CANDIDATES = [
+    Path(r"f:\⊕Workspace\src"),  # post-merge / production
+    Path(r"f:\⊕Workspace\.worktrees") / _BRANCH_NAME / "src",  # pre-merge worktree
+]
+_WORKSPACE_SRC = next(
+    (p for p in _WORKSPACE_SRC_CANDIDATES if (p / "integrations" / "gdrive").exists()),
+    _WORKSPACE_SRC_CANDIDATES[0],  # fallback: will get ImportError if neither exists
+)
+if str(_WORKSPACE_SRC) not in sys.path:
+    sys.path.insert(0, str(_WORKSPACE_SRC))
+
+# ---------------------------------------------------------------------------
 # Regex parser (same pattern used by both backfill & gdrive ingest scripts)
 # Defined here so tests are self-contained without importing prod code first.
 # ---------------------------------------------------------------------------
@@ -197,10 +213,9 @@ def test_backfill_local_idempotent(tmp_path):
 
 def test_gdrive_client_missing_env_var():
     """GDriveClient() raises EnvironmentError when GDRIVE_SA_KEY is absent."""
-    # Add ⊕Workspace src/ to path for this test
-    workspace_src = Path(r"f:\⊕Workspace\.worktrees\fr-gdrive-integration\src")
-    if str(workspace_src) not in sys.path:
-        sys.path.insert(0, str(workspace_src))
+    # _WORKSPACE_SRC already on sys.path (module-level setup above)
+    if str(_WORKSPACE_SRC) not in sys.path:
+        sys.path.insert(0, str(_WORKSPACE_SRC))
 
     env_without_key = {k: v for k, v in os.environ.items() if k != "GDRIVE_SA_KEY"}
     with patch.dict("os.environ", env_without_key, clear=True):
@@ -232,9 +247,8 @@ _FAKE_SA_KEY = base64.b64encode(
 
 def test_gdrive_client_list_files_mocked():
     """list_files() aggregates pages and returns expected dicts (mirror test)."""
-    workspace_src = Path(r"f:\⊕Workspace\.worktrees\fr-gdrive-integration\src")
-    if str(workspace_src) not in sys.path:
-        sys.path.insert(0, str(workspace_src))
+    if str(_WORKSPACE_SRC) not in sys.path:
+        sys.path.insert(0, str(_WORKSPACE_SRC))
 
     page1 = {
         "files": [

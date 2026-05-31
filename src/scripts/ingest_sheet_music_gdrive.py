@@ -28,7 +28,9 @@ from pathlib import Path
 # Path setup — spike: insert ⊕Workspace src/ so we can import GDriveClient.
 # TODO: replace with a proper editable install or published package.
 # ---------------------------------------------------------------------------
-_WORKSPACE_SRC = Path(r"f:\⊕Workspace\.worktrees\fr-gdrive-integration\src")
+# Production path — after merge the workspace worktree is deleted; use main src/.
+# TODO(follow-on FR): replace with a proper editable install / published package.
+_WORKSPACE_SRC = Path(r"f:\⊕Workspace\src")
 if str(_WORKSPACE_SRC) not in sys.path:
     sys.path.insert(0, str(_WORKSPACE_SRC))
 
