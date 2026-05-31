@@ -921,7 +921,7 @@ async function createSession() {
     const sigY_arr = clef === 'treble'
       ? (sigCount > 0 ? SHARP_TREBLE_Y : FLAT_TREBLE_Y)
       : (sigCount > 0 ? SHARP_BASS_Y   : FLAT_BASS_Y);
-    const sigSymbol = sigCount > 0 ? '#' : 'b';
+    const sigSymbol = sigCount > 0 ? '\u266f' : '\u266d';
     // Staff lines (5 lines, 10px spacing)
     const lineYs = [30, 40, 50, 60, 70];
     // Root base-Y on the staff
@@ -948,7 +948,7 @@ async function createSession() {
     for (let k = 0; k < absSig; k++) {
       const sx = 56 + k * 12;
       const sy = sigY_arr[k] ?? 50;
-      html += `<text x="${sx}" y="${sy}" fill="#aaa" font-size="11" font-family="serif" data-keysig="${clef}">${sigSymbol}</text>`;
+      html += `<text x="${sx}" y="${sy}" fill="#aaa" font-size="14" font-family="serif" dominant-baseline="central" data-keysig="${clef}">${sigSymbol}</text>`;
     }
     // Draw 8 diatonic note circles
     for (let idx = 0; idx < MAJOR_INTERVALS.length; idx++) {
