@@ -51,8 +51,8 @@ class TestSongsToAdd:
     def setup_method(self) -> None:
         self.mod = _load_sync_module()
 
-    def test_songs_to_add_has_fourteen_entries(self) -> None:
-        assert len(self.mod.SONGS_TO_ADD) == 14
+    def test_songs_to_add_has_sixteen_entries(self) -> None:
+        assert len(self.mod.SONGS_TO_ADD) == 16
 
     def test_each_entry_has_required_fields(self) -> None:
         required = {"title", "artist", "key_sig", "bpm"}
@@ -62,6 +62,14 @@ class TestSongsToAdd:
     def test_breakdown_present(self) -> None:
         titles = {s["title"] for s in self.mod.SONGS_TO_ADD}
         assert "Breakdown" in titles
+
+    def test_chain_of_fools_present(self) -> None:
+        titles = {s["title"] for s in self.mod.SONGS_TO_ADD}
+        assert "Chain of Fools" in titles
+
+    def test_something_to_talk_about_present(self) -> None:
+        titles = {s["title"] for s in self.mod.SONGS_TO_ADD}
+        assert "Something To Talk About" in titles
 
     def test_no_vetoed_songs(self) -> None:
         """Vetoed songs (Ain't It Fun, Smoke On The Water, etc.) must not appear."""

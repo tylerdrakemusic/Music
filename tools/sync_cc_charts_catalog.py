@@ -22,8 +22,8 @@ if TYPE_CHECKING:
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 # ---------------------------------------------------------------------------
-# Data — 15 active (green-row) songs missing from the catalog
-# Source: coppercreekofficial.com/charts/  (scraped 2026-05-31)
+# Data — active (green-row) songs missing from the catalog
+# Source: coppercreekofficial.com/charts/  (last updated 2026-05-31)
 # ---------------------------------------------------------------------------
 SONGS_TO_ADD: list[dict] = [
     {"title": "Breakdown",            "artist": "Tom Petty",       "key_sig": "Am",  "bpm": 114, "source_file": "Breakdown - Tom Petty and the Heartbreakers.m4a"},
@@ -38,8 +38,10 @@ SONGS_TO_ADD: list[dict] = [
     {"title": "Tequila",              "artist": "The Champs",      "key_sig": "F",   "bpm": 90,  "source_file": "Tequila - The Champs.mp3"},
     {"title": "Thrill Is Gone",       "artist": "BB King",         "key_sig": "Bm",  "bpm": 90,  "source_file": "The Thrill Is Gone - B.B. King.mp3"},
     {"title": "Wicked Games",         "artist": "Chris Isaak",     "key_sig": "Bm",  "bpm": 112, "source_file": None},
-    {"title": "Wonderful Tonight",    "artist": "Eric Clapton",    "key_sig": "G",   "bpm": 95,  "source_file": "Wonderful Tonight - Eric Clapton.mp3"},
-    {"title": "You're So Vain",       "artist": "Carly Simon",     "key_sig": "Am",  "bpm": 106, "source_file": "You're So Vain - Carly Simon.mp3"},
+    {"title": "Wonderful Tonight",        "artist": "Eric Clapton",    "key_sig": "G",   "bpm": 95,  "source_file": "Wonderful Tonight - Eric Clapton.mp3"},
+    {"title": "You're So Vain",           "artist": "Carly Simon",     "key_sig": "Am",  "bpm": 106, "source_file": "You're So Vain - Carly Simon.mp3"},
+    {"title": "Chain of Fools",           "artist": "Aretha Franklin",  "key_sig": "Cm",  "bpm": 118, "source_file": "Chain of Fools - Arethra Franklin.mp3"},
+    {"title": "Something To Talk About",  "artist": "Bonnie Raitt",    "key_sig": "Ab",  "bpm": None, "source_file": None},
 ]
 
 BAND_NAME = "Copper Creek"
