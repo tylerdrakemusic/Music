@@ -323,28 +323,28 @@ def get_daily_portrait(mode: str | None = None) -> Path:
     # 1. DALL-E 3 (primary)
     result = _try_dalle3(positive_prompt, save_dir)
     if result and result.exists():
-        result.rename(today_path)
+        result.replace(today_path)  # replace() overwrites atomically on Windows (no WinError 183)
         _prune_old_portraits()
         return today_path
 
     # 2. HuggingFace Inference API (requires HF_TOKEN with credits)
     result = _try_huggingface(positive_prompt, save_dir, negative_prompt=negative_prompt)
     if result and result.exists():
-        result.rename(today_path)
+        result.replace(today_path)  # replace() overwrites atomically on Windows (no WinError 183)
         _prune_old_portraits()
         return today_path
 
     # 3. HuggingFace Spaces FLUX.1-schnell (free, ZeroGPU quota)
     result = _try_hf_spaces(positive_prompt, save_dir)
     if result and result.exists():
-        result.rename(today_path)
+        result.replace(today_path)  # replace() overwrites atomically on Windows (no WinError 183)
         _prune_old_portraits()
         return today_path
 
     # 4. Pollinations.AI (free, photorealistic, no API key)
     result = _try_pollinations(positive_prompt, save_dir)
     if result and result.exists():
-        result.rename(today_path)
+        result.replace(today_path)  # replace() overwrites atomically on Windows (no WinError 183)
         _prune_old_portraits()
         return today_path
 
