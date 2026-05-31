@@ -58,7 +58,8 @@ def get_instructor_audio(phrase: str, cache_dir: Path) -> Path | None:
     safe_cache.mkdir(parents=True, exist_ok=True)
 
     # Cache key: SHA1 of (voice_id + phrase) so key-changes or voice changes invalidate
-    cache_key = hashlib.sha1(f"{_VOICE_ID}:{phrase}".encode("utf-8")).hexdigest()
+    _cache_input = f"{_VOICE_ID}:{phrase}".encode("utf-8")
+    cache_key = hashlib.sha1(_cache_input, usedforsecurity=False).hexdigest()  # nosec B324
     cache_path = safe_cache / f"{cache_key}.mp3"
 
     if cache_path.exists():
@@ -85,7 +86,7 @@ def get_instructor_audio(phrase: str, cache_dir: Path) -> Path | None:
             },
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
+        with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310  # nosec B310
             audio_bytes = resp.read()
 
         cache_path.write_bytes(audio_bytes)

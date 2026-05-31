@@ -1,6 +1,6 @@
 {
-  "exported_at": "2026-04-26T02:31:19.972238+00:00",
-  "count": 40,
+  "exported_at": "2026-05-31T17:38:03.056696+00:00",
+  "count": 56,
   "songs": [
     {
       "id": 26,
@@ -11,9 +11,22 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Heavy%20Chevy%20-%20Alabama%20Shakes.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Alabama%20Shakes%20-%20Heavy%20Chevy.docx"
       ],
       "audio_url": "file:///G:/Muzic/Heavy%20Chevy%20-%20Alabama%20Shakes%20%282%29.mp3"
+    },
+    {
+      "id": 130,
+      "title": "Chain of Fools",
+      "artist": "Aretha Franklin",
+      "key": "Cm",
+      "bpm": 118,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Aretha%20Franklin%20-%20Chain%20of%20Fools.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Chain%20of%20Fools%20-%20Arethra%20Franklin.mp3"
     },
     {
       "id": 27,
@@ -24,13 +37,39 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Pick%20Up%20The%20Pieces%20-%20Average%20White%20Band%20%28Trombone%29.jpg",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Pick%20Up%20The%20Pieces%20-%20Average%20White%20Band%20%28Trombone%20Page%201%29.jpg",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Pick%20Up%20The%20Pieces%20-%20Average%20White%20Band%20%28Trombone%20Page%202%29.jpg",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Pick%20Up%20The%20Pieces%20-%20Average%20White%20Band%20%28Trombone%20Page%203%29.jpg",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Pick%20Up%20The%20Pieces%20-%20Average%20White%20Band.jpg"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Average%20White%20Band%20-%20Pick%20Up%20The%20Pieces%20%28Trombone%20Page%201%29.jpg",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Average%20White%20Band%20-%20Pick%20Up%20The%20Pieces%20%28Trombone%20Page%202%29.jpg",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Average%20White%20Band%20-%20Pick%20Up%20The%20Pieces%20%28Trombone%20Page%203%29.jpg",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Average%20White%20Band%20-%20Pick%20Up%20The%20Pieces%20%28Trombone%29.jpg",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Average%20White%20Band%20-%20Pick%20Up%20The%20Pieces.jpg"
       ],
       "audio_url": "file:///G:/Muzic/Pick%20Up%20the%20Pieces%20-%20Average%20White%20Band.mp3"
+    },
+    {
+      "id": 120,
+      "title": "Love Shack",
+      "artist": "B-52's",
+      "key": "C",
+      "bpm": 134,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20B-52s%20-%20Love%20Shack.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Love%20Shack%20-%20The%20B-52%27s.mp3"
+    },
+    {
+      "id": 126,
+      "title": "Thrill Is Gone",
+      "artist": "BB King",
+      "key": "Bm",
+      "bpm": 90,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/B.B.%20King%20-%20The%20Thrill%20Is%20Gone.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/The%20Thrill%20Is%20Gone%20-%20B.B.%20King.mp3"
     },
     {
       "id": 7,
@@ -41,9 +80,22 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Call%20Me%20-%20Blondie%20%28in%20B%29.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Blondie%20-%20Call%20Me%20%28in%20B%29.docx"
       ],
       "audio_url": "file:///G:/Muzic/Call%20Me%20-%20Blondie.mp3"
+    },
+    {
+      "id": 119,
+      "title": "Livin' On A Prayer",
+      "artist": "Bon Jovi",
+      "key": "Em",
+      "bpm": 123,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Bon%20Jovi%20-%20Livin%20on%20a%20Prayer.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Livin%27%20On%20a%20Prayer%20-%20Bon%20Jovi.mp3"
     },
     {
       "id": 11,
@@ -54,9 +106,35 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Love%20Sneakin%20Up%20on%20You%20-%20Bonnie%20Raitt.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Bonnie%20Raitt%20-%20Love%20Sneakin%20Up%20on%20You.docx"
       ],
       "audio_url": "file:///G:/Muzic/Love%20Sneakin%27%20Up%20On%20You%20-%20Bonnie%20Raitt.mp3"
+    },
+    {
+      "id": 131,
+      "title": "Something To Talk About",
+      "artist": "Bonnie Raitt",
+      "key": "Ab",
+      "bpm": 103,
+      "bpm_source": "librosa",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Bonnie%20Raitt%20-%20Something%20To%20Talk%20About.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Bonnie%20Rait%20-%20Something%20To%20Talk%20About.mp3"
+    },
+    {
+      "id": 129,
+      "title": "You're So Vain",
+      "artist": "Carly Simon",
+      "key": "Am",
+      "bpm": 106,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Carly%20Simon%20-%20Youre%20So%20Vain.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/You%27re%20So%20Vain%20-%20Carly%20Simon.mp3"
     },
     {
       "id": 24,
@@ -67,9 +145,22 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/I%20Feel%20the%20Earth%20Move%20-%20Carole%20King.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Carole%20King%20-%20I%20Feel%20the%20Earth%20Move.docx"
       ],
       "audio_url": "file:///G:/Muzic/I%20Feel%20the%20Earth%20Move%20-%20Carole%20King.mp3"
+    },
+    {
+      "id": 121,
+      "title": "Natural Woman",
+      "artist": "Carole King",
+      "key": "Bb",
+      "bpm": 111,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Carole%20King%20-%20Natural%20Woman%20%28in%20Bb%29.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/You%20Make%20Me%20Feel%20Like%20a%20Natural%20Woman%20-%20Carole%20King.mp3"
     },
     {
       "id": 14,
@@ -80,9 +171,49 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/25%20or%206%20to%204%20-%20Chicago.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Chicago%20-%2025%20or%206%20to%204.docx"
       ],
       "audio_url": "file:///G:/Muzic/25%20or%206%20to%204%20-%20Chicago.mp3"
+    },
+    {
+      "id": 127,
+      "title": "Wicked Games",
+      "artist": "Chris Isaak",
+      "key": "Bm",
+      "bpm": 112,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Chris%20Isaak%20-%20Wicked%20Games%20%28Key%20Bm%29.docx",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Wicked%20Games%20%28Key%20Bm%29.pdf"
+      ],
+      "audio_url": null
+    },
+    {
+      "id": 116,
+      "title": "Change The World",
+      "artist": "Eric Clapton",
+      "key": "A",
+      "bpm": 97,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Eric%20Clapton%20-%20Change%20the%20World.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Change%20the%20World%20-%20Eric%20Clapton.m4a"
+    },
+    {
+      "id": 128,
+      "title": "Wonderful Tonight",
+      "artist": "Eric Clapton",
+      "key": "G",
+      "bpm": 95,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Eric%20Clapton%20-%20Wonderful%20Tonight.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Wonderful%20Tonight%20-%20Eric%20Clapton.mp3"
     },
     {
       "id": 5,
@@ -93,7 +224,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Rhiannon%20-%20Fleetwood%20Mac.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Fleetwood%20Mac%20-%20Rhiannon.docx"
       ],
       "audio_url": "file:///G:/Muzic/Rhiannon%20-%20Fleetwood%20Mac%20%28in%20Bm%29.wav"
     },
@@ -106,7 +237,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Baker%20Street%20-%20Gerry%20Rafferty.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Gerry%20Rafferty%20-%20Baker%20Street.docx"
       ],
       "audio_url": "file:///G:/Muzic/Baker%20Street%20-%20Gerry%20Rafferty.mp3"
     },
@@ -119,7 +250,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/I%20Will%20Survive%20-%20Gloria%20Gaynor.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Gloria%20Gaynor%20-%20I%20Will%20Survive.docx"
       ],
       "audio_url": "file:///G:/Muzic/I%20Will%20Survive%20-%20Gloria%20Gaynor.mp3"
     },
@@ -132,7 +263,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/I%20Cant%20Go%20for%20That%20-%20Hall%20%26%20Oates.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Hall%20%26%20Oates%20-%20I%20Cant%20Go%20for%20That.docx"
       ],
       "audio_url": "file:///G:/Muzic/I%20Can%27t%20Go%20for%20That%20%28No%20Can%20Do%29%20-%20Daryl%20Hall%20and%20John%20Oates.mp3"
     },
@@ -145,7 +276,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Heart%20of%20Rock%20%26%20Roll%20-%20Huey%20Lewis%20%26%20The%20News.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Huey%20Lewis%20%26%20The%20News%20-%20Heart%20of%20Rock%20%26%20Roll.docx"
       ],
       "audio_url": "file:///G:/Muzic/The%20Heart%20of%20Rock%20and%20Roll%20-%20Huey%20Lewis%20and%20the%20News.mp3"
     },
@@ -158,9 +289,9 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/What%20You%20Need%20-%20INXS.pdf",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/What%20You%20Need%20-%20INXS%20%28Sax%201%29.png",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/What%20You%20Need%20-%20INXS%20%28Sax%202%29.png"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/INXS%20-%20What%20You%20Need%20%28Sax%201%29.png",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/INXS%20-%20What%20You%20Need%20%28Sax%202%29.png",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/INXS%20-%20What%20You%20Need.pdf"
       ],
       "audio_url": "file:///G:/Muzic/What%20You%20Need%20-%20INXS.mp3"
     },
@@ -173,7 +304,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Me%20and%20Bobby%20Mcgee%20-%20Janis%20Joplin.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Janis%20Joplin%20-%20Me%20and%20Bobby%20Mcgee.docx"
       ],
       "audio_url": "file:///G:/Muzic/Me%20and%20Bobby%20McGee%20-%20Janis%20Joplin.mp3"
     },
@@ -186,9 +317,24 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Jacky%20-%20Jim%20Mann.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Jim%20Mann%20-%20Jacky.docx"
       ],
       "audio_url": "file:///G:/Muzic/Jacky%20-%20Jim%20Mann%20%281-7-24%29.mp3"
+    },
+    {
+      "id": 118,
+      "title": "Josie",
+      "artist": "Jim Mann",
+      "key": "E",
+      "bpm": 122,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Steely%20Dan%20-%20Josie%20%28Brass%29.pdf",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Steely%20Dan%20-%20Josie%20%28Horns%29.jpg",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Steely%20Dan%20-%20Josie.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Josie%20-%20Steely%20Dan.mp3"
     },
     {
       "id": 35,
@@ -199,36 +345,63 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20Letter%20-%20Joe%20Cocker.pdf",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20Letter%20-%20Joe%20Cocker.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Joe%20Cocker%20-%20The%20Letter.docx",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Joe%20Cocker%20-%20The%20Letter.pdf"
       ],
       "audio_url": "file:///G:/Muzic/The%20Letter%20-%20Joe%20Cocker%20%28Live%29.mp3"
+    },
+    {
+      "id": 122,
+      "title": "Rocky Mountain Way",
+      "artist": "Joe Walsh",
+      "key": "E",
+      "bpm": 86,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Joe%20Walsh%20-%20Rocky%20Mountain%20Way.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Rocky%20Mountain%20Way%20-%20Joe%20Walsh.mp3"
     },
     {
       "id": 29,
       "title": "On the Dark Side",
       "artist": "John Cafferty",
       "key": "E",
-      "bpm": 162,
+      "bpm": null,
       "bpm_source": "unknown",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/On%20the%20Dark%20Side%20-%20John%20Cafferty.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/John%20Cafferty%20-%20On%20the%20Dark%20Side.docx"
       ],
-      "audio_url": "file:///G:/Muzic/On%20the%20Darkside%20-%20John%20Cafferty.mp3"
+      "audio_url": null
+    },
+    {
+      "id": 123,
+      "title": "Separate Ways",
+      "artist": "Journey",
+      "key": "Em",
+      "bpm": 131,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Journey%20-%20Separate%20Ways%20%28Chords%20Lyrics%29.pdf",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Journey%20-%20Separate%20Ways.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Separate%20Ways%20-%20Journey.mp3"
     },
     {
       "id": 3,
       "title": "I'm Alright",
       "artist": "Kenny Loggins",
       "key": "D",
-      "bpm": 162,
+      "bpm": null,
       "bpm_source": "unknown",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Im%20Alright%20-%20Kenny%20Loggins.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Kenny%20Loggins%20-%20Im%20Alright.docx"
       ],
-      "audio_url": "file:///G:/Muzic/I%27m%20Alright%20-%20Kenny%20Loggins.mp3"
+      "audio_url": null
     },
     {
       "id": 36,
@@ -239,7 +412,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Blue%20on%20Black%20-%20Kenny%20Wayne%20Shepherd%20%28in%20C%29.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Kenny%20Wayne%20Shepherd%20-%20Blue%20on%20Black%20%28in%20C%29.docx"
       ],
       "audio_url": "file:///G:/Muzic/Blue%20On%20Black%20-%20Kenny%20Wayne%20Shepherd.mp3"
     },
@@ -252,7 +425,7 @@
       "bpm_source": null,
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Talk%20Me%20Into%20It%20-%20Kevin%20Redmond.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Kevin%20Redmond%20-%20Talk%20Me%20Into%20It.docx"
       ],
       "audio_url": "file:///G:/Muzic/Talk%20Me%20Into%20It%20-%20Kevin%20Redmond.mp3"
     },
@@ -261,13 +434,26 @@
       "title": "Celebrate",
       "artist": "Kool & the Gang",
       "key": "Ab",
-      "bpm": 123,
+      "bpm": null,
       "bpm_source": "unknown",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Celebrate%20-%20Kool%20%26%20the%20Gang.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Kool%20%26%20the%20Gang%20-%20Celebrate.docx"
       ],
-      "audio_url": "file:///G:/Muzic/Celebration%20-%20Kool%20and%20The%20Gang.mp3"
+      "audio_url": null
+    },
+    {
+      "id": 124,
+      "title": "Sweet Home Alabama",
+      "artist": "Lynyrd Skynyrd",
+      "key": "G",
+      "bpm": 100,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Lynyrd%20Skynyrd%20-%20Sweet%20Home%20Alabama%20%28Key%20G%29.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Sweet%20Home%20Alabama%20-%20Lynyrd%20Skynyrd.mp3"
     },
     {
       "id": 12,
@@ -278,7 +464,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/These%20Boots%20Are%20Made%20for%20Walkin%20-%20Nancy%20Sinatra.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Nancy%20Sinatra%20-%20These%20Boots%20Are%20Made%20for%20Walkin.docx"
       ],
       "audio_url": "file:///G:/Muzic/These%20Boots%20Are%20Made%20for%20Walkin%27%20-%20Nancy%20Sinatra.mp3"
     },
@@ -291,7 +477,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Carnival%20-%20Natalie%20Merchant.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Natalie%20Merchant%20-%20Carnival.docx"
       ],
       "audio_url": "file:///G:/Muzic/Carnival%20-%20Natalie%20Merchant.mp3"
     },
@@ -304,8 +490,8 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Roll%20With%20The%20Changes%20-%20REO%20Speedwagon.pdf",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Roll%20with%20the%20Changes%20-%20REO%20Speedwagon.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/REO%20Speedwagon%20-%20Roll%20With%20The%20Changes.pdf",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/REO%20Speedwagon%20-%20Roll%20with%20the%20Changes.docx"
       ],
       "audio_url": "file:///G:/Muzic/Roll%20With%20the%20Changes%20-%20REO%20Speedwagon.mp3"
     },
@@ -318,9 +504,9 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Smooth%20Operator%20-%20Sade%20%28Tenor%20Sax%20Advanced%29.pdf",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Smooth%20Operator%20-%20Sade%20%28Tenor%20Sax%20Easy%29.pdf",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Smooth%20Operator%20-%20Sade.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Sade%20-%20Smooth%20Operator%20%28Tenor%20Sax%20Advanced%29.pdf",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Sade%20-%20Smooth%20Operator%20%28Tenor%20Sax%20Easy%29.pdf",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Sade%20-%20Smooth%20Operator.docx"
       ],
       "audio_url": "file:///G:/Muzic/Smooth%20Operator%20-%20Sade.mp3"
     },
@@ -333,7 +519,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Black%20Magic%20Woman%20-%20Santana.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Santana%20-%20Black%20Magic%20Woman.docx"
       ],
       "audio_url": "file:///G:/Muzic/Black%20Magic%20Woman%20-%20Santana%20%28Gypsy%20Queen%20medley%29.m4a"
     },
@@ -346,7 +532,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Evil%20Ways%20-%20Santana.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Santana%20-%20Evil%20Ways.docx"
       ],
       "audio_url": "file:///G:/Muzic/Evil%20Ways%20-%20Santana.mp3"
     },
@@ -359,7 +545,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Smooth%20-%20Santana.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Santana%20-%20Smooth.docx"
       ],
       "audio_url": "file:///G:/Muzic/Smooth%20-%20Santana%20feat.%20Rob%20Thomas.mp3"
     },
@@ -372,7 +558,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Do%20It%20Again%20-%20Steely%20Dan.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Steely%20Dan%20-%20Do%20It%20Again.docx"
       ],
       "audio_url": "file:///G:/Muzic/Do%20It%20Again%20-%20Steely%20Dan.mp3"
     },
@@ -385,7 +571,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Peg%20-%20Steely%20Dan.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Steely%20Dan%20-%20Peg.docx"
       ],
       "audio_url": "file:///G:/Muzic/Peg%20-%20Steely%20Dan.mp3"
     },
@@ -398,7 +584,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Reelin%20in%20the%20Years%20-%20Steely%20Dan.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Steely%20Dan%20-%20Reelin%20in%20the%20Years.docx"
       ],
       "audio_url": "file:///G:/Muzic/Reeling%20In%20the%20Years%20-%20Steely%20Dan.mp3"
     },
@@ -411,7 +597,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Stop%20Draggin%20My%20Heart%20Around%20-%20Stevie%20Nicks.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Stevie%20Nicks%20-%20Stop%20Draggin%20My%20Heart%20Around.docx"
       ],
       "audio_url": "file:///G:/Muzic/Stop%20Draggin%27%20My%20Heart%20Around%20-%20Stevie%20Nicks.mp3"
     },
@@ -424,7 +610,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Too%20Much%20Time%20on%20My%20Hands%20-%20Styx.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Styx%20-%20Too%20Much%20Time%20on%20My%20Hands.docx"
       ],
       "audio_url": "file:///G:/Muzic/Too%20Much%20Time%20On%20My%20Hands%20-%20Styx.mp3"
     },
@@ -437,7 +623,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20Logical%20Song%20-%20Supertramp.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Supertramp%20-%20The%20Logical%20Song.docx"
       ],
       "audio_url": "file:///G:/Muzic/The%20Logical%20Song%20-%20Supertramp.mp3"
     },
@@ -446,13 +632,13 @@
       "title": "Shaded Jade",
       "artist": "Tamala Cameron & Gene Ngo",
       "key": "Bm",
-      "bpm": 129,
+      "bpm": null,
       "bpm_source": "unknown",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Shaded%20Jade%20-%20Tamala%20Cameron%20%26%20Gene%20Ngo.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Tamala%20Cameron%20%26%20Gene%20Ngo%20-%20Shaded%20Jade.docx"
       ],
-      "audio_url": "file:///G:/Muzic/Shaded%20Jade%20-%20Tamala%20Cameron%20and%20Gene%20Ngo.mp3"
+      "audio_url": null
     },
     {
       "id": 6,
@@ -463,9 +649,22 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Gold%20on%20the%20Ceiling%20-%20The%20Black%20Keys.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20Black%20Keys%20-%20Gold%20on%20the%20Ceiling.docx"
       ],
       "audio_url": "file:///G:/Muzic/Gold%20On%20the%20Ceiling%20-%20The%20Black%20Keys.mp3"
+    },
+    {
+      "id": 125,
+      "title": "Tequila",
+      "artist": "The Champs",
+      "key": "F",
+      "bpm": 90,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Tequila.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Tequila%20-%20The%20Champs.mp3"
     },
     {
       "id": 1,
@@ -476,7 +675,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Long%20Train%20Runnin%20-%20The%20Doobie%20Brothers.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20Doobie%20Brothers%20-%20Long%20Train%20Runnin.docx"
       ],
       "audio_url": "file:///G:/Muzic/Long%20Train%20Runnin%27%20-%20The%20Doobie%20Brothers.mp3"
     },
@@ -489,7 +688,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/What%20I%20Like%20About%20You%20-%20The%20Romantics.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20Romantics%20-%20What%20I%20Like%20About%20You.docx"
       ],
       "audio_url": "file:///G:/Muzic/What%20I%20Like%20About%20You%20-%20The%20Romantics.mp3"
     },
@@ -502,12 +701,25 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Disco%20Inferno%20-%20The%20Trammps%20%28Score%29.jpg",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Disco%20Inferno%20-%20The%20Trammps%20%28Score%20Page%202%29.jpg",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Disco%20Inferno%20-%20The%20Trammps%20%28Score%20Page%203%29.jpg",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Disco%20Inferno%20-%20Tina%20Turner.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20Trammps%20-%20Disco%20Inferno%20%28Score%20Page%202%29.jpg",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20Trammps%20-%20Disco%20Inferno%20%28Score%20Page%203%29.jpg",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20Trammps%20-%20Disco%20Inferno%20%28Score%29.jpg",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Tina%20Turner%20-%20Disco%20Inferno.docx"
       ],
       "audio_url": "file:///G:/Muzic/Disco%20Inferno%20-%20Tina%20Turner%20%28Live%29.mp3"
+    },
+    {
+      "id": 115,
+      "title": "Breakdown",
+      "artist": "Tom Petty",
+      "key": "Am",
+      "bpm": 114,
+      "bpm_source": "website",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Tom%20Petty%20-%20Breakdown.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Breakdown%20-%20Tom%20Petty%20and%20the%20Heartbreakers.m4a"
     },
     {
       "id": 33,
@@ -518,7 +730,7 @@
       "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/What%20I%20Do%20-%20Tyler%20James%20Drake.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/originals/Tyler%20James%20Drake%20-%20What%20I%20Do.docx"
       ],
       "audio_url": "file:///G:/Muzic/What%20I%20Do%20-%20Tyler%20James%20Drake%20%28Clean%20Master%29.mp3"
     },
@@ -527,14 +739,14 @@
       "title": "Play That Funky Music",
       "artist": "Wild Cherry",
       "key": "Em",
-      "bpm": 108,
+      "bpm": null,
       "bpm_source": "unknown",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Play%20That%20Funky%20Music%20-%20Wild%20Cherry.pdf",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Play%20That%20Funky%20Music%20-%20Wild%20Cherry%20%28Alt%20Ending%29.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Wild%20Cherry%20-%20Play%20That%20Funky%20Music%20%28Alt%20Ending%29.docx",
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Wild%20Cherry%20-%20Play%20That%20Funky%20Music.pdf"
       ],
-      "audio_url": "file:///G:/Muzic/Play%20That%20Funky%20Music%20-%20Wild%20Cherry.mp3"
+      "audio_url": null
     }
   ]
 }

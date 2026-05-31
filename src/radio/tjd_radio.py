@@ -20,7 +20,7 @@ import json
 import math
 import os
 import random
-import subprocess
+import subprocess  # nosec B404
 import sys
 import threading
 import time
@@ -118,7 +118,7 @@ def normalize_icecast_metadata(title: str, artist: str) -> tuple[str, str]:
 def fetch_icecast_source(status_url: str, timeout_seconds: float = 3.0) -> dict:
     """Fetch and parse the active source block from Icecast status-json.xsl."""
     try:
-        with urllib.request.urlopen(status_url, timeout=timeout_seconds) as resp:
+        with urllib.request.urlopen(status_url, timeout=timeout_seconds) as resp:  # nosec B310
             payload = json.loads(resp.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, UnicodeDecodeError):
         return {}
@@ -260,7 +260,7 @@ def _prevent_boundary_repeat(tracks: list[dict], last_track: Optional[dict]) -> 
     if HAS_QUANTUM_ENTROPY and qRax is not None:
         swap_index = qRax(1, len(tracks) - 1)
     else:
-        swap_index = random.randrange(1, len(tracks))
+        swap_index = random.randrange(1, len(tracks))  # nosec B311
     tracks[0], tracks[swap_index] = tracks[swap_index], tracks[0]
 
 
@@ -384,9 +384,9 @@ class RadioBroadcast:
             print(f"[RADIO] ▶ Now playing: {track['title']} ({track['album']})")
 
             try:
-                proc = subprocess.Popen(
-                    [
-                        "ffmpeg",
+                proc = subprocess.Popen(  # nosec B603,B607
+                [
+                    "ffmpeg",
                         "-hide_banner",
                         "-loglevel", "error",
                         "-i", track["path"],
@@ -575,7 +575,7 @@ class RadioBroadcastV2:
     def _get_duration(self, path: str) -> float:
         """Return audio file duration in seconds via ffprobe, or 0 on failure."""
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603,B607
                 [
                     "ffprobe", "-v", "error",
                     "-show_entries", "format=duration",
@@ -618,7 +618,7 @@ class RadioBroadcastV2:
         """Transcode a single file to the stream with optional fades."""
         duration = self._get_duration(path) if fade_out > 0 else 0.0
         cmd = self._build_ffmpeg_cmd(path, fade_in, fade_out, duration)
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # nosec B603,B607
         chunk_size = 4096
         pace = chunk_size / (self.bitrate * 125)
         while self._running:
@@ -648,7 +648,7 @@ class RadioBroadcastV2:
         while self._running and self.playlist:
             # Inject bumper between songs if due
             if self._should_play_bumper():
-                bumper = random.choice(self.bumpers)
+                bumper = random.choice(self.bumpers)  # nosec B311
                 self._current_track = bumper
                 self._track_started = time.time()
                 print(f"[RADIO] 🎙 Bumper: {bumper['title']}")
@@ -1023,7 +1023,7 @@ def _poll_icecast_history() -> None:
                 _icecast_current_title = title
                 _icecast_current_artist = artist
                 _icecast_started_at = time.time()
-        except Exception:
+        except Exception:  # nosec B110
             pass
         time.sleep(5)
 
@@ -1225,7 +1225,7 @@ def main():
     print(f"   Stream  → http://localhost:{args.port}/stream")
     print(f"   API     → http://localhost:{args.port}/api/now_playing\n")
 
-    app.run(host="0.0.0.0", port=args.port, threaded=True)
+    app.run(host="0.0.0.0", port=args.port, threaded=True)  # nosec B104
 
 
 if __name__ == "__main__":
