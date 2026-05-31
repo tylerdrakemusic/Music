@@ -35,6 +35,49 @@ SETLIST_JSON = PROJECT_ROOT / "catalog" / "setlists" / "setlist_active_export.js
 OUTPUT_HTML = PROJECT_ROOT / "reports" / "band_management_panel.html"
 OUTPUT_HTML.parent.mkdir(parents=True, exist_ok=True)
 
+# Roots for --serve mode local-file endpoints (see _resolve_audio_path / _resolve_sheet_path)
+AUDIO_ROOT: Path = Path("G:/Muzic")
+SHEETS_ROOT: Path = PROJECT_ROOT / "catalog" / "sheet_music"
+
+
+# ---------------------------------------------------------------------------
+# Path-validation helpers for --serve mode file-serving endpoints
+# ---------------------------------------------------------------------------
+
+def _resolve_audio_path(raw: str) -> Path:
+    """URL-decode *raw* and resolve it relative to AUDIO_ROOT.
+
+    Raises ``ValueError`` on any path-traversal attempt.
+    """
+    from urllib.parse import unquote
+    filename = unquote(raw)
+    if ".." in filename.split("/") or ".." in filename.split("\\"):
+        raise ValueError(f"Path traversal detected in audio path: {filename!r}")
+    resolved = (AUDIO_ROOT / filename).resolve()
+    try:
+        resolved.relative_to(AUDIO_ROOT.resolve())
+    except ValueError:
+        raise ValueError(f"Path traversal detected in audio path: {filename!r}")
+    return resolved
+
+
+def _resolve_sheet_path(raw: str) -> Path:
+    """URL-decode *raw* and resolve it relative to SHEETS_ROOT.
+
+    Raises ``ValueError`` on any path-traversal attempt.
+    """
+    from urllib.parse import unquote
+    relpath = unquote(raw)
+    if ".." in relpath.split("/") or ".." in relpath.split("\\"):
+        raise ValueError(f"Path traversal detected in sheet path: {relpath!r}")
+    resolved = (SHEETS_ROOT / relpath).resolve()
+    try:
+        resolved.relative_to(SHEETS_ROOT.resolve())
+    except ValueError:
+        raise ValueError(f"Path traversal detected in sheet path: {relpath!r}")
+    return resolved
+
+
 # ---------------------------------------------------------------------------
 # Load data
 # ---------------------------------------------------------------------------
@@ -803,7 +846,49 @@ BM_JS = r"""
     area.innerHTML = '';
   };
 
+  // ---------------------------------------------------------------------------
+  // HTTP-origin URL rewriting (BFX-20260531-band-mgmt-file-urls)
+  // When the panel is served at http:// or https://, browsers block file://
+  // resources.  This function rewrites BM_INLINE song data in-place so every
+  // file:/// URI becomes a relative URL served by the local HTTP server.
+  // When the panel is opened directly as file://, it returns immediately so
+  // existing behaviour is completely unchanged (AC3).
+  // ---------------------------------------------------------------------------
+  function _bmRewriteFileUrls() {
+    if (window.location.protocol === 'file:') return;  // AC3: file:// mode — keep as-is
+    if (!BM_INLINE || !BM_INLINE.bands) return;
+    BM_INLINE.bands.forEach(function(band) {
+      var groups = [];
+      if (band.catalog && band.catalog.songs) groups.push(band.catalog.songs);
+      if (band.setlist && band.setlist.songs) groups.push(band.setlist.songs);
+      groups.forEach(function(songs) {
+        songs.forEach(function(s) {
+          // Rewrite audio_url: file:///G:/Muzic/<filename> → /audio/<filename>
+          if (s.audio_url && s.audio_url.indexOf('file:///') === 0) {
+            var audioMatch = s.audio_url.match(/^file:\/\/\/[Gg][:\/\\]Muzic\/(.+)$/i);
+            if (audioMatch) {
+              s.audio_url = '/audio/' + audioMatch[1];
+            }
+          }
+          // Rewrite sheet_music[]: file:///f:/%E2%9D%A4Music/catalog/sheet_music/<relpath>
+          //                       → /sheets/<relpath>
+          if (s.sheet_music && s.sheet_music.length) {
+            s.sheet_music = s.sheet_music.map(function(url) {
+              if (url.indexOf('file:///') !== 0) return url;
+              var sheetMatch = url.match(/^file:\/\/\/(?:f:\/)?%E2%9D%A4Music\/catalog\/sheet_music\/(.+)$/i);
+              if (sheetMatch) {
+                return '/sheets/' + sheetMatch[1];
+              }
+              return url;
+            });
+          }
+        });
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
+    _bmRewriteFileUrls();  // rewrite file:// → HTTP endpoints before first render (AC1, AC2)
     populateBandSelect();
     var printBtn = document.getElementById('bm-print-btn');
     if (printBtn) printBtn.style.display = currentView === 'setlist' ? '' : 'none';
@@ -1043,6 +1128,39 @@ def _serve_mode(host: str = "127.0.0.1", port: int = 8765) -> None:
             self.end_headers()
             self.wfile.write(body)
 
+        def _send_file(self, file_path: Path, content_type: str) -> None:
+            """Stream *file_path* with optional Range-request support."""
+            import mimetypes
+            try:
+                file_size = file_path.stat().st_size
+            except OSError:
+                self.send_error(404, "File not found")
+                return
+            range_header = self.headers.get("Range", "")
+            range_match = re.match(r"bytes=(\d+)-(\d*)", range_header) if range_header else None
+            if range_match:
+                start = int(range_match.group(1))
+                end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+                end = min(end, file_size - 1)
+                length = end - start + 1
+                self.send_response(206)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Range", f"bytes {start}-{end}/{file_size}")
+                self.send_header("Content-Length", str(length))
+                self.send_header("Accept-Ranges", "bytes")
+                self.end_headers()
+                with open(file_path, "rb") as fh:
+                    fh.seek(start)
+                    self.wfile.write(fh.read(length))
+            else:
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(file_size))
+                self.send_header("Accept-Ranges", "bytes")
+                self.end_headers()
+                with open(file_path, "rb") as fh:
+                    self.wfile.write(fh.read())
+
         def do_GET(self) -> None:
             parsed = urlparse(self.path)
             qs = parse_qs(parsed.query)
@@ -1051,6 +1169,36 @@ def _serve_mode(host: str = "127.0.0.1", port: int = 8765) -> None:
                 data = load_inline_data()
                 inv = load_inventory_data()
                 self._html(generate(data, inv))
+            elif path.startswith("/audio/"):
+                # Serve audio files from AUDIO_ROOT (e.g. G:\Muzic)
+                raw = path[len("/audio/"):]
+                try:
+                    audio_path = _resolve_audio_path(raw)
+                except ValueError:
+                    self.send_error(400, "Invalid audio path")
+                    return
+                import mimetypes
+                ct = mimetypes.guess_type(audio_path.name)[0] or "audio/mpeg"
+                self._send_file(audio_path, ct)
+            elif path.startswith("/sheets/"):
+                # Serve sheet-music files from SHEETS_ROOT
+                raw = path[len("/sheets/"):]
+                try:
+                    sheet_path = _resolve_sheet_path(raw)
+                except ValueError:
+                    self.send_error(400, "Invalid sheet path")
+                    return
+                import mimetypes
+                _DOCX_CT = (
+                    "application/vnd.openxmlformats-officedocument"
+                    ".wordprocessingml.document"
+                )
+                ct = (
+                    _DOCX_CT
+                    if sheet_path.suffix.lower() == ".docx"
+                    else (mimetypes.guess_type(sheet_path.name)[0] or "application/octet-stream")
+                )
+                self._send_file(sheet_path, ct)
             elif path == "/vera/prompt":
                 mode = qs.get("mode", ["rehearsal"])[0]
                 try:
