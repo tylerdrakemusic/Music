@@ -37,6 +37,18 @@ _WORKSPACE_SRC = next(
 if str(_WORKSPACE_SRC) not in sys.path:
     sys.path.insert(0, str(_WORKSPACE_SRC))
 
+# Guard: skip GDriveClient tests on CI runners that don't have ⊕Workspace mounted
+try:
+    from integrations.gdrive import GDriveClient as _GDriveClient  # noqa: F401
+    _gdrive_importable = True
+except Exception:
+    _gdrive_importable = False
+
+_skip_no_gdrive = pytest.mark.skipif(
+    not _gdrive_importable,
+    reason="integrations.gdrive not available (⊕Workspace not mounted on this runner)",
+)
+
 # ---------------------------------------------------------------------------
 # Regex parser (same pattern used by both backfill & gdrive ingest scripts)
 # Defined here so tests are self-contained without importing prod code first.
@@ -211,6 +223,7 @@ def test_backfill_local_idempotent(tmp_path):
 # ---------------------------------------------------------------------------
 
 
+@_skip_no_gdrive
 def test_gdrive_client_missing_env_var():
     """GDriveClient() raises EnvironmentError when GDRIVE_SA_KEY is absent."""
     # _WORKSPACE_SRC already on sys.path (module-level setup above)
@@ -245,6 +258,7 @@ _FAKE_SA_KEY = base64.b64encode(
 ).decode()
 
 
+@_skip_no_gdrive
 def test_gdrive_client_list_files_mocked():
     """list_files() aggregates pages and returns expected dicts (mirror test)."""
     if str(_WORKSPACE_SRC) not in sys.path:
