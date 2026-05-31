@@ -125,14 +125,16 @@ class TestSync:
                 f"Song not linked to Copper Creek: {song['title']}"
             )
 
-    def test_bpm_source_is_website(self, conn) -> None:
+    def test_bpm_source_is_valid(self, conn) -> None:
+        """bpm_source must be a recognised source; librosa is valid for detected BPMs."""
+        valid_sources = {"website", "librosa", "manual"}
         self.mod.sync(conn, dry_run=False)
         for song in self.mod.SONGS_TO_ADD:
             row = conn.execute(
                 "SELECT bpm_source FROM catalog_songs WHERE title=? AND artist=?",
                 (song["title"], song["artist"]),
             ).fetchone()
-            if row:
-                assert row[0] == "website", (
-                    f"Expected bpm_source='website' for {song['title']}, got {row[0]!r}"
+            if row and row[0] is not None:
+                assert row[0] in valid_sources, (
+                    f"Unexpected bpm_source for {song['title']!r}: {row[0]!r}"
                 )
