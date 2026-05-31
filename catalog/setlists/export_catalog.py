@@ -15,6 +15,7 @@ Usage:
 Run this after any DB update (seed, migration, manual edit) to refresh the portal.
 """
 import json
+import re
 import sys
 import unicodedata
 from datetime import datetime, timezone
@@ -34,18 +35,29 @@ OUT_DIR = Path(__file__).parent
 
 # ── Sheet music matching ──────────────────────────────────────────────────────
 
+_ARTICLES = frozenset(("the", "a", "an"))
+
+
 def _normalize(s: str) -> str:
-    """Lowercase, strip accents, remove punctuation for fuzzy matching."""
+    """Lowercase, strip accents, remove punctuation, strip leading articles."""
     s = unicodedata.normalize("NFD", s)
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    return "".join(c for c in s.lower() if c.isalnum() or c.isspace()).strip()
+    s = "".join(c for c in s.lower() if c.isalnum() or c.isspace()).strip()
+    words = s.split()
+    if words and words[0] in _ARTICLES:
+        s = " ".join(words[1:])
+    return s
+
+
+def _strip_variant(s: str) -> str:
+    """Remove trailing parenthetical info like '(in B)', '(Key Gm)', '(Brass)'."""
+    return re.sub(r"\s*\([^)]*\)\s*$", "", s).strip()
 
 
 def build_sheet_music_index() -> dict:
     """
-    Walk SHEET_MUSIC dir. Parse filenames of the form:
-        <Title> - <Artist> [(<variant>)].<ext>
-        <Title>.<ext>   (for originals)
+    Walk SHEET_MUSIC dir. Indexes both halves of 'A - B' filenames so that
+    either 'Title - Artist' or 'Artist - Title' naming conventions match.
     Returns dict keyed by normalized title -> list of file:/// URIs.
     """
     index = {}
@@ -54,10 +66,12 @@ def build_sheet_music_index() -> dict:
     for f in SHEET_MUSIC.rglob("*"):
         if not f.is_file() or f.suffix.lower() in (".txt",):
             continue
-        stem = f.stem  # e.g. "Celebration - Kool & The Gang (Horns)"
-        title_part = stem.split(" - ")[0].strip() if " - " in stem else stem.strip()
-        key = _normalize(title_part)
-        index.setdefault(key, []).append(f.as_uri())
+        stem = f.stem
+        parts = [p.strip() for p in stem.split(" - ", 1)] if " - " in stem else [stem.strip()]
+        for part in parts:
+            key = _normalize(_strip_variant(part))
+            if key:
+                index.setdefault(key, []).append(f.as_uri())
     return index
 
 
