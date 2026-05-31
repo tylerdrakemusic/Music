@@ -28,7 +28,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 SONGS_TO_ADD: list[dict] = [
     {"title": "Breakdown",            "artist": "Tom Petty",        "key_sig": "Am",  "bpm": 114},
     {"title": "Change The World",     "artist": "Eric Clapton",     "key_sig": "A",   "bpm": 97},
-    {"title": "Fly Away",             "artist": "Tyler Drake",      "key_sig": "C",   "bpm": 106},
     {"title": "Josie",                "artist": "Jim Mann",         "key_sig": "E",   "bpm": 122},
     {"title": "Livin' On A Prayer",   "artist": "Bon Jovi",         "key_sig": "Em",  "bpm": 123},
     {"title": "Love Shack",           "artist": "B-52's",           "key_sig": "C",   "bpm": 134},

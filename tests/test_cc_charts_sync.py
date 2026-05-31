@@ -51,8 +51,8 @@ class TestSongsToAdd:
     def setup_method(self) -> None:
         self.mod = _load_sync_module()
 
-    def test_songs_to_add_has_fifteen_entries(self) -> None:
-        assert len(self.mod.SONGS_TO_ADD) == 15
+    def test_songs_to_add_has_fourteen_entries(self) -> None:
+        assert len(self.mod.SONGS_TO_ADD) == 14
 
     def test_each_entry_has_required_fields(self) -> None:
         required = {"title", "artist", "key_sig", "bpm"}
