@@ -41,7 +41,7 @@ SONGS_TO_ADD: list[dict] = [
     {"title": "Wonderful Tonight",        "artist": "Eric Clapton",    "key_sig": "G",   "bpm": 95,  "source_file": "Wonderful Tonight - Eric Clapton.mp3"},
     {"title": "You're So Vain",           "artist": "Carly Simon",     "key_sig": "Am",  "bpm": 106, "source_file": "You're So Vain - Carly Simon.mp3"},
     {"title": "Chain of Fools",           "artist": "Aretha Franklin",  "key_sig": "Cm",  "bpm": 118, "source_file": "Chain of Fools - Arethra Franklin.mp3"},
-    {"title": "Something To Talk About",  "artist": "Bonnie Raitt",    "key_sig": "Ab",  "bpm": None, "source_file": None},
+    {"title": "Something To Talk About",  "artist": "Bonnie Raitt",    "key_sig": "Ab",  "bpm": 103, "source_file": "Bonnie Rait - Something To Talk About.mp3"},
 ]
 
 BAND_NAME = "Copper Creek"
