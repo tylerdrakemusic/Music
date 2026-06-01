@@ -7,12 +7,14 @@ AC coverage:
  4. test_generate_workflow_b_creates_docx      — POST /chord-sheet/generate workflow=B
  5. test_generate_saves_json_workflow_a        — POST /chord-sheet/generate workflow=A
  6. test_download_endpoint_serves_docx         — GET /chord-sheet/download/<filename>
- 7. test_lyrics_only_flag_produces_lyrics_only_docx
+ 7. test_merge_calls_gh_pr_merge               — POST /chord-sheet/merge
+ 8. test_lyrics_only_flag_produces_lyrics_only_docx
 """
 from __future__ import annotations
 
 import json
 import sqlite3
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -234,6 +236,28 @@ def test_download_endpoint_serves_docx(client, tmp_path):
 
     assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
     assert resp.data == b"PK fake docx content"
+
+
+def test_merge_calls_gh_pr_merge(client):
+    """POST /chord-sheet/merge calls 'gh pr merge' with the supplied pr_url."""
+    pr_url = "https://github.com/tylerdrakemusic/Music/pull/98"
+    calls: list = []
+
+    def _fake_run(cmd, **kwargs):
+        calls.append(list(cmd))
+        m = MagicMock()
+        m.returncode = 0
+        m.stdout = ""
+        m.stderr = ""
+        return m
+
+    with patch("subprocess.run", side_effect=_fake_run):
+        resp = client.post("/chord-sheet/merge", json={"pr_url": pr_url})
+
+    assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.get_json()}"
+    merge_calls = [c for c in calls if "gh" in c and "pr" in c and "merge" in c]
+    assert merge_calls, f"No 'gh pr merge' call found in: {calls}"
+    assert any(pr_url in c for c in merge_calls), f"PR URL not found in calls: {merge_calls}"
 
 
 def test_lyrics_only_flag_produces_lyrics_only_docx(client, tmp_path):

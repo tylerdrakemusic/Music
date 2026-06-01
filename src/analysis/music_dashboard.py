@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import json
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -823,7 +824,11 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
     <div id="cs-result-panel" style="display:none;background:var(--surface);border:1px solid var(--ok);border-radius:var(--radius);padding:20px;">
       <h4 style="color:var(--ok);margin-bottom:12px;">✓ Generated</h4>
       <div style="margin-bottom:8px;color:var(--text-muted);">File: <span id="cs-result-filename" style="color:var(--text);font-family:monospace;"></span></div>
-      <a id="cs-download-link" href="#" target="_blank" class="btn" style="display:inline-block;background:var(--ok);color:white;text-decoration:none;">📥 Open DOCX</a>
+      <a id="cs-download-link" href="#" target="_blank" class="btn" style="display:inline-block;background:var(--ok);color:white;text-decoration:none;margin-right:10px;">📥 Open DOCX</a>
+      <div id="cs-pr-section" style="display:none;margin-top:14px;">
+        <div style="margin-bottom:8px;color:var(--text-muted);">PR: <a id="cs-pr-url" href="#" target="_blank" style="color:var(--accent);"></a></div>
+        <button class="btn" onclick="csMergePR()" style="background:var(--accent);">🔀 Merge PR</button>
+      </div>
     </div>
 
     <div id="cs-status" style="margin-top:12px;font-size:13px;color:var(--text-muted);"></div>
@@ -1792,8 +1797,37 @@ async function csGenerateFromJson(workflow) {
     const dl = document.getElementById('cs-download-link');
     dl.href = data.download_url || '#';
     document.getElementById('cs-result-panel').style.display = 'block';
+    const prSection = document.getElementById('cs-pr-section');
+    if (data.pr_url) {
+      _csPrUrl = data.pr_url.trim();
+      const prLink = document.getElementById('cs-pr-url');
+      prLink.href = _csPrUrl;
+      prLink.textContent = _csPrUrl;
+      prSection.style.display = 'block';
+    } else {
+      prSection.style.display = 'none';
+    }
     csSetStatus('Done! DOCX generated.');
     csLoadSongs();
+  } catch (e) { csSetStatus('Network error: ' + e.message); }
+}
+
+let _csPrUrl = '';
+
+async function csMergePR() {
+  if (!_csPrUrl) { csSetStatus('No PR to merge.'); return; }
+  csSetStatus('Merging PR...');
+  try {
+    const r = await fetch('/chord-sheet/merge', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({pr_url: _csPrUrl})
+    });
+    const data = await r.json();
+    if (!r.ok) { csSetStatus('Merge error: ' + (data.error || r.status)); return; }
+    csSetStatus('PR merged! ✓');
+    document.getElementById('cs-pr-section').style.display = 'none';
+    _csPrUrl = '';
   } catch (e) { csSetStatus('Network error: ' + e.message); }
 }
 
@@ -2769,11 +2803,56 @@ def chord_sheet_generate():
     except Exception as exc:
         return jsonify({"error": f"DOCX generation failed: {exc}"}), 500
 
+    # Git commit + push + open PR (best-effort; failures don't block DOCX download)
+    pr_url = ""
+    try:
+        repo_root = _CS_ROOT
+        subprocess.run(
+            ["git", "add", str(json_path), str(out_path)],
+            cwd=str(repo_root), check=True, capture_output=True,
+        )
+        subprocess.run(
+            ["git", "commit", "--allow-empty", "-m",
+             f"chord-sheet: add {out_path.name}"],
+            cwd=str(repo_root), check=True, capture_output=True,
+        )
+        subprocess.run(
+            ["git", "push"],
+            cwd=str(repo_root), check=True, capture_output=True,
+        )
+        gh = subprocess.run(
+            ["gh", "pr", "create", "--fill", "--base", "main"],
+            cwd=str(repo_root), capture_output=True, text=True,
+        )
+        pr_url = gh.stdout.strip()
+    except Exception:
+        pass  # PR creation is optional; DOCX is already generated
+
     return jsonify({
         "filename": out_path.name,
         "json_path": str(json_path),
         "download_url": f"/chord-sheet/download/{out_path.name}",
+        "pr_url": pr_url,
     })
+
+
+@app.route("/chord-sheet/merge", methods=["POST"])
+def chord_sheet_merge():
+    """Merge a chord-sheet PR via `gh pr merge`."""
+    data = request.get_json(silent=True) or {}
+    pr_url = str(data.get("pr_url", "")).strip()
+    if not pr_url:
+        return jsonify({"error": "pr_url is required"}), 400
+    try:
+        result = subprocess.run(
+            ["gh", "pr", "merge", pr_url, "--merge", "--auto"],
+            cwd=str(_CS_ROOT), capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            return jsonify({"error": result.stderr.strip() or "gh pr merge failed"}), 500
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"merged": True, "pr_url": pr_url})
 
 
 @app.route("/chord-sheet/download/<path:filename>")
