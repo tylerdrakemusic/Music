@@ -219,6 +219,20 @@ _POSITION_DATA: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("C_shape",      18, "Position 9 — C shape (18th fret)",         "A string",     "Start on the 18th fret of the A string — E-flat major C shape one octave up."),
         ("rock",         18, "Position 10 — 石 Rock shape (18th fret)",  "A string",     "Start on the 18th fret of the A string for E-flat major 石 Rock shape (high octave)."),
     ],
+    # FR-20260531-guitar-trainer-a-major
+    "A": [
+        ("A_shape",  0,  "Position 1 — A shape (open)",               "A string",     "Start on the open A string — A major A shape."),
+        ("G_shape",  5,  "Position 2 — G shape (5th fret)",           "Low E string", "Start on the 5th fret of the low E string — A major G shape."),
+        ("river",    5,  "Position 3 — 川 River shape (5th fret)",    "Low E string", "Start on the 5th fret of the low E string — A major 川 River shape."),
+        ("E_shape",  5,  "Position 4 — E shape (5th fret)",           "Low E string", "Start on the 5th fret of the low E string — A major E shape."),
+        ("D_shape",  5,  "Position 5 — D shape (5th fret)",           "Low E string", "Start on the 5th fret of the low E string — A major D shape."),
+        ("C_shape",  12, "Position 6 — C shape (12th fret)",          "A string",     "Start on the 12th fret of the A string — A major C shape."),
+        ("rock",     12, "Position 7 — 石 Rock shape (12th fret)",    "A string",     "Start on the 12th fret of the A string for A major 石 Rock shape."),
+        ("A_shape",  12, "Position 8 — A shape (12th fret)",          "A string",     "Start on the 12th fret of the A string — A major A shape one octave up."),
+        ("G_shape",  17, "Position 9 — G shape (17th fret)",          "Low E string", "Start on the 17th fret of the low E string — A major G shape one octave up."),
+        ("river",    17, "Position 10 — 川 River shape (17th fret)",  "Low E string", "Start on the 17th fret of the low E string — A major 川 River shape (high octave)."),
+        ("E_shape",  17, "Position 11 — E shape (17th fret)",         "Low E string", "Start on the 17th fret of the low E string — A major E shape (high octave)."),
+    ],
 }
 
 

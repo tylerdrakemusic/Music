@@ -111,12 +111,12 @@ def client(mem_conn):
 # ---------------------------------------------------------------------------
 
 def test_scale_positions_has_c_and_g() -> None:
-    """SCALE_POSITIONS must contain C, G, F, D, Bb, B, Eb, and the A#/D# aliases."""
-    assert {"C", "G", "F", "D", "Bb", "A#", "B", "Eb", "D#"}.issubset(set(SCALE_POSITIONS.keys()))
+    """SCALE_POSITIONS must contain C, G, F, D, Bb, B, Eb, A, and the A#/D# aliases."""
+    assert {"C", "G", "F", "D", "Bb", "A#", "B", "Eb", "D#", "A"}.issubset(set(SCALE_POSITIONS.keys()))
 
 
 def test_scale_positions_counts() -> None:
-    """C must have 12 positions; G, D, Bb, B must have 11; F must have 12; Eb must have 10."""
+    """C must have 12 positions; G, D, Bb, B, A must have 11; F must have 12; Eb must have 10."""
     assert len(SCALE_POSITIONS["C"]) == 12, f"SCALE_POSITIONS['C'] has {len(SCALE_POSITIONS['C'])} positions, expected 12"
     assert len(SCALE_POSITIONS["G"]) == 11, f"SCALE_POSITIONS['G'] has {len(SCALE_POSITIONS['G'])} positions, expected 11"
     assert len(SCALE_POSITIONS["F"]) == 12, f"SCALE_POSITIONS['F'] has {len(SCALE_POSITIONS['F'])} positions, expected 12"
@@ -124,6 +124,7 @@ def test_scale_positions_counts() -> None:
     assert len(SCALE_POSITIONS["Bb"]) == 11, f"SCALE_POSITIONS['Bb'] has {len(SCALE_POSITIONS['Bb'])} positions, expected 11"
     assert len(SCALE_POSITIONS["B"]) == 11, f"SCALE_POSITIONS['B'] has {len(SCALE_POSITIONS['B'])} positions, expected 11"
     assert len(SCALE_POSITIONS["Eb"]) == 10, f"SCALE_POSITIONS['Eb'] has {len(SCALE_POSITIONS['Eb'])} positions, expected 10"
+    assert len(SCALE_POSITIONS["A"]) == 11, f"SCALE_POSITIONS['A'] has {len(SCALE_POSITIONS['A'])} positions, expected 11"
 
 
 def test_caged_positions_count() -> None:
@@ -657,6 +658,80 @@ def test_html_has_scale_play_btn(html: str) -> None:
 def test_html_has_tap_tempo_btn(html: str) -> None:
     """Rendered HTML must contain scaleTap() tap-tempo button."""
     assert "scaleTap()" in html
+
+
+# ---------------------------------------------------------------------------
+# A major — FR-20260531-guitar-trainer-a-major
+# ---------------------------------------------------------------------------
+
+def test_a_major_positions_pitch_classes() -> None:
+    """All notes in all A major positions must belong to the A major scale (pitch classes {9,11,1,2,4,6,8})."""
+    A_MAJOR_PC = {9, 11, 1, 2, 4, 6, 8}  # A B C# D E F# G#
+    for i, pos in enumerate(SCALE_POSITIONS["A"]):
+        for note in pos["notes"]:
+            assert note["midi"] % 12 in A_MAJOR_PC, (
+                f"A major pos {i+1} has invalid pitch class {note['midi'] % 12} (fret {note['fret']})"
+            )
+
+
+def test_a_major_max_fret() -> None:
+    """No note in any A major position may exceed fret 22."""
+    for i, pos in enumerate(SCALE_POSITIONS["A"]):
+        for note in pos["notes"]:
+            assert note["fret"] <= 22, (
+                f"A major pos {i+1} has fret {note['fret']} > 22"
+            )
+
+
+def test_api_scale_positions_a_returns_11(client) -> None:
+    """GET /api/scale-positions?key=A must return a list of exactly 11 A major positions."""
+    resp = client.get("/api/scale-positions?key=A")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) == 11
+    assert all("A major" in p["instructor_phrase"] for p in data)
+
+
+def test_html_key_select_has_a_option(html: str) -> None:
+    """HTML key dropdown must include an A major option."""
+    assert '<option value="A">A major</option>' in html
+
+
+# ---------------------------------------------------------------------------
+# TTS normalization — hash→sharp bugfix
+# ---------------------------------------------------------------------------
+
+def test_tts_normalize_hash_to_sharp() -> None:
+    """_normalize_phrase must replace # with ' sharp' so TTS says 'sharp' not 'hash'."""
+    from training.scale_tts import _normalize_phrase  # noqa: PLC0415
+
+    assert _normalize_phrase("A major A shape (F#, C#, G#).") == \
+        "Ay major Ay shape (F sharp, C sharp, G sharp)."
+
+
+def test_tts_normalize_a_major_pronunciation() -> None:
+    """_normalize_phrase must replace 'A major' with 'Ay major' for hard A pronunciation."""
+    from training.scale_tts import _normalize_phrase  # noqa: PLC0415
+
+    assert _normalize_phrase("Start on the open A string — A major A shape.") == \
+        "Start on the open A string — Ay major Ay shape."
+
+
+def test_tts_normalize_a_shape_pronunciation() -> None:
+    """_normalize_phrase must replace 'A shape' with 'Ay shape' for hard A pronunciation."""
+    from training.scale_tts import _normalize_phrase  # noqa: PLC0415
+
+    assert _normalize_phrase("A major A shape one octave up.") == \
+        "Ay major Ay shape one octave up."
+
+
+def test_tts_normalize_no_sharps_unchanged() -> None:
+    """_normalize_phrase must leave phrases without # unmodified."""
+    from training.scale_tts import _normalize_phrase  # noqa: PLC0415
+
+    phrase = "Start on the 3rd fret of the A string — C major C shape."
+    assert _normalize_phrase(phrase) == phrase
 
 
 def test_html_freq_table_injected(html: str) -> None:
