@@ -38,6 +38,19 @@ def _resolve_cache_dir(cache_dir: Path) -> Path:
     return resolved
 
 
+def _normalize_phrase(phrase: str) -> str:
+    """Expand music notation so TTS pronounces it correctly.
+
+    '#'      → ' sharp'  (ElevenLabs reads bare '#' as 'hash')
+    'A major'→ 'Ay major' (ElevenLabs soft-pronounces the letter A otherwise)
+    'A shape'→ 'Ay shape' (ElevenLabs soft-pronounces the letter A otherwise)
+    """
+    phrase = phrase.replace("#", " sharp")
+    phrase = phrase.replace("A major", "Ay major")
+    phrase = phrase.replace("A shape", "Ay shape")
+    return phrase
+
+
 def get_instructor_audio(phrase: str, cache_dir: Path) -> Path | None:
     """Return path to cached MP3 for *phrase*, generating it via ElevenLabs if needed.
 
@@ -57,8 +70,11 @@ def get_instructor_audio(phrase: str, cache_dir: Path) -> Path | None:
 
     safe_cache.mkdir(parents=True, exist_ok=True)
 
-    # Cache key: SHA1 of (voice_id + phrase) so key-changes or voice changes invalidate
-    _cache_input = f"{_VOICE_ID}:{phrase}".encode("utf-8")
+    # Normalize before cache key + TTS so stale 'hash' audio is bypassed
+    tts_text = _normalize_phrase(phrase)
+
+    # Cache key: SHA1 of (voice_id + normalized text) so notation changes invalidate
+    _cache_input = f"{_VOICE_ID}:{tts_text}".encode("utf-8")
     cache_key = hashlib.sha1(_cache_input, usedforsecurity=False).hexdigest()  # nosec B324
     cache_path = safe_cache / f"{cache_key}.mp3"
 
@@ -72,7 +88,7 @@ def get_instructor_audio(phrase: str, cache_dir: Path) -> Path | None:
 
         url = f"{_API_BASE}/text-to-speech/{_VOICE_ID}"
         payload = _json.dumps({
-            "text": phrase,
+            "text": tts_text,
             "model_id": "eleven_monolingual_v1",
             "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
         }).encode("utf-8")
