@@ -43,9 +43,11 @@ def _normalize_phrase(phrase: str) -> str:
 
     '#'      → ' sharp'  (ElevenLabs reads bare '#' as 'hash')
     'A major'→ 'Ay major' (ElevenLabs soft-pronounces the letter A otherwise)
+    'A shape'→ 'Ay shape' (ElevenLabs soft-pronounces the letter A otherwise)
     """
     phrase = phrase.replace("#", " sharp")
     phrase = phrase.replace("A major", "Ay major")
+    phrase = phrase.replace("A shape", "Ay shape")
     return phrase
 
 
