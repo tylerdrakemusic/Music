@@ -483,3 +483,56 @@ class TestVarianceMetrics:
         assert metrics["unique_titles"] == 3
         assert metrics["repeat_rate"] == pytest.approx(1 / 3, rel=1e-6)
         assert metrics["entropy_bits"] > 0
+
+
+# ---------------------------------------------------------------------------
+# /api/now_playing — Icecast offline / online behaviour
+# BFX-20260531-radio-stuck-starting
+# ---------------------------------------------------------------------------
+class TestNowPlayingIcecastOffline:
+    """Tests for graceful offline behaviour when Icecast is unreachable."""
+
+    def _get_app(self):
+        import radio.tjd_radio as tjd
+        return tjd.app
+
+    def test_now_playing_icecast_offline_returns_status_offline(self, monkeypatch):
+        """When fetch_icecast_source returns {}, response must include status='offline'
+        and title='Icecast offline' — never 'Starting...'."""
+        import radio.tjd_radio as tjd
+
+        monkeypatch.setattr(tjd, "active_backend", "icecast")
+        monkeypatch.setattr(tjd, "fetch_icecast_source", lambda url: {})
+        monkeypatch.setattr(tjd, "playlist_snapshot", [])
+        monkeypatch.setattr(tjd, "_icecast_started_at", None)
+        monkeypatch.setattr(tjd, "_icecast_history", [])
+
+        with self._get_app().test_client() as client:
+            resp = client.get("/api/now_playing")
+            data = resp.get_json()
+
+        assert data["status"] == "offline"
+        assert data["title"] == "Icecast offline"
+        assert data["title"] != "Starting..."
+
+    def test_now_playing_icecast_online_returns_track_title(self, monkeypatch):
+        """When fetch_icecast_source returns a populated source, title must be the track
+        title and status must NOT be 'offline'."""
+        import radio.tjd_radio as tjd
+
+        monkeypatch.setattr(tjd, "active_backend", "icecast")
+        monkeypatch.setattr(
+            tjd,
+            "fetch_icecast_source",
+            lambda url: {"title": "Song A", "listeners": 1},
+        )
+        monkeypatch.setattr(tjd, "playlist_snapshot", [])
+        monkeypatch.setattr(tjd, "_icecast_started_at", None)
+        monkeypatch.setattr(tjd, "_icecast_history", [])
+
+        with self._get_app().test_client() as client:
+            resp = client.get("/api/now_playing")
+            data = resp.get_json()
+
+        assert data["title"] == "Song A"
+        assert data.get("status") != "offline"
