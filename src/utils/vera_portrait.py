@@ -193,7 +193,7 @@ def _build_prompt(mode: str) -> tuple[str, str | None]:
         if _db_mod is not None:
             positive, negative = _db_mod.get_active_prompt(mode)
             return positive, negative
-    except Exception:
+    except Exception:  # nosec B110
         pass
 
     # Fallback: built-in prompt for this mode

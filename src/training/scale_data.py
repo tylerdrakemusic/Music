@@ -323,7 +323,7 @@ def _load() -> dict[str, list[CagedPosition]]:
         db_result = _build_from_conn(conn)
         if db_result:
             base.update(db_result)
-    except Exception:
+    except Exception:  # nosec B110
         pass
     return base
 

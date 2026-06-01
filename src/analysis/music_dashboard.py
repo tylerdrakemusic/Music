@@ -1766,7 +1766,7 @@ def api_release_ops():
         bloom_signature_count = 0
         if bloom_album_ids and _table_exists(conn, "tracks"):
             placeholders = ",".join("?" for _ in bloom_album_ids)
-            count_tracks_sql = "SELECT COUNT(*) FROM tracks WHERE album_id IN (" + placeholders + ")"
+            count_tracks_sql = "SELECT COUNT(*) FROM tracks WHERE album_id IN (" + placeholders + ")"  # nosec B608
             bloom_track_count = conn.execute(
                 count_tracks_sql,
                 bloom_album_ids,
@@ -1776,7 +1776,7 @@ def api_release_ops():
                     "SELECT COUNT(*) "
                     "FROM release_signatures rs "
                     "JOIN tracks t ON t.id = rs.track_id "
-                    "WHERE t.album_id IN (" + placeholders + ")"
+                    "WHERE t.album_id IN (" + placeholders + ")"  # nosec B608
                 )
                 bloom_signature_count = conn.execute(
                     count_signatures_sql,
@@ -1974,7 +1974,7 @@ RADIO_BASE = "http://localhost:8100"
 @app.route("/api/radio/now_playing")
 def api_radio_now_playing():
     try:
-        req = urllib.request.urlopen(f"{RADIO_BASE}/api/now_playing", timeout=2)
+        req = urllib.request.urlopen(f"{RADIO_BASE}/api/now_playing", timeout=2)  # nosec B310
         data = json.loads(req.read())
         return jsonify(data)
     except (urllib.error.URLError, OSError):
@@ -1984,7 +1984,7 @@ def api_radio_now_playing():
 @app.route("/api/radio/playlist")
 def api_radio_playlist():
     try:
-        req = urllib.request.urlopen(f"{RADIO_BASE}/api/playlist", timeout=2)
+        req = urllib.request.urlopen(f"{RADIO_BASE}/api/playlist", timeout=2)  # nosec B310
         data = json.loads(req.read())
         return jsonify(data)
     except (urllib.error.URLError, OSError):
@@ -2031,7 +2031,7 @@ def api_update_track(track_id: int):
             return jsonify({"ok": False, "error": "Track not found"}), 404
 
         set_clause = ", ".join(k + " = ?" for k in updates)
-        update_sql = "UPDATE tracks SET " + set_clause + " WHERE id = ?"
+        update_sql = "UPDATE tracks SET " + set_clause + " WHERE id = ?"  # nosec B608
         values = list(updates.values()) + [track_id]
         conn.execute(update_sql, values)
         conn.commit()
@@ -2060,6 +2060,11 @@ def api_delete_track(track_id: int):
 
 _LINK_ALLOWED_CATEGORIES: frozenset[str] = frozenset({"email", "social", "payment", "distribution"})
 _LINK_ALLOWED_STATUSES: frozenset[str] = frozenset({"confirmed", "pending", "broken"})
+# Explicit allowlist for DB column names used in dynamic SET clauses (B608 guard).
+_LINK_ALLOWED_COLUMNS: frozenset[str] = frozenset({
+    "category", "status", "platform", "label",
+    "url", "embed_html", "song_title", "sort_order",
+})
 
 
 def _validate_link_payload(data: dict) -> tuple[dict, str | None]:
@@ -2148,10 +2153,11 @@ def api_links_put(link_id: int):
     with get_connection() as conn:
         if not conn.execute("SELECT id FROM artist_links WHERE id = ?", (link_id,)).fetchone():
             return jsonify({"error": "Link not found"}), 404
-        set_parts = [f"{k} = ?" for k in cleaned] + ["updated_at = datetime('now')"]
+        safe_cleaned = {k: v for k, v in cleaned.items() if k in _LINK_ALLOWED_COLUMNS}
+        set_parts = [f"{k} = ?" for k in safe_cleaned] + ["updated_at = datetime('now')"]
         conn.execute(
-            f"UPDATE artist_links SET {', '.join(set_parts)} WHERE id = ?",
-            list(cleaned.values()) + [link_id],
+            f"UPDATE artist_links SET {', '.join(set_parts)} WHERE id = ?",  # nosec B608
+            list(safe_cleaned.values()) + [link_id],
         )
         conn.commit()
         row = conn.execute("SELECT * FROM artist_links WHERE id = ?", (link_id,)).fetchone()
@@ -2453,10 +2459,10 @@ def rhymes_suggest():
         placeholders = ",".join("?" * len(group_ids))
         with get_connection() as conn:
             rows = conn.execute(
-                f"SELECT DISTINCT vl.line FROM vault_lines vl "
-                f"JOIN vault_line_groups vlg ON vl.id = vlg.line_id "
-                f"WHERE vlg.group_id IN ({placeholders}) "
-                f"AND vl.line != ? LIMIT 20",
+                f"SELECT DISTINCT vl.line FROM vault_lines vl "  # nosec B608
+                f"JOIN vault_line_groups vlg ON vl.id = vlg.line_id "  # nosec B608
+                f"WHERE vlg.group_id IN ({placeholders}) "  # nosec B608
+                f"AND vl.line != ? LIMIT 20",  # nosec B608
                 group_ids + [q],
             ).fetchall()
         suggestions = [r[0] for r in rows]

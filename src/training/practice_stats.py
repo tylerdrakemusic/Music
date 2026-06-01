@@ -92,7 +92,7 @@ def get_practice_stats() -> dict:
         if last_row and last_row[0]:
             try:
                 last_practiced = str(last_row[0])[:10]  # YYYY-MM-DD
-            except Exception:
+            except Exception:  # nosec B110
                 pass
 
         conn.close()
