@@ -865,7 +865,7 @@ BM_JS = r"""
         songs.forEach(function(s) {
           // Rewrite audio_url: file:///G:/Muzic/<filename> → /audio/<filename>
           if (s.audio_url && s.audio_url.indexOf('file:///') === 0) {
-            var audioMatch = s.audio_url.match(/^file:\/\/\/[Gg][:\/\\]Muzic\/(.+)$/i);
+            var audioMatch = s.audio_url.match(/^file:\/\/\/[Gg]:[\/\\]Muzic[\/\\](.+)$/i);
             if (audioMatch) {
               s.audio_url = '/audio/' + audioMatch[1];
             }

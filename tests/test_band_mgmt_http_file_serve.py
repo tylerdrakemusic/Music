@@ -181,6 +181,69 @@ class TestJsUrlRewriting:
         ), "JS sheet music rewrite pattern must be present"
 
 
+class TestAudioUrlRegexMatchesRealUrls:
+    """Regression: the JS audio regex must match the actual file:///G:/Muzic/ format.
+
+    The regex in _bmRewriteFileUrls() is JS but shares Python re syntax for
+    this simple character-class pattern.  We use re.match() here to validate
+    the pattern against real-world URL strings from catalog_export.json.
+    """
+
+    import re as _re
+
+    # Real URL shapes taken from setlist_active_export.json and catalog
+    _AUDIO_URLS = [
+        "file:///G:/Muzic/Long%20Train%20Runnin%27%20-%20The%20Doobie%20Brothers.mp3",
+        "file:///G:/Muzic/Too%20Much%20Time%20On%20My%20Hands%20-%20Styx.mp3",
+        "file:///G:/Muzic/Rhiannon%20-%20Fleetwood%20Mac%20%28in%20Bm%29.wav",
+        "file:///g:/Muzic/lowercase-drive.mp3",  # lowercase g
+    ]
+
+    def _extract_audio_regex(self, generated_html: str) -> str:
+        import re
+        # Pull the raw regex literal from the JS source
+        m = re.search(r"audioMatch\s*=\s*s\.audio_url\.match\((/[^/].*?/i)\)", generated_html)
+        assert m, "Could not find audioMatch regex in generated HTML"
+        return m.group(1)
+
+    def test_regex_matches_g_muzic_url_with_colon_slash(
+        self, generated_html: str
+    ) -> None:
+        import re
+        raw_re = self._extract_audio_regex(generated_html)
+        # Strip JS regex delimiters and flags: /pattern/i → pattern
+        pattern = raw_re.lstrip("/").rsplit("/", 1)[0]
+        # Translate JS regex to Python: unescape \/  → /
+        python_pattern = pattern.replace(r"\/", "/")
+        for url in self._AUDIO_URLS:
+            m = re.match(python_pattern, url, re.IGNORECASE)
+            assert m, (
+                f"Audio regex {pattern!r} failed to match URL: {url!r}\n"
+                "Fix: ensure the regex handles 'G:/Muzic/' (colon + slash before Muzic)"
+            )
+            captured = m.group(1)
+            assert not captured.startswith("/"), (
+                f"Captured group should be the filename, not start with '/': {captured!r}"
+            )
+            assert "Muzic" not in captured, (
+                f"Captured group must not include 'Muzic' prefix: {captured!r}"
+            )
+
+    def test_regex_does_not_match_non_audio_url(self, generated_html: str) -> None:
+        import re
+        raw_re = self._extract_audio_regex(generated_html)
+        pattern = raw_re.lstrip("/").rsplit("/", 1)[0].replace(r"\/", "/")
+        non_matches = [
+            "http://example.com/song.mp3",
+            "/audio/relative.mp3",
+            "file:///G:/NotMuzic/song.mp3",
+        ]
+        for url in non_matches:
+            assert not re.match(pattern, url, re.IGNORECASE), (
+                f"Audio regex must NOT match {url!r}"
+            )
+
+
 # ---------------------------------------------------------------------------
 # 8 – 11 — Integration: live HTTP server
 # ---------------------------------------------------------------------------
