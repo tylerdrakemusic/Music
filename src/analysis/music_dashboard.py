@@ -11,7 +11,6 @@ Usage:
 
 import argparse
 import json
-import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -48,14 +47,14 @@ try:
     _CHORD_SHEET_TOOLS_DIR = Path(__file__).resolve().parents[2] / "tools"
     if str(_CHORD_SHEET_TOOLS_DIR) not in sys.path:
         sys.path.insert(0, str(_CHORD_SHEET_TOOLS_DIR))
-    from make_chord_sheet import build_document, compute_output_path  # type: ignore[import]
+    from make_chord_sheet import build_docx, compute_output_path  # type: ignore[import]
     _CHORD_SHEET_AVAILABLE = True
 except Exception:
     _CHORD_SHEET_AVAILABLE = False
 
-_CHORD_SHEET_WORKTREE_ROOT = Path(__file__).resolve().parents[2]
-_CHORD_SHEET_TEMPLATES_DIR = _CHORD_SHEET_WORKTREE_ROOT / "studio_master" / "song_templates"
-_CHORD_SHEET_DOCS_DIR = _CHORD_SHEET_WORKTREE_ROOT / "documents"
+_CS_ROOT = Path(__file__).resolve().parents[2]
+_CHORD_SHEET_TEMPLATES_DIR = _CS_ROOT / "studio_master" / "song_templates"
+_CHORD_SHEET_DOCS_DIR = _CS_ROOT / "documents"
 
 
 def _cs_sanitize(name: str) -> str:
@@ -824,8 +823,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
     <div id="cs-result-panel" style="display:none;background:var(--surface);border:1px solid var(--ok);border-radius:var(--radius);padding:20px;">
       <h4 style="color:var(--ok);margin-bottom:12px;">✓ Generated</h4>
       <div style="margin-bottom:8px;color:var(--text-muted);">File: <span id="cs-result-filename" style="color:var(--text);font-family:monospace;"></span></div>
-      <div style="margin-bottom:16px;color:var(--text-muted);">PR: <a id="cs-result-pr-url" href="#" target="_blank" style="color:var(--accent2);"></a></div>
-      <button class="btn" id="cs-merge-btn" onclick="csMergePR()" style="background:var(--ok);color:white;">Merge PR</button>
+      <a id="cs-download-link" href="#" target="_blank" class="btn" style="display:inline-block;background:var(--ok);color:white;text-decoration:none;">📥 Open DOCX</a>
     </div>
 
     <div id="cs-status" style="margin-top:12px;font-size:13px;color:var(--text-muted);"></div>
@@ -1736,7 +1734,6 @@ async function confirmLinkDelete() {
 function setRadioVol(v) { radioAudio.volume = v / 100; }
 
 // ── Chord Sheets Tab ─────────────────────────────────────────────────────────
-let _csPrUrl = '';
 
 async function csLoadSongs() {
   try {
@@ -1791,29 +1788,12 @@ async function csGenerateFromJson(workflow) {
     });
     const data = await r.json();
     if (!r.ok) { csSetStatus('Error: ' + (data.error || r.status)); return; }
-    _csPrUrl = data.pr_url || '';
     document.getElementById('cs-result-filename').textContent = data.filename || '';
-    const link = document.getElementById('cs-result-pr-url');
-    link.href = _csPrUrl;
-    link.textContent = _csPrUrl || '(no PR URL)';
+    const dl = document.getElementById('cs-download-link');
+    dl.href = data.download_url || '#';
     document.getElementById('cs-result-panel').style.display = 'block';
-    document.getElementById('cs-merge-btn').disabled = !_csPrUrl;
     csSetStatus('Done! DOCX generated.');
     csLoadSongs();
-  } catch (e) { csSetStatus('Network error: ' + e.message); }
-}
-
-async function csMergePR() {
-  if (!_csPrUrl) return;
-  csSetStatus('Merging PR\u2026');
-  try {
-    const r = await fetch('/chord-sheet/merge', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({pr_url: _csPrUrl})
-    });
-    const data = await r.json();
-    csSetStatus(r.ok ? 'PR merged!' : 'Merge error: ' + (data.error || r.status));
   } catch (e) { csSetStatus('Network error: ' + e.message); }
 }
 
@@ -2749,7 +2729,10 @@ def chord_sheet_save_json():
 
 @app.route("/chord-sheet/generate", methods=["POST"])
 def chord_sheet_generate():
-    """Generate DOCX, git commit+push, open PR. Supports workflow A (new) and B (existing)."""
+    """Generate DOCX from template or new JSON. Returns download URL."""
+    if not _CHORD_SHEET_AVAILABLE:
+        return jsonify({"error": "make_chord_sheet not available"}), 503
+
     data = request.get_json(silent=True) or {}
     workflow = data.get("workflow", "B")
     lyrics_only = bool(data.get("lyrics_only", False))
@@ -2782,63 +2765,25 @@ def chord_sheet_generate():
     try:
         _CHORD_SHEET_DOCS_DIR.mkdir(parents=True, exist_ok=True)
         out_path = compute_output_path(song, _CHORD_SHEET_DOCS_DIR, lyrics_only=lyrics_only)
-        build_document(song, out_path)
+        build_docx(song, out_path)
     except Exception as exc:
         return jsonify({"error": f"DOCX generation failed: {exc}"}), 500
-
-    title_display = song.get("title", "Untitled")
-
-    # git add → commit → push → gh pr create
-    worktree_root = _CHORD_SHEET_WORKTREE_ROOT
-    try:
-        subprocess.run(
-            ["git", "add", str(json_path), str(out_path)],
-            cwd=worktree_root, check=True,
-        )
-        subprocess.run(
-            ["git", "commit", "-m", f"docs: add chord sheet for {title_display}"],
-            cwd=worktree_root, check=True,
-        )
-        subprocess.run(["git", "push"], cwd=worktree_root, check=True)
-        pr_result = subprocess.run(
-            [
-                "gh", "pr", "create",
-                "--title", f"docs: chord sheet \u2014 {title_display}",
-                "--body", "Auto-generated chord sheet via Music Dashboard chord-sheet tool.",
-            ],
-            cwd=worktree_root, capture_output=True, text=True,
-        )
-        pr_url = pr_result.stdout.strip()
-    except subprocess.CalledProcessError as exc:
-        return jsonify({"error": str(exc)}), 500
 
     return jsonify({
         "filename": out_path.name,
         "json_path": str(json_path),
-        "pr_url": pr_url,
+        "download_url": f"/chord-sheet/download/{out_path.name}",
     })
 
 
-@app.route("/chord-sheet/merge", methods=["POST"])
-def chord_sheet_merge():
-    """Merge a PR via 'gh pr merge --merge --auto'."""
-    data = request.get_json(silent=True) or {}
-    pr_url = str(data.get("pr_url", "")).strip()
-    if not pr_url:
-        return jsonify({"error": "pr_url is required"}), 400
-
-    try:
-        result = subprocess.run(
-            ["gh", "pr", "merge", pr_url, "--merge", "--auto"],
-            capture_output=True, text=True,
-        )
-        return jsonify({
-            "ok": True,
-            "stdout": result.stdout.strip(),
-            "stderr": result.stderr.strip(),
-        })
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+@app.route("/chord-sheet/download/<path:filename>")
+def chord_sheet_download(filename: str):
+    """Serve a generated chord sheet DOCX for download."""
+    safe_name = Path(filename).name
+    file_path = _CHORD_SHEET_DOCS_DIR / safe_name
+    if not file_path.exists():
+        return jsonify({"error": "File not found"}), 404
+    return send_file(file_path, as_attachment=True, download_name=safe_name)
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────

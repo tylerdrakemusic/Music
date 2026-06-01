@@ -6,16 +6,13 @@ AC coverage:
  3. test_parse_endpoint_ollama_unavailable_returns_503
  4. test_generate_workflow_b_creates_docx      — POST /chord-sheet/generate workflow=B
  5. test_generate_saves_json_workflow_a        — POST /chord-sheet/generate workflow=A
- 6. test_merge_calls_gh_pr_merge               — POST /chord-sheet/merge
+ 6. test_download_endpoint_serves_docx         — GET /chord-sheet/download/<filename>
  7. test_lyrics_only_flag_produces_lyrics_only_docx
-
-TDD: tests written BEFORE implementation. Expected pre-impl failure: 404 (routes missing).
 """
 from __future__ import annotations
 
 import json
 import sqlite3
-import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -102,22 +99,6 @@ _SAMPLE_SONG = {
     ],
 }
 
-_MOCK_PR_URL = "https://github.com/tylerdrakemusic/Music/pull/99\n"
-
-
-def _mock_subprocess_factory(pr_url: str = _MOCK_PR_URL):
-    """Return a mock subprocess.run that records calls and returns pr_url for gh commands."""
-    calls: list = []
-
-    def _run(cmd, **kwargs):
-        calls.append(list(cmd))
-        m = MagicMock()
-        m.returncode = 0
-        m.stdout = pr_url if "gh" in cmd[0] else ""
-        return m
-
-    return _run, calls
-
 
 # ── tests ─────────────────────────────────────────────────────────────────────
 
@@ -178,7 +159,7 @@ def test_parse_endpoint_ollama_unavailable_returns_503(client):
 
 
 def test_generate_workflow_b_creates_docx(client, tmp_path):
-    """POST /chord-sheet/generate workflow=B returns filename and PR URL."""
+    """POST /chord-sheet/generate workflow=B returns filename and download_url."""
     import analysis.music_dashboard as dash_mod
 
     json_filename = "Test_Song_Test_Artist_Key_C.json"
@@ -186,19 +167,18 @@ def test_generate_workflow_b_creates_docx(client, tmp_path):
 
     expected_docx = tmp_path / "Test_Song_Test_Artist_Key_C.docx"
 
-    def _fake_build_document(song_data, output_path):
+    def _fake_build_docx(song_data, output_path, **kwargs):
         Path(output_path).write_bytes(b"PK fake docx")
+        return Path(output_path)
 
     def _fake_compute_output_path(song, outdir, lyrics_only=False):
         return expected_docx
 
-    _run, _ = _mock_subprocess_factory()
-
     with patch.object(dash_mod, "_CHORD_SHEET_TEMPLATES_DIR", tmp_path, create=True), \
          patch.object(dash_mod, "_CHORD_SHEET_DOCS_DIR", tmp_path, create=True), \
-         patch("analysis.music_dashboard.build_document", _fake_build_document, create=True), \
-         patch("analysis.music_dashboard.compute_output_path", _fake_compute_output_path, create=True), \
-         patch("subprocess.run", side_effect=_run):
+         patch.object(dash_mod, "_CHORD_SHEET_AVAILABLE", True, create=True), \
+         patch("analysis.music_dashboard.build_docx", _fake_build_docx, create=True), \
+         patch("analysis.music_dashboard.compute_output_path", _fake_compute_output_path, create=True):
         resp = client.post(
             "/chord-sheet/generate",
             json={"workflow": "B", "song_path": json_filename},
@@ -206,7 +186,7 @@ def test_generate_workflow_b_creates_docx(client, tmp_path):
 
     assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.get_json()}"
     data = resp.get_json()
-    assert "pr_url" in data, f"Missing pr_url in {data}"
+    assert "download_url" in data, f"Missing download_url in {data}"
     assert "filename" in data, f"Missing filename in {data}"
 
 
@@ -217,19 +197,18 @@ def test_generate_saves_json_workflow_a(client, tmp_path):
     json_content = json.dumps(_SAMPLE_SONG)
     expected_docx = tmp_path / "Test_Song_Test_Artist_Key_C.docx"
 
-    def _fake_build_document(song_data, output_path):
+    def _fake_build_docx(song_data, output_path, **kwargs):
         Path(output_path).write_bytes(b"PK fake docx")
+        return Path(output_path)
 
     def _fake_compute_output_path(song, outdir, lyrics_only=False):
         return expected_docx
 
-    _run, _ = _mock_subprocess_factory()
-
     with patch.object(dash_mod, "_CHORD_SHEET_TEMPLATES_DIR", tmp_path, create=True), \
          patch.object(dash_mod, "_CHORD_SHEET_DOCS_DIR", tmp_path, create=True), \
-         patch("analysis.music_dashboard.build_document", _fake_build_document, create=True), \
-         patch("analysis.music_dashboard.compute_output_path", _fake_compute_output_path, create=True), \
-         patch("subprocess.run", side_effect=_run):
+         patch.object(dash_mod, "_CHORD_SHEET_AVAILABLE", True, create=True), \
+         patch("analysis.music_dashboard.build_docx", _fake_build_docx, create=True), \
+         patch("analysis.music_dashboard.compute_output_path", _fake_compute_output_path, create=True):
         resp = client.post(
             "/chord-sheet/generate",
             json={"workflow": "A", "json_content": json_content},
@@ -243,28 +222,18 @@ def test_generate_saves_json_workflow_a(client, tmp_path):
     assert saved["title"] == "Test Song"
 
 
-def test_merge_calls_gh_pr_merge(client):
-    """POST /chord-sheet/merge calls 'gh pr merge' with the supplied pr_url."""
-    pr_url = "https://github.com/tylerdrakemusic/Music/pull/98"
-    calls: list = []
+def test_download_endpoint_serves_docx(client, tmp_path):
+    """GET /chord-sheet/download/<filename> serves the file if it exists."""
+    import analysis.music_dashboard as dash_mod
 
-    def _fake_run(cmd, **kwargs):
-        calls.append(list(cmd))
-        m = MagicMock()
-        m.returncode = 0
-        m.stdout = ""
-        m.stderr = ""
-        return m
+    docx_name = "Test_Song_Test_Artist_Key_C.docx"
+    (tmp_path / docx_name).write_bytes(b"PK fake docx content")
 
-    with patch("subprocess.run", side_effect=_fake_run):
-        resp = client.post("/chord-sheet/merge", json={"pr_url": pr_url})
+    with patch.object(dash_mod, "_CHORD_SHEET_DOCS_DIR", tmp_path, create=True):
+        resp = client.get(f"/chord-sheet/download/{docx_name}")
 
-    assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.get_json()}"
-    # At least one subprocess call should contain "gh", "pr", "merge"
-    merge_calls = [c for c in calls if "gh" in c and "pr" in c and "merge" in c]
-    assert merge_calls, f"No 'gh pr merge' call found in: {calls}"
-    # The PR URL should be passed
-    assert any(pr_url in c for c in merge_calls), f"PR URL not found in calls: {merge_calls}"
+    assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+    assert resp.data == b"PK fake docx content"
 
 
 def test_lyrics_only_flag_produces_lyrics_only_docx(client, tmp_path):
@@ -281,16 +250,15 @@ def test_lyrics_only_flag_produces_lyrics_only_docx(client, tmp_path):
         received_flags.append(lyrics_only)
         return expected_docx
 
-    def _fake_build_document(song_data, output_path):
+    def _fake_build_docx(song_data, output_path, **kwargs):
         Path(output_path).write_bytes(b"PK fake docx")
-
-    _run, _ = _mock_subprocess_factory()
+        return Path(output_path)
 
     with patch.object(dash_mod, "_CHORD_SHEET_TEMPLATES_DIR", tmp_path, create=True), \
          patch.object(dash_mod, "_CHORD_SHEET_DOCS_DIR", tmp_path, create=True), \
-         patch("analysis.music_dashboard.build_document", _fake_build_document, create=True), \
-         patch("analysis.music_dashboard.compute_output_path", _fake_compute_output_path, create=True), \
-         patch("subprocess.run", side_effect=_run):
+         patch.object(dash_mod, "_CHORD_SHEET_AVAILABLE", True, create=True), \
+         patch("analysis.music_dashboard.build_docx", _fake_build_docx, create=True), \
+         patch("analysis.music_dashboard.compute_output_path", _fake_compute_output_path, create=True):
         resp = client.post(
             "/chord-sheet/generate",
             json={"workflow": "B", "song_path": json_filename, "lyrics_only": True},
