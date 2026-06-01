@@ -707,7 +707,7 @@ def test_tts_normalize_hash_to_sharp() -> None:
     from training.scale_tts import _normalize_phrase  # noqa: PLC0415
 
     assert _normalize_phrase("A major A shape (F#, C#, G#).") == \
-        "Ay major A shape (F sharp, C sharp, G sharp)."
+        "Ay major Ay shape (F sharp, C sharp, G sharp)."
 
 
 def test_tts_normalize_a_major_pronunciation() -> None:
@@ -715,7 +715,15 @@ def test_tts_normalize_a_major_pronunciation() -> None:
     from training.scale_tts import _normalize_phrase  # noqa: PLC0415
 
     assert _normalize_phrase("Start on the open A string — A major A shape.") == \
-        "Start on the open A string — Ay major A shape."
+        "Start on the open A string — Ay major Ay shape."
+
+
+def test_tts_normalize_a_shape_pronunciation() -> None:
+    """_normalize_phrase must replace 'A shape' with 'Ay shape' for hard A pronunciation."""
+    from training.scale_tts import _normalize_phrase  # noqa: PLC0415
+
+    assert _normalize_phrase("A major A shape one octave up.") == \
+        "Ay major Ay shape one octave up."
 
 
 def test_tts_normalize_no_sharps_unchanged() -> None:
