@@ -2060,6 +2060,11 @@ def api_delete_track(track_id: int):
 
 _LINK_ALLOWED_CATEGORIES: frozenset[str] = frozenset({"email", "social", "payment", "distribution"})
 _LINK_ALLOWED_STATUSES: frozenset[str] = frozenset({"confirmed", "pending", "broken"})
+# Explicit allowlist for DB column names used in dynamic SET clauses (B608 guard).
+_LINK_ALLOWED_COLUMNS: frozenset[str] = frozenset({
+    "category", "status", "platform", "label",
+    "url", "embed_html", "song_title", "sort_order",
+})
 
 
 def _validate_link_payload(data: dict) -> tuple[dict, str | None]:
@@ -2148,10 +2153,11 @@ def api_links_put(link_id: int):
     with get_connection() as conn:
         if not conn.execute("SELECT id FROM artist_links WHERE id = ?", (link_id,)).fetchone():
             return jsonify({"error": "Link not found"}), 404
-        set_parts = [f"{k} = ?" for k in cleaned] + ["updated_at = datetime('now')"]
+        safe_cleaned = {k: v for k, v in cleaned.items() if k in _LINK_ALLOWED_COLUMNS}
+        set_parts = [f"{k} = ?" for k in safe_cleaned] + ["updated_at = datetime('now')"]
         conn.execute(
             f"UPDATE artist_links SET {', '.join(set_parts)} WHERE id = ?",  # nosec B608
-            list(cleaned.values()) + [link_id],
+            list(safe_cleaned.values()) + [link_id],
         )
         conn.commit()
         row = conn.execute("SELECT * FROM artist_links WHERE id = ?", (link_id,)).fetchone()
