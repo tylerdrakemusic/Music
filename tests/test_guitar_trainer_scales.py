@@ -698,6 +698,26 @@ def test_html_key_select_has_a_option(html: str) -> None:
     assert '<option value="A">A major</option>' in html
 
 
+# ---------------------------------------------------------------------------
+# TTS normalization — hash→sharp bugfix
+# ---------------------------------------------------------------------------
+
+def test_tts_normalize_hash_to_sharp() -> None:
+    """_normalize_phrase must replace # with ' sharp' so TTS says 'sharp' not 'hash'."""
+    from training.scale_tts import _normalize_phrase  # noqa: PLC0415
+
+    assert _normalize_phrase("A major A shape (F#, C#, G#).") == \
+        "A major A shape (F sharp, C sharp, G sharp)."
+
+
+def test_tts_normalize_no_sharps_unchanged() -> None:
+    """_normalize_phrase must leave phrases without # unmodified."""
+    from training.scale_tts import _normalize_phrase  # noqa: PLC0415
+
+    phrase = "Start on the 3rd fret of the A string — C major C shape."
+    assert _normalize_phrase(phrase) == phrase
+
+
 def test_html_freq_table_injected(html: str) -> None:
     """Rendered HTML must contain the MIDI frequency table (440 Hz for A4)."""
     assert "440" in html
