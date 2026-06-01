@@ -951,10 +951,43 @@ function togglePlay() {
 function setVol(v) { audio.volume = v / 100; }
 
 // Poll now-playing metadata
+let _pollInterval = null;
+const POLL_ONLINE_MS  = 3000;
+const POLL_OFFLINE_MS = 1_800_000; // 30 minutes
+
+function _startPolling(ms) {
+  if (_pollInterval) clearInterval(_pollInterval);
+  _pollInterval = setInterval(pollMeta, ms);
+}
+
 async function pollMeta() {
   try {
     const r = await fetch('/api/now_playing');
     const d = await r.json();
+
+    if (d.status === 'offline') {
+      // Icecast unreachable — show graceful offline state
+      document.getElementById('trackTitle').textContent = 'Stream unavailable';
+      document.getElementById('trackAlbum').textContent = '';
+      document.getElementById('listeners').textContent = '0';
+      document.getElementById('totalTracks').textContent = d.total_tracks || '0';
+      document.getElementById('uptime').textContent = '0:00';
+      document.getElementById('vinyl').classList.remove('spinning');
+      const btn = document.getElementById('playBtn');
+      btn.disabled = true;
+      btn.style.opacity = '0.4';
+      _startPolling(POLL_OFFLINE_MS); // back off to 30-min retry
+      return;
+    }
+
+    // Icecast is online — restore normal state if we were in offline mode
+    const btn = document.getElementById('playBtn');
+    if (btn.disabled) {
+      btn.disabled = false;
+      btn.style.opacity = '';
+      _startPolling(POLL_ONLINE_MS); // resume fast polling
+    }
+
     document.getElementById('trackTitle').textContent = d.title || 'Silence...';
     document.getElementById('trackAlbum').textContent = d.artist || d.album || '';
     document.getElementById('listeners').textContent = d.listeners;
@@ -977,7 +1010,7 @@ async function pollMeta() {
     }
   } catch(e) {}
 }
-setInterval(pollMeta, 3000);
+_startPolling(POLL_ONLINE_MS);
 pollMeta();
 </script>
 
@@ -1074,6 +1107,21 @@ def stream():
 def now_playing():
     if active_backend == "icecast":
         source = fetch_icecast_source(icecast_status_url)
+        if not source:
+            # Icecast is unreachable — return offline sentinel so the web player
+            # can show a graceful "Stream unavailable" state and back off polling.
+            return jsonify({
+                "status": "offline",
+                "title": "Icecast offline",
+                "album": "",
+                "artist": "",
+                "format": "icecast-mp3",
+                "listeners": 0,
+                "total_tracks": len(playlist_snapshot),
+                "uptime_sec": 0.0,
+                "elapsed_sec": 0.0,
+                "history": [],
+            })
         title, artist = normalize_icecast_metadata(
             str(source.get("title", "")),
             str(source.get("artist", "")),
