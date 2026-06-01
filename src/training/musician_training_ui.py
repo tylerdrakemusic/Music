@@ -370,6 +370,7 @@ HTML = r"""
         <option value="Eb">Eb / D&#x23; major</option>
         <option value="F">F major</option>
         <option value="G">G major</option>
+        <option value="A">A major</option>
         <option value="Bb">Bb / A&#x23; major</option>
         <option value="B">B major</option>
       </select>
@@ -1430,11 +1431,15 @@ def api_instructor_audio():
     if not audio_path.resolve().is_relative_to(TTS_CACHE_DIR.resolve()):
         abort(403)
 
+    # Cache-Control: no-cache — browser must revalidate with the server on
+    # every request so that TTS normalization changes (which alter the
+    # server-side cache key) are reflected immediately.  The server-side
+    # file cache in TTS_CACHE_DIR still avoids re-calling ElevenLabs.
     return Response(
         audio_path.read_bytes(),
         status=200,
         mimetype="audio/mpeg",
-        headers={"Cache-Control": "public, max-age=31536000"},
+        headers={"Cache-Control": "no-cache"},
     )
 
 
