@@ -1,0 +1,107 @@
+{
+  "title": "Something to Talk About",
+  "artist": "Bonnie Raitt",
+  "original_artist": "Bonnie Raitt",
+  "key": "Ab",
+  "bpm": "131",
+  "notes": "Tune guitar down a half step to Eb tuning (Eb Ab Db Gb Bb Eb). Ab = open A shape, Eb = open E shape. Written by Shirley Eikhard.",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        { "chords": "Ab | Eb | Ab | Eb | Ab | Eb | Fm" },
+        { "chords": "Gb | Db" },
+        { "chords": "E" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Ab", "lyrics": "People are talkin', talkin' 'bout people" },
+        { "chords": "Ab", "lyrics": "I hear them whisper, you won't believe it" },
+        { "chords": "Db", "lyrics": "They think we're lovers kept under covers" },
+        { "chords": "Ab", "lyrics": "I just ignore it, but they keep saying" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "Fm | Gb", "lyrics": "We laugh just a little too loud" },
+        { "chords": "Fm | Gb", "lyrics": "We stand just a little too close" },
+        { "chords": "B | E", "lyrics": "We stare just a little too long" },
+        { "chords": "Eb", "lyrics": "Maybe they're seeing something we don't, darlin'" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Ab | Eb", "lyrics": "Let's give them something to talk about" },
+        { "chords": "Ab | Eb", "lyrics": "Let's give them something to talk about" },
+        { "chords": "Ab | Eb", "lyrics": "Let's give them something to talk about" },
+        { "chords": "Fm | Gb | Db | E", "lyrics": "How about love?" }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Ab", "lyrics": "I feel so foolish, I never noticed" },
+        { "chords": "Ab", "lyrics": "You'd act so nervous" },
+        { "chords": "Db", "lyrics": "Could you be falling for me?" },
+        { "chords": "Db", "lyrics": "It took a rumor to make me wonder" },
+        { "chords": "Ab", "lyrics": "Now I'm convinced I'm going under" }
+      ]
+    },
+    {
+      "name": "Pre-Chorus",
+      "lines": [
+        { "chords": "Fm | Gb", "lyrics": "Thinking 'bout you every day" },
+        { "chords": "Fm | Gb", "lyrics": "Dreaming 'bout you every night" },
+        { "chords": "B | E", "lyrics": "I'm hoping that you feel the same way" },
+        { "chords": "Eb", "lyrics": "Now that we know it, let's really show it, darlin'" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Ab | Eb", "lyrics": "Let's give them something to talk about" },
+        { "chords": "Ab | Eb", "lyrics": "A little mystery to figure out" },
+        { "chords": "Ab | Eb", "lyrics": "Let's give them something to talk about" },
+        { "chords": "Fm | Gb | Db | E", "lyrics": "How about love, love, love, love?" }
+      ]
+    },
+    {
+      "name": "Solo",
+      "lines": [
+        { "chords": "Ab | Eb | Ab | Eb" },
+        { "chords": "Ab | Eb | Fm | Gb | Db | E" }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "B", "lyrics": "Let's give them something to talk about, baby" },
+        { "chords": "B", "lyrics": "A little mystery to figure out" },
+        { "chords": "Gb", "lyrics": "Let's give them something to talk about" },
+        { "chords": "Abm | A | E | G", "lyrics": "How about love?" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "annotation": "Key change to B — final chorus",
+      "lines": [
+        { "chords": "B | Gb", "lyrics": "Let's give them something to talk about" },
+        { "chords": "B | Gb", "lyrics": "A little mystery to figure out" },
+        { "chords": "B | Gb", "lyrics": "Let's give them something to talk about" },
+        { "chords": "Abm | A | E | G", "lyrics": "How about love, love, love, love?" }
+      ]
+    },
+    {
+      "name": "Outro",
+      "annotation": "Fade out",
+      "lines": [
+        { "chords": "B | Gb | B | Gb" },
+        { "chords": "B | Gb | Abm | A | E | G" }
+      ]
+    }
+  ]
+}
