@@ -41,9 +41,12 @@ def _resolve_cache_dir(cache_dir: Path) -> Path:
 def _normalize_phrase(phrase: str) -> str:
     """Expand music notation so TTS pronounces it correctly.
 
-    '#' → ' sharp'  (ElevenLabs reads bare '#' as 'hash')
+    '#'      → ' sharp'  (ElevenLabs reads bare '#' as 'hash')
+    'A major'→ 'Ay major' (ElevenLabs soft-pronounces the letter A otherwise)
     """
-    return phrase.replace("#", " sharp")
+    phrase = phrase.replace("#", " sharp")
+    phrase = phrase.replace("A major", "Ay major")
+    return phrase
 
 
 def get_instructor_audio(phrase: str, cache_dir: Path) -> Path | None:
