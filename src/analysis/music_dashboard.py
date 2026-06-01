@@ -2769,7 +2769,7 @@ def chord_sheet_generate():
         json_path = _CHORD_SHEET_TEMPLATES_DIR / json_filename
         json_path.write_text(json.dumps(song, indent=2, ensure_ascii=False), encoding="utf-8")
     else:
-        song_filename = str(data.get("song_path", "")).strip()
+        song_filename = Path(str(data.get("song_path", "")).strip()).name
         if not song_filename:
             return jsonify({"error": "song_path is required for workflow B"}), 400
         json_path = _CHORD_SHEET_TEMPLATES_DIR / song_filename
