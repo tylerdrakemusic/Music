@@ -221,7 +221,7 @@ _POSITION_DATA: dict[str, list[tuple[str, int, str, str, str]]] = {
     ],
     # FR-20260531-guitar-trainer-a-major
     "A": [
-        ("A_shape",  0,  "Position 1 — A shape (open)",               "A string",     "Open strings — start on the open A string — A major A shape (F#, C#, G#)."),
+        ("A_shape",  0,  "Position 1 — A shape (open)",               "A string",     "Start on the open A string — A major A shape."),
         ("G_shape",  5,  "Position 2 — G shape (5th fret)",           "Low E string", "Start on the 5th fret of the low E string — A major G shape."),
         ("river",    5,  "Position 3 — 川 River shape (5th fret)",    "Low E string", "Start on the 5th fret of the low E string — A major 川 River shape."),
         ("E_shape",  5,  "Position 4 — E shape (5th fret)",           "Low E string", "Start on the 5th fret of the low E string — A major E shape."),
