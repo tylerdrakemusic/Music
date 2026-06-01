@@ -1,0 +1,94 @@
+{
+  "title": "Ain't It Fun",
+  "artist": "Paramore",
+  "original_artist": "Original Artist",
+  "key": "E",
+  "bpm": "",
+  "notes": "",
+  "sections": [
+    {
+      "name": "Intro",
+      "lines": [
+        {
+          "chords": "D | C | G | D",
+          "lyrics": ""
+        },
+        {
+          "chords": "C | G | D",
+          "lyrics": ""
+        }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        {
+          "chords": "D",
+          "lyrics": "I once had a girl"
+        },
+        {
+          "chords": "C | G | D",
+          "lyrics": "She once had me She showed me her room Isn't it good Norwegian wood"
+        }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        {
+          "chords": "Dm",
+          "lyrics": "She asked me to stay And she told me to sit anywhere So I looked around And I noticed there wasn't a chair"
+        }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        {
+          "chords": "D",
+          "lyrics": "I sat on a rug Biding my time Drinking her wine We talked until two And then she said It's time for bed"
+        },
+        {
+          "chords": "C | G | D",
+          "lyrics": ""
+        }
+      ]
+    },
+    {
+      "name": "Interlude",
+      "lines": [
+        {
+          "chords": "D | C | G | D | Dm",
+          "lyrics": "She told me she worked in the morning"
+        }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        {
+          "chords": "G",
+          "lyrics": "And started to laugh I told her I didn't And crawled off to sleep in the bath"
+        }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        {
+          "chords": "D",
+          "lyrics": "And when I awoke I was alone This bird had flown So I lit a fire Isn't it good Norwegian wood"
+        }
+      ]
+    },
+    {
+      "name": "Outro",
+      "lines": [
+        {
+          "chords": "D | C | G | D",
+          "lyrics": ""
+        }
+      ]
+    }
+  ]
+}
