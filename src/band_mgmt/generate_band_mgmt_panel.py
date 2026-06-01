@@ -588,11 +588,12 @@ BM_JS = r"""
   window.bmPlayRow = function(btn) {
     const audio = document.getElementById('bm-audio');
     const url = btn.dataset.audioUrl;
+    const resolvedUrl = new URL(url, location.href).href;
     if (_bmCurrentAudioBtn && _bmCurrentAudioBtn !== btn) {
       _bmCurrentAudioBtn.textContent = '\u25b6';
       _bmCurrentAudioBtn.classList.remove('playing');
     }
-    if (audio.src === url && !audio.paused) {
+    if (audio.src === resolvedUrl && !audio.paused) {
       audio.pause(); btn.textContent = '\u25b6'; btn.classList.remove('playing'); _bmCurrentAudioBtn = null;
     } else {
       audio.src = url; audio.play().catch(function(){});

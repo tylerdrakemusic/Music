@@ -244,6 +244,39 @@ class TestAudioUrlRegexMatchesRealUrls:
             )
 
 
+class TestPauseButtonUsesResolvedUrl:
+    """Regression: bmPlayRow must compare audio.src against new URL(url, location.href).href.
+
+    audio.src is always absolute (browser-resolved); comparing against the raw
+    relative /audio/... string always returns false → pause never triggers.
+    """
+
+    def test_pause_compares_resolved_url(self, generated_html: str) -> None:
+        # The JS must resolve the relative URL before comparing with audio.src
+        assert "new URL(url, location.href).href" in generated_html, (
+            "bmPlayRow must resolve url via new URL(url, location.href).href "
+            "before comparing with audio.src — bare === comparison always fails "
+            "because audio.src is absolute but data-audio-url is relative"
+        )
+
+    def test_pause_check_uses_resolved_not_raw(self, generated_html: str) -> None:
+        # Ensure the old broken pattern is NOT present: audio.src === url
+        # (where url is the raw relative value)
+        import re
+        # Find the bmPlayRow function body
+        m = re.search(r"window\.bmPlayRow\s*=\s*function.*?audio\.onended", generated_html, re.DOTALL)
+        assert m, "bmPlayRow function not found"
+        fn_body = m.group(0)
+        assert "audio.src === resolvedUrl" in fn_body, (
+            "Pause check must use resolvedUrl, not raw url"
+        )
+        # The raw comparison pattern must not appear (would always be false)
+        assert "audio.src === url" not in fn_body, (
+            "audio.src === url comparison must be removed — it always fails "
+            "because audio.src is absolute while url is relative (/audio/...)"
+        )
+
+
 # ---------------------------------------------------------------------------
 # 8 – 11 — Integration: live HTTP server
 # ---------------------------------------------------------------------------
