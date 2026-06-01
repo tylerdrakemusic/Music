@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import json
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -41,6 +42,27 @@ try:
         _OLLAMA_AVAILABLE = False
 except Exception:
     _OLLAMA_AVAILABLE = False
+
+# ── make_chord_sheet (optional) ───────────────────────────────────────────────
+try:
+    _CHORD_SHEET_TOOLS_DIR = Path(__file__).resolve().parents[2] / "tools"
+    if str(_CHORD_SHEET_TOOLS_DIR) not in sys.path:
+        sys.path.insert(0, str(_CHORD_SHEET_TOOLS_DIR))
+    from make_chord_sheet import build_docx, compute_output_path  # type: ignore[import]
+    _CHORD_SHEET_AVAILABLE = True
+except Exception:
+    _CHORD_SHEET_AVAILABLE = False
+
+_CS_ROOT = Path(__file__).resolve().parents[2]
+_CHORD_SHEET_TEMPLATES_DIR = _CS_ROOT / "studio_master" / "song_templates"
+_CHORD_SHEET_DOCS_DIR = _CS_ROOT / "documents"
+
+
+def _cs_sanitize(name: str) -> str:
+    """Sanitize a string to a safe filename component."""
+    keep = " _-.()[]{}+"
+    return "".join(c for c in name if c.isalnum() or c in keep).strip().replace(" ", "_")
+
 
 app = Flask(__name__, template_folder="templates")
 
@@ -653,6 +675,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <button class="tab-btn" onclick="switchTab('signatures', this)">🔐 Release Signatures</button>
   <button class="tab-btn" onclick="switchTab('release-ops', this)">📡 Release Ops</button>
   <button class="tab-btn" onclick="switchTab('radio', this)">📻 Radio</button>
+  <button class="tab-btn" onclick="switchTab('chord-sheets', this); csLoadSongs()">📄 Chord Sheets</button>
   <a href="/rhymes" class="tab-btn" style="text-decoration:none;">🎼 Rhyme Grouper</a>
   <a href="/links" class="tab-btn" style="text-decoration:none;">🔗 Artist Links</a>
 </div>
@@ -761,6 +784,54 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
       <h3>Full Playlist</h3>
       <div id="radioPlaylistList"><div style="color:var(--text-dim);padding:12px;">Loading...</div></div>
     </div>
+  </div>
+</div>
+
+<div id="tab-chord-sheets" class="tab-content">
+  <div style="max-width:900px;">
+    <h3 style="color:var(--accent2);margin-bottom:20px;">📄 Chord Sheets</h3>
+
+    <!-- Section A: parse raw text ─────────────────────────────────────────── -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px;">
+      <h4 style="color:var(--text);margin-bottom:12px;">A — New Song (Parse → Review → Generate)</h4>
+      <div style="margin-bottom:12px;">
+        <label style="color:var(--text-muted);font-size:12px;display:block;margin-bottom:6px;">Paste raw chord chart</label>
+        <textarea id="cs-raw-text" rows="8" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;color:var(--text);font-family:monospace;font-size:13px;resize:vertical;" placeholder="C G Am F&#10;Hello darkness my old friend..."></textarea>
+      </div>
+      <button class="btn" onclick="csParseText()" style="background:var(--accent);color:white;margin-bottom:16px;">Parse with AI</button>
+      <div style="margin-bottom:12px;">
+        <label style="color:var(--text-muted);font-size:12px;display:block;margin-bottom:6px;">Review / Edit JSON</label>
+        <textarea id="cs-json-review" rows="10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;color:var(--text);font-family:monospace;font-size:12px;resize:vertical;" placeholder="Parsed JSON will appear here..."></textarea>
+      </div>
+      <button class="btn" onclick="csGenerateFromJson('A')" style="background:var(--accent2);color:white;">Save &amp; Generate DOCX</button>
+    </div>
+
+    <!-- Section B: existing template ──────────────────────────────────────── -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px;">
+      <h4 style="color:var(--text);margin-bottom:12px;">B — Regenerate from Existing Template</h4>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <select id="cs-song-select" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-size:13px;flex:1;min-width:200px;">
+          <option value="">Loading songs…</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="cs-lyrics-only" style="width:14px;height:14px;"> Lyrics Only
+        </label>
+      </div>
+      <button class="btn" onclick="csGenerateFromJson('B')" style="background:var(--accent2);color:white;">Generate DOCX</button>
+    </div>
+
+    <!-- Result panel ───────────────────────────────────────────────────────── -->
+    <div id="cs-result-panel" style="display:none;background:var(--surface);border:1px solid var(--ok);border-radius:var(--radius);padding:20px;">
+      <h4 style="color:var(--ok);margin-bottom:12px;">✓ Generated</h4>
+      <div style="margin-bottom:8px;color:var(--text-muted);">File: <span id="cs-result-filename" style="color:var(--text);font-family:monospace;"></span></div>
+      <a id="cs-download-link" href="#" target="_blank" class="btn" style="display:inline-block;background:var(--ok);color:white;text-decoration:none;margin-right:10px;">📥 Open DOCX</a>
+      <div id="cs-pr-section" style="display:none;margin-top:14px;">
+        <div style="margin-bottom:8px;color:var(--text-muted);">PR: <a id="cs-pr-url" href="#" target="_blank" style="color:var(--accent);"></a></div>
+        <button class="btn" onclick="csMergePR()" style="background:var(--accent);">🔀 Merge PR</button>
+      </div>
+    </div>
+
+    <div id="cs-status" style="margin-top:12px;font-size:13px;color:var(--text-muted);"></div>
   </div>
 </div>
 
@@ -1666,6 +1737,104 @@ async function confirmLinkDelete() {
 }
 
 function setRadioVol(v) { radioAudio.volume = v / 100; }
+
+// ── Chord Sheets Tab ─────────────────────────────────────────────────────────
+
+async function csLoadSongs() {
+  try {
+    const r = await fetch('/chord-sheet/songs');
+    const songs = await r.json();
+    const sel = document.getElementById('cs-song-select');
+    sel.innerHTML = songs.length
+      ? songs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')
+      : '<option value="">No templates found</option>';
+  } catch (_) {
+    const sel = document.getElementById('cs-song-select');
+    if (sel) sel.innerHTML = '<option value="">Error loading songs</option>';
+  }
+}
+
+async function csParseText() {
+  const raw = document.getElementById('cs-raw-text').value.trim();
+  if (!raw) { showToast('Paste a chord chart first', 'error'); return; }
+  csSetStatus('Parsing with AI\u2026');
+  try {
+    const r = await fetch('/chord-sheet/parse', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({raw_text: raw})
+    });
+    const data = await r.json();
+    if (!r.ok) { csSetStatus('Error: ' + (data.error || r.status)); return; }
+    document.getElementById('cs-json-review').value =
+      JSON.stringify(JSON.parse(data.json_string), null, 2);
+    csSetStatus('Parsed. Review and edit the JSON, then click Save & Generate DOCX.');
+  } catch (e) { csSetStatus('Network error: ' + e.message); }
+}
+
+async function csGenerateFromJson(workflow) {
+  csSetStatus('Generating\u2026');
+  const payload = {workflow};
+  if (workflow === 'A') {
+    const jsonStr = document.getElementById('cs-json-review').value.trim();
+    if (!jsonStr) { showToast('No JSON to generate from', 'error'); return; }
+    payload.json_content = jsonStr;
+  } else {
+    const sel = document.getElementById('cs-song-select');
+    if (!sel.value) { showToast('Select a song first', 'error'); return; }
+    payload.song_path = sel.value;
+    payload.lyrics_only = document.getElementById('cs-lyrics-only').checked;
+  }
+  try {
+    const r = await fetch('/chord-sheet/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+    if (!r.ok) { csSetStatus('Error: ' + (data.error || r.status)); return; }
+    document.getElementById('cs-result-filename').textContent = data.filename || '';
+    const dl = document.getElementById('cs-download-link');
+    dl.href = data.download_url || '#';
+    document.getElementById('cs-result-panel').style.display = 'block';
+    const prSection = document.getElementById('cs-pr-section');
+    if (data.pr_url) {
+      _csPrUrl = data.pr_url.trim();
+      const prLink = document.getElementById('cs-pr-url');
+      prLink.href = _csPrUrl;
+      prLink.textContent = _csPrUrl;
+      prSection.style.display = 'block';
+    } else {
+      prSection.style.display = 'none';
+    }
+    csSetStatus('Done! DOCX generated.');
+    csLoadSongs();
+  } catch (e) { csSetStatus('Network error: ' + e.message); }
+}
+
+let _csPrUrl = '';
+
+async function csMergePR() {
+  if (!_csPrUrl) { csSetStatus('No PR to merge.'); return; }
+  csSetStatus('Merging PR...');
+  try {
+    const r = await fetch('/chord-sheet/merge', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({pr_url: _csPrUrl})
+    });
+    const data = await r.json();
+    if (!r.ok) { csSetStatus('Merge error: ' + (data.error || r.status)); return; }
+    csSetStatus('PR merged! ✓');
+    document.getElementById('cs-pr-section').style.display = 'none';
+    _csPrUrl = '';
+  } catch (e) { csSetStatus('Network error: ' + e.message); }
+}
+
+function csSetStatus(msg) {
+  const el = document.getElementById('cs-status');
+  if (el) el.textContent = msg;
+}
 </script>
 </body>
 </html>
@@ -2518,6 +2687,182 @@ def rhymes_stats():
     """Return vault statistics as JSON."""
     _ensure_vault_schema()
     return jsonify(_get_vault_stats())
+
+
+# ── Chord Sheet Routes ────────────────────────────────────────────────────────
+
+@app.route("/chord-sheet/songs")
+def chord_sheet_songs():
+    """Return sorted list of .json filenames from studio_master/song_templates/."""
+    templates = sorted(p.name for p in _CHORD_SHEET_TEMPLATES_DIR.glob("*.json"))
+    return jsonify(templates)
+
+
+@app.route("/chord-sheet/parse", methods=["POST"])
+def chord_sheet_parse():
+    """Parse raw chord chart text via Ollama → return JSON string."""
+    if not _OLLAMA_AVAILABLE:
+        return jsonify({"error": "Ollama not available"}), 503
+
+    data = request.get_json(silent=True) or {}
+    raw_text = str(data.get("raw_text", "")).strip()
+    if not raw_text:
+        return jsonify({"error": "raw_text is required"}), 400
+
+    # Build schema example from an existing template
+    schema_example = ""
+    try:
+        sample = next(_CHORD_SHEET_TEMPLATES_DIR.glob("*.json"))
+        schema_example = sample.read_text(encoding="utf-8")
+    except StopIteration:
+        pass
+
+    prompt = (
+        "You are a music data parser. Convert the following chord chart to JSON.\n"
+        "Return ONLY valid JSON matching this schema example:\n"
+        f"{schema_example}\n\n"
+        "The JSON must have these fields: title, artist, key, bpm, sections "
+        "(array of section objects with name and lines). "
+        "Each line is either a string or an object with chords and lyrics keys.\n\n"
+        f"Raw chord chart:\n{raw_text}\n\n"
+        "Return ONLY the JSON object, no explanation, no code block markers."
+    )
+
+    try:
+        client_ollama = _OllamaClient()
+        llm_response = client_ollama.generate(prompt)
+    except Exception as exc:
+        return jsonify({"error": f"Ollama error: {exc}"}), 503
+
+    try:
+        parsed = json.loads(llm_response)
+        return jsonify({"json_string": json.dumps(parsed, ensure_ascii=False)})
+    except (json.JSONDecodeError, ValueError):
+        return jsonify({"error": "LLM parse failed", "raw": llm_response}), 422
+
+
+@app.route("/chord-sheet/save-json", methods=["POST"])
+def chord_sheet_save_json():
+    """Write reviewed JSON to disk in studio_master/song_templates/."""
+    data = request.get_json(silent=True) or {}
+    json_content = data.get("json_content", "")
+    try:
+        song = json.loads(json_content)
+    except (json.JSONDecodeError, ValueError):
+        return jsonify({"error": "Invalid JSON content"}), 400
+
+    title = _cs_sanitize(song.get("title", "Untitled"))
+    artist = _cs_sanitize(song.get("artist", "Unknown"))
+    key = _cs_sanitize(song.get("key", "?"))
+    filename = f"{title}_{artist}_Key_{key}.json"
+    _CHORD_SHEET_TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = _CHORD_SHEET_TEMPLATES_DIR / filename
+    out_path.write_text(json.dumps(song, indent=2, ensure_ascii=False), encoding="utf-8")
+    return jsonify({"path": str(out_path), "filename": filename})
+
+
+@app.route("/chord-sheet/generate", methods=["POST"])
+def chord_sheet_generate():
+    """Generate DOCX from template or new JSON. Returns download URL."""
+    if not _CHORD_SHEET_AVAILABLE:
+        return jsonify({"error": "make_chord_sheet not available"}), 503
+
+    data = request.get_json(silent=True) or {}
+    workflow = data.get("workflow", "B")
+    lyrics_only = bool(data.get("lyrics_only", False))
+
+    if workflow == "A":
+        json_content = data.get("json_content", "")
+        try:
+            song = json.loads(json_content)
+        except (json.JSONDecodeError, ValueError):
+            return jsonify({"error": "Invalid JSON content"}), 400
+
+        title_s = _cs_sanitize(song.get("title", "Untitled"))
+        artist_s = _cs_sanitize(song.get("artist", "Unknown"))
+        key_s = _cs_sanitize(song.get("key", "?"))
+        json_filename = f"{title_s}_{artist_s}_Key_{key_s}.json"
+        _CHORD_SHEET_TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+        json_path = _CHORD_SHEET_TEMPLATES_DIR / json_filename
+        json_path.write_text(json.dumps(song, indent=2, ensure_ascii=False), encoding="utf-8")
+    else:
+        song_filename = Path(str(data.get("song_path", "")).strip()).name
+        if not song_filename:
+            return jsonify({"error": "song_path is required for workflow B"}), 400
+        json_path = _CHORD_SHEET_TEMPLATES_DIR / song_filename
+        if not json_path.exists():
+            return jsonify({"error": f"JSON file not found: {song_filename}"}), 404
+        with json_path.open(encoding="utf-8") as fh:
+            song = json.load(fh)
+
+    # Generate DOCX
+    try:
+        _CHORD_SHEET_DOCS_DIR.mkdir(parents=True, exist_ok=True)
+        out_path = compute_output_path(song, _CHORD_SHEET_DOCS_DIR, lyrics_only=lyrics_only)
+        build_docx(song, out_path)
+    except Exception as exc:
+        return jsonify({"error": f"DOCX generation failed: {exc}"}), 500
+
+    # Git commit + push + open PR (best-effort; failures don't block DOCX download)
+    pr_url = ""
+    try:
+        repo_root = _CS_ROOT
+        subprocess.run(
+            ["git", "add", str(json_path), str(out_path)],
+            cwd=str(repo_root), check=True, capture_output=True,
+        )
+        subprocess.run(
+            ["git", "commit", "--allow-empty", "-m",
+             f"chord-sheet: add {out_path.name}"],
+            cwd=str(repo_root), check=True, capture_output=True,
+        )
+        subprocess.run(
+            ["git", "push"],
+            cwd=str(repo_root), check=True, capture_output=True,
+        )
+        gh = subprocess.run(
+            ["gh", "pr", "create", "--fill", "--base", "main"],
+            cwd=str(repo_root), capture_output=True, text=True,
+        )
+        pr_url = gh.stdout.strip()
+    except Exception:
+        pass  # PR creation is optional; DOCX is already generated
+
+    return jsonify({
+        "filename": out_path.name,
+        "json_path": str(json_path),
+        "download_url": f"/chord-sheet/download/{out_path.name}",
+        "pr_url": pr_url,
+    })
+
+
+@app.route("/chord-sheet/merge", methods=["POST"])
+def chord_sheet_merge():
+    """Merge a chord-sheet PR via `gh pr merge`."""
+    data = request.get_json(silent=True) or {}
+    pr_url = str(data.get("pr_url", "")).strip()
+    if not pr_url:
+        return jsonify({"error": "pr_url is required"}), 400
+    try:
+        result = subprocess.run(
+            ["gh", "pr", "merge", pr_url, "--merge", "--auto"],
+            cwd=str(_CS_ROOT), capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            return jsonify({"error": result.stderr.strip() or "gh pr merge failed"}), 500
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"merged": True, "pr_url": pr_url})
+
+
+@app.route("/chord-sheet/download/<path:filename>")
+def chord_sheet_download(filename: str):
+    """Serve a generated chord sheet DOCX for download."""
+    safe_name = Path(filename).name
+    file_path = _CHORD_SHEET_DOCS_DIR / safe_name
+    if not file_path.exists():
+        return jsonify({"error": "File not found"}), 404
+    return send_file(file_path, as_attachment=True, download_name=safe_name)
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
