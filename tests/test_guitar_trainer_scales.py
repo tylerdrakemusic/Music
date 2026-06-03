@@ -734,6 +734,12 @@ def test_html_key_select_has_e_option(html: str) -> None:
     assert '<option value="E">E major</option>' in html
 
 
+def test_html_sharp_treble_y_positions_for_key_signature(html: str) -> None:
+    """Treble clef sharp key signature positions must use the correct staff Y coordinates."""
+    compact = html.replace(" ", "")
+    assert "constSHARP_TREBLE_Y=[30,45,60,40,55,35,50]" in compact
+
+
 # ---------------------------------------------------------------------------
 # TTS normalization — hash→sharp bugfix
 # ---------------------------------------------------------------------------
