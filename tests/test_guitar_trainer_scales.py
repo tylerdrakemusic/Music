@@ -123,6 +123,7 @@ def test_scale_positions_counts() -> None:
     assert len(SCALE_POSITIONS["D"]) == 11, f"SCALE_POSITIONS['D'] has {len(SCALE_POSITIONS['D'])} positions, expected 11"
     assert len(SCALE_POSITIONS["Bb"]) == 11, f"SCALE_POSITIONS['Bb'] has {len(SCALE_POSITIONS['Bb'])} positions, expected 11"
     assert len(SCALE_POSITIONS["B"]) == 11, f"SCALE_POSITIONS['B'] has {len(SCALE_POSITIONS['B'])} positions, expected 11"
+    assert len(SCALE_POSITIONS["E"]) == 11, f"SCALE_POSITIONS['E'] has {len(SCALE_POSITIONS['E'])} positions, expected 11"
     assert len(SCALE_POSITIONS["Eb"]) == 10, f"SCALE_POSITIONS['Eb'] has {len(SCALE_POSITIONS['Eb'])} positions, expected 10"
     assert len(SCALE_POSITIONS["A"]) == 11, f"SCALE_POSITIONS['A'] has {len(SCALE_POSITIONS['A'])} positions, expected 11"
 
@@ -234,6 +235,24 @@ def test_b_major_max_fret() -> None:
         for note in pos["notes"]:
             assert note["fret"] <= 22, (
                 f"B major Position {i+1} note fret={note['fret']} exceeds 22"
+            )
+
+def test_e_major_positions_pitch_classes() -> None:
+    """All notes in all E major positions must belong to the E major scale."""
+    E_MAJOR_PCS = {4, 6, 8, 9, 11, 1, 3}  # E F# G# A B C# D#
+    for i, pos in enumerate(SCALE_POSITIONS["E"]):
+        for note in pos["notes"]:
+            assert note["midi"] % 12 in E_MAJOR_PCS, (
+                f"E major Position {i+1} note midi={note['midi']} "
+                f"(pc={note['midi'] % 12}) not in E major scale"
+            )
+
+def test_e_major_max_fret() -> None:
+    """No note in any E major position may exceed fret 22."""
+    for i, pos in enumerate(SCALE_POSITIONS["E"]):
+        for note in pos["notes"]:
+            assert note["fret"] <= 22, (
+                f"E major Position {i+1} note fret={note['fret']} exceeds 22"
             )
 
 
@@ -634,6 +653,10 @@ def test_html_key_pc_map_has_dsharp(html: str) -> None:
     """KEY_PC JavaScript map must have a D# entry (pitch class 3) for correct root coloring."""
     assert "'D#':3" in html
 
+def test_html_key_pc_map_has_e(html: str) -> None:
+    """KEY_SIGS JavaScript map must have an E entry (4 sharps) for correct staff key signatures."""
+    assert "E: 4" in html
+
 
 def test_html_has_scale_position_select(html: str) -> None:
     """Rendered HTML must contain the scale position dropdown."""
@@ -692,10 +715,29 @@ def test_api_scale_positions_a_returns_11(client) -> None:
     assert len(data) == 11
     assert all("A major" in p["instructor_phrase"] for p in data)
 
+def test_api_scale_positions_e_returns_11(client) -> None:
+    """GET /api/scale-positions?key=E must return a list of exactly 11 E major positions."""
+    resp = client.get("/api/scale-positions?key=E")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) == 11
+    assert all("E major" in p["instructor_phrase"] for p in data)
+
 
 def test_html_key_select_has_a_option(html: str) -> None:
     """HTML key dropdown must include an A major option."""
     assert '<option value="A">A major</option>' in html
+
+def test_html_key_select_has_e_option(html: str) -> None:
+    """HTML key dropdown must include an E major option."""
+    assert '<option value="E">E major</option>' in html
+
+
+def test_html_sharp_treble_y_positions_for_key_signature(html: str) -> None:
+    """Treble clef sharp key signature positions must use the correct staff Y coordinates."""
+    compact = html.replace(" ", "")
+    assert "constSHARP_TREBLE_Y=[30,45,60,40,55,35,50]" in compact
 
 
 # ---------------------------------------------------------------------------
