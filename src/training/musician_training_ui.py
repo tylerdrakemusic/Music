@@ -896,15 +896,21 @@ async function createSession() {
   const FLAT_ORDER  = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
   // Y positions for accidentals on treble/bass clef (per accidental order slot)
   // Staff lines at Y=30(F5),40(D5),50(B4),60(G4),70(E4) — treble; Y=30(A3),40(F3),50(D3),60(B2),70(G2) — bass
-  const SHARP_TREBLE_Y = [30, 45, 25, 40, 55, 35, 50]; // F C G D A E B → F5 C5 G5 D5 A4 E5 B4
+  const SHARP_TREBLE_Y = [30, 45, 60, 40, 55, 35, 50]; // F C G D A E B → F5 C5 G4 D5 A4 E5 B4
   const FLAT_TREBLE_Y  = [50, 35, 55, 40, 60, 45, 30]; // B E A D G C F → B4 E5 A4 D5 G4 C5 F5
   const SHARP_BASS_Y   = [40, 55, 35, 50, 65, 45, 60]; // F C G D A E B → F3 C3 G3 D3 A2 E3 B2
   const FLAT_BASS_Y    = [60, 45, 65, 50, 70, 55, 40]; // B E A D G C F → B2 E3 A2 D3 G2 C3 F3
   // Treble clef: C4 sits one ledger line below staff (Y=80); each diatonic step = -5px upward
   // Lines at Y=30,40,50,60,70 (top to bottom): F5,D5,B4,G4,E4
-  const DIATONIC_STEP_FROM_C = { C: 0, D: 1, Eb: 2, F: 3, G: 4, A: 5, Bb: 6, B: 6, 'A#': 6, 'D#': 2 };
+  const DIATONIC_STEP_FROM_C = {
+    C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6,
+    Eb: 2, Bb: 5, 'A#': 5, 'D#': 1, 'G#': 4, 'C#': 0, 'F#': 3,
+  };
   // Bass clef: G2 at bottom line (Y=70); each diatonic step = -5px upward
-  const BASS_STEP_FROM_G2 = { C: 3, D: 4, Eb: 5, F: 6, G: 0, A: 1, Bb: 2, B: 2, 'A#': 2, 'D#': 5 };
+  const BASS_STEP_FROM_G2 = {
+    C: 3, D: 4, E: 5, F: 6, G: 0, A: 1, B: 2,
+    Eb: 5, Bb: 1, 'A#': 1, 'D#': 4, 'G#': 0, 'C#': 3, 'F#': 6,
+  };
 
   window.drawStaves = function(key, highlightMidi) {
     const rootPc   = KEY_PC[key] ?? 0;
