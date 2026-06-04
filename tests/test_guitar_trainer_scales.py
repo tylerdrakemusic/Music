@@ -111,8 +111,8 @@ def client(mem_conn):
 # ---------------------------------------------------------------------------
 
 def test_scale_positions_has_c_and_g() -> None:
-    """SCALE_POSITIONS must contain C, G, F, D, Bb, B, Eb, A, and the A#/D# aliases."""
-    assert {"C", "G", "F", "D", "Bb", "A#", "B", "Eb", "D#", "A"}.issubset(set(SCALE_POSITIONS.keys()))
+    """SCALE_POSITIONS must contain C, G, F, D, Bb, B, Eb, A, F#, and the A#/D# aliases."""
+    assert {"C", "G", "F", "D", "Bb", "A#", "B", "Eb", "D#", "A", "F#"}.issubset(set(SCALE_POSITIONS.keys()))
 
 
 def test_scale_positions_counts() -> None:
@@ -124,6 +124,7 @@ def test_scale_positions_counts() -> None:
     assert len(SCALE_POSITIONS["Bb"]) == 11, f"SCALE_POSITIONS['Bb'] has {len(SCALE_POSITIONS['Bb'])} positions, expected 11"
     assert len(SCALE_POSITIONS["B"]) == 11, f"SCALE_POSITIONS['B'] has {len(SCALE_POSITIONS['B'])} positions, expected 11"
     assert len(SCALE_POSITIONS["E"]) == 11, f"SCALE_POSITIONS['E'] has {len(SCALE_POSITIONS['E'])} positions, expected 11"
+    assert len(SCALE_POSITIONS["F#"]) == 11, f"SCALE_POSITIONS['F#'] has {len(SCALE_POSITIONS['F#'])} positions, expected 11"
     assert len(SCALE_POSITIONS["Eb"]) == 10, f"SCALE_POSITIONS['Eb'] has {len(SCALE_POSITIONS['Eb'])} positions, expected 10"
     assert len(SCALE_POSITIONS["A"]) == 11, f"SCALE_POSITIONS['A'] has {len(SCALE_POSITIONS['A'])} positions, expected 11"
 
@@ -194,6 +195,17 @@ def test_d_major_positions_pitch_classes() -> None:
             assert note["midi"] % 12 in D_MAJOR_PCS, (
                 f"D major Position {i+1} note midi={note['midi']} "
                 f"(pc={note['midi'] % 12}) not in D major scale"
+            )
+
+
+def test_f_sharp_major_positions_pitch_classes() -> None:
+    """All notes in all F# major positions must belong to the F# major scale."""
+    F_SHARP_MAJOR_PCS = {6, 8, 10, 11, 1, 3, 5}  # F# G# A# B C# D# E#
+    for i, pos in enumerate(SCALE_POSITIONS["F#"]):
+        for note in pos["notes"]:
+            assert note["midi"] % 12 in F_SHARP_MAJOR_PCS, (
+                f"F# major Position {i+1} note midi={note['midi']} "
+                f"(pc={note['midi'] % 12}) not in F# major scale"
             )
 
 
@@ -392,6 +404,16 @@ def test_api_scale_positions_f_returns_12(client) -> None:
     assert isinstance(data, list)
     assert len(data) == 12
     assert all("F major" in p["instructor_phrase"] for p in data)
+
+
+def test_api_scale_positions_f_sharp_returns_11(client) -> None:
+    """GET /api/scale-positions?key=F%23 must return a list of exactly 11 F# major positions."""
+    resp = client.get("/api/scale-positions?key=F%23")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) == 11
+    assert all("F# major" in p["instructor_phrase"] for p in data)
 
 
 def test_api_scale_positions_d_returns_11(client) -> None:
