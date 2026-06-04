@@ -238,3 +238,17 @@ def test_metronome_js_has_tap_tempo(trainer_src: str) -> None:
 def test_metronome_js_scheduler_uses_setinterval(trainer_src: str) -> None:
     """Metronome scheduler must use setInterval for look-ahead timing loop."""
     assert "setInterval" in trainer_src
+
+
+def test_metronome_js_stop_cancels_scheduled_sources(trainer_src: str) -> None:
+    """Metronome stop() must cancel scheduled AudioBufferSourceNodes."""
+    assert "scheduledSources" in trainer_src
+    assert "src.stop()" in trainer_src or "src.stop (" in trainer_src
+    assert "scheduledSources.length = 0" in trainer_src
+
+
+def test_metronome_js_stop_clears_dot_timeouts(trainer_src: str) -> None:
+    """Metronome stop() must clear pending dot update timeouts."""
+    assert "scheduledDotHandles" in trainer_src
+    assert "clearTimeout" in trainer_src
+    assert "scheduledDotHandles.length = 0" in trainer_src

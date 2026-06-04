@@ -632,6 +632,8 @@ async function createSession() {
   let currentBeat = 0;
   let bpm = 120;
   let beatsPerBar = 4;
+  let scheduledSources = [];
+  let scheduledDotHandles = [];
   const LOOKAHEAD_MS = 25;
   const SCHEDULE_AHEAD_S = 0.1;
 
@@ -664,6 +666,11 @@ async function createSession() {
     src.buffer = buf;
     src.connect(ctx.destination);
     src.start(time);
+    scheduledSources.push(src);
+    src.onended = () => {
+      const idx = scheduledSources.indexOf(src);
+      if (idx !== -1) scheduledSources.splice(idx, 1);
+    };
   }
 
   function updateDots(beat) {
@@ -676,6 +683,7 @@ async function createSession() {
   }
 
   function scheduler() {
+    if (!running) return;
     const ctx = getCtx();
     while (nextBeatTime < ctx.currentTime + SCHEDULE_AHEAD_S) {
       const isAccent = currentBeat === 0;
@@ -683,7 +691,8 @@ async function createSession() {
       // Schedule dot flash at the right wall-clock time
       const delay = Math.max(0, (nextBeatTime - ctx.currentTime) * 1000);
       const beatSnapshot = currentBeat;
-      setTimeout(() => updateDots(beatSnapshot), delay);
+      const handle = setTimeout(() => updateDots(beatSnapshot), delay);
+      scheduledDotHandles.push(handle);
       currentBeat = (currentBeat + 1) % beatsPerBar;
       nextBeatTime += 60.0 / bpm;
     }
@@ -705,6 +714,16 @@ async function createSession() {
     running = false;
     clearInterval(schedulerHandle);
     schedulerHandle = null;
+    scheduledSources.forEach((src) => {
+      try {
+        src.stop();
+      } catch (_e) {
+        // ignore sources that are already stopped
+      }
+    });
+    scheduledSources.length = 0;
+    scheduledDotHandles.forEach(clearTimeout);
+    scheduledDotHandles.length = 0;
     // Clear all dots
     for (let i = 0; i < 6; i++) {
       const dot = document.getElementById('mdot-' + i);
