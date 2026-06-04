@@ -179,6 +179,19 @@ _POSITIONS: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("G_shape",      19, "Position 10 — G shape (19th fret)",        "Low E string", "Start on the 19th fret of the low E string — B major G shape one octave up."),
         ("river",        19, "Position 11 — 川 River shape (19th fret)", "Low E string", "Start on the 19th fret of the low E string — B major 川 River shape (high octave)."),
     ],
+    "F#": [
+        ("E_shape",  2,  "Position 1 — E shape (2nd fret)",           "Low E string", "Start on the 2nd fret of the low E string — F# major E shape."),
+        ("D_shape",  2,  "Position 2 — D shape (2nd fret)",           "Low E string", "Start on the 2nd fret of the low E string — F# major D shape."),
+        ("C_shape",  9,  "Position 3 — C shape (9th fret)",           "A string",     "Start on the 9th fret of the A string — F# major C shape."),
+        ("rock",     9,  "Position 4 — 石 Rock shape (9th fret)",      "A string",     "Start on the 9th fret of the A string for F# major 石 Rock shape."),
+        ("A_shape",  9,  "Position 5 — A shape (9th fret)",           "A string",     "Start on the 9th fret of the A string — F# major A shape."),
+        ("G_shape", 14,  "Position 6 — G shape (14th fret)",          "Low E string", "Start on the 14th fret of the low E string — F# major G shape."),
+        ("river",   14,  "Position 7 — 川 River shape (14th fret)",     "Low E string", "Start on the 14th fret of the low E string — F# major 川 River shape."),
+        ("E_shape", 14,  "Position 8 — E shape (14th fret)",           "Low E string", "Start on the 14th fret of the low E string — F# major E shape."),
+        ("D_shape", 14,  "Position 9 — D shape (14th fret)",           "Low E string", "Start on the 14th fret of the low E string — F# major D shape."),
+        ("C_shape", 21,  "Position 10 — C shape (21st fret)",         "A string",     "Start on the 21st fret of the A string — F# major C shape one octave up."),
+        ("rock",    21,  "Position 11 — 石 Rock shape (21st fret)",    "A string",     "Start on the 21st fret of the A string for F# major 石 Rock shape (high octave)."),
+    ],
     "Eb": [
         ("D_shape_open", 1,  "Position 1 — D shape (1st fret)",          "D string",     "Start on the 1st fret of the D string — E-flat major D shape."),
         ("C_shape",      6,  "Position 2 — C shape (6th fret)",          "A string",     "Start on the 6th fret of the A string — E-flat major C shape."),
@@ -201,6 +214,7 @@ _PITCH_CLASSES: dict[str, set[int]] = {
     "D":  {2, 4, 6, 7, 9, 11, 1},   # D E F# G A B C#
     "Bb": {10, 0, 2, 3, 5, 7, 9},   # Bb C D Eb F G A
     "B":  {11, 1, 3, 4, 6, 8, 10},  # B C# D# E F# G# A#
+    "F#": {6, 8, 10, 11, 1, 3, 5},  # F# G# A# B C# D# E#
     "Eb": {3, 5, 7, 8, 10, 0, 2},   # Eb F G Ab Bb C D
 }
 

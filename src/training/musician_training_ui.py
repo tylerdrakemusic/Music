@@ -369,6 +369,7 @@ HTML = r"""
         <option value="D">D major</option>
         <option value="Eb">Eb / D&#x23; major</option>
         <option value="E">E major</option>
+        <option value="F#">F# major</option>
         <option value="F">F major</option>
         <option value="G">G major</option>
         <option value="A">A major</option>
@@ -815,7 +816,7 @@ async function createSession() {
   };
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
-  const KEY_PC = {C:0, D:2, E:4, F:5, G:7, A:9, B:11, Bb:10, 'A#':10, Eb:3, 'D#':3};
+  const KEY_PC = {C:0, D:2, E:4, F:5, 'F#':6, G:7, A:9, B:11, Bb:10, 'A#':10, Eb:3, 'D#':3};
   const PC_NAMES      = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const PC_NAMES_FLAT = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
   const FLAT_KEYS     = new Set(['F','Bb','Eb','Ab','Db','Gb']);
@@ -891,7 +892,7 @@ async function createSession() {
   const STAFF_COLORS = { root: '#ff0080', third: '#fb5607', fifth: '#00e5cc', other: '#555555' };
   const STAFF_TEXT   = { root: '#fff',    third: '#fff',    fifth: '#000',    other: '#fff'    };
   // Key signature accidental counts (positive = sharps, negative = flats)
-  const KEY_SIGS = { C: 0, D: 2, Eb: -3, E: 4, F: -1, G: 1, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
+  const KEY_SIGS = { C: 0, D: 2, Eb: -3, E: 4, F: -1, F#: 6, G: 1, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
   const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
   const FLAT_ORDER  = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
   // Y positions for accidentals on treble/bass clef (per accidental order slot)
