@@ -115,6 +115,15 @@ def test_scale_positions_has_c_and_g() -> None:
     assert {"C", "G", "F", "D", "Bb", "A#", "B", "Eb", "D#", "A", "F#"}.issubset(set(SCALE_POSITIONS.keys()))
 
 
+def test_key_sigs_js_quotes_sharp_keys(client) -> None:
+    """The rendered Guitar Trainer JS must quote F# in KEY_SIGS to remain valid JS."""
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.data.decode("utf-8")
+    assert "'F#': 6" in html
+    assert "F#: 6" not in html
+
+
 def test_scale_positions_counts() -> None:
     """C must have 12 positions; G, D, Bb, B, A must have 11; F must have 12; Eb must have 10."""
     assert len(SCALE_POSITIONS["C"]) == 12, f"SCALE_POSITIONS['C'] has {len(SCALE_POSITIONS['C'])} positions, expected 12"
