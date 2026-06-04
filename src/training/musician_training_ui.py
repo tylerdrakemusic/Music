@@ -892,7 +892,7 @@ async function createSession() {
   const STAFF_COLORS = { root: '#ff0080', third: '#fb5607', fifth: '#00e5cc', other: '#555555' };
   const STAFF_TEXT   = { root: '#fff',    third: '#fff',    fifth: '#000',    other: '#fff'    };
   // Key signature accidental counts (positive = sharps, negative = flats)
-  const KEY_SIGS = { C: 0, D: 2, Eb: -3, E: 4, F: -1, F#: 6, G: 1, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
+  const KEY_SIGS = { C: 0, D: 2, Eb: -3, E: 4, F: -1, 'F#': 6, G: 1, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
   const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
   const FLAT_ORDER  = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
   // Y positions for accidentals on treble/bass clef (per accidental order slot)
