@@ -245,6 +245,19 @@ _POSITION_DATA: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("C_shape",      18, "Position 9 — C shape (18th fret)",         "A string",     "Start on the 18th fret of the A string — E-flat major C shape one octave up."),
         ("rock",         18, "Position 10 — 石 Rock shape (18th fret)",  "A string",     "Start on the 18th fret of the A string for E-flat major 石 Rock shape (high octave)."),
     ],
+    "Ab": [
+        ("G_shape",  4,  "Position 1 — G shape (4th fret)",            "Low E string", "Start on the 4th fret of the low E string — A-flat major G shape."),
+        ("river",   4,  "Position 2 — 川 River shape (4th fret)",         "Low E string", "Start on the 4th fret of the low E string — A-flat major 川 River shape."),
+        ("E_shape", 4,  "Position 3 — E shape (4th fret)",             "Low E string", "Start on the 4th fret of the low E string — A-flat major E shape."),
+        ("D_shape", 4,  "Position 4 — D shape (4th fret)",             "Low E string", "Start on the 4th fret of the low E string — A-flat major D shape."),
+        ("C_shape", 11, "Position 5 — C shape (11th fret)",            "A string",     "Start on the 11th fret of the A string — A-flat major C shape."),
+        ("rock",    11, "Position 6 — 石 Rock shape (11th fret)",       "A string",     "Start on the 11th fret of the A string for A-flat major 石 Rock shape."),
+        ("A_shape", 11, "Position 7 — A shape (11th fret)",            "A string",     "Start on the 11th fret of the A string — A-flat major A shape."),
+        ("G_shape", 16, "Position 8 — G shape (16th fret)",           "Low E string", "Start on the 16th fret of the low E string — A-flat major G shape (high octave)."),
+        ("river",   16, "Position 9 — 川 River shape (16th fret)",      "Low E string", "Start on the 16th fret of the low E string — A-flat major 川 River shape (high octave)."),
+        ("E_shape", 16, "Position 10 — E shape (16th fret)",           "Low E string", "Start on the 16th fret of the low E string — A-flat major E shape (high octave)."),
+        ("D_shape", 16, "Position 11 — D shape (16th fret)",           "Low E string", "Start on the 16th fret of the low E string — A-flat major D shape (high octave)."),
+    ],
     # FR-20260531-guitar-trainer-a-major
     "A": [
         ("A_shape",  0,  "Position 1 — A shape (open)",               "A string",     "Start on the open A string — A major A shape."),
