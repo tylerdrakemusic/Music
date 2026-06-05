@@ -206,6 +206,18 @@ _POSITION_DATA: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("C_shape", 21,  "Position 10 — C shape (21st fret)",         "A string",     "Start on the 21st fret of the A string — F# major C shape one octave up."),
         ("rock",    21,  "Position 11 — 石 Rock shape (21st fret)",    "A string",     "Start on the 21st fret of the A string for F# major 石 Rock shape (high octave)."),
     ],
+    "Db": [
+        ("rock",    4,  "Position 1 — 石 Rock shape (4th fret)",       "A string",     "Start on the 4th fret of the A string for D-flat major 石 Rock shape."),
+        ("A_shape", 4,  "Position 2 — A shape (4th fret)",          "A string",     "Start on the 4th fret of the A string — D-flat major A shape."),
+        ("G_shape", 9,  "Position 3 — G shape (9th fret)",           "Low E string", "Start on the 9th fret of the low E string — D-flat major G shape."),
+        ("river",   9,  "Position 4 — 川 River shape (9th fret)",    "Low E string", "Start on the 9th fret of the low E string — D-flat major 川 River shape."),
+        ("E_shape", 9,  "Position 5 — E shape (9th fret)",           "Low E string", "Start on the 9th fret of the low E string — D-flat major E shape."),
+        ("D_shape", 9,  "Position 6 — D shape (9th fret)",           "Low E string", "Start on the 9th fret of the low E string — D-flat major D shape."),
+        ("C_shape", 16, "Position 7 — C shape (16th fret)",          "A string",     "Start on the 16th fret of the A string — D-flat major C shape."),
+        ("rock",    16, "Position 8 — 石 Rock shape (16th fret)",    "A string",     "Start on the 16th fret of the A string for D-flat major 石 Rock shape (high octave)."),
+        ("A_shape", 16, "Position 9 — A shape (16th fret)",          "A string",     "Start on the 16th fret of the A string — D-flat major A shape (high octave)."),
+        ("G_shape", 21, "Position 10 — G shape (21st fret)",         "Low E string", "Start on the 21st fret of the low E string — D-flat major G shape (high octave)."),
+    ],
     "Bb": [
         ("A_shape", 1,  "Position 1 — A shape (1st fret)",           "A string",     "Start on the 1st fret of the A string — B-flat major A shape."),
         ("G_shape", 6,  "Position 2 — G shape (6th fret)",           "Low E string", "Start on the 6th fret of the low E string — B-flat major G shape."),
@@ -391,6 +403,9 @@ SCALE_POSITIONS["A#"] = SCALE_POSITIONS["Bb"]
 
 # D# is enharmonically identical to Eb — expose as a transparent alias
 SCALE_POSITIONS["D#"] = SCALE_POSITIONS["Eb"]
+
+# C# is enharmonically identical to Db — expose as a transparent alias
+SCALE_POSITIONS["C#"] = SCALE_POSITIONS["Db"]
 
 # Backward-compat alias — C major positions
 CAGED_POSITIONS: list[CagedPosition] = SCALE_POSITIONS["C"]
