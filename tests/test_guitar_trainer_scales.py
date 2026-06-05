@@ -136,7 +136,7 @@ def test_scale_positions_counts() -> None:
     assert len(SCALE_POSITIONS["F#"]) == 11, f"SCALE_POSITIONS['F#'] has {len(SCALE_POSITIONS['F#'])} positions, expected 11"
     assert len(SCALE_POSITIONS["Eb"]) == 10, f"SCALE_POSITIONS['Eb'] has {len(SCALE_POSITIONS['Eb'])} positions, expected 10"
     assert len(SCALE_POSITIONS["A"]) == 11, f"SCALE_POSITIONS['A'] has {len(SCALE_POSITIONS['A'])} positions, expected 11"
-    assert len(SCALE_POSITIONS["Db"]) == 11, f"SCALE_POSITIONS['Db'] has {len(SCALE_POSITIONS['Db'])} positions, expected 11"
+    assert len(SCALE_POSITIONS["Db"]) == 10, f"SCALE_POSITIONS['Db'] has {len(SCALE_POSITIONS['Db'])} positions, expected 10"
     assert len(SCALE_POSITIONS["Ab"]) == 11, f"SCALE_POSITIONS['Ab'] has {len(SCALE_POSITIONS['Ab'])} positions, expected 11"
 
 
