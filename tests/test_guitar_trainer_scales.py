@@ -111,8 +111,8 @@ def client(mem_conn):
 # ---------------------------------------------------------------------------
 
 def test_scale_positions_has_c_and_g() -> None:
-    """SCALE_POSITIONS must contain C, G, F, D, Bb, B, Eb, A, F#, and the A#/D# aliases."""
-    assert {"C", "G", "F", "D", "Bb", "A#", "B", "Eb", "D#", "A", "F#"}.issubset(set(SCALE_POSITIONS.keys()))
+    """SCALE_POSITIONS must contain C, G, F, D, Bb, B, Eb, A, F#, Ab, and the A#/D# aliases."""
+    assert {"C", "G", "F", "D", "Bb", "A#", "B", "Eb", "D#", "A", "F#", "Ab"}.issubset(set(SCALE_POSITIONS.keys()))
 
 
 def test_key_sigs_js_quotes_sharp_keys(client) -> None:
@@ -136,6 +136,7 @@ def test_scale_positions_counts() -> None:
     assert len(SCALE_POSITIONS["F#"]) == 11, f"SCALE_POSITIONS['F#'] has {len(SCALE_POSITIONS['F#'])} positions, expected 11"
     assert len(SCALE_POSITIONS["Eb"]) == 10, f"SCALE_POSITIONS['Eb'] has {len(SCALE_POSITIONS['Eb'])} positions, expected 10"
     assert len(SCALE_POSITIONS["A"]) == 11, f"SCALE_POSITIONS['A'] has {len(SCALE_POSITIONS['A'])} positions, expected 11"
+    assert len(SCALE_POSITIONS["Ab"]) == 11, f"SCALE_POSITIONS['Ab'] has {len(SCALE_POSITIONS['Ab'])} positions, expected 11"
 
 
 def test_caged_positions_count() -> None:
@@ -683,6 +684,18 @@ def test_html_key_pc_map_has_eb(html: str) -> None:
 def test_html_key_pc_map_has_dsharp(html: str) -> None:
     """KEY_PC JavaScript map must have a D# entry (pitch class 3) for correct root coloring."""
     assert "'D#':3" in html
+
+def test_html_key_pc_map_has_ab(html: str) -> None:
+    """KEY_PC JavaScript map must have an Ab entry (pitch class 8) for correct root coloring."""
+    assert "Ab:8" in html
+
+def test_html_key_sigs_map_has_ab(html: str) -> None:
+    """KEY_SIGS JavaScript map must have an Ab entry (-4) for correct staff key signatures."""
+    assert "Ab: -4" in html
+
+def test_html_key_select_has_ab_option(html: str) -> None:
+    """HTML key dropdown must include an Ab major option."""
+    assert 'value="Ab"' in html
 
 def test_html_key_pc_map_has_e(html: str) -> None:
     """KEY_SIGS JavaScript map must have an E entry (4 sharps) for correct staff key signatures."""
