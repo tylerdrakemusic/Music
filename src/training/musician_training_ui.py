@@ -926,12 +926,14 @@ async function createSession() {
   // Lines at Y=30,40,50,60,70 (top to bottom): F5,D5,B4,G4,E4
   const DIATONIC_STEP_FROM_C = {
     C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6,
-    Eb: 2, Bb: 5, 'A#': 5, 'D#': 1, 'G#': 4, 'C#': 0, 'F#': 3,
+    Db: 1, Eb: 2, Gb: 4, Ab: 5, Bb: 6,
+    'A#': 5, 'D#': 1, 'G#': 4, 'C#': 0, 'F#': 3,
   };
   // Bass clef: G2 at bottom line (Y=70); each diatonic step = -5px upward
   const BASS_STEP_FROM_G2 = {
     C: 3, D: 4, E: 5, F: 6, G: 0, A: 1, B: 2,
-    Eb: 5, Bb: 1, 'A#': 1, 'D#': 4, 'G#': 0, 'C#': 3, 'F#': 6,
+    Db: 4, Eb: 5, Gb: 0, Ab: 1, Bb: 2,
+    'A#': 1, 'D#': 4, 'G#': 0, 'C#': 3, 'F#': 6,
   };
 
   window.drawStaves = function(key, highlightMidi) {
