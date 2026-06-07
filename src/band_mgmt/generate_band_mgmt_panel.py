@@ -683,10 +683,10 @@ BM_JS = r"""
       '<p><strong>' + songCount + '</strong> songs in catalog</p>' +
       '<p class="sort-hint">Click any column header to sort the catalog.</p>' +
       '<table id="catalog-export-table"><thead><tr>' +
-      '<th onclick="sortTableBy(0)">Title</th>' +
-      '<th onclick="sortTableBy(1)">Artist</th>' +
-      '<th onclick="sortTableBy(2)">Key</th>' +
-      '<th onclick="sortTableBy(3)">BPM</th>' +
+      '<th onclick="sortTableBy(0)" title="Click to sort">Title</th>' +
+      '<th onclick="sortTableBy(1)" title="Click to sort">Artist</th>' +
+      '<th onclick="sortTableBy(2)" title="Click to sort">Key</th>' +
+      '<th onclick="sortTableBy(3)" title="Click to sort">BPM</th>' +
       '</tr></thead><tbody>' + rows + '</tbody></table>' +
       '<script>' +
       'function sortTableBy(col){var table=document.getElementById("catalog-export-table");if(!table)return;var tbody=table.tBodies[0];var rows=Array.prototype.slice.call(tbody.rows);var asc=true;var currentCol=table.getAttribute("data-sort-col");var currentDir=table.getAttribute("data-sort-dir");if(currentCol==col){asc=currentDir!=="asc";}rows.sort(function(a,b){var av=a.cells[col].textContent.trim();var bv=b.cells[col].textContent.trim();var an=parseFloat(av);var bn=parseFloat(bv);if(!isNaN(an)&&!isNaN(bn)){av=an;bv=bn;}if(av<bv)return asc?-1:1; if(av>bv)return asc?1:-1; return 0;});rows.forEach(function(r){tbody.appendChild(r);});table.setAttribute("data-sort-col",col);table.setAttribute("data-sort-dir",asc?"asc":"desc");Array.prototype.forEach.call(table.tHead.rows[0].cells,function(th){th.classList.remove("sort-asc","sort-desc");});table.tHead.rows[0].cells[col].classList.add(asc?"sort-asc":"sort-desc");}' +
