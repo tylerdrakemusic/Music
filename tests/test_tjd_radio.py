@@ -536,3 +536,14 @@ class TestNowPlayingIcecastOffline:
 
         assert data["title"] == "Song A"
         assert data.get("status") != "offline"
+
+
+class TestDefaultIcecastUrls:
+    def test_default_icecast_urls_use_port_18000(self):
+        import radio.tjd_radio as tjd
+
+        parser = tjd.build_arg_parser()
+        args = parser.parse_args([])
+
+        assert args.icecast_stream_url == "http://127.0.0.1:18000/stream"
+        assert args.icecast_status_url == "http://127.0.0.1:18000/status-json.xsl"
