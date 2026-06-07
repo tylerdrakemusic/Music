@@ -675,8 +675,8 @@ BM_JS = r"""
       'table{width:100%;border-collapse:collapse;box-shadow:0 1px 3px rgba(15,23,42,.08);}' +
       'th,td{padding:.85rem 1rem;border:1px solid #e2e8f0;text-align:left;}' +
       'th{background:#f8fafc;color:#0f172a;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;}' +
-      'th.sort-asc::after{content:" \25B2";}' +
-      'th.sort-desc::after{content:" \25BC";}' +
+      'th.sort-asc::after{content:" \\25B2";}' +
+      'th.sort-desc::after{content:" \\25BC";}' +
       'tbody tr:nth-child(even){background:#f8fafc;}' +
       '</style></head><body>' +
       '<h1>' + _escHtml(titleText) + '</h1>' +
@@ -689,7 +689,7 @@ BM_JS = r"""
       '</tr></thead><tbody>' + rows + '</tbody></table>' +
       '<script>' +
       'function sortTableBy(col){var table=document.getElementById("catalog-export-table");if(!table)return;var tbody=table.tBodies[0];var rows=Array.prototype.slice.call(tbody.rows);var asc=true;var currentCol=table.getAttribute("data-sort-col");var currentDir=table.getAttribute("data-sort-dir");if(currentCol==col){asc=currentDir!=="asc";}rows.sort(function(a,b){var av=a.cells[col].textContent.trim();var bv=b.cells[col].textContent.trim();var an=parseFloat(av);var bn=parseFloat(bv);if(!isNaN(an)&&!isNaN(bn)){av=an;bv=bn;}if(av<bv)return asc?-1:1; if(av>bv)return asc?1:-1; return 0;});rows.forEach(function(r){tbody.appendChild(r);});table.setAttribute("data-sort-col",col);table.setAttribute("data-sort-dir",asc?"asc":"desc");Array.prototype.forEach.call(table.tHead.rows[0].cells,function(th){th.classList.remove("sort-asc","sort-desc");});table.tHead.rows[0].cells[col].classList.add(asc?"sort-asc":"sort-desc");}' +
-      '</script>' +
+      '<\/script>' +
       '</body></html>';
     var filename = 'band-catalog-' + (band.name || 'catalog').replace(/[^a-zA-Z0-9_-]+/g, '-').toLowerCase() + '.html';
     var blob = new Blob([html], {type:'text/html;charset=utf-8'});
