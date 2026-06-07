@@ -12,3 +12,5 @@ def test_catalog_export_button_is_present():
     assert 'id="bm-export-html-btn"' in html
     assert 'bmExportCatalogHtml()' in html
     assert 'Export Catalog' in html
+    assert 'sortTableBy(' in html
+    assert 'songs in catalog' in html
