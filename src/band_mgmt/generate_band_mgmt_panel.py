@@ -667,18 +667,29 @@ BM_JS = r"""
         '</tr>';
     }).join('');
     var titleText = 'Full Catalog — ' + (band.name || 'Band');
+    var songCount = songs.length;
     var html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>' + _escHtml(titleText) + '</title><style>' +
-      'body{margin:0;padding:2rem;font-family:Segoe UI,system-ui, sans-serif;background:#f7f9fc;color:#0f172a;}' +
+      'body{margin:0;padding:2rem;font-family:Segoe UI,system-ui,sans-serif;background:#f7f9fc;color:#0f172a;}' +
       'h1{margin:0 0 .25rem;font-size:2rem;color:#111827;}' +
       'p{margin:.25rem 0 1rem;color:#475569;}' +
       'table{width:100%;border-collapse:collapse;box-shadow:0 1px 3px rgba(15,23,42,.08);}' +
       'th,td{padding:.85rem 1rem;border:1px solid #e2e8f0;text-align:left;}' +
-      'th{background:#f8fafc;color:#0f172a;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;}' +
+      'th{background:#f8fafc;color:#0f172a;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;}' +
+      'th.sort-asc::after{content:" \25B2";}' +
+      'th.sort-desc::after{content:" \25BC";}' +
       'tbody tr:nth-child(even){background:#f8fafc;}' +
       '</style></head><body>' +
       '<h1>' + _escHtml(titleText) + '</h1>' +
-      '<p>Exported from ❤Music Band Management · ' + _escHtml(exportedAt) + '</p>' +
-      '<table><thead><tr><th>Title</th><th>Artist</th><th>Key</th><th>BPM</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<p><strong>' + songCount + '</strong> songs in catalog</p>' +
+      '<table id="catalog-export-table"><thead><tr>' +
+      '<th onclick="sortTableBy(0)">Title</th>' +
+      '<th onclick="sortTableBy(1)">Artist</th>' +
+      '<th onclick="sortTableBy(2)">Key</th>' +
+      '<th onclick="sortTableBy(3)">BPM</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<script>' +
+      'function sortTableBy(col){var table=document.getElementById("catalog-export-table");if(!table)return;var tbody=table.tBodies[0];var rows=Array.prototype.slice.call(tbody.rows);var asc=true;var currentCol=table.getAttribute("data-sort-col");var currentDir=table.getAttribute("data-sort-dir");if(currentCol==col){asc=currentDir!=="asc";}rows.sort(function(a,b){var av=a.cells[col].textContent.trim();var bv=b.cells[col].textContent.trim();var an=parseFloat(av);var bn=parseFloat(bv);if(!isNaN(an)&&!isNaN(bn)){av=an;bv=bn;}if(av<bv)return asc?-1:1; if(av>bv)return asc?1:-1; return 0;});rows.forEach(function(r){tbody.appendChild(r);});table.setAttribute("data-sort-col",col);table.setAttribute("data-sort-dir",asc?"asc":"desc");Array.prototype.forEach.call(table.tHead.rows[0].cells,function(th){th.classList.remove("sort-asc","sort-desc");});table.tHead.rows[0].cells[col].classList.add(asc?"sort-asc":"sort-desc");}' +
+      '</script>' +
       '</body></html>';
     var filename = 'band-catalog-' + (band.name || 'catalog').replace(/[^a-zA-Z0-9_-]+/g, '-').toLowerCase() + '.html';
     var blob = new Blob([html], {type:'text/html;charset=utf-8'});
