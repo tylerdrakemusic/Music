@@ -1178,14 +1178,12 @@ def playlist_api():
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-def main():
-    global active_backend, broadcast, icecast_status_url, icecast_stream_url, playlist_snapshot
-
+def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="TJD Radio — Self-hosted AI Radio Station")
     parser.add_argument("--port", type=int, default=8100, help="HTTP port (default 8100)")
     parser.add_argument("--backend", choices=["icecast", "local"], default="icecast", help="Runtime backend (default icecast)")
-    parser.add_argument("--icecast-stream-url", type=str, default="http://127.0.0.1:8000/stream", help="Icecast stream URL used in icecast backend mode")
-    parser.add_argument("--icecast-status-url", type=str, default="http://127.0.0.1:8000/status-json.xsl", help="Icecast status JSON URL used in icecast backend mode")
+    parser.add_argument("--icecast-stream-url", type=str, default="http://127.0.0.1:18000/stream", help="Icecast stream URL used in icecast backend mode")
+    parser.add_argument("--icecast-status-url", type=str, default="http://127.0.0.1:18000/status-json.xsl", help="Icecast status JSON URL used in icecast backend mode")
     parser.add_argument("--bitrate", type=int, default=192, help="Stream bitrate kbps (default 192)")
     parser.add_argument("--crossfade", type=float, default=2.0, help="Crossfade seconds between tracks (default 2.0, 0=off)")
     parser.add_argument("--bumper-dir", type=str, default=str(BUMPER_DIR), help="Directory with station-ID bumper audio")
@@ -1197,6 +1195,13 @@ def main():
         help="Shuffle entropy source: auto (default), classical only, or quantum-preferred",
     )
     parser.add_argument("--extra-dirs", nargs="*", default=[], help="Extra directories to scan for audio")
+    return parser
+
+
+def main() -> None:
+    global active_backend, broadcast, icecast_status_url, icecast_stream_url, playlist_snapshot
+
+    parser = build_arg_parser()
     args = parser.parse_args()
 
     active_backend = args.backend
