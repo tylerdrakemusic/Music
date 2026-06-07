@@ -14,9 +14,11 @@ from pathlib import Path
 # running on environments without the native SQLCipher library (e.g. CI) can
 # still import this module and monkeypatch get_connection without crashing.
 
+DEFAULT_DB_PATH = Path(__file__).resolve().parents[2] / "src" / "data" / "heartmusic.db"
+ALT_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "heartmusic.db"
 DB_PATH = Path(
     os.environ.get("HEARTMUSIC_DB_PATH")
-    or str(Path(__file__).resolve().parents[2] / "data" / "heartmusic.db")
+    or str(DEFAULT_DB_PATH if DEFAULT_DB_PATH.exists() else ALT_DB_PATH)
 )
 
 _SCHEMA_SQL = """
