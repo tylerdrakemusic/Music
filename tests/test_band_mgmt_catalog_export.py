@@ -14,3 +14,4 @@ def test_catalog_export_button_is_present():
     assert 'Export Catalog' in html
     assert 'sortTableBy(' in html
     assert 'songs in catalog' in html
+    assert 'Click any column header to sort the catalog.' in html

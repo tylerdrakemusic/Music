@@ -674,13 +674,14 @@ BM_JS = r"""
       'p{margin:.25rem 0 1rem;color:#475569;}' +
       'table{width:100%;border-collapse:collapse;box-shadow:0 1px 3px rgba(15,23,42,.08);}' +
       'th,td{padding:.85rem 1rem;border:1px solid #e2e8f0;text-align:left;}' +
-      'th{background:#f8fafc;color:#0f172a;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;}' +
+      'th{background:#f8fafc;color:#0f172a;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;user-select:none;}' +
       'th.sort-asc::after{content:" \\25B2";}' +
       'th.sort-desc::after{content:" \\25BC";}' +
-      'tbody tr:nth-child(even){background:#f8fafc;}' +
+      '.sort-hint{margin:.5rem 0 1rem;color:#334155;font-size:.95rem;}' +
       '</style></head><body>' +
       '<h1>' + _escHtml(titleText) + '</h1>' +
       '<p><strong>' + songCount + '</strong> songs in catalog</p>' +
+      '<p class="sort-hint">Click any column header to sort the catalog.</p>' +
       '<table id="catalog-export-table"><thead><tr>' +
       '<th onclick="sortTableBy(0)">Title</th>' +
       '<th onclick="sortTableBy(1)">Artist</th>' +
