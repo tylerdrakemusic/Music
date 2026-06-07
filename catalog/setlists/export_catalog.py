@@ -11,12 +11,17 @@ Outputs:
 
 Usage:
     C:\G\python.exe f:\❤Music\catalog\setlists\export_catalog.py
+    C:\G\python.exe f:\❤Music\catalog\setlists\export_catalog.py --panel
+    C:\G\python.exe f:\❤Music\catalog\setlists\export_catalog.py --watch --panel
 
 Run this after any DB update (seed, migration, manual edit) to refresh the portal.
 """
 import json
+import os
 import re
+import subprocess
 import sys
+import time
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
@@ -171,7 +176,73 @@ def export_active_setlist_for_band(conn, band_id: int) -> tuple:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
-def main() -> None:
+def _run_panel_generator() -> None:
+    panel_script = Path(__file__).resolve().parents[2] / "src" / "band_mgmt" / "generate_band_mgmt_panel.py"
+    if not panel_script.exists():
+        print(f"WARNING: panel generator not found at {panel_script} — skipping panel regeneration")
+        return
+
+    print(f"Regenerating band management panel HTML via {panel_script}")
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    result = subprocess.run(
+        [sys.executable, str(panel_script)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+    )
+    if result.returncode != 0:
+        print("ERROR: panel generator failed")
+        if result.stdout:
+            print(result.stdout)
+        if result.stderr:
+            print(result.stderr, file=sys.stderr)
+        return
+    print("Panel regeneration completed.")
+
+
+def _path_mtime(path: Path) -> float | None:
+    try:
+        if path.is_file():
+            return path.stat().st_mtime
+        if path.is_dir():
+            mtimes = [f.stat().st_mtime for f in path.rglob("*") if f.is_file()]
+            return max(mtimes) if mtimes else path.stat().st_mtime
+        return None
+    except OSError:
+        return None
+
+
+def run_export(regenerate_panel: bool = False) -> None:
+    main()
+    if regenerate_panel:
+        _run_panel_generator()
+
+
+def watch_export(regenerate_panel: bool = False, interval: float = 2.0) -> None:
+    db_path = Path(__file__).resolve().parents[2] / "src" / "data" / "heartmusic.db"
+    watch_paths = [db_path, SHEET_MUSIC]
+    last_mtimes = {path: _path_mtime(path) for path in watch_paths}
+
+    print(f"Watching {', '.join(str(p) for p in watch_paths)} for changes...")
+    print("Press Ctrl+C to stop.")
+    while True:
+        time.sleep(interval)
+        changed = False
+        for path in watch_paths:
+            current = _path_mtime(path)
+            if current != last_mtimes.get(path):
+                changed = True
+                last_mtimes[path] = current
+        if changed:
+            print(f"Change detected at {datetime.now(timezone.utc).isoformat()}; regenerating exports.")
+            run_export(regenerate_panel)
+
+
+def main(regenerate_panel: bool = False) -> None:
     conn = get_connection()
     conn.execute("PRAGMA foreign_keys=ON")
 
@@ -240,4 +311,22 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Export HeartMusic band data and optionally watch for DB changes.")
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="Watch heartmusic.db and sheet_music for changes and regenerate exports automatically.",
+    )
+    parser.add_argument(
+        "--panel",
+        action="store_true",
+        help="Also regenerate the Band Management panel HTML after each export.",
+    )
+    args = parser.parse_args()
+
+    if args.watch:
+        watch_export(regenerate_panel=args.panel)
+    else:
+        run_export(regenerate_panel=args.panel)

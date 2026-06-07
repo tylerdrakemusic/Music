@@ -318,6 +318,7 @@ PANEL_BODY = f"""
       <span class="bm-vtab" id="vtab-catalog" onclick="bmSwitchView('catalog',this)">&#x1F4DA; Full Catalog</span>
       <span class="bm-vtab" id="vtab-inventory" onclick="bmSwitchView('inventory',this)">&#x1F4E6; Gig Inventory</span>
       <button id="bm-print-btn" onclick="bmPrintSetlist()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;margin-left:.5rem;">&#x1F5A8; Print Setlist</button>
+      <button id="bm-export-html-btn" onclick="bmExportCatalogHtml()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;margin-left:.25rem;display:none;">&#x1F4BE; Export Catalog</button>
       <button id="bm-print-inv-btn" onclick="bmPrintInventory()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;margin-left:.25rem;display:none;">&#x1F5A8; Print Inventory</button>
     </div>
     <div class="bm-meta" id="bm-meta"></div>
@@ -400,6 +401,8 @@ BM_JS = r"""
     document.getElementById('bm-view-label').textContent = labels[view] || '';
     var printBtn = document.getElementById('bm-print-btn');
     if (printBtn) printBtn.style.display = view === 'setlist' ? '' : 'none';
+    var exportBtn = document.getElementById('bm-export-html-btn');
+    if (exportBtn) exportBtn.style.display = view === 'catalog' ? '' : 'none';
     var printInvBtn = document.getElementById('bm-print-inv-btn');
     if (printInvBtn) printInvBtn.style.display = view === 'inventory' ? '' : 'none';
     var controls = document.querySelector('.bm-controls');
@@ -647,6 +650,57 @@ BM_JS = r"""
     area.innerHTML = html;
     window.print();
     area.innerHTML = '';
+  };
+
+  window.bmExportCatalogHtml = function() {
+    if (currentView !== 'catalog') return;
+    var band = getBandData(currentBandId);
+    if (!band) return;
+    var songs = allSongs || [];
+    var exportedAt = (BM_INLINE && BM_INLINE.exported_at) ? BM_INLINE.exported_at : '';
+    var rows = songs.map(function(s) {
+      return '<tr>' +
+        '<td>' + _escHtml(s.title || '') + '</td>' +
+        '<td>' + _escHtml(s.artist || '') + '</td>' +
+        '<td>' + _escHtml(s.key || '') + '</td>' +
+        '<td>' + _escHtml(s.bpm != null ? String(s.bpm) : '') + '</td>' +
+        '</tr>';
+    }).join('');
+    var titleText = 'Full Catalog — ' + (band.name || 'Band');
+    var songCount = songs.length;
+    var html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>' + _escHtml(titleText) + '</title><style>' +
+      'body{margin:0;padding:2rem;font-family:Segoe UI,system-ui,sans-serif;background:#f7f9fc;color:#0f172a;}' +
+      'h1{margin:0 0 .25rem;font-size:2rem;color:#111827;}' +
+      'p{margin:.25rem 0 1rem;color:#475569;}' +
+      'table{width:100%;border-collapse:collapse;box-shadow:0 1px 3px rgba(15,23,42,.08);}' +
+      'th,td{padding:.85rem 1rem;border:1px solid #e2e8f0;text-align:left;}' +
+      'th{background:#f8fafc;color:#0f172a;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;user-select:none;}' +
+      'th.sort-asc::after{content:" \\25B2";}' +
+      'th.sort-desc::after{content:" \\25BC";}' +
+      '.sort-hint{margin:.5rem 0 1rem;color:#334155;font-size:.95rem;}' +
+      '</style></head><body>' +
+      '<h1>' + _escHtml(titleText) + '</h1>' +
+      '<p><strong>' + songCount + '</strong> songs in catalog</p>' +
+      '<p class="sort-hint">Click any column header to sort the catalog.</p>' +
+      '<table id="catalog-export-table"><thead><tr>' +
+      '<th onclick="sortTableBy(0)" title="Click to sort">Title</th>' +
+      '<th onclick="sortTableBy(1)" title="Click to sort">Artist</th>' +
+      '<th onclick="sortTableBy(2)" title="Click to sort">Key</th>' +
+      '<th onclick="sortTableBy(3)" title="Click to sort">BPM</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<script>' +
+      'function sortTableBy(col){var table=document.getElementById("catalog-export-table");if(!table)return;var tbody=table.tBodies[0];var rows=Array.prototype.slice.call(tbody.rows);var asc=true;var currentCol=table.getAttribute("data-sort-col");var currentDir=table.getAttribute("data-sort-dir");if(currentCol==col){asc=currentDir!=="asc";}rows.sort(function(a,b){var av=a.cells[col].textContent.trim();var bv=b.cells[col].textContent.trim();var an=parseFloat(av);var bn=parseFloat(bv);if(!isNaN(an)&&!isNaN(bn)){av=an;bv=bn;}if(av<bv)return asc?-1:1; if(av>bv)return asc?1:-1; return 0;});rows.forEach(function(r){tbody.appendChild(r);});table.setAttribute("data-sort-col",col);table.setAttribute("data-sort-dir",asc?"asc":"desc");Array.prototype.forEach.call(table.tHead.rows[0].cells,function(th){th.classList.remove("sort-asc","sort-desc");});table.tHead.rows[0].cells[col].classList.add(asc?"sort-asc":"sort-desc");}' +
+      '<\/script>' +
+      '</body></html>';
+    var filename = 'band-catalog-' + (band.name || 'catalog').replace(/[^a-zA-Z0-9_-]+/g, '-').toLowerCase() + '.html';
+    var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    URL.revokeObjectURL(link.href);
+    link.remove();
   };
 
   // === GIG INVENTORY (AC2-AC6) ===
