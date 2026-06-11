@@ -140,6 +140,21 @@ def test_scale_positions_counts() -> None:
     assert len(SCALE_POSITIONS["Ab"]) == 11, f"SCALE_POSITIONS['Ab'] has {len(SCALE_POSITIONS['Ab'])} positions, expected 11"
 
 
+def test_scale_positions_include_aeolian_keys() -> None:
+    assert "A_aeolian" in SCALE_POSITIONS
+    assert "Eb_aeolian" in SCALE_POSITIONS
+    assert len(SCALE_POSITIONS["A_aeolian"]) == len(SCALE_POSITIONS["C"])
+
+
+def test_api_scale_positions_aeolian_mode(client) -> None:
+    resp = client.get('/api/scale-positions?key=A&mode=aeolian')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert data[0]["label"].endswith(" (Aeolian)")
+    assert len(data) == len(SCALE_POSITIONS["A_aeolian"])
+
+
 def test_caged_positions_count() -> None:
     """CAGED_POSITIONS alias must point to the 12 C major positions."""
     assert len(CAGED_POSITIONS) == 12
