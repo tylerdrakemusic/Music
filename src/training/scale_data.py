@@ -319,7 +319,51 @@ def _generate_from_templates() -> dict[str, list[CagedPosition]]:
                 )
             )
         result[key_name] = positions
+
+    for major_key, minor_root in _RELATIVE_MAJOR_TO_AEOLIAN_MINOR.items():
+        if major_key not in result:
+            continue
+        aeolian_key = f"{minor_root}_aeolian"
+        result[aeolian_key] = [
+            _copy_position_for_aeolian(pos, major_key, minor_root)
+            for pos in result[major_key]
+        ]
+
     return result
+
+
+def _rewrite_phrase_for_minor(phrase: str, major_key: str, minor_key: str) -> str:
+    if f"{major_key} major" in phrase:
+        return phrase.replace(f"{major_key} major", f"{minor_key} Aeolian")
+    return phrase.replace(" major", " Aeolian")
+
+
+def _copy_position_for_aeolian(pos: CagedPosition, major_key: str, minor_key: str) -> CagedPosition:
+    return CagedPosition(
+        label=pos["label"] + " (Aeolian)",
+        root_string=pos["root_string"],
+        root_fret=pos["root_fret"],
+        instructor_phrase=_rewrite_phrase_for_minor(
+            pos["instructor_phrase"], major_key, minor_key
+        ),
+        notes=[ScaleNote(string=n["string"], fret=n["fret"], midi=n["midi"]) for n in pos["notes"]],
+    )
+
+_RELATIVE_MAJOR_TO_AEOLIAN_MINOR: dict[str, str] = {
+    "C": "A",
+    "G": "E",
+    "D": "B",
+    "A": "F#",
+    "E": "C#",
+    "B": "G#",
+    "F#": "D#",
+    "C#": "A#",
+    "F": "D",
+    "Bb": "G",
+    "Eb": "C",
+    "Ab": "F",
+    "Db": "Bb",
+}
 
 
 def _build_from_conn(conn) -> dict[str, list[CagedPosition]]:
@@ -400,12 +444,26 @@ SCALE_POSITIONS: dict[str, list[CagedPosition]] = _load()
 
 # A# is enharmonically identical to Bb — expose as a transparent alias
 SCALE_POSITIONS["A#"] = SCALE_POSITIONS["Bb"]
+if "Bb_aeolian" in SCALE_POSITIONS:
+    SCALE_POSITIONS["A#_aeolian"] = SCALE_POSITIONS["Bb_aeolian"]
 
 # D# is enharmonically identical to Eb — expose as a transparent alias
 SCALE_POSITIONS["D#"] = SCALE_POSITIONS["Eb"]
+if "Eb_aeolian" in SCALE_POSITIONS:
+    SCALE_POSITIONS["D#_aeolian"] = SCALE_POSITIONS["Eb_aeolian"]
 
 # C# is enharmonically identical to Db — expose as a transparent alias
 SCALE_POSITIONS["C#"] = SCALE_POSITIONS["Db"]
+if "Db_aeolian" in SCALE_POSITIONS:
+    SCALE_POSITIONS["C#_aeolian"] = SCALE_POSITIONS["Db_aeolian"]
+
+# Additional Aeolian enharmonic aliases for flat root keys
+if "D#_aeolian" in SCALE_POSITIONS:
+    SCALE_POSITIONS["Eb_aeolian"] = SCALE_POSITIONS["D#_aeolian"]
+if "C#_aeolian" in SCALE_POSITIONS:
+    SCALE_POSITIONS["Db_aeolian"] = SCALE_POSITIONS["C#_aeolian"]
+if "G#_aeolian" in SCALE_POSITIONS:
+    SCALE_POSITIONS["Ab_aeolian"] = SCALE_POSITIONS["G#_aeolian"]
 
 # Backward-compat alias — C major positions
 CAGED_POSITIONS: list[CagedPosition] = SCALE_POSITIONS["C"]
