@@ -379,6 +379,12 @@ HTML = r"""
         <option value="B">B major</option>
       </select>
     </label>
+    <label>Mode
+      <select id="scale-mode" class="scale-select" onchange="onModeChange()">
+        <option value="major">Major</option>
+        <option value="aeolian">Aeolian</option>
+      </select>
+    </label>
     <label>Position
       <select id="scale-position" class="scale-select" onchange="onPositionChange()"></select>
     </label>
@@ -786,6 +792,7 @@ async function createSession() {
   let _scalePlaying = false;
   let _scaleStopFlag = false;
   let _currentKey = 'C';
+  let _currentMode = 'major';
   const _scaleTapTimes = [];
   const MAX_TAP_GAP_MS = 3000;
 
@@ -795,14 +802,15 @@ async function createSession() {
     document.getElementById('tab-scales').style.display   = name === 'scales'    ? '' : 'none';
     document.getElementById('tab-btn-exercises').classList.toggle('active', name === 'exercises');
     document.getElementById('tab-btn-scales').classList.toggle('active', name === 'scales');
-    if (name === 'scales' && !_positions.length) loadScalePositions(_currentKey);
+    if (name === 'scales' && !_positions.length) loadScalePositions(_currentKey, _currentMode);
   };
 
   // ── Load positions from server ───────────────────────────────────────────
-  async function loadScalePositions(key) {
+  async function loadScalePositions(key, mode) {
     key = key || 'C';
+    mode = mode || 'major';
     try {
-      const r = await fetch('/api/scale-positions?key=' + encodeURIComponent(key));
+      const r = await fetch('/api/scale-positions?key=' + encodeURIComponent(key) + '&mode=' + encodeURIComponent(mode));
       _positions = await r.json();
     } catch (e) { console.error('scale positions load failed', e); return; }
     const sel = document.getElementById('scale-position');
@@ -810,14 +818,15 @@ async function createSession() {
       `<option value="${i}">${p.label}</option>`
     ).join('');
     onPositionChange();
-    drawStaves(key, -1);
+    drawStaves(key, mode, -1);
   }
 
   window.onKeyChange = function() {
     _currentKey = document.getElementById('scale-key').value || 'C';
+    _currentMode = document.getElementById('scale-mode').value || 'major';
     _positions = [];
-    loadScalePositions(_currentKey);
-    drawStaves(_currentKey, -1);
+    loadScalePositions(_currentKey, _currentMode);
+    drawStaves(_currentKey, _currentMode, -1);
   };
 
   window.onPositionChange = function() {
@@ -827,13 +836,19 @@ async function createSession() {
     const phraseBox = document.getElementById('instructor-phrase');
     phraseBox.textContent = pos.instructor_phrase;
     phraseBox.style.display = 'none';
-    // Load instructor audio — include phrase as cache-buster so URL changes when phrase changes
     const audio = document.getElementById('instructor-audio');
     audio.onerror = () => { phraseBox.style.display = ''; };
-    audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}&p=${encodeURIComponent(pos.instructor_phrase)}`;
+    audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}&mode=${encodeURIComponent(_currentMode)}&p=${encodeURIComponent(pos.instructor_phrase)}`;
     audio.load();
     audio.play().catch(() => {});
     drawFretboard(pos.notes, -1);
+  };
+
+  window.onModeChange = function() {
+    _currentMode = document.getElementById('scale-mode').value || 'major';
+    _positions = [];
+    loadScalePositions(_currentKey, _currentMode);
+    drawStaves(_currentKey, _currentMode, -1);
   };
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
@@ -841,6 +856,9 @@ async function createSession() {
   const PC_NAMES      = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const PC_NAMES_FLAT = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
   const FLAT_KEYS     = new Set(['F','Bb','Eb','Ab','Db','Gb']);
+  const AEOLIAN_RELATIVE_MAJOR = {A:'C', E:'G', B:'D', 'F#':'A', 'C#':'E', 'G#':'B', 'D#':'F#', 'A#':'C#', D:'F', G:'Bb', C:'Eb', F:'Ab', Bb:'Db'};
+  const AEOLIAN_INTERVALS = [0, 2, 3, 5, 7, 8, 10, 12];
+  const MAJOR_INTERVALS = [0, 2, 4, 5, 7, 9, 11, 12];
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
   // Interval color map: root=hot-pink, major 3rd=red-orange, perfect 5th=hot-teal, other=grey
@@ -887,6 +905,7 @@ async function createSession() {
     // Open-string notes appear to the LEFT of the nut
     const rootPc = KEY_PC[_currentKey] ?? 0;
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
+    const thirdInterval = _currentMode === 'aeolian' ? 3 : 4;
     const sorted = (notes || []).slice().sort((a,b) => a.midi - b.midi);
     sorted.forEach((n, i) => {
       const row = n.string - 1;  // string 1→row 0 (top), string 6→row 5 (bottom)
@@ -896,7 +915,7 @@ async function createSession() {
       const isActive = i === activeIdx;
       const pc = n.midi % 12;
       const interval = (pc - rootPc + 12) % 12;
-      const dotType = interval === 0 ? 'root' : interval === 4 ? 'third' : interval === 7 ? 'fifth' : 'other';
+      const dotType = interval === 0 ? 'root' : interval === thirdInterval ? 'third' : interval === 7 ? 'fifth' : 'other';
       const fill   = isActive ? PLAYING_COLOR : DOT_FILL[dotType];
       const textFill = isActive ? '#000000' : DOT_TEXT[dotType];
       const stroke = isActive ? '#000000' : DOT_STROKE[dotType];
@@ -936,19 +955,23 @@ async function createSession() {
     'A#': 1, 'D#': 4, 'G#': 0, 'C#': 3, 'F#': 6,
   };
 
-  window.drawStaves = function(key, highlightMidi) {
-    const rootPc   = KEY_PC[key] ?? 0;
-    const useFlats = FLAT_KEYS.has(key);
+  window.drawStaves = function(key, mode, highlightMidi) {
+    mode = mode || 'major';
+    const sigKey = mode === 'aeolian' ? AEOLIAN_RELATIVE_MAJOR[key] || key : key;
+    const rootPc = KEY_PC[key] ?? 0;
+    const useFlats = FLAT_KEYS.has(sigKey);
     const noteNames = useFlats ? PC_NAMES_FLAT : PC_NAMES;
-    drawSingleStaff('staff-treble-svg', key, 'treble', rootPc, noteNames, highlightMidi);
-    drawSingleStaff('staff-bass-svg',   key, 'bass',   rootPc, noteNames, highlightMidi);
+    const intervals = mode === 'aeolian' ? AEOLIAN_INTERVALS : MAJOR_INTERVALS;
+    drawSingleStaff('staff-treble-svg', key, mode, 'treble', rootPc, noteNames, intervals, highlightMidi);
+    drawSingleStaff('staff-bass-svg',   key, mode, 'bass',   rootPc, noteNames, intervals, highlightMidi);
   };
 
-  function drawSingleStaff(svgId, key, clef, rootPc, noteNames, highlightMidi) {
+  function drawSingleStaff(svgId, key, mode, clef, rootPc, noteNames, intervals, highlightMidi) {
     const svg = document.getElementById(svgId);
     if (!svg) return;
     const W = 500, H = 120;
-    const sigCount = KEY_SIGS[key] ?? 0;
+    const sigKey = mode === 'aeolian' ? AEOLIAN_RELATIVE_MAJOR[key] || key : key;
+    const sigCount = KEY_SIGS[sigKey] ?? 0;
     const absSig   = Math.abs(sigCount);
     const sigY_arr = clef === 'treble'
       ? (sigCount > 0 ? SHARP_TREBLE_Y : FLAT_TREBLE_Y)
@@ -983,14 +1006,15 @@ async function createSession() {
       html += `<text x="${sx}" y="${sy}" fill="#aaa" font-size="14" font-family="serif" dominant-baseline="central" data-keysig="${clef}">${sigSymbol}</text>`;
     }
     // Draw 8 diatonic note circles
-    for (let idx = 0; idx < MAJOR_INTERVALS.length; idx++) {
-      const interval = MAJOR_INTERVALS[idx];
+    for (let idx = 0; idx < intervals.length; idx++) {
+      const interval = intervals[idx];
       const pc       = (rootPc + interval) % 12;
       const noteName = noteNames[pc];
       const noteY    = baseY - idx * 5;
       const noteX    = noteXStart + idx * noteXSpacing;
       const degInterval = (pc - rootPc + 12) % 12;
-      const colorKey = degInterval === 0 ? 'root' : degInterval === 4 ? 'third' : degInterval === 7 ? 'fifth' : 'other';
+      const thirdInterval = mode === 'aeolian' ? 3 : 4;
+      const colorKey = degInterval === 0 ? 'root' : degInterval === thirdInterval ? 'third' : degInterval === 7 ? 'fifth' : 'other';
       const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
       const noteFill  = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
       const textFill  = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
@@ -1066,7 +1090,7 @@ async function createSession() {
       for (let i = 0; i < sequence.length && !_scaleStopFlag; i++) {
         status.textContent = `Rep ${rep + 1}/${reps} — note ${i + 1}/${sequence.length}`;
         drawFretboard(pos.notes, allAsc.indexOf(sequence[i]));
-        drawStaves(_currentKey, sequence[i].midi);
+        drawStaves(_currentKey, _currentMode, sequence[i].midi);
         await playNote(sequence[i].midi, noteDurationMs * 0.85);
         await sleep(noteDurationMs);
       }
@@ -1075,10 +1099,10 @@ async function createSession() {
     _scaleStopFlag = false;
     btn.textContent = '▶ Play';
     drawFretboard(pos.notes, -1);
-    drawStaves(_currentKey, -1);
+    drawStaves(_currentKey, _currentMode, -1);
     status.textContent = _scaleStopFlag ? '' : '✓ Complete';
     if (!_scaleStopFlag) {
-      logScaleSession(_currentKey + '_major', _currentPos + 1, _scaleBpm, reps, _currentKey);
+      logScaleSession(_currentKey + '_' + _currentMode, _currentPos + 1, _scaleBpm, reps, _currentKey);
     }
   };
 
@@ -1358,9 +1382,13 @@ def delete_session():
 
 @app.route("/api/scale-positions")
 def api_scale_positions():
-    """Return positions for the given key as JSON. Query param: ?key=C (default) or ?key=G."""
+    """Return positions for the given key and mode as JSON. Query params: ?key=C (default), ?mode=major (default) or ?mode=aeolian."""
     key = request.args.get("key", "C").strip()
-    positions = SCALE_POSITIONS.get(key)
+    mode = request.args.get("mode", "major").strip()
+    if mode == "aeolian":
+        positions = SCALE_POSITIONS.get(f"{key}_aeolian")
+    else:
+        positions = SCALE_POSITIONS.get(key)
     if positions is None:
         abort(400)
     return jsonify([
@@ -1443,7 +1471,11 @@ def api_instructor_audio():
     Returns 204 No Content when TTS is unavailable (no key, network error, etc.)
     """
     key = request.args.get("key", "C").strip()
-    key_positions = SCALE_POSITIONS.get(key)
+    mode = request.args.get("mode", "major").strip()
+    if mode == "aeolian":
+        key_positions = SCALE_POSITIONS.get(f"{key}_aeolian")
+    else:
+        key_positions = SCALE_POSITIONS.get(key)
     if key_positions is None:
         abort(400)
     try:
