@@ -365,18 +365,29 @@ HTML = r"""
   <div class="scale-row">
     <label>Key
       <select id="scale-key" class="scale-select" onchange="onKeyChange()">
-        <option value="C">C major</option>
-        <option value="Db">Db major</option>
-        <option value="D">D major</option>
-        <option value="Eb">Eb / D&#x23; major</option>
-        <option value="E">E major</option>
-        <option value="F#">F# major</option>
-        <option value="F">F major</option>
-        <option value="G">G major</option>
-        <option value="A">A major</option>
-        <option value="Ab">Ab major</option>
-        <option value="Bb">Bb / A&#x23; major</option>
-        <option value="B">B major</option>
+        <option value="C">C major / A minor</option>
+        <option value="Db">Db major / Bb minor</option>
+        <option value="D">D major / B minor</option>
+        <option value="Eb">Eb major / C minor</option>
+        <option value="E">E major / C# minor</option>
+        <option value="F#">F# major / D# minor</option>
+        <option value="F">F major / D minor</option>
+        <option value="G">G major / E minor</option>
+        <option value="A">A major / F# minor</option>
+        <option value="Ab">Ab major / F minor</option>
+        <option value="Bb">Bb major / G minor</option>
+        <option value="B">B major / G# minor</option>
+      </select>
+    </label>
+    <label>Mode
+      <select id="scale-mode" class="scale-select" onchange="onModeChange()">
+        <option value="Ionian">Ionian</option>
+        <option value="Dorian">Dorian</option>
+        <option value="Phrygian">Phrygian</option>
+        <option value="Lydian">Lydian</option>
+        <option value="Mixolydian">Mixolydian</option>
+        <option value="Aeolian">Aeolian</option>
+        <option value="Locrian">Locrian</option>
       </select>
     </label>
     <label>Position
@@ -422,8 +433,8 @@ HTML = r"""
     <summary style="cursor:pointer;color:var(--accent);font-weight:600;font-size:.9rem;user-select:none">Scale Practice Log</summary>
     <div style="margin-top:8px" id="scale-log-wrap">
       <table class="scale-log-table">
-        <thead><tr><th>Time</th><th>Key</th><th>Scale</th><th>Position</th><th>BPM</th><th>Reps</th></tr></thead>
-        <tbody id="scale-log-tbody"><tr><td colspan="6" style="color:var(--muted)">No sessions yet.</td></tr></tbody>
+        <thead><tr><th>Time</th><th>Key</th><th>Mode</th><th>Scale</th><th>Position</th><th>BPM</th><th>Reps</th></tr></thead>
+        <tbody id="scale-log-tbody"><tr><td colspan="7" style="color:var(--muted)">No sessions yet.</td></tr></tbody>
       </table>
     </div>
   </details>
@@ -786,6 +797,7 @@ async function createSession() {
   let _scalePlaying = false;
   let _scaleStopFlag = false;
   let _currentKey = 'C';
+  let _currentMode = 'Ionian';
   const _scaleTapTimes = [];
   const MAX_TAP_GAP_MS = 3000;
 
@@ -818,6 +830,10 @@ async function createSession() {
     _positions = [];
     loadScalePositions(_currentKey);
     drawStaves(_currentKey, -1);
+  };
+
+  window.onModeChange = function() {
+    _currentMode = document.getElementById('scale-mode').value || 'Ionian';
   };
 
   window.onPositionChange = function() {
@@ -1078,7 +1094,7 @@ async function createSession() {
     drawStaves(_currentKey, -1);
     status.textContent = _scaleStopFlag ? '' : '✓ Complete';
     if (!_scaleStopFlag) {
-      logScaleSession(_currentKey + '_major', _currentPos + 1, _scaleBpm, reps, _currentKey);
+      logScaleSession(_currentKey, _currentMode, _currentPos + 1, _scaleBpm, reps);
     }
   };
 
@@ -1103,14 +1119,16 @@ async function createSession() {
     if (_scaleTapTimes.length > 8) _scaleTapTimes.shift();
   };
 
-  async function logScaleSession(scale, position, bpm, reps, key) {
+  async function logScaleSession(key, mode, position, bpm, reps) {
     try {
       const durEl = document.getElementById('scale-duration');
       const duration_minutes = durEl ? (parseInt(durEl.value) || 0) : 0;
+      const modeKey = mode === 'Ionian' ? 'major' : mode.toLowerCase();
+      const scale = `${key}_${modeKey}`;
       const r = await fetch('/api/scale-log', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({scale, position, bpm, reps, key: key || 'C', duration_minutes}),
+        body: JSON.stringify({scale, position, bpm, reps, key: key || 'C', mode, duration_minutes}),
       });
       if ((await r.json()).ok) loadScaleLog();
     } catch (e) { console.warn('scale log failed', e); }
@@ -1123,7 +1141,7 @@ async function createSession() {
       const tbody = document.getElementById('scale-log-tbody');
       if (!rows.length) return;
       tbody.innerHTML = rows.slice(0, 10).map(row =>
-        `<tr><td>${row.logged_at}</td><td>${row.key || 'C'}</td><td>${row.scale.replace('_',' ')}</td><td>${row.position}</td><td>${row.bpm}</td><td>${row.reps}</td></tr>`
+        `<tr><td>${row.logged_at}</td><td>${row.key || 'C'}</td><td>${row.mode || 'Ionian'}</td><td>${row.scale.replace('_',' ')}</td><td>${row.position}</td><td>${row.bpm}</td><td>${row.reps}</td></tr>`
       ).join('');
     } catch(e) { console.warn('scale log load failed', e); }
   }
@@ -1381,7 +1399,7 @@ def api_scale_log():
         try:
             with get_connection() as conn:
                 rows = conn.execute(
-                    "SELECT key, scale, position, bpm, reps, logged_at "
+                    "SELECT key, mode, scale, position, bpm, reps, logged_at "
                     "FROM scale_practice_log ORDER BY id DESC LIMIT 50"
                 ).fetchall()
             return jsonify([dict(r) for r in rows])
@@ -1425,10 +1443,13 @@ def api_scale_log():
         return jsonify({"ok": False, "error": "reps must be integer 1-100"})
 
     try:
+        mode = str(data.get("mode") or "Ionian").strip()
+        if mode not in ("Ionian", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Aeolian", "Locrian"):
+            return jsonify({"ok": False, "error": f"mode must be one of Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian"})
         with get_connection() as conn:
             conn.execute(
-                "INSERT INTO scale_practice_log (key, scale, position, bpm, reps, duration_minutes) VALUES (?,?,?,?,?,?)",
-                (key, scale, position, bpm, reps, duration_minutes),
+                "INSERT INTO scale_practice_log (key, mode, scale, position, bpm, reps, duration_minutes) VALUES (?,?,?,?,?,?,?)",
+                (key, mode, scale, position, bpm, reps, duration_minutes),
             )
             conn.commit()
         return jsonify({"ok": True})
