@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS guitar_training_log (
 CREATE TABLE IF NOT EXISTS scale_practice_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     key TEXT NOT NULL DEFAULT 'C',
+    mode TEXT NOT NULL DEFAULT 'Ionian',
     scale TEXT NOT NULL DEFAULT 'C_major',
     position INTEGER NOT NULL DEFAULT 1,
     bpm INTEGER NOT NULL DEFAULT 60,
@@ -520,6 +521,25 @@ def test_scale_log_valid_insert(client, mem_conn) -> None:
     assert row["bpm"] == 80
     assert row["reps"] == 4
     assert row["key"] == "C"
+    assert row["mode"] == "Ionian"
+
+
+def test_scale_log_mode_insert(client, mem_conn) -> None:
+    """POST /api/scale-log must save the selected mode with the scale session."""
+    resp = client.post(
+        "/api/scale-log",
+        data=json.dumps({"scale": "C_dorian", "position": 2, "bpm": 90, "reps": 3, "key": "C", "mode": "Dorian"}),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    j = resp.get_json()
+    assert j["ok"] is True
+    row = mem_conn.execute("SELECT * FROM scale_practice_log").fetchone()
+    assert row is not None
+    assert row["key"] == "C"
+    assert row["mode"] == "Dorian"
+    assert row["scale"] == "C_dorian"
+    assert row["position"] == 2
 
 
 def test_scale_log_g_major_insert(client, mem_conn) -> None:
@@ -784,11 +804,11 @@ def test_api_scale_positions_e_returns_11(client) -> None:
 
 def test_html_key_select_has_a_option(html: str) -> None:
     """HTML key dropdown must include an A major option."""
-    assert '<option value="A">A major</option>' in html
+    assert '<option value="A">A major / F# minor</option>' in html
 
 def test_html_key_select_has_e_option(html: str) -> None:
     """HTML key dropdown must include an E major option."""
-    assert '<option value="E">E major</option>' in html
+    assert '<option value="E">E major / C# minor</option>' in html
 
 
 def test_html_sharp_treble_y_positions_for_key_signature(html: str) -> None:

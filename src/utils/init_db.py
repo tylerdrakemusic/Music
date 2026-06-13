@@ -267,6 +267,7 @@ CREATE TABLE IF NOT EXISTS guitar_training_log (
 CREATE TABLE IF NOT EXISTS scale_practice_log (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     key              TEXT NOT NULL DEFAULT 'C',   -- musical key (FR-20260522-guitar-trainer-multi-key)
+    mode             TEXT NOT NULL DEFAULT 'Ionian',
     scale            TEXT NOT NULL DEFAULT 'C_major',
     position         INTEGER NOT NULL DEFAULT 1,
     bpm              INTEGER NOT NULL DEFAULT 60,
@@ -446,6 +447,14 @@ def init_db(*, seed: bool = True) -> None:
             conn.commit()
         except Exception:  # nosec B110
             pass  # column already exists
+    # FR-20260613: add mode to scale_practice_log for mode selector support
+    try:
+        conn.execute(
+            "ALTER TABLE scale_practice_log ADD COLUMN mode TEXT NOT NULL DEFAULT 'Ionian'"
+        )
+        conn.commit()
+    except Exception:  # nosec B110
+        pass  # column already exists
     # FR-20260525: add duration_minutes to scale_practice_log
     try:
         conn.execute(
