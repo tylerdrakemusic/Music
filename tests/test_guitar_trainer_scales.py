@@ -638,6 +638,23 @@ def test_instructor_audio_204_when_no_key(client) -> None:
             os.environ["ELEVENLABS_API_KEY"] = env_backup
 
 
+def test_instructor_audio_uses_phrase_param(client, tmp_path, monkeypatch) -> None:
+    """GET /api/instructor-audio?p=... must pass the override phrase through to TTS."""
+    import training.musician_training_ui as ui
+
+    captured: dict[str, str] = {}
+
+    def fake_get_audio(phrase, cache_dir):
+        captured["phrase"] = phrase
+        return tmp_path / "fake.mp3"
+
+    monkeypatch.setattr(ui, "get_instructor_audio", fake_get_audio)
+    resp = client.get("/api/instructor-audio?position=1&key=C&p=Start+on+the+open+5th-string+A")
+
+    assert resp.status_code == 204
+    assert captured["phrase"] == "Start on the open 5th-string A"
+
+
 def test_instructor_audio_400_invalid_position(client) -> None:
     """Invalid position must return 400 (max 12 for C, 11 for G)."""
     resp = client.get("/api/instructor-audio?position=13")

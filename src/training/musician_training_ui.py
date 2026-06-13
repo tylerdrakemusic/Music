@@ -841,12 +841,16 @@ async function createSession() {
     const pos = _positions[_currentPos];
     if (!pos) return;
     const phraseBox = document.getElementById('instructor-phrase');
-    phraseBox.textContent = pos.instructor_phrase;
+    let phrase = pos.instructor_phrase;
+    if (_currentMode === 'Aeolian' && _currentKey === 'C' && _currentPos === 0) {
+      phrase = 'Start on the open 5th-string A and go up and down the position 1 C shape.';
+    }
+    phraseBox.textContent = phrase;
     phraseBox.style.display = 'none';
     // Load instructor audio — include phrase as cache-buster so URL changes when phrase changes
     const audio = document.getElementById('instructor-audio');
     audio.onerror = () => { phraseBox.style.display = ''; };
-    audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}&p=${encodeURIComponent(pos.instructor_phrase)}`;
+    audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}&p=${encodeURIComponent(phrase)}`;
     audio.load();
     audio.play().catch(() => {});
     drawFretboard(pos.notes, -1);
@@ -854,9 +858,44 @@ async function createSession() {
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
   const KEY_PC = {C:0, Db:1, D:2, E:4, F:5, 'F#':6, G:7, A:9, B:11, Bb:10, 'A#':10, Eb:3, 'D#':3, Ab:8};
+  const MODE_ROOT_OFFSETS = {
+    Ionian: 0,
+    Dorian: 2,
+    Phrygian: 4,
+    Lydian: 5,
+    Mixolydian: 7,
+    Aeolian: 9,
+    Locrian: 11,
+  };
+
   const PC_NAMES      = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const PC_NAMES_FLAT = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
   const FLAT_KEYS     = new Set(['F','Bb','Eb','Ab','Db','Gb']);
+
+  function findModeRootPitchClass(key, mode) {
+    const base = KEY_PC[key] ?? 0;
+    const offset = MODE_ROOT_OFFSETS[mode] ?? 0;
+    return (base + offset) % 12;
+  }
+
+  function buildScalePlayback(notes, key, mode) {
+    const sorted = notes.slice().sort((a, b) => a.midi - b.midi);
+    const seen = new Set();
+    const allAsc = [];
+    for (const n of sorted) {
+      if (!seen.has(n.midi)) {
+        seen.add(n.midi);
+        allAsc.push(n);
+      }
+    }
+    const rootPc = findModeRootPitchClass(key, mode);
+    const rootNote = allAsc.find(n => n.midi % 12 === rootPc) || allAsc[0];
+    const rootIdx = allAsc.indexOf(rootNote);
+    const asc = allAsc.slice(rootIdx);
+    const desc = allAsc.slice(rootIdx === 0 ? 1 : 0, -1).reverse();
+    const returnAsc = allAsc.slice(1, rootIdx);
+    return {sequence: [...asc, ...desc, ...returnAsc], allAsc};
+  }
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
   // Interval color map: root=hot-pink, major 3rd=red-orange, perfect 5th=hot-teal, other=grey
@@ -1055,24 +1094,7 @@ async function createSession() {
     if (!pos) return;
     const reps = Math.max(1, Math.min(20, parseInt(document.getElementById('scale-reps').value) || 4));
     const noteDurationMs = Math.round(60000 / _scaleBpm);
-    const sorted = pos.notes.slice().sort((a, b) => a.midi - b.midi);
-    // Deduplicate midi values for playback sequence
-    const seen = new Set();
-    const allAsc = [];
-    for (const n of sorted) { if (!seen.has(n.midi)) { seen.add(n.midi); allAsc.push(n); } }
-    // Start ascending run from the position root (lowest root-pitch-class note).
-    // Each rep is a closed loop with no double root at the seam:
-    // - rootIdx > 0 (C/A shape): desc goes all the way to the bottom, returnAsc
-    //   climbs back to one below root; next rep opens on root.
-    // - rootIdx = 0 (G/E/D shape): root IS the lowest note, so desc starts from
-    //   allAsc[1] and stops one above root; no returnAsc needed.
-    const rootPc   = KEY_PC[_currentKey] ?? 0;
-    const rootNote = allAsc.find(n => n.midi % 12 === rootPc);
-    const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
-    const asc       = allAsc.slice(rootIdx);
-    const desc      = allAsc.slice(rootIdx === 0 ? 1 : 0, -1).reverse();
-    const returnAsc = allAsc.slice(1, rootIdx);           // empty when rootIdx=0
-    const sequence = [...asc, ...desc, ...returnAsc];
+    const {sequence, allAsc} = buildScalePlayback(pos.notes, _currentKey, _currentMode);
     _scalePlaying = true;
     _scaleStopFlag = false;
     const btn = document.getElementById('scale-play-btn');
@@ -1475,7 +1497,8 @@ def api_instructor_audio():
         abort(400)
 
     pos = key_positions[position - 1]
-    audio_path = get_instructor_audio(pos["instructor_phrase"], TTS_CACHE_DIR)
+    phrase = str(request.args.get("p") or pos["instructor_phrase"]).strip() or pos["instructor_phrase"]
+    audio_path = get_instructor_audio(phrase, TTS_CACHE_DIR)
     if audio_path is None or not audio_path.exists():
         return Response(status=204)
 
