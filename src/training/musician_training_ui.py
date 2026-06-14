@@ -819,41 +819,84 @@ async function createSession() {
     } catch (e) { console.error('scale positions load failed', e); return; }
     const sel = document.getElementById('scale-position');
     sel.innerHTML = _positions.map((p, i) =>
-      `<option value="${i}">${p.label}</option>`
+      `<option value="${i}">${formatPositionLabel(p)}</option>`
     ).join('');
     onPositionChange();
-    drawStaves(key, -1);
+    drawStaves(key, _currentMode, -1);
   }
 
   window.onKeyChange = function() {
     _currentKey = document.getElementById('scale-key').value || 'C';
     _positions = [];
     loadScalePositions(_currentKey);
-    drawStaves(_currentKey, -1);
+    drawStaves(_currentKey, _currentMode, -1);
   };
 
   window.onModeChange = function() {
     _currentMode = document.getElementById('scale-mode').value || 'Ionian';
+    if (_positions.length) {
+      const sel = document.getElementById('scale-position');
+      sel.innerHTML = _positions.map((p, i) =>
+        `<option value="${i}">${formatPositionLabel(p)}</option>`
+      ).join('');
+    }
+    onPositionChange();
+    drawStaves(_currentKey, _currentMode, -1);
   };
+
+  function formatPositionLabel(pos) {
+    if (_currentMode === 'Aeolian' && _currentKey === 'C') {
+      return pos.label.replace(/\s*\([^)]*\)$/, '');
+    }
+    return pos.label;
+  }
+
+  function findTonicStart(pos, mode) {
+    const rootPc = findModeRootPitchClass(_currentKey, mode);
+    const tonicNotes = pos.notes.filter(n => n.midi % 12 === rootPc);
+    if (!tonicNotes.length) return null;
+    return tonicNotes.reduce((best, note) => note.midi < best.midi ? note : best, tonicNotes[0]);
+  }
+
+  function buildAeolianPhrase(pos) {
+    let shapeName = pos.label.replace(/^Position \d+ — /, '').replace(/\s*\([^)]*\)$/, '');
+    shapeName = shapeName.replace(/\s*shape\s*$/i, '').trim();
+    shapeName = shapeName.replace(/([A-G])#/g, '$1 sharp').replace(/([A-G])b/g, '$1 flat');
+    const tonic = findTonicStart(pos, 'Aeolian');
+    const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
+    const modeRootPc = findModeRootPitchClass(_currentKey, 'Aeolian');
+    const rawTonicName = noteNames[modeRootPc] || 'A';
+    const tonicName = rawTonicName.replace(/^([A-G])#$/, '$1 sharp').replace(/^([A-G])b$/, '$1 flat');
+    const stringNames = {1: 'high e', 2: 'B', 3: 'G', 4: 'D', 5: 'A', 6: 'low E'};
+    const tonicLocation = tonic
+      ? `on the ${stringNames[tonic.string] || 'unknown'} string at fret ${tonic.fret}`
+      : '';
+    let phrase = `Start on the tonic root ${tonicName}`;
+    if (tonicLocation) {
+      phrase += ` ${tonicLocation}`;
+    }
+    if (shapeName) {
+      phrase += ` and go up and down the ${shapeName} shape.`;
+    }
+    return phrase.trim();
+  }
 
   window.onPositionChange = function() {
     _currentPos = parseInt(document.getElementById('scale-position').value) || 0;
     const pos = _positions[_currentPos];
     if (!pos) return;
-    const phraseBox = document.getElementById('instructor-phrase');
     let phrase = pos.instructor_phrase;
-    if (_currentMode === 'Aeolian' && _currentKey === 'C' && _currentPos === 0) {
-      phrase = 'Start on the open 5th-string A and go up and down the position 1 C shape.';
+    if (_currentMode === 'Aeolian') {
+      phrase = buildAeolianPhrase(pos);
     }
-    phraseBox.textContent = phrase;
-    phraseBox.style.display = 'none';
     // Load instructor audio — include phrase as cache-buster so URL changes when phrase changes
     const audio = document.getElementById('instructor-audio');
-    audio.onerror = () => { phraseBox.style.display = ''; };
+    audio.onerror = () => {};
     audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}&p=${encodeURIComponent(phrase)}`;
     audio.load();
     audio.play().catch(() => {});
     drawFretboard(pos.notes, -1);
+    drawStaves(_currentKey, _currentMode, -1);
   };
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
@@ -889,20 +932,56 @@ async function createSession() {
       }
     }
     const rootPc = findModeRootPitchClass(key, mode);
-    const rootNote = allAsc.find(n => n.midi % 12 === rootPc) || allAsc[0];
-    const rootIdx = allAsc.indexOf(rootNote);
-    const asc = allAsc.slice(rootIdx);
-    const desc = allAsc.slice(rootIdx === 0 ? 1 : 0, -1).reverse();
+    const rootNote = allAsc.find(n => n.midi % 12 === rootPc);
+    const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
+    const asc       = allAsc.slice(rootIdx);
+    const desc      = allAsc.slice(rootIdx === 0 ? 1 : 0, -1).reverse();
     const returnAsc = allAsc.slice(1, rootIdx);
-    return {sequence: [...asc, ...desc, ...returnAsc], allAsc};
+    const sequence  = [...asc, ...desc, ...returnAsc];
+    return {sequence, allAsc};
   }
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
   // Interval color map: root=hot-pink, major 3rd=red-orange, perfect 5th=hot-teal, other=grey
-  const DOT_FILL  = { root: '#ff0080', third: '#fb5607', fifth: '#00e5cc', other: '#555555' };
-  const DOT_TEXT  = { root: '#ffffff', third: '#ffffff', fifth: '#000000', other: '#ffffff' };
-  const DOT_STROKE = { root: '#000000', third: '#000000', fifth: '#000000', other: '#333333' };
+  const DOT_FILL  = {
+    root: '#ff0080',
+    third: '#fb5607',
+    fifth: '#00e5cc',
+    minor_third: '#fb5607',
+    leading: '#00b4d8',
+    other: '#555555',
+  };
+  const DOT_TEXT  = {
+    root: '#ffffff',
+    third: '#ffffff',
+    fifth: '#000000',
+    minor_third: '#ffffff',
+    leading: '#ffffff',
+    other: '#ffffff',
+  };
+  const DOT_STROKE = {
+    root: '#000000',
+    third: '#000000',
+    fifth: '#000000',
+    minor_third: '#000000',
+    leading: '#000000',
+    other: '#333333',
+  };
   const PLAYING_COLOR = '#ffe066';
+
+  function getDotTypeForMode(interval, key, mode) {
+    if (mode === 'Aeolian') {
+      const aeolianRootPc = findModeRootPitchClass(key, mode);
+      const aeolianInterval = (interval + 12) % 12;
+      if (aeolianInterval === 0) return 'root';
+      if (aeolianInterval === 3) return 'minor_third';
+      if (aeolianInterval === 7) return 'fifth';
+      if (aeolianInterval === 10) return 'leading';
+      return 'other';
+    }
+    return interval === 0 ? 'root' : interval === 4 ? 'third' : interval === 7 ? 'fifth' : 'other';
+  }
+
   window.drawFretboard = function(notes, activeIdx) {
     const svg = document.getElementById('fretboard-svg');
     const W = 1320, H = 240;
@@ -940,7 +1019,7 @@ async function createSession() {
     html += `<text x="${LEFT - 20}" y="${H - 8}" fill="#bbb" text-anchor="middle" font-size="8" font-family="Segoe UI,sans-serif">open</text>`;
     // Scale dots — string 1 (high e) → row 0 (top), string 6 (low E) → row 5 (bottom)
     // Open-string notes appear to the LEFT of the nut
-    const rootPc = KEY_PC[_currentKey] ?? 0;
+    const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
     const sorted = (notes || []).slice().sort((a,b) => a.midi - b.midi);
     sorted.forEach((n, i) => {
@@ -951,7 +1030,7 @@ async function createSession() {
       const isActive = i === activeIdx;
       const pc = n.midi % 12;
       const interval = (pc - rootPc + 12) % 12;
-      const dotType = interval === 0 ? 'root' : interval === 4 ? 'third' : interval === 7 ? 'fifth' : 'other';
+      const dotType = getDotTypeForMode(interval, _currentKey, _currentMode);
       const fill   = isActive ? PLAYING_COLOR : DOT_FILL[dotType];
       const textFill = isActive ? '#000000' : DOT_TEXT[dotType];
       const stroke = isActive ? '#000000' : DOT_STROKE[dotType];
@@ -965,6 +1044,15 @@ async function createSession() {
 
   // ── Staff notation renderer (FR-20260530-guitar-trainer-staff-notation) ──
   const MAJOR_INTERVALS = [0, 2, 4, 5, 7, 9, 11, 12];
+  const MODE_SCALE_INTERVALS = {
+    Ionian:     [0, 2, 4, 5, 7, 9, 11, 12],
+    Dorian:     [0, 2, 3, 5, 7, 9, 10, 12],
+    Phrygian:   [0, 1, 3, 5, 7, 8, 10, 12],
+    Lydian:     [0, 2, 4, 6, 7, 9, 11, 12],
+    Mixolydian: [0, 2, 4, 5, 7, 9, 10, 12],
+    Aeolian:    [0, 2, 3, 5, 7, 8, 10, 12],
+    Locrian:    [0, 1, 3, 5, 6, 8, 10, 12],
+  };
   const STAFF_COLORS = { root: '#ff0080', third: '#fb5607', fifth: '#00e5cc', other: '#555555' };
   const STAFF_TEXT   = { root: '#fff',    third: '#fff',    fifth: '#000',    other: '#fff'    };
   // Key signature accidental counts (positive = sharps, negative = flats)
@@ -991,15 +1079,17 @@ async function createSession() {
     'A#': 1, 'D#': 4, 'G#': 0, 'C#': 3, 'F#': 6,
   };
 
-  window.drawStaves = function(key, highlightMidi) {
-    const rootPc   = KEY_PC[key] ?? 0;
+  window.drawStaves = function(key, mode, highlightMidi) {
+    // Staff rendering always uses the selected major key's signature and
+    // notation convention. For Aeolian, the note sequence is mode-based
+    // but the staff template borrows the major key signature.
     const useFlats = FLAT_KEYS.has(key);
     const noteNames = useFlats ? PC_NAMES_FLAT : PC_NAMES;
-    drawSingleStaff('staff-treble-svg', key, 'treble', rootPc, noteNames, highlightMidi);
-    drawSingleStaff('staff-bass-svg',   key, 'bass',   rootPc, noteNames, highlightMidi);
+    drawSingleStaff('staff-treble-svg', key, mode, 'treble', noteNames, highlightMidi);
+    drawSingleStaff('staff-bass-svg',   key, mode, 'bass',   noteNames, highlightMidi);
   };
 
-  function drawSingleStaff(svgId, key, clef, rootPc, noteNames, highlightMidi) {
+  function drawSingleStaff(svgId, key, mode, clef, noteNames, highlightMidi) {
     const svg = document.getElementById(svgId);
     if (!svg) return;
     const W = 500, H = 120;
@@ -1011,12 +1101,15 @@ async function createSession() {
     const sigSymbol = sigCount > 0 ? '\u266f' : '\u266d';
     // Staff lines (5 lines, 10px spacing)
     const lineYs = [30, 40, 50, 60, 70];
-    // Root base-Y on the staff
-    const rootStep = DIATONIC_STEP_FROM_C[key] ?? 0;
+    // Mode root base-Y on the staff
+    const majorRootPc = KEY_PC[key] ?? 0;
+    const modeRootPc = findModeRootPitchClass(key, mode);
+    const modeRootName = noteNames[modeRootPc] ?? noteNames[majorRootPc];
+    const rootStep = DIATONIC_STEP_FROM_C[modeRootName] ?? 0;
     const TREBLE_C4_Y = 80;
     const baseY = clef === 'treble'
       ? TREBLE_C4_Y - rootStep * 5
-      : 70 - (BASS_STEP_FROM_G2[key] ?? 0) * 5;
+      : 70 - (BASS_STEP_FROM_G2[modeRootName] ?? 0) * 5;
     // X layout: leave room for clef symbol (55px) + key signature
     const CLEF_W = 55;
     const SIG_W  = Math.max(0, absSig) * 12;
@@ -1037,15 +1130,24 @@ async function createSession() {
       const sy = sigY_arr[k] ?? 50;
       html += `<text x="${sx}" y="${sy}" fill="#aaa" font-size="14" font-family="serif" dominant-baseline="central" data-keysig="${clef}">${sigSymbol}</text>`;
     }
+    const intervals = MODE_SCALE_INTERVALS[mode] ?? MAJOR_INTERVALS;
     // Draw 8 diatonic note circles
-    for (let idx = 0; idx < MAJOR_INTERVALS.length; idx++) {
-      const interval = MAJOR_INTERVALS[idx];
-      const pc       = (rootPc + interval) % 12;
+    for (let idx = 0; idx < intervals.length; idx++) {
+      const interval = intervals[idx];
+      const pc       = (modeRootPc + interval) % 12;
       const noteName = noteNames[pc];
       const noteY    = baseY - idx * 5;
       const noteX    = noteXStart + idx * noteXSpacing;
-      const degInterval = (pc - rootPc + 12) % 12;
-      const colorKey = degInterval === 0 ? 'root' : degInterval === 4 ? 'third' : degInterval === 7 ? 'fifth' : 'other';
+      const degInterval = (pc - modeRootPc + 12) % 12;
+      const colorKey = mode === 'Aeolian'
+        ? degInterval === 0 ? 'root'
+          : degInterval === 3 ? 'third'
+          : degInterval === 7 ? 'fifth'
+          : 'other'
+        : degInterval === 0 ? 'root'
+          : degInterval === 4 ? 'third'
+          : degInterval === 7 ? 'fifth'
+          : 'other';
       const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
       const noteFill  = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
       const textFill  = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
@@ -1104,7 +1206,7 @@ async function createSession() {
       for (let i = 0; i < sequence.length && !_scaleStopFlag; i++) {
         status.textContent = `Rep ${rep + 1}/${reps} — note ${i + 1}/${sequence.length}`;
         drawFretboard(pos.notes, allAsc.indexOf(sequence[i]));
-        drawStaves(_currentKey, sequence[i].midi);
+        drawStaves(_currentKey, _currentMode, sequence[i].midi);
         await playNote(sequence[i].midi, noteDurationMs * 0.85);
         await sleep(noteDurationMs);
       }
@@ -1113,7 +1215,7 @@ async function createSession() {
     _scaleStopFlag = false;
     btn.textContent = '▶ Play';
     drawFretboard(pos.notes, -1);
-    drawStaves(_currentKey, -1);
+    drawStaves(_currentKey, _currentMode, -1);
     status.textContent = _scaleStopFlag ? '' : '✓ Complete';
     if (!_scaleStopFlag) {
       logScaleSession(_currentKey, _currentMode, _currentPos + 1, _scaleBpm, reps);
