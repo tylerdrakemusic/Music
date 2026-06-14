@@ -655,6 +655,23 @@ def test_instructor_audio_uses_phrase_param(client, tmp_path, monkeypatch) -> No
     assert captured["phrase"] == "Start on the open 5th-string A"
 
 
+def test_c_aeolian_all_positions_phrase_override(client, tmp_path, monkeypatch) -> None:
+    """C/Aeolian position phrase override must use the scale shape name for any position."""
+    import training.musician_training_ui as ui
+
+    captured: dict[str, str] = {}
+
+    def fake_get_audio(phrase, cache_dir):
+        captured["phrase"] = phrase
+        return tmp_path / "fake.mp3"
+
+    monkeypatch.setattr(ui, "get_instructor_audio", fake_get_audio)
+    resp = client.get("/api/instructor-audio?position=5&key=C&p=Start+on+the+tonic+root+A+and+go+up+and+down+the+G+shape.")
+
+    assert resp.status_code == 204
+    assert captured["phrase"] == "Start on the tonic root A and go up and down the G shape."
+
+
 def test_instructor_audio_400_invalid_position(client) -> None:
     """Invalid position must return 400 (max 12 for C, 11 for G)."""
     resp = client.get("/api/instructor-audio?position=13")
