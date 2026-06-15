@@ -8,6 +8,7 @@ Usage:
     C:\\G\\python.exe src/utils/init_db.py
 """
 import os
+import sys
 from pathlib import Path
 
 # sqlcipher3 is imported lazily inside get_connection() so that test suites
@@ -15,11 +16,14 @@ from pathlib import Path
 # still import this module and monkeypatch get_connection without crashing.
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parents[2] / "src" / "data" / "heartmusic.db"
-ALT_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "heartmusic.db"
-DB_PATH = Path(
-    os.environ.get("HEARTMUSIC_DB_PATH")
-    or str(DEFAULT_DB_PATH if DEFAULT_DB_PATH.exists() else ALT_DB_PATH)
-)
+LEGACY_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "legacy_heartmusic.db"
+ALT_DB_PATH = LEGACY_DB_PATH
+CANONICAL_DB_PATH = DEFAULT_DB_PATH
+_ENV_DB_PATH = os.environ.get("HEARTMUSIC_DB_PATH", "").strip()
+if _ENV_DB_PATH:
+    DB_PATH = Path(_ENV_DB_PATH)
+else:
+    DB_PATH = DEFAULT_DB_PATH if DEFAULT_DB_PATH.exists() else LEGACY_DB_PATH
 
 _SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
@@ -381,6 +385,16 @@ def _apply_cipher_pragmas(conn) -> None:
     conn.execute("PRAGMA kdf_iter=256000")
     conn.execute("PRAGMA cipher_hmac_algorithm=HMAC_SHA512")
 
+_LEGACY_INSPECTION_TABLES = (
+    "studio_equipment",
+    "guitar_exercises",
+    "guitar_training_log",
+    "vault_lines",
+    "phonetic_groups",
+    "sheet_music",
+)
+_LEGACY_WARNING_PRINTED = False
+
 
 def _try_open_with_key(conn, key: str, *, use_hex: bool) -> bool:
     if use_hex:
@@ -399,12 +413,68 @@ def _try_open_with_key(conn, key: str, *, use_hex: bool) -> bool:
         return False
 
 
-def get_connection():
+def _open_with_any_key(path: Path, key: str):
+    import sqlcipher3
+
+    for use_hex in (False, True):
+        conn = sqlcipher3.connect(str(path))
+        if _try_open_with_key(conn, key, use_hex=use_hex):
+            return conn, use_hex
+        conn.close()
+    raise RuntimeError(f"Failed to decrypt heartmusic.db at {path} with HEARTMUSIC_DB_KEY.")
+
+
+def _table_has_rows(conn, table: str) -> bool:
+    try:
+        return bool(conn.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone())
+    except Exception:
+        return False
+
+
+def _warn_legacy_populated(conn) -> None:
+    global _LEGACY_WARNING_PRINTED
+    if _LEGACY_WARNING_PRINTED:
+        return
+    if not LEGACY_DB_PATH.exists() or _ENV_DB_PATH:
+        return
+
+    try:
+        legacy_conn, _ = _open_with_any_key(LEGACY_DB_PATH, os.environ.get("HEARTMUSIC_DB_KEY", ""))
+    except Exception:
+        return
+
+    mismatch = []
+    try:
+        for table in _LEGACY_INSPECTION_TABLES:
+            if not _table_has_rows(conn, table) and _table_has_rows(legacy_conn, table):
+                mismatch.append(table)
+    finally:
+        legacy_conn.close()
+
+    if mismatch:
+        print(
+            f"WARNING: Canonical heartmusic.db at {CANONICAL_DB_PATH} appears empty for {', '.join(mismatch)} while legacy heartmusic.db at {LEGACY_DB_PATH} contains data. "
+            "Run tools/reconcile_heartmusic_db.py --apply to merge legacy data into the canonical DB, or set HEARTMUSIC_DB_PATH to the legacy DB if that is intentionally the active dataset.",
+            file=sys.stderr,
+        )
+        _LEGACY_WARNING_PRINTED = True
+
+
+def get_connection(*, create_if_missing: bool = False):
     """Return a sqlcipher3 connection to heartmusic.db."""
     import sqlcipher3  # noqa: PLC0415 — lazy import; native lib not available on CI
     key = os.environ.get("HEARTMUSIC_DB_KEY", "")
     if not key:
-        raise RuntimeError("HEARTMUSIC_DB_KEY not set")
+        raise RuntimeError(
+            "HEARTMUSIC_DB_KEY not set. "
+            "Set HEARTMUSIC_DB_KEY in User or Machine environment before starting the Guitar Trainer or Studio Panel."
+        )
+
+    if not DB_PATH.exists() and not create_if_missing:
+        raise RuntimeError(
+            f"heartmusic.db not found at {DB_PATH}. "
+            "Run src/utils/init_db.py to create it or set HEARTMUSIC_DB_PATH to an existing DB."
+        )
 
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlcipher3.connect(str(DB_PATH))
@@ -414,18 +484,28 @@ def get_connection():
         opened = _try_open_with_key(conn, key, use_hex=False)
     if not opened:
         conn.close()
-        raise RuntimeError("Failed to decrypt heartmusic.db with HEARTMUSIC_DB_KEY")
+        raise RuntimeError(
+            "Failed to decrypt heartmusic.db with HEARTMUSIC_DB_KEY. "
+            "Verify the key value and ensure the same key is used by all Music services."
+        )
 
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     import sqlcipher3 as _sc3  # noqa: PLC0415
     conn.row_factory = _sc3.Row
+
+    if DB_PATH == CANONICAL_DB_PATH and LEGACY_DB_PATH.exists() and not _ENV_DB_PATH:
+        try:
+            _warn_legacy_populated(conn)
+        except Exception:
+            pass
+
     return conn
 
 
 def init_db(*, seed: bool = True) -> None:
     """Create all tables and optionally seed with catalog data. Safe to re-run."""
-    conn = get_connection()
+    conn = get_connection(create_if_missing=True)
     conn.executescript(_SCHEMA_SQL)
     # FR-20260522: add 'key' column to scale_practice_log for existing DBs
     try:

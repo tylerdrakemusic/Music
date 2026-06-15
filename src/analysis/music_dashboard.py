@@ -50,12 +50,14 @@ try:
         sys.path.insert(0, str(_CHORD_SHEET_TOOLS_DIR))
     from make_chord_sheet import build_docx, compute_output_path  # type: ignore[import]
     _CHORD_SHEET_AVAILABLE = True
-except Exception:
+except Exception as exc:
     _CHORD_SHEET_AVAILABLE = False
+    _CHORD_SHEET_IMPORT_ERROR = exc
 
 _CS_ROOT = Path(__file__).resolve().parents[2]
+_CATALOG_ROOT = Path(__file__).resolve().parents[2].parent / "catalog"
 _CHORD_SHEET_TEMPLATES_DIR = _CS_ROOT / "studio_master" / "song_templates"
-_CHORD_SHEET_DOCS_DIR = _CS_ROOT / "documents"
+_CHORD_SHEET_DOCS_DIR = _CATALOG_ROOT / "sheet_music" / "covers"
 
 
 def _cs_sanitize(name: str) -> str:
@@ -824,6 +826,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
     <div id="cs-result-panel" style="display:none;background:var(--surface);border:1px solid var(--ok);border-radius:var(--radius);padding:20px;">
       <h4 style="color:var(--ok);margin-bottom:12px;">✓ Generated</h4>
       <div style="margin-bottom:8px;color:var(--text-muted);">File: <span id="cs-result-filename" style="color:var(--text);font-family:monospace;"></span></div>
+      <div style="margin-bottom:8px;color:var(--text-muted);">Path: <span id="cs-result-path" style="color:var(--text);font-family:monospace;"></span></div>
       <a id="cs-download-link" href="#" target="_blank" class="btn" style="display:inline-block;background:var(--ok);color:white;text-decoration:none;margin-right:10px;">📥 Open DOCX</a>
       <div id="cs-pr-section" style="display:none;margin-top:14px;">
         <div style="margin-bottom:8px;color:var(--text-muted);">PR: <a id="cs-pr-url" href="#" target="_blank" style="color:var(--accent);"></a></div>
@@ -1794,6 +1797,9 @@ async function csGenerateFromJson(workflow) {
     const data = await r.json();
     if (!r.ok) { csSetStatus('Error: ' + (data.error || r.status)); return; }
     document.getElementById('cs-result-filename').textContent = data.filename || '';
+    const filePath = data.file_path || '';
+    const pathEl = document.getElementById('cs-result-path');
+    if (pathEl) pathEl.textContent = filePath;
     const dl = document.getElementById('cs-download-link');
     dl.href = data.download_url || '#';
     document.getElementById('cs-result-panel').style.display = 'block';
@@ -2765,7 +2771,11 @@ def chord_sheet_save_json():
 def chord_sheet_generate():
     """Generate DOCX from template or new JSON. Returns download URL."""
     if not _CHORD_SHEET_AVAILABLE:
-        return jsonify({"error": "make_chord_sheet not available"}), 503
+        details = str(_CHORD_SHEET_IMPORT_ERROR) if '_CHORD_SHEET_IMPORT_ERROR' in globals() else None
+        payload = {"error": "make_chord_sheet not available"}
+        if details:
+            payload["details"] = details
+        return jsonify(payload), 503
 
     data = request.get_json(silent=True) or {}
     workflow = data.get("workflow", "B")
@@ -2830,6 +2840,7 @@ def chord_sheet_generate():
 
     return jsonify({
         "filename": out_path.name,
+        "file_path": str(out_path),
         "json_path": str(json_path),
         "download_url": f"/chord-sheet/download/{out_path.name}",
         "pr_url": pr_url,
