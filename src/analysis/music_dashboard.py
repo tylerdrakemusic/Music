@@ -50,8 +50,9 @@ try:
         sys.path.insert(0, str(_CHORD_SHEET_TOOLS_DIR))
     from make_chord_sheet import build_docx, compute_output_path  # type: ignore[import]
     _CHORD_SHEET_AVAILABLE = True
-except Exception:
+except Exception as exc:
     _CHORD_SHEET_AVAILABLE = False
+    _CHORD_SHEET_IMPORT_ERROR = exc
 
 _CS_ROOT = Path(__file__).resolve().parents[2]
 _CHORD_SHEET_TEMPLATES_DIR = _CS_ROOT / "studio_master" / "song_templates"
@@ -2765,7 +2766,11 @@ def chord_sheet_save_json():
 def chord_sheet_generate():
     """Generate DOCX from template or new JSON. Returns download URL."""
     if not _CHORD_SHEET_AVAILABLE:
-        return jsonify({"error": "make_chord_sheet not available"}), 503
+        details = str(_CHORD_SHEET_IMPORT_ERROR) if '_CHORD_SHEET_IMPORT_ERROR' in globals() else None
+        payload = {"error": "make_chord_sheet not available"}
+        if details:
+            payload["details"] = details
+        return jsonify(payload), 503
 
     data = request.get_json(silent=True) or {}
     workflow = data.get("workflow", "B")
