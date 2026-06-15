@@ -2356,6 +2356,7 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS vault_lines (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     line       TEXT NOT NULL UNIQUE,
+    is_hook    INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS phonetic_groups (
@@ -2374,6 +2375,9 @@ def _ensure_vault_schema() -> None:
     """Create vault tables if they don't already exist."""
     with get_connection() as conn:
         conn.executescript(_VAULT_SCHEMA)
+        existing = [row[1] for row in conn.execute("PRAGMA table_info(vault_lines)").fetchall()]
+        if "is_hook" not in existing:
+            conn.execute("ALTER TABLE vault_lines ADD COLUMN is_hook INTEGER NOT NULL DEFAULT 0")
         conn.commit()
 
 
@@ -2443,11 +2447,15 @@ def _get_vault_stats() -> dict:
         matched_lines = conn.execute(
             "SELECT COUNT(DISTINCT line_id) FROM vault_line_groups"
         ).fetchone()[0]
+        hook_lines = conn.execute(
+            "SELECT COUNT(*) FROM vault_lines WHERE is_hook = 1"
+        ).fetchone()[0]
     return {
         "total_lines": total_lines,
         "total_groups": total_groups,
         "matched_lines": matched_lines,
         "ungrouped_lines": total_lines - matched_lines,
+        "hook_lines": hook_lines,
     }
 
 
@@ -2465,7 +2473,7 @@ def rhymes_page():
         ).fetchall()
 
         line_rows = conn.execute(
-            "SELECT id, line FROM vault_lines ORDER BY line COLLATE NOCASE"
+            "SELECT id, line, is_hook FROM vault_lines ORDER BY line COLLATE NOCASE"
         ).fetchall()
 
         join_rows = conn.execute(
@@ -2473,7 +2481,7 @@ def rhymes_page():
         ).fetchall()
 
     # Build group_id → line list mapping
-    line_by_id = {r[0]: {"id": r[0], "line": r[1]} for r in line_rows}
+    line_by_id = {r[0]: {"id": r[0], "line": r[1], "is_hook": bool(r[2])} for r in line_rows}
     group_lines: dict[int, list[dict]] = {}
     grouped_line_ids: set[int] = set()
     for line_id, group_id in join_rows:
@@ -2529,13 +2537,15 @@ def rhymes_add_line():
     if not line:
         return jsonify({"error": "line is required"}), 400
 
+    is_hook = int(bool(data.get("is_hook")))
     _, db_suffix_map = _load_phonetics()
     group_ids = _match_line_to_db_groups(line, db_suffix_map)
 
     with get_connection() as conn:
         try:
             cur = conn.execute(
-                "INSERT INTO vault_lines (line) VALUES (?)", (line,)
+                "INSERT INTO vault_lines (line, is_hook) VALUES (?, ?)",
+                (line, is_hook),
             )
             line_id = cur.lastrowid
         except Exception:
@@ -2553,7 +2563,12 @@ def rhymes_add_line():
             )
         conn.commit()
 
-    return jsonify({"id": line_id, "line": line, "groups": group_ids}), 201
+    return jsonify({
+        "id": line_id,
+        "line": line,
+        "groups": group_ids,
+        "is_hook": bool(is_hook),
+    }), 201
 
 
 @app.route("/rhymes/lines/<int:line_id>", methods=["PUT"])
@@ -2562,33 +2577,53 @@ def rhymes_edit_line(line_id: int):
     _ensure_vault_schema()
     data = request.get_json(silent=True) or {}
     new_line = (data.get("line") or "").strip()
-    if not new_line:
-        return jsonify({"error": "line is required"}), 400
+    is_hook = data.get("is_hook")
+    is_hook_value = None if is_hook is None else int(bool(is_hook))
 
     _, db_suffix_map = _load_phonetics()
 
     with get_connection() as conn:
         existing = conn.execute(
-            "SELECT id FROM vault_lines WHERE id = ?", (line_id,)
+            "SELECT id, line, is_hook FROM vault_lines WHERE id = ?", (line_id,)
         ).fetchone()
         if not existing:
             return jsonify({"error": "Line not found"}), 404
+        current_line = existing[1]
+        current_hook = bool(existing[2])
 
-        conn.execute(
-            "UPDATE vault_lines SET line = ? WHERE id = ?", (new_line, line_id)
-        )
-        conn.execute(
-            "DELETE FROM vault_line_groups WHERE line_id = ?", (line_id,)
-        )
-        new_groups = _match_line_to_db_groups(new_line, db_suffix_map)
-        for gid in new_groups:
+        if new_line:
             conn.execute(
-                "INSERT OR IGNORE INTO vault_line_groups (line_id, group_id) VALUES (?, ?)",
-                (line_id, gid),
+                "UPDATE vault_lines SET line = ? WHERE id = ?", (new_line, line_id)
+            )
+            conn.execute(
+                "DELETE FROM vault_line_groups WHERE line_id = ?", (line_id,)
+            )
+            new_groups = _match_line_to_db_groups(new_line, db_suffix_map)
+            for gid in new_groups:
+                conn.execute(
+                    "INSERT OR IGNORE INTO vault_line_groups (line_id, group_id) VALUES (?, ?)",
+                    (line_id, gid),
+                )
+        else:
+            new_groups = [r[0] for r in conn.execute(
+                "SELECT group_id FROM vault_line_groups WHERE line_id = ?", (line_id,)
+            ).fetchall()]
+
+        if is_hook_value is not None and is_hook_value != current_hook:
+            conn.execute(
+                "UPDATE vault_lines SET is_hook = ? WHERE id = ?",
+                (is_hook_value, line_id),
             )
         conn.commit()
 
-    return jsonify({"id": line_id, "line": new_line, "groups": new_groups})
+    response_line = new_line or current_line
+    response_hook = bool(is_hook_value) if is_hook_value is not None else current_hook
+    return jsonify({
+        "id": line_id,
+        "line": response_line,
+        "groups": new_groups,
+        "is_hook": response_hook,
+    })
 
 
 @app.route("/rhymes/lines/<int:line_id>", methods=["DELETE"])
