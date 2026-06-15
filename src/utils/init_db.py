@@ -404,7 +404,10 @@ def get_connection():
     import sqlcipher3  # noqa: PLC0415 — lazy import; native lib not available on CI
     key = os.environ.get("HEARTMUSIC_DB_KEY", "")
     if not key:
-        raise RuntimeError("HEARTMUSIC_DB_KEY not set")
+        raise RuntimeError(
+            "HEARTMUSIC_DB_KEY not set. "
+            "Set HEARTMUSIC_DB_KEY in User or Machine environment before starting the Guitar Trainer or Studio Panel."
+        )
 
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlcipher3.connect(str(DB_PATH))
@@ -414,7 +417,10 @@ def get_connection():
         opened = _try_open_with_key(conn, key, use_hex=False)
     if not opened:
         conn.close()
-        raise RuntimeError("Failed to decrypt heartmusic.db with HEARTMUSIC_DB_KEY")
+        raise RuntimeError(
+            "Failed to decrypt heartmusic.db with HEARTMUSIC_DB_KEY. "
+            "Verify the key value and ensure the same key is used by all Music services."
+        )
 
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
