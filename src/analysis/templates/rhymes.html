@@ -114,12 +114,118 @@
   }
   .search-box:focus { border-color: var(--accent); }
   .search-box::placeholder { color: var(--text-dim); }
-  .regroup-btn {
+  .regroup-btn, .print-btn {
     background: var(--surface2); border: 1px solid var(--border);
     color: var(--text-muted); border-radius: 20px; padding: 7px 16px;
     font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
   }
-  .regroup-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .regroup-btn:hover, .print-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .compact-print-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-muted);
+    margin-left: auto;
+  }
+  .compact-print-label input {
+    width: 14px; height: 14px; accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  @media print {
+    body {
+      background: white;
+      color: #111;
+      min-height: auto;
+      margin: 0;
+      font-size: 9pt;
+      line-height: 1.25;
+    }
+    html, body {
+      overflow: visible !important;
+    }
+    .header,
+    .suggest-panel,
+    .add-bar,
+    .toolbar,
+    .toast,
+    .btn,
+    .btn-danger-sm,
+    .btn-edit-sm,
+    .lyric-edit-input,
+    .ollama-check,
+    .suggest-results,
+    .stats-row,
+    .back-link {
+      display: none !important;
+    }
+    .main {
+      padding: 10px !important;
+      width: auto !important;
+    }
+    .group-card {
+      background: transparent !important;
+      border: 1px solid #ccc !important;
+      box-shadow: none !important;
+      page-break-inside: avoid;
+      break-inside: avoid-column;
+      display: inline-block !important;
+      vertical-align: top;
+      width: calc(50% - 12px);
+      margin: 0 6px 10px !important;
+      padding: 0 !important;
+    }
+    .group-header {
+      background: transparent !important;
+      border: 1px solid #bbb !important;
+      border-bottom: none !important;
+      padding: 6px 8px !important;
+      font-size: 10pt !important;
+      color: #111 !important;
+    }
+    .group-toggle {
+      display: none !important;
+    }
+    .group-suffixes {
+      gap: 4px;
+    }
+    .suffix-chip {
+      background: transparent !important;
+      border-color: #999 !important;
+      color: #111 !important;
+      font-size: 8.5pt;
+      padding: 1px 5px !important;
+    }
+    .group-body {
+      display: block !important;
+      padding: 4px 8px 8px !important;
+    }
+    .lyric-line {
+      display: block !important;
+      padding: 2px 0 !important;
+      border: none !important;
+      color: #111 !important;
+    }
+    .lyric-text {
+      font-size: 9pt !important;
+      color: #111 !important;
+    }
+    .ungrouped-section {
+      page-break-before: always;
+    }
+    .section-title {
+      font-size: 10pt !important;
+      margin-bottom: 6px !important;
+    }
+    @page {
+      margin: 10mm;
+    }
+  }
+
+  @media print and (max-width: 900px) {
+    .group-card {
+      width: 100% !important;
+      margin: 0 0 10px !important;
+    }
+  }
 
   /* ── Stats pills ─────────────────────────────────────────────────────────── */
   .stats-row {
@@ -295,6 +401,7 @@
     <input type="text" class="search-box" id="searchBox"
            placeholder="Filter lines…" oninput="filterLines(this.value)" />
     <button class="regroup-btn" onclick="regroup()">↻ Re-run Grouping</button>
+    <button class="print-btn" onclick="printGroupedLines()">🖨️ Print grouped lyrics</button>
   </div>
 
   <!-- Stats -->
@@ -503,6 +610,22 @@ async function regroup() {
     btn.disabled = false;
   }
 }
+
+// ── Print helpers ─────────────────────────────────────────────────────────
+function printGroupedLines() {
+  document.body.classList.add('compact-print');
+  document.querySelectorAll('.group-body').forEach(body => body.classList.add('open'));
+  window.print();
+}
+
+window.addEventListener('beforeprint', () => {
+  document.querySelectorAll('.group-body').forEach(body => body.classList.add('open'));
+  document.body.classList.add('compact-print');
+});
+
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('compact-print');
+});
 
 // ── Suggest rhymes ─────────────────────────────────────────────────────────
 async function runSuggest() {
