@@ -8,15 +8,14 @@ import tempfile
 from datetime import datetime
 import numpy as np
 import librosa
-import sqlite3
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+from utils.init_db import get_connection  # noqa: E402
+
 # ---------------------------------------------------------------------------
-# DB path / key (mirrors utils/init_db.py — direct sqlite3 since this script
-# runs as a subprocess outside the Flask context)
+# DB helpers
 # ---------------------------------------------------------------------------
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-_DB_PATH = _PROJECT_ROOT / "src" / "data" / "heartmusic.db"
 
 # Module-level exercise id set by main() once we know which _run_<id>.json
 # we are executing.  None = migrated / manual session (exercise_id IS NULL).
@@ -77,16 +76,7 @@ def log_practice_session(log_path, song_path, segment):
         return
 
     try:
-        import sqlcipher3  # noqa: PLC0415
-        conn = sqlcipher3.connect(str(_DB_PATH))
-        # hex-encoded key (matches init_db._try_open_with_key logic)
-        key_hex = db_key.encode().hex()
-        conn.execute(f"PRAGMA key=\"x'{key_hex}'\"")  # nosec B608
-        conn.execute("PRAGMA cipher_page_size=4096")
-        conn.execute("PRAGMA kdf_iter=256000")
-        conn.execute("PRAGMA cipher_hmac_algorithm=HMAC_SHA512")
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
+        conn = get_connection()
         conn.execute(
             "INSERT INTO guitar_training_log "
             "(exercise_id, song_path, seg_start, seg_end, repetition, logged_at) "
