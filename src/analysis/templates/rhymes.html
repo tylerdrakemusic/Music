@@ -100,6 +100,33 @@
     padding: 4px 8px; font-size: 11px; cursor: pointer; transition: all 0.15s;
   }
   .btn-edit-sm:hover { border-color: #6366f1; color: #a5b4fc; }
+  .btn-hook-sm {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-dim); border-radius: var(--radius-sm);
+    padding: 4px 8px; font-size: 11px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-hook-sm.active {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(251,113,133,0.12);
+  }
+  .btn-hook-sm:hover { border-color: var(--accent); color: var(--accent2); }
+  .hook-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 999px; padding: 2px 8px; font-size: 11px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-muted); margin-left: 10px; white-space: nowrap;
+  }
+  .hook-badge.active {
+    background: rgba(225,29,72,0.13); border-color: rgba(225,29,72,0.3);
+    color: var(--accent2);
+    font-weight: 700;
+  }
+  .hook-badge::before {
+    content: '🎣';
+    display: inline-block;
+    font-size: 11px;
+  }
 
   /* ── Toolbar row ─────────────────────────────────────────────────────────── */
   .toolbar {
@@ -207,6 +234,24 @@
     .lyric-text {
       font-size: 9pt !important;
       color: #111 !important;
+    }
+    .hook-badge {
+      display: inline-block !important;
+      margin-left: 0 !important;
+      padding: 1px 4px !important;
+      font-size: 8.5pt !important;
+      border: 1px solid #999 !important;
+      background: transparent !important;
+      color: #111 !important;
+    }
+    .hook-badge.active {
+      border-color: #444 !important;
+      font-weight: 700 !important;
+    }
+    .btn-hook-sm,
+    .btn-edit-sm,
+    .btn-danger-sm {
+      display: none !important;
     }
     .ungrouped-section {
       page-break-before: always;
@@ -393,6 +438,10 @@
     <input type="text" class="add-input" id="newLineInput"
            placeholder="Add a new lyric line…"
            onkeydown="if(event.key==='Enter') addLine()" />
+    <label class="compact-print-label">
+      <input type="checkbox" id="newLineHook" />
+      Hookworthy
+    </label>
     <button class="btn btn-primary" onclick="addLine()">+ Add Line</button>
   </div>
 
@@ -410,6 +459,7 @@
     <div class="stat-pill">Groups: <strong id="statGroups">{{ stats.total_groups }}</strong></div>
     <div class="stat-pill">Matched: <strong id="statMatched">{{ stats.matched_lines }}</strong></div>
     <div class="stat-pill">Ungrouped: <strong id="statUngrouped">{{ stats.ungrouped_lines }}</strong></div>
+    <div class="stat-pill">Hooks: <strong id="statHooks">{{ stats.hook_lines }}</strong></div>
   </div>
 
   <!-- Phonetic Groups -->
@@ -427,13 +477,15 @@
       </div>
       <div class="group-body">
         {% for line in group.lines %}
-        <div class="lyric-line" data-line-id="{{ line.id }}">
+        <div class="lyric-line" data-line-id="{{ line.id }}" data-hook="{{ 1 if line.is_hook else 0 }}">
           <span class="lyric-text">{{ line.line }}</span>
+          <span class="hook-badge{{ ' active' if line.is_hook else '' }}">HOOK</span>
           <input type="text" class="lyric-edit-input"
                  value="{{ line.line }}"
                  onkeydown="handleEditKey(event, {{ line.id }})"
                  onblur="saveEdit({{ line.id }}, this)" />
           <div class="lyric-actions">
+            <button class="btn-hook-sm{{ ' active' if line.is_hook else '' }}" onclick="toggleHook({{ line.id }})" title="Toggle hook-worthy">{{ '★' if line.is_hook else '☆' }}</button>
             <button class="btn-edit-sm" onclick="startEdit({{ line.id }})" title="Edit">✏</button>
             <button class="btn-danger-sm" onclick="deleteLine({{ line.id }})" title="Delete">✕</button>
           </div>
@@ -458,13 +510,15 @@
       </div>
       <div class="group-body">
         {% for line in ungrouped %}
-        <div class="lyric-line" data-line-id="{{ line.id }}">
+        <div class="lyric-line" data-line-id="{{ line.id }}" data-hook="{{ 1 if line.is_hook else 0 }}">
           <span class="lyric-text">{{ line.line }}</span>
+          <span class="hook-badge{{ ' active' if line.is_hook else '' }}">HOOK</span>
           <input type="text" class="lyric-edit-input"
                  value="{{ line.line }}"
                  onkeydown="handleEditKey(event, {{ line.id }})"
                  onblur="saveEdit({{ line.id }}, this)" />
           <div class="lyric-actions">
+            <button class="btn-hook-sm{{ ' active' if line.is_hook else '' }}" onclick="toggleHook({{ line.id }})" title="Toggle hook-worthy">{{ '★' if line.is_hook else '☆' }}</button>
             <button class="btn-edit-sm" onclick="startEdit({{ line.id }})" title="Edit">✏</button>
             <button class="btn-danger-sm" onclick="deleteLine({{ line.id }})" title="Delete">✕</button>
           </div>
@@ -520,17 +574,19 @@ function filterLines(q) {
 // ── Add line ───────────────────────────────────────────────────────────────
 async function addLine() {
   const input = document.getElementById('newLineInput');
+  const hookCheckbox = document.getElementById('newLineHook');
   const line = input.value.trim();
   if (!line) return;
   try {
     const res = await fetch('/rhymes/lines', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ line })
+      body: JSON.stringify({ line, is_hook: hookCheckbox.checked })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Unknown error');
     input.value = '';
+    hookCheckbox.checked = false;
     showToast('Line added — reload to see it grouped');
     updateStats();
   } catch (e) {
@@ -565,12 +621,17 @@ async function saveEdit(id, input) {
     const res = await fetch(`/rhymes/lines/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ line: newVal })
+      body: JSON.stringify({
+        line: newVal,
+        is_hook: row.dataset.hook === '1',
+      })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Unknown error');
     row.querySelector('.lyric-text').textContent = newVal;
+    renderHookState(row, data.is_hook);
     showToast('Line updated');
+    updateStats();
   } catch (e) {
     input.value = original;
     showToast(e.message, 'error');
@@ -589,6 +650,40 @@ async function deleteLine(id) {
     updateStats();
   } catch (e) {
     showToast(e.message, 'error');
+  }
+}
+
+async function toggleHook(id) {
+  const row = document.querySelector(`.lyric-line[data-line-id="${id}"]`);
+  if (!row) return;
+  const currentHook = row.dataset.hook === '1';
+  const newHook = !currentHook;
+  try {
+    const res = await fetch(`/rhymes/lines/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_hook: newHook })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Unknown error');
+    renderHookState(row, data.is_hook);
+    showToast(data.is_hook ? 'Marked as hook-worthy' : 'Unmarked hook-worthy');
+    updateStats();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+function renderHookState(row, isHook) {
+  row.dataset.hook = isHook ? '1' : '0';
+  const badge = row.querySelector('.hook-badge');
+  const hookBtn = row.querySelector('.btn-hook-sm');
+  if (badge) {
+    badge.classList.toggle('active', isHook);
+  }
+  if (hookBtn) {
+    hookBtn.classList.toggle('active', isHook);
+    hookBtn.textContent = isHook ? '★' : '☆';
   }
 }
 
@@ -675,6 +770,7 @@ async function updateStats() {
     document.getElementById('statGroups').textContent = d.total_groups;
     document.getElementById('statMatched').textContent = d.matched_lines;
     document.getElementById('statUngrouped').textContent = d.ungrouped_lines;
+    document.getElementById('statHooks').textContent = d.hook_lines;
   } catch (_) {}
 }
 </script>
