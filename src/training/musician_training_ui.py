@@ -8,6 +8,7 @@ Scales & Arpeggios tab added in FR-20260517-guitar-trainer-scale-exercises.
 import argparse
 import json
 import os
+import re
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
@@ -126,6 +127,83 @@ def _append_log(
     )
     conn.commit()
     conn.close()
+
+
+def buildModePhrase(pos: dict, mode: str, key: str = "C") -> str:
+    """Build the instructor phrase for mode-based Dorian/Aeolian training."""
+    shape_name = pos.get("label", "")
+    shape_name = re.sub(r"^Position \d+ — ", "", shape_name)
+    shape_name = re.sub(r"\s*\([^)]*\)$", "", shape_name)
+    shape_name = re.sub(r"\s*shape\s*$", "", shape_name, flags=re.IGNORECASE).strip()
+    shape_name = re.sub(r"([A-G])#", r"\1 sharp", shape_name)
+    shape_name = re.sub(r"([A-G])b", r"\1 flat", shape_name)
+
+    key_pc_map = {
+        "C": 0,
+        "Db": 1,
+        "C#": 1,
+        "D": 2,
+        "Eb": 3,
+        "D#": 3,
+        "E": 4,
+        "F": 5,
+        "F#": 6,
+        "Gb": 6,
+        "G": 7,
+        "Ab": 8,
+        "G#": 8,
+        "A": 9,
+        "Bb": 10,
+        "A#": 10,
+        "B": 11,
+    }
+    mode_root_offsets = {
+        "Ionian": 0,
+        "Dorian": 2,
+        "Phrygian": 4,
+        "Lydian": 5,
+        "Mixolydian": 7,
+        "Aeolian": 9,
+        "Locrian": 11,
+    }
+    root_pc = (key_pc_map.get(key, 0) + mode_root_offsets.get(mode, 0)) % 12
+    note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    flat_note_names = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
+    raw_tonic_name = flat_note_names[root_pc] if key in {"F", "Bb", "Eb", "Ab", "Db", "Gb"} else note_names[root_pc]
+    tonic_name = re.sub(r"^([A-G])#$", r"\1 sharp", raw_tonic_name)
+    tonic_name = re.sub(r"^([A-G])b$", r"\1 flat", tonic_name)
+
+    tonic = None
+    notes = pos.get("notes", [])
+    for note in notes:
+        if note.get("midi", -1) % 12 == root_pc:
+            if tonic is None or note.get("midi", 0) < tonic.get("midi", 0):
+                tonic = note
+
+    tonic_location = ""
+    if tonic is not None:
+        string_names = {1: "high e", 2: "B", 3: "G", 4: "D", 5: "A", 6: "low E"}
+        string_name = string_names.get(tonic.get("string", 0), "unknown")
+        if tonic.get("fret", 0) == 0:
+            tonic_location = f"on the open {string_name} string"
+        else:
+            tonic_location = f"on the {string_name} string at fret {tonic.get('fret', 0)}"
+
+    root_label = (
+        "tonic root"
+        if mode == "Ionian"
+        else "root of the Dorian scale"
+        if mode == "Dorian"
+        else "root of the Aeolian scale"
+        if mode == "Aeolian"
+        else "root"
+    )
+    phrase = f"Start on the {root_label} {tonic_name}"
+    if tonic_location:
+        phrase += f", {tonic_location}"
+    if shape_name:
+        phrase += f" and go up and down the {shape_name} shape."
+    return phrase.strip()
 
 
 # ---------------------------------------------------------------------------

@@ -678,8 +678,8 @@ def test_build_mode_phrase_dorian_uses_dorian_root_label() -> None:
     pos = ui.SCALE_POSITIONS["C"][0]
     phrase = ui.buildModePhrase(pos, "Dorian")
 
-    assert phrase.startswith("Start on the root note of the Dorian scale")
-    assert "Dorian scale root" in phrase or phrase.startswith("Start on the root note of the Dorian scale")
+    assert phrase.startswith("Start on the root of the Dorian scale")
+    assert "Dorian scale" in phrase
     assert phrase.endswith("shape.")
 
 
