@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import urllib.error
@@ -27,24 +28,81 @@ from analysis.rhyme_utils import build_suffix_map, get_phonetic_group, last_word
 CATALOG_ROOT = Path(__file__).resolve().parent.parent.parent / "catalog"
 
 # ── Ollama (optional) ─────────────────────────────────────────────────────────
+_OLLAMA_AVAILABLE = False
+_OLLAMA_BASE_URL = None
+_OLLAMA_MODEL = "llama3.3:70b"
+_OLLAMA_FALLBACK_MODEL_ORDER = ["llama3:70b", "llama3.1:8b"]
+_OLLAMA_HOOK_LINE_LIMIT = 30
 try:
     import os as _os
-    _ai_root = None
-    for _d in _os.listdir("f:\\"):
-        if "AI" in _d:
-            _ai_root = Path("f:\\") / _d
-            break
-    if _ai_root:
-        sys.path.insert(0, str(_ai_root))
-        from src.integrations.ollama.client import OllamaClient as _OllamaClient
-        _OLLAMA_AVAILABLE = True
-    else:
-        _OLLAMA_AVAILABLE = False
-except Exception:
-    _OLLAMA_AVAILABLE = False
+    _workspace_root = None
+    _workspace_env = _os.environ.get("WORKSPACE_ROOT")
+    if _workspace_env:
+        _workspace_path = Path(_workspace_env)
+        if _workspace_path.is_dir():
+            _workspace_root = _workspace_path
 
-# ── make_chord_sheet (optional) ───────────────────────────────────────────────
-try:
+    if _workspace_root is None:
+        file_path = Path(__file__).resolve()
+        for parent in [file_path, *file_path.parents]:
+            candidate = parent / "⊕Workspace"
+            if candidate.is_dir():
+                _workspace_root = candidate
+                break
+            candidate = parent / "workspace"
+            if candidate.is_dir():
+                _workspace_root = candidate
+                break
+
+    if _workspace_root is None:
+        _drive_root = Path(__file__).resolve().anchor
+        for _entry in Path(_drive_root).iterdir():
+            if _entry.is_dir() and (
+                _entry.name == "⊕Workspace"
+                or _entry.name.endswith("Workspace")
+                or _entry.name.lower() == "workspace"
+            ):
+                _workspace_root = _entry
+                break
+
+    if _workspace_root is not None:
+        sys.path.insert(0, str(_workspace_root))
+
+    _OLLAMA_MODEL = _os.environ.get("OLLAMA_MODEL") or _OLLAMA_MODEL
+    from src.integrations.ollama.client import OllamaClient as _OllamaClient
+    try:
+        client = _OllamaClient(model=_OLLAMA_MODEL)
+        if client.health_check():
+            if client.ensure_model_available(_OLLAMA_MODEL):
+                _OLLAMA_AVAILABLE = True
+            else:
+                available_models: list[str] = []
+                try:
+                    available_models = [
+                        m.get("name") or m.get("model")
+                        for m in client.list_models()
+                    ]
+                except Exception:
+                    available_models = []
+
+                fallback_model: str | None = None
+                for candidate in available_models:
+                    if candidate and "70b" in candidate:
+                        fallback_model = candidate
+                        break
+                if fallback_model is None and available_models:
+                    fallback_model = available_models[0]
+
+                if fallback_model is not None:
+                    client = _OllamaClient(model=fallback_model)
+                    if client.ensure_model_available(fallback_model):
+                        _OLLAMA_MODEL = fallback_model
+                        _OLLAMA_AVAILABLE = True
+            if _OLLAMA_AVAILABLE:
+                _OLLAMA_BASE_URL = client.base_url
+    except Exception:
+        _OLLAMA_AVAILABLE = False
+        _OLLAMA_BASE_URL = None
     _CHORD_SHEET_TOOLS_DIR = Path(__file__).resolve().parents[2] / "tools"
     if str(_CHORD_SHEET_TOOLS_DIR) not in sys.path:
         sys.path.insert(0, str(_CHORD_SHEET_TOOLS_DIR))
@@ -64,6 +122,62 @@ def _cs_sanitize(name: str) -> str:
     """Sanitize a string to a safe filename component."""
     keep = " _-.()[]{}+"
     return "".join(c for c in name if c.isalnum() or c in keep).strip().replace(" ", "_")
+
+
+def _select_fallback_ollama_models(client, selected_model: str) -> list[str]:
+    try:
+        available = [
+            m.get("name") or m.get("model")
+            for m in client.list_models()
+            if m is not None
+        ]
+    except Exception:
+        available = []
+
+    candidates: list[str] = []
+    for candidate in _OLLAMA_FALLBACK_MODEL_ORDER:
+        if candidate and candidate != selected_model and candidate not in candidates:
+            candidates.append(candidate)
+    for candidate in available:
+        if candidate and candidate != selected_model and candidate not in candidates:
+            candidates.append(candidate)
+    return candidates
+
+
+def _generate_with_ollama_fallback(prompt: str, timeout: float | None = None) -> str:
+    selected_model = _OLLAMA_MODEL
+    models_to_try = [selected_model]
+    client = _OllamaClient(model=selected_model)
+    models_to_try.extend(_select_fallback_ollama_models(client, selected_model))
+
+    def _should_fallback(exc: Exception) -> bool:
+        message = str(exc).lower()
+        return any(
+            phrase in message
+            for phrase in [
+                "not found",
+                "unavailable",
+                "no such model",
+                "timed out",
+                "timeout",
+                "cannot reach ollama",
+            ]
+        )
+
+    last_exc: Exception | None = None
+    for model in models_to_try:
+        client = _OllamaClient(model=model)
+        try:
+            return client.generate(prompt, timeout=timeout)
+        except Exception as exc:
+            last_exc = exc
+            if _should_fallback(exc):
+                continue
+            raise
+
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError("Ollama generation failed: no fallback model could produce output.")
 
 
 app = Flask(__name__, template_folder="templates")
@@ -2459,6 +2573,21 @@ def _get_vault_stats() -> dict:
     }
 
 
+def _parse_ollama_candidates(raw: str, valid_lines: set[str]) -> list[str]:
+    """Extract exact hook-worthy lines from Ollama output."""
+    candidates: list[str] = []
+    for line in raw.splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        text = re.sub(r'^\s*[\d]+[\).:-]*\s*', '', text)
+        if text.startswith(('•', '-', '*')):
+            text = text[1:].strip()
+        if text in valid_lines and text not in candidates:
+            candidates.append(text)
+    return candidates
+
+
 # ── Rhyme Grouper routes ───────────────────────────────────────────────────────
 
 @app.route("/rhymes")
@@ -2680,12 +2809,11 @@ def rhymes_suggest():
     if (not suggestions or use_ollama) and _OLLAMA_AVAILABLE:
         source = "ollama"
         try:
-            client = _OllamaClient()
             prompt = (
                 f"List 5 lyric lines from a songwriter's vault that rhyme with: "
                 f"'{word}'. Return only the lines, one per line."
             )
-            raw = client.generate(prompt)
+            raw = _generate_with_ollama_fallback(prompt)
             suggestions = [
                 ln.strip().lstrip("0123456789.-) ")
                 for ln in raw.strip().splitlines()
@@ -2698,6 +2826,77 @@ def rhymes_suggest():
         source = "none"
 
     return jsonify({"suggestions": suggestions, "source": source})
+
+
+@app.route("/rhymes/hook-candidates", methods=["POST"])
+def rhymes_hook_candidates():
+    """Use Ollama to mark unhooked vault lines as hook-worthy."""
+    _ensure_vault_schema()
+    if not _OLLAMA_AVAILABLE:
+        return jsonify({"error": "Ollama not available"}), 503
+
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT id, line FROM vault_lines WHERE is_hook = 0 ORDER BY line COLLATE NOCASE"
+        ).fetchall()
+
+    if not rows:
+        return jsonify({
+            "marked_ids": [],
+            "marked_lines": [],
+            "source": "none",
+            "message": "No unhooked lines available to score.",
+        })
+
+    lines = [row[1] for row in rows]
+    valid_lines = set(lines)
+    if len(lines) > _OLLAMA_HOOK_LINE_LIMIT:
+        lines = lines[:_OLLAMA_HOOK_LINE_LIMIT]
+        valid_lines = set(lines)
+        prompt_intro = (
+            f"You are a songwriting assistant. Here are the first {_OLLAMA_HOOK_LINE_LIMIT} unhooked lyric lines from a songwriter's vault:\n"
+        )
+    else:
+        prompt_intro = (
+            "You are a songwriting assistant. Here are lyric lines from a songwriter's vault:\n"
+        )
+
+    prompt = (
+        prompt_intro
+        + "\n".join(f"{index + 1}. {line}" for index, line in enumerate(lines))
+        + "\n\nIdentify only the lines that would make the strongest chorus hook. "
+        + "Return only the exact lines as they appear above, one per line, without explanation."
+    )
+
+    try:
+        raw = _generate_with_ollama_fallback(prompt, timeout=90.0)
+        candidates = _parse_ollama_candidates(str(raw), valid_lines)
+    except Exception as exc:
+        return jsonify({"error": f"Ollama error: {exc}"}), 503
+
+    marked_ids: list[int] = []
+    line_to_ids: dict[str, list[int]] = {}
+    for row_id, line in rows:
+        line_to_ids.setdefault(line, []).append(row_id)
+
+    for candidate in candidates:
+        marked_ids.extend(line_to_ids.get(candidate, []))
+
+    marked_ids = list(dict.fromkeys(marked_ids))
+    if marked_ids:
+        with get_connection() as conn:
+            conn.executemany(
+                "UPDATE vault_lines SET is_hook = 1 WHERE id = ?",
+                [(line_id,) for line_id in marked_ids],
+            )
+            conn.commit()
+
+    return jsonify({
+        "marked_ids": marked_ids,
+        "marked_lines": candidates,
+        "source": "ollama",
+        "message": f"Marked {len(marked_ids)} hook-worthy line(s).",
+    })
 
 
 @app.route("/rhymes/regroup", methods=["POST"])
@@ -2770,8 +2969,7 @@ def chord_sheet_parse():
     )
 
     try:
-        client_ollama = _OllamaClient()
-        llm_response = client_ollama.generate(prompt)
+        llm_response = _generate_with_ollama_fallback(prompt)
     except Exception as exc:
         return jsonify({"error": f"Ollama error: {exc}"}), 503
 
