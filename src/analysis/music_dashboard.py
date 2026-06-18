@@ -27,21 +27,84 @@ from analysis.rhyme_utils import build_suffix_map, get_phonetic_group, last_word
 CATALOG_ROOT = Path(__file__).resolve().parent.parent.parent / "catalog"
 
 # ── Ollama (optional) ─────────────────────────────────────────────────────────
+_OLLAMA_AVAILABLE = False
+_OLLAMA_BASE_URL = None
+_OLLAMA_MODEL = "llama3.3:70b"
+_OLLAMA_FALLBACK_MODEL_ORDER = ["llama3:70b", "llama3.1:8b"]
+_OLLAMA_HOOK_LINE_LIMIT = 30
 try:
     import os as _os
-    _ai_root = None
-    for _d in _os.listdir("f:\\"):
-        if "AI" in _d:
-            _ai_root = Path("f:\\") / _d
-            break
-    if _ai_root:
-        sys.path.insert(0, str(_ai_root))
-        from src.integrations.ollama.client import OllamaClient as _OllamaClient
-        _OLLAMA_AVAILABLE = True
-    else:
+    _workspace_root = None
+    _workspace_env = _os.environ.get("WORKSPACE_ROOT")
+    if _workspace_env:
+        _workspace_path = Path(_workspace_env)
+        if _workspace_path.is_dir():
+            _workspace_root = _workspace_path
+
+    if _workspace_root is None:
+        file_path = Path(__file__).resolve()
+        for parent in [file_path, *file_path.parents]:
+            candidate = parent / "⊕Workspace"
+            if candidate.is_dir():
+                _workspace_root = candidate
+                break
+            candidate = parent / "workspace"
+            if candidate.is_dir():
+                _workspace_root = candidate
+                break
+
+    if _workspace_root is None:
+        _drive_root = Path(__file__).resolve().anchor
+        for _entry in Path(_drive_root).iterdir():
+            if _entry.is_dir() and (
+                _entry.name == "⊕Workspace"
+                or _entry.name.endswith("Workspace")
+                or _entry.name.lower() == "workspace"
+            ):
+                _workspace_root = _entry
+                break
+
+    if _workspace_root is not None:
+        sys.path.insert(0, str(_workspace_root))
+
+    _OLLAMA_MODEL = _os.environ.get("OLLAMA_MODEL") or _OLLAMA_MODEL
+    from src.integrations.ollama.client import OllamaClient as _OllamaClient
+    try:
+        client = _OllamaClient(model=_OLLAMA_MODEL)
+        if client.health_check():
+            if client.ensure_model_available(_OLLAMA_MODEL):
+                _OLLAMA_AVAILABLE = True
+            else:
+                available_models: list[str] = []
+                try:
+                    available_models = [
+                        m.get("name") or m.get("model")
+                        for m in client.list_models()
+                    ]
+                except Exception:
+                    available_models = []
+
+                fallback_model: str | None = None
+                for candidate in available_models:
+                    if candidate and "70b" in candidate:
+                        fallback_model = candidate
+                        break
+                if fallback_model is None and available_models:
+                    fallback_model = available_models[0]
+
+                if fallback_model is not None:
+                    client = _OllamaClient(model=fallback_model)
+                    if client.ensure_model_available(fallback_model):
+                        _OLLAMA_MODEL = fallback_model
+                        _OLLAMA_AVAILABLE = True
+            if _OLLAMA_AVAILABLE:
+                _OLLAMA_BASE_URL = client.base_url
+    except Exception:
         _OLLAMA_AVAILABLE = False
-except Exception:
+        _OLLAMA_BASE_URL = None
+except Exception as exc:
     _OLLAMA_AVAILABLE = False
+    _OLLAMA_IMPORT_ERROR = exc
 
 # ── make_chord_sheet (optional) ───────────────────────────────────────────────
 try:
