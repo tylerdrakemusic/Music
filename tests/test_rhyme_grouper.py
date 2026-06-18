@@ -102,3 +102,90 @@ def test_stats_includes_hook_count(client):
     stats = res.get_json()
     assert stats["hook_lines"] == 1
     assert stats["total_lines"] >= 2
+
+
+def test_hook_candidate_auto_tags_unhooked_lines(client, monkeypatch):
+    client.post("/rhymes/lines", json={"line": "Strong chorus lifts the night", "is_hook": False})
+    client.post("/rhymes/lines", json={"line": "Soft bridge whispers out", "is_hook": False})
+
+    class FakeOllama:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def ensure_model_available(self, model=None):
+            return True
+
+        def generate(self, prompt, timeout=None, model=None):
+            return "Strong chorus lifts the night\n"
+
+    monkeypatch.setattr(dash_mod, "_OLLAMA_AVAILABLE", True)
+    monkeypatch.setattr(dash_mod, "_OllamaClient", FakeOllama, raising=False)
+
+    res = client.post("/rhymes/hook-candidates")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["marked_ids"]
+    assert "Strong chorus lifts the night" in data["marked_lines"]
+
+    stats = client.get("/rhymes/stats").get_json()
+    assert stats["hook_lines"] == 1
+
+
+def test_ollama_fallback_uses_available_model(client, monkeypatch):
+    class FallbackOllama:
+        def __init__(self, *args, **kwargs):
+            self.model = kwargs.get("model")
+
+        def list_models(self):
+            return [
+                {"name": "llama3.3:70b"},
+                {"name": "llama3:70b"},
+                {"name": "llama3.1:8b"},
+            ]
+
+        def generate(self, prompt, timeout=None):
+            if self.model == "llama3.3:70b":
+                raise Exception("model 'llama3.3:70b' not found")
+            if self.model == "llama3:70b":
+                raise Exception("model 'llama3:70b' not found")
+            return "Fallback success"
+
+    monkeypatch.setattr(dash_mod, "_OllamaClient", FallbackOllama, raising=False)
+
+    result = dash_mod._generate_with_ollama_fallback("Test prompt", timeout=5.0)
+    assert result == "Fallback success"
+
+
+def test_ollama_timeout_falls_back_to_smaller_model(client, monkeypatch):
+    class FallbackOllama:
+        def __init__(self, *args, **kwargs):
+            self.model = kwargs.get("model")
+
+        def list_models(self):
+            return [
+                {"name": "llama3.3:70b"},
+                {"name": "llama3:70b"},
+                {"name": "llama3.1:8b"},
+            ]
+
+        def generate(self, prompt, timeout=None):
+            if self.model == "llama3.3:70b":
+                raise Exception("timed out waiting for response")
+            if self.model == "llama3:70b":
+                raise Exception("model 'llama3:70b' not found")
+            return "Timeout fallback success"
+
+    monkeypatch.setattr(dash_mod, "_OllamaClient", FallbackOllama, raising=False)
+
+    result = dash_mod._generate_with_ollama_fallback("Test prompt", timeout=5.0)
+    assert result == "Timeout fallback success"
+
+
+def test_hook_candidate_returns_503_when_ollama_unavailable(client, monkeypatch):
+    client.post("/rhymes/lines", json={"line": "Lost in the verse", "is_hook": False})
+    monkeypatch.setattr(dash_mod, "_OLLAMA_AVAILABLE", False)
+
+    res = client.post("/rhymes/hook-candidates")
+    assert res.status_code == 503
+    data = res.get_json()
+    assert data["error"] == "Ollama not available"
