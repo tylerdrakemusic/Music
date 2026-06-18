@@ -672,6 +672,17 @@ def test_c_aeolian_all_positions_phrase_override(client, tmp_path, monkeypatch) 
     assert captured["phrase"] == "Start on the tonic root A and go up and down the G shape."
 
 
+def test_build_mode_phrase_dorian_uses_dorian_root_label() -> None:
+    import training.musician_training_ui as ui
+
+    pos = ui.SCALE_POSITIONS["C"][0]
+    phrase = ui.buildModePhrase(pos, "Dorian")
+
+    assert phrase.startswith("Start on the root of the Dorian scale")
+    assert "Dorian scale" in phrase
+    assert phrase.endswith("shape.")
+
+
 def test_instructor_audio_400_invalid_position(client) -> None:
     """Invalid position must return 400 (max 12 for C, 11 for G)."""
     resp = client.get("/api/instructor-audio?position=13")

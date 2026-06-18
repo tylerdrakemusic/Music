@@ -8,6 +8,7 @@ Scales & Arpeggios tab added in FR-20260517-guitar-trainer-scale-exercises.
 import argparse
 import json
 import os
+import re
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
@@ -126,6 +127,83 @@ def _append_log(
     )
     conn.commit()
     conn.close()
+
+
+def buildModePhrase(pos: dict, mode: str, key: str = "C") -> str:
+    """Build the instructor phrase for mode-based Dorian/Aeolian training."""
+    shape_name = pos.get("label", "")
+    shape_name = re.sub(r"^Position \d+ — ", "", shape_name)
+    shape_name = re.sub(r"\s*\([^)]*\)$", "", shape_name)
+    shape_name = re.sub(r"\s*shape\s*$", "", shape_name, flags=re.IGNORECASE).strip()
+    shape_name = re.sub(r"([A-G])#", r"\1 sharp", shape_name)
+    shape_name = re.sub(r"([A-G])b", r"\1 flat", shape_name)
+
+    key_pc_map = {
+        "C": 0,
+        "Db": 1,
+        "C#": 1,
+        "D": 2,
+        "Eb": 3,
+        "D#": 3,
+        "E": 4,
+        "F": 5,
+        "F#": 6,
+        "Gb": 6,
+        "G": 7,
+        "Ab": 8,
+        "G#": 8,
+        "A": 9,
+        "Bb": 10,
+        "A#": 10,
+        "B": 11,
+    }
+    mode_root_offsets = {
+        "Ionian": 0,
+        "Dorian": 2,
+        "Phrygian": 4,
+        "Lydian": 5,
+        "Mixolydian": 7,
+        "Aeolian": 9,
+        "Locrian": 11,
+    }
+    root_pc = (key_pc_map.get(key, 0) + mode_root_offsets.get(mode, 0)) % 12
+    note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    flat_note_names = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
+    raw_tonic_name = flat_note_names[root_pc] if key in {"F", "Bb", "Eb", "Ab", "Db", "Gb"} else note_names[root_pc]
+    tonic_name = re.sub(r"^([A-G])#$", r"\1 sharp", raw_tonic_name)
+    tonic_name = re.sub(r"^([A-G])b$", r"\1 flat", tonic_name)
+
+    tonic = None
+    notes = pos.get("notes", [])
+    for note in notes:
+        if note.get("midi", -1) % 12 == root_pc:
+            if tonic is None or note.get("midi", 0) < tonic.get("midi", 0):
+                tonic = note
+
+    tonic_location = ""
+    if tonic is not None:
+        string_names = {1: "high e", 2: "B", 3: "G", 4: "D", 5: "A", 6: "low E"}
+        string_name = string_names.get(tonic.get("string", 0), "unknown")
+        if tonic.get("fret", 0) == 0:
+            tonic_location = f"on the open {string_name} string"
+        else:
+            tonic_location = f"on the {string_name} string at fret {tonic.get('fret', 0)}"
+
+    root_label = (
+        "tonic root"
+        if mode == "Ionian"
+        else "root of the Dorian scale"
+        if mode == "Dorian"
+        else "root of the Aeolian scale"
+        if mode == "Aeolian"
+        else "root"
+    )
+    phrase = f"Start on the {root_label} {tonic_name}"
+    if tonic_location:
+        phrase += f", {tonic_location}"
+    if shape_name:
+        phrase += f" and go up and down the {shape_name} shape."
+    return phrase.strip()
 
 
 # ---------------------------------------------------------------------------
@@ -858,22 +936,37 @@ async function createSession() {
     return tonicNotes.reduce((best, note) => note.midi < best.midi ? note : best, tonicNotes[0]);
   }
 
-  function buildAeolianPhrase(pos) {
-    let shapeName = pos.label.replace(/^Position \d+ — /, '').replace(/\s*\([^)]*\)$/, '');
-    shapeName = shapeName.replace(/\s*shape\s*$/i, '').trim();
-    shapeName = shapeName.replace(/([A-G])#/g, '$1 sharp').replace(/([A-G])b/g, '$1 flat');
-    const tonic = findTonicStart(pos, 'Aeolian');
+  function buildModePhrase(pos, mode) {
+    const shapeName = pos.label.replace(/^Position \d+ — /, '').replace(/\s*\([^)]*\)$/, '')
+      .replace(/\s*shape\s*$/i, '')
+      .trim()
+      .replace(/([A-G])#/g, '$1 sharp')
+      .replace(/([A-G])b/g, '$1 flat');
+    const tonic = findTonicStart(pos, mode);
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
-    const modeRootPc = findModeRootPitchClass(_currentKey, 'Aeolian');
-    const rawTonicName = noteNames[modeRootPc] || 'A';
+    const modeRootPc = findModeRootPitchClass(_currentKey, mode);
+    const rawTonicName = noteNames[modeRootPc] || 'D';
     const tonicName = rawTonicName.replace(/^([A-G])#$/, '$1 sharp').replace(/^([A-G])b$/, '$1 flat');
     const stringNames = {1: 'high e', 2: 'B', 3: 'G', 4: 'D', 5: 'A', 6: 'low E'};
-    const tonicLocation = tonic
-      ? `on the ${stringNames[tonic.string] || 'unknown'} string at fret ${tonic.fret}`
-      : '';
-    let phrase = `Start on the tonic root ${tonicName}`;
+    let tonicLocation = '';
+    if (tonic) {
+      const stringName = stringNames[tonic.string] || 'unknown';
+      if (tonic.fret === 0) {
+        tonicLocation = `on the open ${stringName} string`;
+      } else {
+        tonicLocation = `on the ${stringName} string at fret ${tonic.fret}`;
+      }
+    }
+    const rootLabel = mode === 'Ionian'
+      ? 'tonic root'
+      : mode === 'Dorian'
+        ? 'root of the Dorian scale'
+        : mode === 'Aeolian'
+          ? 'root of the Aeolian scale'
+          : 'root';
+    let phrase = `Start on the ${rootLabel} ${tonicName}`;
     if (tonicLocation) {
-      phrase += ` ${tonicLocation}`;
+      phrase += `, ${tonicLocation}`;
     }
     if (shapeName) {
       phrase += ` and go up and down the ${shapeName} shape.`;
@@ -886,13 +979,13 @@ async function createSession() {
     const pos = _positions[_currentPos];
     if (!pos) return;
     let phrase = pos.instructor_phrase;
-    if (_currentMode === 'Aeolian') {
-      phrase = buildAeolianPhrase(pos);
+    if (_currentMode === 'Aeolian' || _currentMode === 'Dorian') {
+      phrase = buildModePhrase(pos, _currentMode);
     }
     // Load instructor audio — include phrase as cache-buster so URL changes when phrase changes
     const audio = document.getElementById('instructor-audio');
     audio.onerror = () => {};
-    audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}&p=${encodeURIComponent(phrase)}`;
+    audio.src = `/api/instructor-audio?position=${_currentPos + 1}&key=${encodeURIComponent(_currentKey)}&mode=${encodeURIComponent(_currentMode)}&p=${encodeURIComponent(phrase)}`;
     audio.load();
     audio.play().catch(() => {});
     drawFretboard(pos.notes, -1);
@@ -948,6 +1041,7 @@ async function createSession() {
     third: '#fb5607',
     fifth: '#00e5cc',
     minor_third: '#fb5607',
+    major_sixth: '#ffd166',
     leading: '#00b4d8',
     other: '#555555',
   };
@@ -956,6 +1050,7 @@ async function createSession() {
     third: '#ffffff',
     fifth: '#000000',
     minor_third: '#ffffff',
+    major_sixth: '#000000',
     leading: '#ffffff',
     other: '#ffffff',
   };
@@ -964,12 +1059,20 @@ async function createSession() {
     third: '#000000',
     fifth: '#000000',
     minor_third: '#000000',
+    major_sixth: '#000000',
     leading: '#000000',
     other: '#333333',
   };
   const PLAYING_COLOR = '#ffe066';
 
   function getDotTypeForMode(interval, key, mode) {
+    if (mode === 'Dorian') {
+      if (interval === 0) return 'root';
+      if (interval === 3) return 'minor_third';
+      if (interval === 7) return 'fifth';
+      if (interval === 9) return 'major_sixth';
+      return 'other';
+    }
     if (mode === 'Aeolian') {
       const aeolianRootPc = findModeRootPitchClass(key, mode);
       const aeolianInterval = (interval + 12) % 12;
@@ -1053,8 +1156,8 @@ async function createSession() {
     Aeolian:    [0, 2, 3, 5, 7, 8, 10, 12],
     Locrian:    [0, 1, 3, 5, 6, 8, 10, 12],
   };
-  const STAFF_COLORS = { root: '#ff0080', third: '#fb5607', fifth: '#00e5cc', other: '#555555' };
-  const STAFF_TEXT   = { root: '#fff',    third: '#fff',    fifth: '#000',    other: '#fff'    };
+  const STAFF_COLORS = { root: '#ff0080', third: '#fb5607', minor_third: '#fb5607', fifth: '#00e5cc', major_sixth: '#ffd166', other: '#555555' };
+  const STAFF_TEXT   = { root: '#fff',    third: '#fff',    minor_third: '#fff',    fifth: '#000',    major_sixth: '#000',    other: '#fff'    };
   // Key signature accidental counts (positive = sharps, negative = flats)
   const KEY_SIGS = { C: 0, Db: -5, D: 2, Eb: -3, E: 4, F: -1, 'F#': 6, G: 1, Ab: -4, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
   const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
@@ -1139,15 +1242,21 @@ async function createSession() {
       const noteY    = baseY - idx * 5;
       const noteX    = noteXStart + idx * noteXSpacing;
       const degInterval = (pc - modeRootPc + 12) % 12;
-      const colorKey = mode === 'Aeolian'
+      const colorKey = mode === 'Dorian'
         ? degInterval === 0 ? 'root'
-          : degInterval === 3 ? 'third'
+          : degInterval === 3 ? 'minor_third'
           : degInterval === 7 ? 'fifth'
+          : degInterval === 9 ? 'major_sixth'
           : 'other'
-        : degInterval === 0 ? 'root'
-          : degInterval === 4 ? 'third'
-          : degInterval === 7 ? 'fifth'
-          : 'other';
+        : mode === 'Aeolian'
+          ? degInterval === 0 ? 'root'
+            : degInterval === 3 ? 'minor_third'
+            : degInterval === 7 ? 'fifth'
+            : 'other'
+          : degInterval === 0 ? 'root'
+            : degInterval === 4 ? 'third'
+            : degInterval === 7 ? 'fifth'
+            : 'other';
       const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
       const noteFill  = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
       const textFill  = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
@@ -1170,14 +1279,26 @@ async function createSession() {
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  async function playNote(midi, durationMs) {
+  function getDorianAccentType(midi) {
+    if (_currentMode !== 'Dorian') return 'normal';
+    const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
+    const interval = (midi % 12 - rootPc + 12) % 12;
+    if (interval === 0) return 'root';
+    if (interval === 3) return 'minor_third';
+    if (interval === 9) return 'major_sixth';
+    return 'normal';
+  }
+
+  async function playNote(midi, durationMs, accentType = 'normal') {
     const ctx = getAudioCtx();
     if (ctx.state === 'suspended') await ctx.resume();
     const freq = {{ freq_table | tojson }}[midi];
     if (!freq) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'sine';
+    osc.type = accentType === 'root' || accentType === 'minor_third' || accentType === 'major_sixth'
+      ? 'triangle'
+      : 'sine';
     osc.frequency.value = freq;
     const now = ctx.currentTime;
     gain.gain.setValueAtTime(0, now);
@@ -1207,7 +1328,8 @@ async function createSession() {
         status.textContent = `Rep ${rep + 1}/${reps} — note ${i + 1}/${sequence.length}`;
         drawFretboard(pos.notes, allAsc.indexOf(sequence[i]));
         drawStaves(_currentKey, _currentMode, sequence[i].midi);
-        await playNote(sequence[i].midi, noteDurationMs * 0.85);
+        const accentType = getDorianAccentType(sequence[i].midi);
+        await playNote(sequence[i].midi, noteDurationMs * 0.85, accentType);
         await sleep(noteDurationMs);
       }
     }

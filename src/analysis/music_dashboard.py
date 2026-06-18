@@ -103,6 +103,12 @@ try:
     except Exception:
         _OLLAMA_AVAILABLE = False
         _OLLAMA_BASE_URL = None
+except Exception as exc:
+    _OLLAMA_AVAILABLE = False
+    _OLLAMA_IMPORT_ERROR = exc
+
+# ── make_chord_sheet (optional) ───────────────────────────────────────────────
+try:
     _CHORD_SHEET_TOOLS_DIR = Path(__file__).resolve().parents[2] / "tools"
     if str(_CHORD_SHEET_TOOLS_DIR) not in sys.path:
         sys.path.insert(0, str(_CHORD_SHEET_TOOLS_DIR))
