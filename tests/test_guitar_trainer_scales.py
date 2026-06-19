@@ -683,6 +683,38 @@ def test_build_mode_phrase_dorian_uses_dorian_root_label() -> None:
     assert phrase.endswith("shape.")
 
 
+def test_build_mode_phrase_dorian_all_major_keys() -> None:
+    import training.musician_training_ui as ui
+
+    keys = ["C", "G", "F", "D", "Bb", "B", "E", "F#", "Db", "A", "Ab", "Eb"]
+    for key in keys:
+        pos = ui.SCALE_POSITIONS[key][0]
+        phrase = ui.buildModePhrase(pos, "Dorian", key)
+
+        assert phrase.startswith("Start on the root of the Dorian scale"), f"{key}: {phrase}"
+        assert "Dorian scale" in phrase, f"{key}: {phrase}"
+        assert phrase.endswith("shape."), f"{key}: {phrase}"
+
+
+def test_scale_log_g_dorian_insert(client, mem_conn) -> None:
+    """POST /api/scale-log must save Dorian sessions with a non-C key."""
+    resp = client.post(
+        "/api/scale-log",
+        data=json.dumps({"scale": "G_dorian", "position": 2, "bpm": 90, "reps": 3, "key": "G", "mode": "Dorian"}),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    j = resp.get_json()
+    assert j["ok"] is True
+
+    row = mem_conn.execute("SELECT * FROM scale_practice_log").fetchone()
+    assert row is not None
+    assert row["key"] == "G"
+    assert row["mode"] == "Dorian"
+    assert row["scale"] == "G_dorian"
+    assert row["position"] == 2
+
+
 def test_instructor_audio_400_invalid_position(client) -> None:
     """Invalid position must return 400 (max 12 for C, 11 for G)."""
     resp = client.get("/api/instructor-audio?position=13")
