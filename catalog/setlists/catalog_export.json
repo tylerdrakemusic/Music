@@ -1,6 +1,6 @@
 {
-  "exported_at": "2026-06-20T01:49:20.778233+00:00",
-  "count": 56,
+  "exported_at": "2026-06-20T01:56:39.800743+00:00",
+  "count": 55,
   "songs": [
     {
       "id": 26,
@@ -706,22 +706,6 @@
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Tom%20Petty%20-%20Breakdown.docx"
       ],
       "audio_url": "file:///G:/Muzic/Breakdown%20-%20Tom%20Petty%20and%20the%20Heartbreakers.m4a"
-    },
-    {
-      "id": 42,
-      "title": "Fly Away",
-      "artist": "Tyler Drake",
-      "key": "C",
-      "bpm": 105,
-      "bpm_source": "librosa",
-      "genre": null,
-      "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/originals/Fly%20Away.pdf",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/originals/Tyler%20James%20Drake%20-%20Fly%20Away%20%28Key%20C%29.docx",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/originals/Tyler%20James%20Drake%20-%20Fly%20Away.docx",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/originals/Fly%20Away.docx"
-      ],
-      "audio_url": "file:///G:/Muzic/Fly%20Away%20-%20Tyler%20James%20Drake%20%28Rough%20Bass%20Drums%29.mp3"
     },
     {
       "id": 33,
