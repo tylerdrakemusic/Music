@@ -1279,6 +1279,8 @@ def _serve_mode(host: str = "127.0.0.1", port: int = 8765) -> None:
                     self._json({"status": "ok", "path": str(new_path), "mode": mode})
                 except Exception as exc:
                     self._json({"error": str(exc)}, 500)
+            elif path == "/health":
+                self._json({"status": "ok", "ready": True})
             else:
                 self.send_error(404)
 

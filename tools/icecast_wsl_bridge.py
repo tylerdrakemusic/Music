@@ -57,6 +57,11 @@ def stream() -> Response:
     return Response(generate(), mimetype="audio/mpeg")
 
 
+@app.route("/health")
+def health() -> Response:
+    return Response(json.dumps({"status": "ok", "ready": True}), status=200, mimetype="application/json")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Bridge WSL Icecast to local Windows HTTP")
     parser.add_argument("--port", type=int, default=18000)
