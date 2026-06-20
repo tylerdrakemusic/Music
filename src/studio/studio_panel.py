@@ -79,6 +79,11 @@ def favicon_hyperthreat():
     )
 
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "ready": True})
+
+
 @app.route("/brand/personal.ico")
 def brand_personal_ico():
     """Tyler personal brand icon for use in <img> tags."""

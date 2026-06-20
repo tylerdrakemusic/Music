@@ -1974,6 +1974,11 @@ def index():
     return render_template_string(DASHBOARD_HTML)
 
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "ready": True})
+
+
 @app.route("/api/albums")
 def api_albums():
     with get_connection() as conn:
