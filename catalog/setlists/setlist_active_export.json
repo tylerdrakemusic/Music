@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-05-31T17:38:03.056696+00:00",
+  "exported_at": "2026-06-20T02:24:40.859221+00:00",
   "setlist": {
     "id": 1,
     "name": "Copper Creek Prost 5/2/26",
@@ -41,11 +41,11 @@
       "title": "I'm Alright",
       "artist": "Kenny Loggins",
       "key": "D",
-      "bpm": null,
+      "bpm": 162,
       "bpm_source": "unknown",
       "catalog_id": 3,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/I%27m%20Alright%20-%20Kenny%20Loggins.mp3",
       "catalog_warning": false
     },
     {
@@ -106,11 +106,11 @@
       "title": "Shaded Jade",
       "artist": "Tamala Cameron & Gene Ngo",
       "key": "Bm",
-      "bpm": null,
-      "bpm_source": "unknown",
+      "bpm": 129,
+      "bpm_source": "librosa",
       "catalog_id": 8,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/Shaded%20Jade%20-%20Tamala%20Cameron%20and%20Gene%20Ngo.mp3",
       "catalog_warning": false
     },
     {
@@ -236,11 +236,11 @@
       "title": "Celebrate",
       "artist": "Kool & the Gang",
       "key": "Ab",
-      "bpm": null,
-      "bpm_source": "unknown",
+      "bpm": 123,
+      "bpm_source": "librosa",
       "catalog_id": 18,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/Celebration%20-%20Kool%20and%20The%20Gang.mp3",
       "catalog_warning": false
     },
     {
@@ -366,11 +366,11 @@
       "title": "Play That Funky Music",
       "artist": "Wild Cherry",
       "key": "Em",
-      "bpm": null,
-      "bpm_source": "unknown",
+      "bpm": 110,
+      "bpm_source": "librosa",
       "catalog_id": 28,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/Play%20That%20Funky%20Music%20-%20Wild%20Cherry.mp3",
       "catalog_warning": false
     },
     {
@@ -379,11 +379,11 @@
       "title": "On the Dark Side",
       "artist": "John Cafferty",
       "key": "E",
-      "bpm": null,
+      "bpm": 162,
       "bpm_source": "unknown",
       "catalog_id": 29,
       "notes": null,
-      "audio_url": null,
+      "audio_url": "file:///G:/Muzic/On%20the%20Darkside%20-%20John%20Cafferty.mp3",
       "catalog_warning": false
     },
     {
