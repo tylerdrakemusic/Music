@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-06-20T01:56:39.800743+00:00",
+  "exported_at": "2026-06-20T02:05:18.432702+00:00",
   "setlist": {
     "id": 1,
     "name": "Copper Creek Prost 5/2/26",
@@ -71,7 +71,7 @@
       "bpm_source": "librosa",
       "catalog_id": 5,
       "notes": null,
-      "audio_url": "file:///G:/Muzic/Rhiannon%20-%20Fleetwood%20Mac.m4a",
+      "audio_url": "file:///G:/Muzic/Rhiannon%20-%20Fleetwood%20Mac%20%28in%20Bm%29.wav",
       "catalog_warning": false
     },
     {
