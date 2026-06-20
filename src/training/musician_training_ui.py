@@ -1478,6 +1478,11 @@ def index():
     return render_template_string(HTML, sessions=sessions, log=log, freq_table=MIDI_TO_FREQ, stats=stats)
 
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "ready": True})
+
+
 @app.route("/save", methods=["POST"])
 def save():
     data = request.get_json(force=True)
