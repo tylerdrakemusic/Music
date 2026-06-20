@@ -1,6 +1,6 @@
 {
-  "exported_at": "2026-06-20T01:37:33.416910+00:00",
-  "count": 55,
+  "exported_at": "2026-06-20T01:49:20.778233+00:00",
+  "count": 56,
   "songs": [
     {
       "id": 26,
@@ -89,8 +89,8 @@
       "title": "Livin' On A Prayer",
       "artist": "Bon Jovi",
       "key": "Em",
-      "bpm": null,
-      "bpm_source": "unknown",
+      "bpm": 123,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Bon%20Jovi%20-%20Livin%20on%20a%20Prayer.docx"
@@ -128,8 +128,8 @@
       "title": "You're So Vain",
       "artist": "Carly Simon",
       "key": "Am",
-      "bpm": null,
-      "bpm_source": "unknown",
+      "bpm": 123,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Carly%20Simon%20-%20Youre%20So%20Vain.docx"
@@ -401,6 +401,19 @@
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Kenny%20Wayne%20Shepherd%20-%20Blue%20on%20Black%20%28in%20C%29.docx"
       ],
       "audio_url": "file:///G:/Muzic/Blue%20On%20Black%20-%20Kenny%20Wayne%20Shepherd.mp3"
+    },
+    {
+      "id": 58,
+      "title": "Talk Me Into It",
+      "artist": "Kevin Redmond",
+      "key": "?",
+      "bpm": 112,
+      "bpm_source": "librosa",
+      "genre": null,
+      "sheet_music": [
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Kevin%20Redmond%20-%20Talk%20Me%20Into%20It.docx"
+      ],
+      "audio_url": "file:///G:/Muzic/Talk%20Me%20Into%20It%20-%20Kevin%20Redmond.mp3"
     },
     {
       "id": 18,
