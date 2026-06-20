@@ -1,6 +1,6 @@
 {
-  "exported_at": "2026-05-31T17:38:03.056696+00:00",
-  "count": 56,
+  "exported_at": "2026-06-20T02:24:40.859221+00:00",
+  "count": 55,
   "songs": [
     {
       "id": 26,
@@ -16,7 +16,7 @@
       "audio_url": "file:///G:/Muzic/Heavy%20Chevy%20-%20Alabama%20Shakes%20%282%29.mp3"
     },
     {
-      "id": 130,
+      "id": 55,
       "title": "Chain of Fools",
       "artist": "Aretha Franklin",
       "key": "Cm",
@@ -46,12 +46,12 @@
       "audio_url": "file:///G:/Muzic/Pick%20Up%20the%20Pieces%20-%20Average%20White%20Band.mp3"
     },
     {
-      "id": 120,
+      "id": 45,
       "title": "Love Shack",
       "artist": "B-52's",
       "key": "C",
-      "bpm": 134,
-      "bpm_source": "website",
+      "bpm": 133,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/The%20B-52s%20-%20Love%20Shack.docx"
@@ -59,12 +59,12 @@
       "audio_url": "file:///G:/Muzic/Love%20Shack%20-%20The%20B-52%27s.mp3"
     },
     {
-      "id": 126,
+      "id": 51,
       "title": "Thrill Is Gone",
       "artist": "BB King",
       "key": "Bm",
-      "bpm": 90,
-      "bpm_source": "website",
+      "bpm": 89,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/B.B.%20King%20-%20The%20Thrill%20Is%20Gone.docx"
@@ -85,12 +85,12 @@
       "audio_url": "file:///G:/Muzic/Call%20Me%20-%20Blondie.mp3"
     },
     {
-      "id": 119,
+      "id": 44,
       "title": "Livin' On A Prayer",
       "artist": "Bon Jovi",
       "key": "Em",
       "bpm": 123,
-      "bpm_source": "website",
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Bon%20Jovi%20-%20Livin%20on%20a%20Prayer.docx"
@@ -111,25 +111,25 @@
       "audio_url": "file:///G:/Muzic/Love%20Sneakin%27%20Up%20On%20You%20-%20Bonnie%20Raitt.mp3"
     },
     {
-      "id": 131,
+      "id": 56,
       "title": "Something To Talk About",
       "artist": "Bonnie Raitt",
       "key": "Ab",
       "bpm": 103,
-      "bpm_source": "librosa",
+      "bpm_source": "website",
       "genre": null,
       "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Bonnie%20Raitt%20-%20Something%20To%20Talk%20About.docx"
+        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Bonnie%20Raitt%20-%20Something%20To%20Talk%20About%20%28Key%20Ab%29.docx"
       ],
       "audio_url": "file:///G:/Muzic/Bonnie%20Rait%20-%20Something%20To%20Talk%20About.mp3"
     },
     {
-      "id": 129,
+      "id": 54,
       "title": "You're So Vain",
       "artist": "Carly Simon",
       "key": "Am",
-      "bpm": 106,
-      "bpm_source": "website",
+      "bpm": 123,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Carly%20Simon%20-%20Youre%20So%20Vain.docx"
@@ -150,12 +150,12 @@
       "audio_url": "file:///G:/Muzic/I%20Feel%20the%20Earth%20Move%20-%20Carole%20King.mp3"
     },
     {
-      "id": 121,
+      "id": 46,
       "title": "Natural Woman",
       "artist": "Carole King",
       "key": "Bb",
-      "bpm": 111,
-      "bpm_source": "website",
+      "bpm": 112,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Carole%20King%20-%20Natural%20Woman%20%28in%20Bb%29.docx"
@@ -176,26 +176,12 @@
       "audio_url": "file:///G:/Muzic/25%20or%206%20to%204%20-%20Chicago.mp3"
     },
     {
-      "id": 127,
-      "title": "Wicked Games",
-      "artist": "Chris Isaak",
-      "key": "Bm",
-      "bpm": 112,
-      "bpm_source": "website",
-      "genre": null,
-      "sheet_music": [
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Chris%20Isaak%20-%20Wicked%20Games%20%28Key%20Bm%29.docx",
-        "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Wicked%20Games%20%28Key%20Bm%29.pdf"
-      ],
-      "audio_url": null
-    },
-    {
-      "id": 116,
+      "id": 41,
       "title": "Change The World",
       "artist": "Eric Clapton",
       "key": "A",
-      "bpm": 97,
-      "bpm_source": "website",
+      "bpm": 98,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Eric%20Clapton%20-%20Change%20the%20World.docx"
@@ -203,12 +189,12 @@
       "audio_url": "file:///G:/Muzic/Change%20the%20World%20-%20Eric%20Clapton.m4a"
     },
     {
-      "id": 128,
+      "id": 53,
       "title": "Wonderful Tonight",
       "artist": "Eric Clapton",
       "key": "G",
-      "bpm": 95,
-      "bpm_source": "website",
+      "bpm": 96,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Eric%20Clapton%20-%20Wonderful%20Tonight.docx"
@@ -322,12 +308,12 @@
       "audio_url": "file:///G:/Muzic/Jacky%20-%20Jim%20Mann%20%281-7-24%29.mp3"
     },
     {
-      "id": 118,
+      "id": 43,
       "title": "Josie",
       "artist": "Jim Mann",
       "key": "E",
-      "bpm": 122,
-      "bpm_source": "website",
+      "bpm": 120,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Steely%20Dan%20-%20Josie%20%28Brass%29.pdf",
@@ -351,38 +337,38 @@
       "audio_url": "file:///G:/Muzic/The%20Letter%20-%20Joe%20Cocker%20%28Live%29.mp3"
     },
     {
-      "id": 122,
+      "id": 47,
       "title": "Rocky Mountain Way",
       "artist": "Joe Walsh",
       "key": "E",
       "bpm": 86,
-      "bpm_source": "website",
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Joe%20Walsh%20-%20Rocky%20Mountain%20Way.docx"
       ],
-      "audio_url": "file:///G:/Muzic/Rocky%20Mountain%20Way%20-%20Joe%20Walsh.mp3"
+      "audio_url": "file:///G:/Muzic/Rocky%20Mountain%20Way%20-%20Joe%20Walsh.m4a"
     },
     {
       "id": 29,
       "title": "On the Dark Side",
       "artist": "John Cafferty",
       "key": "E",
-      "bpm": null,
+      "bpm": 162,
       "bpm_source": "unknown",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/John%20Cafferty%20-%20On%20the%20Dark%20Side.docx"
       ],
-      "audio_url": null
+      "audio_url": "file:///G:/Muzic/On%20the%20Darkside%20-%20John%20Cafferty.mp3"
     },
     {
-      "id": 123,
+      "id": 48,
       "title": "Separate Ways",
       "artist": "Journey",
       "key": "Em",
-      "bpm": 131,
-      "bpm_source": "website",
+      "bpm": 133,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Journey%20-%20Separate%20Ways%20%28Chords%20Lyrics%29.pdf",
@@ -395,13 +381,13 @@
       "title": "I'm Alright",
       "artist": "Kenny Loggins",
       "key": "D",
-      "bpm": null,
+      "bpm": 162,
       "bpm_source": "unknown",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Kenny%20Loggins%20-%20Im%20Alright.docx"
       ],
-      "audio_url": null
+      "audio_url": "file:///G:/Muzic/I%27m%20Alright%20-%20Kenny%20Loggins.mp3"
     },
     {
       "id": 36,
@@ -417,12 +403,12 @@
       "audio_url": "file:///G:/Muzic/Blue%20On%20Black%20-%20Kenny%20Wayne%20Shepherd.mp3"
     },
     {
-      "id": 83,
+      "id": 58,
       "title": "Talk Me Into It",
       "artist": "Kevin Redmond",
       "key": "G",
       "bpm": 112,
-      "bpm_source": null,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Kevin%20Redmond%20-%20Talk%20Me%20Into%20It.docx"
@@ -434,21 +420,21 @@
       "title": "Celebrate",
       "artist": "Kool & the Gang",
       "key": "Ab",
-      "bpm": null,
-      "bpm_source": "unknown",
+      "bpm": 123,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Kool%20%26%20the%20Gang%20-%20Celebrate.docx"
       ],
-      "audio_url": null
+      "audio_url": "file:///G:/Muzic/Celebration%20-%20Kool%20and%20The%20Gang.mp3"
     },
     {
-      "id": 124,
+      "id": 49,
       "title": "Sweet Home Alabama",
       "artist": "Lynyrd Skynyrd",
       "key": "G",
-      "bpm": 100,
-      "bpm_source": "website",
+      "bpm": 98,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Lynyrd%20Skynyrd%20-%20Sweet%20Home%20Alabama%20%28Key%20G%29.docx"
@@ -632,13 +618,13 @@
       "title": "Shaded Jade",
       "artist": "Tamala Cameron & Gene Ngo",
       "key": "Bm",
-      "bpm": null,
-      "bpm_source": "unknown",
+      "bpm": 129,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Tamala%20Cameron%20%26%20Gene%20Ngo%20-%20Shaded%20Jade.docx"
       ],
-      "audio_url": null
+      "audio_url": "file:///G:/Muzic/Shaded%20Jade%20-%20Tamala%20Cameron%20and%20Gene%20Ngo.mp3"
     },
     {
       "id": 6,
@@ -654,12 +640,12 @@
       "audio_url": "file:///G:/Muzic/Gold%20On%20the%20Ceiling%20-%20The%20Black%20Keys.mp3"
     },
     {
-      "id": 125,
+      "id": 50,
       "title": "Tequila",
       "artist": "The Champs",
       "key": "F",
-      "bpm": 90,
-      "bpm_source": "website",
+      "bpm": 178,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Tequila.docx"
@@ -709,12 +695,12 @@
       "audio_url": "file:///G:/Muzic/Disco%20Inferno%20-%20Tina%20Turner%20%28Live%29.mp3"
     },
     {
-      "id": 115,
+      "id": 40,
       "title": "Breakdown",
       "artist": "Tom Petty",
       "key": "Am",
-      "bpm": 114,
-      "bpm_source": "website",
+      "bpm": 112,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Tom%20Petty%20-%20Breakdown.docx"
@@ -739,14 +725,14 @@
       "title": "Play That Funky Music",
       "artist": "Wild Cherry",
       "key": "Em",
-      "bpm": null,
-      "bpm_source": "unknown",
+      "bpm": 110,
+      "bpm_source": "librosa",
       "genre": null,
       "sheet_music": [
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Wild%20Cherry%20-%20Play%20That%20Funky%20Music%20%28Alt%20Ending%29.docx",
         "file:///f:/%E2%9D%A4Music/catalog/sheet_music/covers/Wild%20Cherry%20-%20Play%20That%20Funky%20Music.pdf"
       ],
-      "audio_url": null
+      "audio_url": "file:///G:/Muzic/Play%20That%20Funky%20Music%20-%20Wild%20Cherry.mp3"
     }
   ]
 }
