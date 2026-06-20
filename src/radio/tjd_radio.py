@@ -1066,6 +1066,11 @@ def index():
     return render_template_string(WEB_PLAYER_HTML)
 
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "ready": True})
+
+
 @app.route("/stream")
 def stream():
     """MP3 audio stream endpoint — each connection gets a listener buffer."""
