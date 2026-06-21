@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hyperthreat Studios — Mic Configuration</title>
+<title>Hyperthreat Studios — Signal Tracking</title>
 <style>
   :root {
     --border: #000;
@@ -23,10 +23,11 @@
   }
 
   .sheet {
-    width: 7.5in;            /* letter 8.5in - 0.5in margins */
+    width: 7.35in;            /* letter 8.5in - 0.5in margins */
     margin: 0 auto;
     padding: 0;
     page-break-after: always;
+    page-break-inside: avoid;
   }
   .sheet:last-of-type { page-break-after: auto; }
 
@@ -35,15 +36,15 @@
   header.brand {
     display: flex;
     align-items: center;
-    gap: 0.25in;
-    border-bottom: 2px solid var(--border);
-    padding-bottom: 0.12in;
-    margin-bottom: 0.18in;
+    gap: 0.18in;
+    border-bottom: 1.5px solid var(--border);
+    padding-bottom: 0.08in;
+    margin-bottom: 0.12in;
   }
 
   header.brand .logo-wrap {
-    width: 0.85in;
-    height: 0.85in;
+    width: 0.72in;
+    height: 0.72in;
     flex: 0 0 auto;
     display: flex;
     align-items: center;
@@ -58,17 +59,39 @@
 
   header.brand .title-block { flex: 1; }
   header.brand h1 {
-    font-size: 22pt;
+    font-size: 18pt;
     font-weight: 700;
     margin: 0;
     letter-spacing: 0.02em;
   }
   header.brand .subtitle {
-    font-size: 11pt;
-    margin-top: 2px;
+    font-size: 9.5pt;
+    margin-top: 1px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #222;
+  }
+  header.brand .instructions {
+    font-size: 8.5pt;
+    margin-top: 0.08in;
+    color: #444;
+    max-width: 26rem;
+    line-height: 1.3;
+  }
+  .print-button {
+    margin-left: auto;
+    padding: 0.18em 0.45em;
+    border: 1px solid #333;
+    background: #fff;
+    color: #111;
+    font-size: 9pt;
+    font-weight: 700;
+    border-radius: 0.2rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .print-button:hover {
+    background: #f3f3f3;
   }
 
   /* swap logos for screen vs print */
@@ -88,22 +111,24 @@
   }
   table.mic-grid thead th {
     background: var(--header-bg);
-    font-size: 11pt;
+    font-size: 10pt;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    height: 0.30in;
+    height: 0.28in;
     text-align: center;
     border-bottom: 2px solid var(--border);
+    padding: 0.05in 0.04in;
   }
   table.mic-grid col.col-mic        { width: 12%; }
-  table.mic-grid col.col-instrument { width: 22%; }
+  table.mic-grid col.col-instrument { width: 24%; }
   table.mic-grid col.col-wall       { width: 22%; }
-  table.mic-grid col.col-stud       { width: 44%; }
+  table.mic-grid col.col-stud       { width: 42%; }
 
   table.mic-grid td {
-    height: 0.35in;
-    font-size: 13pt;
+    height: 0.30in;
+    font-size: 11pt;
+    padding: 0 0.08in;
   }
   table.mic-grid td.mic-num {
     text-align: right;
@@ -111,8 +136,120 @@
     padding-right: 0.12in;
     background: #fafafa;
   }
+  .editable-cell {
+    outline: none;
+    min-width: 100%;
+    cursor: text;
+    padding: 0 0.08in;
+  }
+  .editable-cell:focus {
+    outline: 1px dashed #666;
+    background: rgba(0, 0, 0, 0.03);
+  }
+  .editable-cell:empty:before {
+    content: attr(data-placeholder);
+    color: #999;
+    font-style: italic;
+  }
   table.mic-grid tbody tr:nth-child(even) td:not(.mic-num) {
     background: var(--row-stripe);
+  }
+
+  .legend {
+    margin-top: 0.2in;
+    padding: 0.14in;
+    border: 1px solid var(--border);
+    background: #f7f7f7;
+  }
+  .legend h2 {
+    margin: 0 0 0.1in;
+    font-size: 11pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .legend-groups {
+    display: grid;
+    gap: 0.12in;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+  .legend-group {
+    padding: 0.12in;
+    border: 1px solid #bbb;
+    border-radius: 0.14rem;
+    background: #fff;
+  }
+  .legend-group-title {
+    font-size: 9.5pt;
+    font-weight: 700;
+    margin-bottom: 0.08in;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #222;
+  }
+  .legend-group-items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(3.75rem, 1fr));
+    gap: 0.06in;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.2em;
+    padding: 0.08em 0.12em;
+    border: 1px solid #ccc;
+    color: #111;
+    font-size: 10pt;
+    font-weight: 700;
+    cursor: grab;
+    user-select: none;
+  }
+  .legend-item:active {
+    cursor: grabbing;
+  }
+  .preamp-cell {
+    min-width: 3rem;
+    cursor: pointer;
+  }
+  .preamp-cell.drop-target {
+    outline: 2px dashed #666;
+    background: rgba(0, 0, 0, 0.02);
+  }
+  .legend-group-api .legend-item {
+    background: rgba(198, 221, 255, 0.55);
+    border-color: #a7c2ff;
+  }
+  .legend-group-neve .legend-item {
+    background: rgba(255, 220, 220, 0.55);
+    border-color: #ffb2b2;
+  }
+  .legend-group-ssl .legend-item {
+    background: rgba(219, 255, 218, 0.55);
+    border-color: #a9d7a8;
+  }
+  .legend-group-warm .legend-item {
+    background: rgba(255, 252, 220, 0.7);
+    border-color: #e7d785;
+  }
+  .legend-group-vintech .legend-item {
+    background: rgba(224, 224, 255, 0.55);
+    border-color: #b9b3ff;
+  }
+  @media print {
+    .legend { background: #f5f5f5; }
+    .legend-group { background: #fff; border-color: #888; }
+    .legend-group-api .legend-item { background: #e6e6e6; }
+    .legend-group-neve .legend-item { background: #dddddd; }
+    .legend-group-ssl .legend-item { background: #d4d4d4; }
+    .legend-group-warm .legend-item { background: #cbcbcb; }
+    .legend-group-vintech .legend-item { background: #c2c2c2; }
+    .editable-cell:empty:before {
+      content: none !important;
+    }
+    .instructions,
+    .print-button {
+      display: none !important;
+    }
   }
 
   footer.foot {
@@ -152,7 +289,9 @@
       <div class="title-block">
         <h1>Hyperthreat Studios</h1>
         <div class="subtitle">Mic Configuration</div>
+        <div class="instructions">Drag a preamp from the legend into the Preamp column. Double-click a Preamp cell to clear it. Click to edit Instrument and Wall Mount #.</div>
       </div>
+      <button class="print-button" type="button" onclick="window.print()">Print</button>
     </header>
 
     <table class="mic-grid">
@@ -164,16 +303,60 @@
       </colgroup>
       <thead>
         <tr>
-          <th>Mic</th>
+          <th>Cables</th>
           <th>Instrument</th>
-          <th>Wall</th>
-          <th>STUD i/o</th>
+          <th>Wall Mount #</th>
+          <th>Preamp</th>
         </tr>
       </thead>
       <tbody class="grid-body"></tbody>
     </table>
 
-    <footer class="foot">Hyperthreat Studios &middot; Mic Patch Sheet</footer>
+    <section class="legend">
+      <h2>Preamp Legend</h2>
+      <div class="legend-groups">
+        <div class="legend-group legend-group-api">
+          <div class="legend-group-title">API</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true">API 1</span>
+            <span class="legend-item" draggable="true">API 2</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-neve">
+          <div class="legend-group-title">NEVE</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true">NEVE 1</span>
+            <span class="legend-item" draggable="true">NEVE 2</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-ssl">
+          <div class="legend-group-title">SSL</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true">SSL 1</span>
+            <span class="legend-item" draggable="true">SSL 2</span>
+            <span class="legend-item" draggable="true">SSL 3</span>
+            <span class="legend-item" draggable="true">SSL 4</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-warm">
+          <div class="legend-group-title">WARM</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true">WARM 1:1</span>
+            <span class="legend-item" draggable="true">WARM 1:2</span>
+            <span class="legend-item" draggable="true">WARM 2:1</span>
+            <span class="legend-item" draggable="true">WARM 2:2</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-vintech">
+          <div class="legend-group-title">VINTECH</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true">VINTECH 1</span>
+            <span class="legend-item" draggable="true">VINTECH 2</span>
+            <span class="legend-item" draggable="true">VINTECH 3</span>
+          </div>
+        </div>
+      </div>
+    </section>
   </section>
 </template>
 
@@ -193,21 +376,72 @@
       tdNum.className = 'mic-num';
       tdNum.textContent = i;
       const tdInstrument = document.createElement('td');
+      tdInstrument.className = 'editable-cell';
+      tdInstrument.contentEditable = 'true';
+      tdInstrument.dataset.placeholder = 'Instrument';
       const tdWall = document.createElement('td');
-      const tdStud = document.createElement('td');
+      tdWall.className = 'editable-cell';
+      tdWall.contentEditable = 'true';
+      tdWall.dataset.placeholder = 'Wall Mount #';
+      const tdPreamp = document.createElement('td');
+      tdPreamp.className = 'preamp-cell';
+      tdPreamp.dataset.dropTarget = 'true';
       tr.appendChild(tdNum);
       tr.appendChild(tdInstrument);
       tr.appendChild(tdWall);
-      tr.appendChild(tdStud);
+      tr.appendChild(tdPreamp);
       tbody.appendChild(tr);
     }
     return node;
+  }
+
+  function setupDragAndDrop(container) {
+    const legendItems = container.querySelectorAll('.legend-item');
+    const dropCells = container.querySelectorAll('.preamp-cell');
+
+    legendItems.forEach((item) => {
+      item.addEventListener('dragstart', (event) => {
+        event.dataTransfer.setData('text/plain', item.textContent);
+        event.dataTransfer.effectAllowed = 'copy';
+        item.classList.add('dragging');
+      });
+      item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+      });
+    });
+
+    dropCells.forEach((cell) => {
+      cell.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragleave', () => {
+        cell.classList.remove('drop-target');
+      });
+      cell.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const value = event.dataTransfer.getData('text/plain');
+        if (value) {
+          cell.textContent = value;
+        }
+        cell.classList.remove('drop-target');
+      });
+      cell.addEventListener('dblclick', () => {
+        cell.textContent = '';
+      });
+    });
   }
 
   const host = document.getElementById('sheets');
   for (let s = 0; s < SHEET_COUNT; s++) {
     host.appendChild(buildSheet());
   }
+  setupDragAndDrop(document);
 </script>
 
 </body>
