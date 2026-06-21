@@ -198,6 +198,31 @@ def test_favicon_hyperthreat_returns_200(flask_client):
     assert res.status_code == 200
 
 
+def test_patch_bay_route_returns_200(flask_client):
+    """Patch Bay route should return the standalone HTML page."""
+    res = flask_client.get("/patch_bay.html")
+    assert res.status_code == 200
+    html = res.data.decode("utf-8")
+    assert "Patch Bay" in html
+
+
+def test_patch_bay_button_exists(flask_client):
+    """The main panel should expose a Patch Bay button that opens the standalone page."""
+    res = flask_client.get("/")
+    assert res.status_code == 200
+    html = res.data.decode("utf-8")
+    assert "window.open('/patch_bay.html'" in html
+
+
+def test_patch_bay_button_in_signal_chain_tab(flask_client):
+    """The Signal Chain tab should include a Patch Bay launch button."""
+    res = flask_client.get("/")
+    assert res.status_code == 200
+    html = res.data.decode("utf-8")
+    wiring_section = html.split('<div id="tab-wiring"')[1]
+    assert "window.open('/patch_bay.html'" in wiring_section
+
+
 def test_tab_order_personal_first_mic_last(flask_client):
     """AC5: Nav tab order is Personal Studio -> HyperThreat Studio -> Mic Config."""
     res = flask_client.get("/")

@@ -16,6 +16,7 @@ from utils.init_db import get_connection  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 MIC_CONFIG_PATH = ROOT / "studio" / "mic_config_template.html"
+PATCH_BAY_PATH = ROOT / "studio" / "patch_bay.html"
 
 app = Flask(__name__)
 
@@ -52,6 +53,12 @@ def _ensure_table():
 @app.route("/mic-config")
 def mic_config():
     return send_file(str(MIC_CONFIG_PATH), mimetype="text/html")
+
+
+@app.route("/patch_bay.html")
+@app.route("/patch-bay")
+def patch_bay():
+    return send_file(str(PATCH_BAY_PATH), mimetype="text/html")
 
 
 @app.route("/Brand/<path:filename>")
@@ -325,7 +332,10 @@ PANEL_HTML = r"""<!DOCTYPE html>
 <div id="tab-hyperthreat" class="tab-content">
   <div class="studio-header">
     <h2><img class="h2-icon" src="/favicon-hyperthreat.png" alt=""> HyperThreat Recording Studio</h2>
-    <button class="btn btn-accent" onclick="openModal(null, 'HyperThreat Recording Studio')">＋ Add Equipment</button>
+    <div style="display:flex;gap:0.5rem; flex-wrap:wrap; align-items:center;">
+      <button class="btn btn-accent" onclick="openModal(null, 'HyperThreat Recording Studio')">＋ Add Equipment</button>
+      <button class="btn btn-ghost" onclick="window.open('/patch_bay.html', '_blank')">🧩 Patch Bay</button>
+    </div>
   </div>
   <div id="hyperthreat-content" class="loading">Loading…</div>
 </div>
@@ -333,7 +343,9 @@ PANEL_HTML = r"""<!DOCTYPE html>
 <!-- SIGNAL CHAIN TAB -->
 <div id="tab-wiring" class="tab-content">
   <div class="studio-header">
-    <h2>⚡ Studio Signal Chain — Revised 2026-05-17</h2>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+      <h2 style="margin:0;">⚡ Studio Signal Chain — Revised 2026-05-17</h2>
+    </div>
     <span style="font-size:0.85rem;color:var(--text-muted)">Denon AVR-1000 → JBL 2600 × 2 + Sterling Center · Scarlett direct → Yamaha HS8 × 2</span>
   </div>
   <div id="wiring-diagram" style="background:var(--surface);border-radius:8px;padding:1.5rem;overflow:auto;"></div>
