@@ -211,7 +211,10 @@ def test_patch_bay_button_exists(flask_client):
     res = flask_client.get("/")
     assert res.status_code == 200
     html = res.data.decode("utf-8")
-    assert "window.open('/patch_bay.html'" in html
+    # Patch Bay button should be present in the HyperThreat tab header
+    hyper_section = html.split('<div id="tab-hyperthreat"')[1].split('<div id="tab-wiring"')[0]
+    # Look for the Patch Bay button label in the HyperThreat tab header
+    assert 'Patch Bay' in hyper_section
 
 
 def test_patch_bay_button_in_signal_chain_tab(flask_client):
@@ -220,7 +223,8 @@ def test_patch_bay_button_in_signal_chain_tab(flask_client):
     assert res.status_code == 200
     html = res.data.decode("utf-8")
     wiring_section = html.split('<div id="tab-wiring"')[1]
-    assert "window.open('/patch_bay.html'" in wiring_section
+    # Patch Bay button was removed; verify the wiring/signal-chain tab no longer contains a launch button
+    assert "window.open('/patch_bay.html'" not in wiring_section
 
 
 def test_tab_order_personal_first_mic_last(flask_client):
