@@ -479,9 +479,9 @@ def get_connection(*, create_if_missing: bool = False):
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlcipher3.connect(str(DB_PATH))
 
-    opened = _try_open_with_key(conn, key, use_hex=True)
+    opened = _try_open_with_key(conn, key, use_hex=False)
     if not opened:
-        opened = _try_open_with_key(conn, key, use_hex=False)
+        opened = _try_open_with_key(conn, key, use_hex=True)
     if not opened:
         conn.close()
         raise RuntimeError(
