@@ -131,9 +131,11 @@
     padding: 0 0.08in;
   }
   table.mic-grid td.mic-num {
-    text-align: right;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-weight: 700;
-    padding-right: 0.12in;
+    padding: 0.06in 0.08in;
     background: #fafafa;
   }
   .editable-cell {
@@ -235,8 +237,56 @@
     background: rgba(224, 224, 255, 0.55);
     border-color: #b9b3ff;
   }
+  .grid-and-legends {
+    display: flex;
+    gap: 0.12in;
+    align-items: flex-start;
+  }
+  .table-wrap { flex: 1 1 auto; }
+  .instruments-legend-slot,
+  .preamp-legend { width: 4.4rem; flex: 0 0 4.4rem; position: sticky; top: 0.95in; align-self: flex-start; z-index: 50; }
+  /* make preamp aside visually minimal (no outer legend box) and nudge it down a bit */
+  .preamp-legend { padding: 0 0.06in; background: transparent; border: none; margin-top: 0; }
+  .preamp-legend .legend-group { padding: 0.08in; border: 1px solid #ddd; background: #fff; border-radius: 0.12rem; }
+  .global-wrap { display: flex; gap: 0.12in; justify-content: center; align-items: flex-start; }
+  .sheets-wrap { flex: 0 0 auto; width: 7.35in; display: flex; flex-direction: column; gap: 0.8in; align-items: center; }
+  .sheets-wrap .sheet { margin: 0; }
+  /* instruments legend styling: smaller, colored like preamp items */
+  /* compact instruments legend (MVP): minimal containers, just small draggable items */
+  /* instruments column: narrower and compact; groups arranged vertically */
+  .instruments-legend-slot {
+    width: 4.4rem;
+    flex: 0 0 4.4rem;
+    padding: 0.02in 0.04in;
+    display: flex;
+    flex-direction: column;
+    gap: 0.04in;
+    align-items: stretch;
+    margin-top: 0; /* use sticky top for vertical alignment */
+    z-index: 60;
+    position: sticky;
+    top: 0.95in;
+    transform: translateX(-75px); /* nudge left by ~75px (additional 45px) */
+  }
+  .instruments-legend-slot .legend-groups { grid-template-columns: 1fr; gap: 0.06in; }
+  .instruments-legend-slot .legend-group { padding: 0.06in; }
+  .instruments-legend-slot .legend-group-title { font-size: 8.5pt; margin-bottom: 0.06in; }
+  .instruments-legend-slot .legend-item {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: 9pt;
+    padding: 0.06em 0.08em;
+    min-height: 1em;
+    border-radius: 0.12rem;
+    box-shadow: none;
+  }
+  /* add a little left padding to the sheets area so legend items don't visually clash */
+  .sheets-wrap { flex: 0 0 auto; width: 7.35in; display: flex; flex-direction: column; gap: 0.8in; align-items: center; padding-left: 1.0in; padding-right: 1.0in; }
   @media print {
     .legend { background: #f5f5f5; }
+    /* hide all legend sidebars/containers in print */
+    .legend, .instruments-legend, .instruments-legend-slot, .preamp-legend { display: none !important; }
     .legend-group { background: #fff; border-color: #888; }
     .legend-group-api .legend-item { background: #e6e6e6; }
     .legend-group-neve .legend-item { background: #dddddd; }
@@ -269,11 +319,36 @@
     .screen-only { display: none !important; }
     .print-only  { display: block !important; }
     body { background: #fff; }
-    .sheet { width: auto; margin: 0; }
+    /* make the sheet expand to fill printable area */
+    .sheet { width: auto; margin: 0; padding: 0.25in 0.25in 0.5in 0.25in; }
+    .sheets-wrap { padding-left: 0 !important; padding-right: 0 !important; width: 100% !important; }
+    table.mic-grid { width: 100% !important; }
     table.mic-grid tbody tr:nth-child(even) td:not(.mic-num) {
       background: #ececec;
     }
   }
+  .cable-badge {
+    display: inline-block;
+    padding: 0.12em 0.35em;
+    background: #e6f0ff;
+    border: 1px solid #8fb0ff;
+    border-radius: 0.25rem;
+    font-weight: 700;
+    font-size: 9pt;
+    color: #0b3a8a;
+  }
+  .legend-badge {
+    display: inline-block;
+    padding: 0.12em 0.28em;
+    background: #f3f3f3;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    font-weight: 700;
+    font-size: 9pt;
+    color: #111;
+  }
+  .legend-badge.instrument { min-width: 3.0rem; text-align: center; }
+  .legend-badge.preamp { min-width: 3.2rem; text-align: center; }
 </style>
 </head>
 <body>
@@ -290,7 +365,10 @@
         <div class="subtitle">Mic Configuration</div>
         <div class="instructions">Drag a preamp from the legend into the Preamp column. Double-click a Preamp cell to clear it. Click to edit Instrument and Wall Mount #.</div>
       </div>
-      <button class="print-button" type="button" onclick="window.print()">Print</button>
+      <div style="margin-left: auto; display:flex; gap:0.4rem; align-items:center;">
+        <button class="print-button screen-only" type="button" id="clear-button">Clear</button>
+        <button class="print-button" type="button" onclick="window.print()">Print</button>
+      </div>
     </header>
 
     <table class="mic-grid">
@@ -311,59 +389,204 @@
       <tbody class="grid-body"></tbody>
     </table>
 
-    <section class="legend">
-      <h2>Preamp Legend</h2>
-      <div class="legend-groups">
-        <div class="legend-group legend-group-api">
-          <div class="legend-group-title">API</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">API 1</span>
-            <span class="legend-item" draggable="true">API 2</span>
-          </div>
-        </div>
-        <div class="legend-group legend-group-neve">
-          <div class="legend-group-title">NEVE</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">NEVE 1</span>
-            <span class="legend-item" draggable="true">NEVE 2</span>
-          </div>
-        </div>
-        <div class="legend-group legend-group-ssl">
-          <div class="legend-group-title">SSL</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">SSL 1</span>
-            <span class="legend-item" draggable="true">SSL 2</span>
-            <span class="legend-item" draggable="true">SSL 3</span>
-            <span class="legend-item" draggable="true">SSL 4</span>
-          </div>
-        </div>
-        <div class="legend-group legend-group-warm">
-          <div class="legend-group-title">WARM</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">WARM 1:1</span>
-            <span class="legend-item" draggable="true">WARM 1:2</span>
-            <span class="legend-item" draggable="true">WARM 2:1</span>
-            <span class="legend-item" draggable="true">WARM 2:2</span>
-          </div>
-        </div>
-        <div class="legend-group legend-group-vintech">
-          <div class="legend-group-title">VINTECH</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">VINTECH 1</span>
-            <span class="legend-item" draggable="true">VINTECH 2</span>
-            <span class="legend-item" draggable="true">VINTECH 3</span>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- preamp legend removed from per-sheet template; rendered globally below -->
   </section>
 </template>
 
-<div id="sheets"></div>
+<!-- single global controls now rendered in header.brand per sheet template -->
+
+<div class="global-wrap">
+  <aside class="instruments-legend-slot" id="instruments-legend" aria-label="Instruments"></aside>
+  <div id="sheets" class="sheets-wrap"></div>
+  <aside class="preamp-legend" id="preamp-legend" aria-label="Preamp Legend">
+    <div class="legend-groups">
+      <div class="legend-group legend-group-api">
+        <div class="legend-group-title">API</div>
+        <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="preamp">API 1</span>
+            <span class="legend-item" draggable="true" data-type="preamp">API 2</span>
+        </div>
+      </div>
+      <div class="legend-group legend-group-neve">
+        <div class="legend-group-title">NEVE</div>
+          <div class="legend-group-items">
+          <span class="legend-item" draggable="true" data-type="preamp">NEVE 1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">NEVE 2</span>
+        </div>
+      </div>
+      <div class="legend-group legend-group-ssl">
+        <div class="legend-group-title">SSL</div>
+        <div class="legend-group-items">
+          <span class="legend-item" draggable="true" data-type="preamp">SSL 1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">SSL 2</span>
+          <span class="legend-item" draggable="true" data-type="preamp">SSL 3</span>
+          <span class="legend-item" draggable="true" data-type="preamp">SSL 4</span>
+        </div>
+      </div>
+      <div class="legend-group legend-group-warm">
+        <div class="legend-group-title">WARM</div>
+        <div class="legend-group-items">
+          <span class="legend-item" draggable="true" data-type="preamp">WARM 1:1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">WARM 1:2</span>
+          <span class="legend-item" draggable="true" data-type="preamp">WARM 2:1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">WARM 2:2</span>
+        </div>
+      </div>
+      <div class="legend-group legend-group-vintech">
+        <div class="legend-group-title">VINTECH</div>
+        <div class="legend-group-items">
+          <span class="legend-item" draggable="true" data-type="preamp">VINTECH 1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">VINTECH 2</span>
+          <span class="legend-item" draggable="true" data-type="preamp">VINTECH 3</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
 
 <script>
   const CHANNEL_COUNT = 16;
   const SHEET_COUNT = 2; // front + back, identical for duplex
+
+  // Compute the next numbered label for a base instrument name (e.g., "guitar" -> "guitar 3")
+  function nextLabelFor(base) {
+    const rows = Array.from(document.querySelectorAll('.grid-body tr'));
+    const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp('^' + esc + '(?:\\s*(\\d+))?$', 'i');
+    let max = 0;
+    rows.forEach(r => {
+      const instrCell = r.querySelector('.editable-cell[data-col="instrument"]');
+      if (!instrCell) return;
+      const txt = instrCell.textContent.trim();
+      const m = txt.match(re);
+      if (m) {
+        if (m[1]) {
+          const n = parseInt(m[1], 10);
+          if (!isNaN(n) && n > max) max = n;
+        } else if (txt.length > 0) {
+          max = Math.max(max, 1);
+        }
+      }
+    });
+    return base + ' ' + (max + 1);
+  }
+
+  // Cable color mapping (16 visually distinct hues)
+  function cableColorFor(n) {
+    const idx = ((n - 1) % 16 + 16) % 16; // 0-based
+    const hue = Math.round((idx / 16) * 360);
+    const bg = `hsl(${hue} 85% 88%)`;
+    const border = `hsl(${hue} 75% 60%)`;
+    const text = '#111';
+    return { bg, border, text };
+  }
+
+  function createCableBadge(n) {
+    const span = document.createElement('span');
+    span.className = 'cable-badge';
+    span.textContent = String(n);
+    span.dataset.cable = String(n);
+    const c = cableColorFor(Number(n));
+    const bg = (arguments[1] && arguments[1].bg) ? arguments[1].bg : c.bg;
+    const border = (arguments[1] && arguments[1].border) ? arguments[1].border : c.border;
+    const textColor = (arguments[1] && arguments[1].color) ? arguments[1].color : c.text;
+    span.style.backgroundColor = bg;
+    span.style.borderColor = border;
+    span.style.color = textColor;
+    span.dataset.bg = bg;
+    span.dataset.border = border;
+    span.dataset.color = textColor;
+    span.draggable = true;
+    span.addEventListener('dragstart', (ev) => {
+      try { ev.dataTransfer.setData('text/plain', String(n)); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-type', 'cable'); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-bg', span.style.backgroundColor); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-border', span.style.borderColor); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-color', span.style.color); } catch (e) {}
+      ev.dataTransfer.effectAllowed = 'copy';
+      span.classList.add('dragging');
+    });
+    span.addEventListener('dragend', () => span.classList.remove('dragging'));
+    return span;
+  }
+
+  function normalizeWallCell(cell) {
+    if (!cell) return;
+    const text = (cell.textContent || '').trim();
+    const nums = text.match(/\d+/g);
+    const hasBadges = cell.querySelector && cell.querySelector('.cable-badge');
+    if (hasBadges) return; // already badges
+    if (nums && nums.length) {
+      cell.innerHTML = '';
+      nums.forEach(n => cell.appendChild(createCableBadge(parseInt(n, 10))));
+    }
+  }
+
+  function normalizeAllWallCells() {
+    const wallCells = document.querySelectorAll('.editable-cell[data-col="wall"]');
+    wallCells.forEach(c => normalizeWallCell(c));
+  }
+
+  // legend badges for instruments/preamps
+  function pickColorForLabel(label) {
+    const l = (label || '').toLowerCase();
+    // explicit palette overrides requested by user
+    if (l.includes('vox') || l.includes('vocal')) {
+      // pink
+      return { bg: `hsl(330 70% 92%)`, border: `hsl(330 60% 70%)`, text: '#111' };
+    }
+    if (l.includes('guitar')) {
+      // green
+      return { bg: `hsl(140 60% 92%)`, border: `hsl(140 55% 65%)`, text: '#081d08' };
+    }
+    if (l.includes('bass')) {
+      // orange
+      return { bg: `hsl(24 85% 92%)`, border: `hsl(24 75% 60%)`, text: '#2b1600' };
+    }
+    // drums / toms / overheads -> yellow
+    if (/(kick|snare|tom|overhead|drum)/i.test(l)) {
+      return { bg: `hsl(52 90% 92%)`, border: `hsl(52 80% 60%)`, text: '#2b2600' };
+    }
+    // piano / keys -> purple
+    if (/(piano|key|keys)/i.test(l)) {
+      return { bg: `hsl(270 65% 92%)`, border: `hsl(270 60% 68%)`, text: '#1a0730' };
+    }
+    // deterministic hash to hue for everything else
+    let h = 0;
+    for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) >>> 0;
+    const hue = Math.round((h % 360));
+    return { bg: `hsl(${hue} 70% 92%)`, border: `hsl(${hue} 60% 70%)`, text: '#111' };
+  }
+
+  function createLegendBadge(text, kind, styleOverride) {
+    const span = document.createElement('span');
+    span.className = 'legend-badge ' + (kind || 'instrument');
+    span.textContent = text;
+    span.dataset.kind = kind || 'instrument';
+    const c = pickColorForLabel(text.toLowerCase());
+    // apply computed or override styles
+    const bg = (styleOverride && styleOverride.bg) ? styleOverride.bg : c.bg;
+    const border = (styleOverride && styleOverride.border) ? styleOverride.border : c.border;
+    const color = (styleOverride && styleOverride.color) ? styleOverride.color : c.text;
+    span.style.backgroundColor = bg;
+    span.style.borderColor = border;
+    span.style.color = color;
+    span.dataset.bg = bg;
+    span.dataset.border = border;
+    span.dataset.color = color;
+    span.draggable = true;
+    span.addEventListener('dragstart', (ev) => {
+      try { ev.dataTransfer.setData('text/plain', text); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-type', kind || 'instrument'); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-bg', span.style.backgroundColor); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-border', span.style.borderColor); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-color', span.style.color); } catch (e) {}
+      ev.dataTransfer.effectAllowed = 'copy';
+      span.classList.add('dragging');
+    });
+    span.addEventListener('dragend', () => span.classList.remove('dragging'));
+    return span;
+  }
 
   function buildSheet() {
     const tpl = document.getElementById('sheet-template');
@@ -373,17 +596,21 @@
       const tr = document.createElement('tr');
       const tdNum = document.createElement('td');
       tdNum.className = 'mic-num';
-      tdNum.textContent = i;
+      // render the cable number as a colored draggable badge
+      tdNum.appendChild(createCableBadge(i));
       const tdInstrument = document.createElement('td');
       tdInstrument.className = 'editable-cell';
+      tdInstrument.dataset.col = 'instrument';
       tdInstrument.contentEditable = 'true';
       tdInstrument.dataset.placeholder = 'Instrument';
       const tdWall = document.createElement('td');
       tdWall.className = 'editable-cell';
+      tdWall.dataset.col = 'wall';
       tdWall.contentEditable = 'true';
       tdWall.dataset.placeholder = 'Wall Mount #';
       const tdPreamp = document.createElement('td');
       tdPreamp.className = 'preamp-cell';
+      tdPreamp.dataset.col = 'preamp';
       tdPreamp.dataset.dropTarget = 'true';
       tr.appendChild(tdNum);
       tr.appendChild(tdInstrument);
@@ -397,10 +624,26 @@
   function setupDragAndDrop(container) {
     const legendItems = container.querySelectorAll('.legend-item');
     const dropCells = container.querySelectorAll('.preamp-cell');
+    const instrDropCells = container.querySelectorAll('.editable-cell[data-col="instrument"]');
+    const numCells = container.querySelectorAll('.mic-num');
+    const wallCells = container.querySelectorAll('.editable-cell[data-col="wall"]');
 
     legendItems.forEach((item) => {
       item.addEventListener('dragstart', (event) => {
-        event.dataTransfer.setData('text/plain', item.textContent);
+        const text = item.textContent.trim();
+        const type = item.dataset.type || 'preamp';
+        try { event.dataTransfer.setData('text/plain', text); } catch (e) {}
+        try { event.dataTransfer.setData('text/x-item-type', type); } catch (e) {}
+        try {
+          const computed = pickColorForLabel(text.toLowerCase());
+          const cs = window.getComputedStyle ? window.getComputedStyle(item) : null;
+          const bg = (cs && cs.backgroundColor) ? cs.backgroundColor : (item.style.backgroundColor || computed.bg);
+          const border = (cs && cs.borderColor) ? cs.borderColor : (item.style.borderColor || computed.border);
+          const color = (cs && cs.color) ? cs.color : (item.style.color || computed.text);
+          event.dataTransfer.setData('text/x-item-bg', bg);
+          event.dataTransfer.setData('text/x-item-border', border);
+          event.dataTransfer.setData('text/x-item-color', color);
+        } catch (e) {}
         event.dataTransfer.effectAllowed = 'copy';
         item.classList.add('dragging');
       });
@@ -408,6 +651,8 @@
         item.classList.remove('dragging');
       });
     });
+
+    // cable badges inside .mic-num cells are already draggable via createCableBadge()
 
     dropCells.forEach((cell) => {
       cell.addEventListener('dragover', (event) => {
@@ -424,14 +669,120 @@
       });
       cell.addEventListener('drop', (event) => {
         event.preventDefault();
-        const value = event.dataTransfer.getData('text/plain');
+        const valueRaw = event.dataTransfer.getData('text/plain') || '';
+        const value = valueRaw.trim();
+        const itemType = (() => { try { return event.dataTransfer.getData('text/x-item-type'); } catch (e) { return ''; } })() || '';
+        // accept preamp by explicit type, or fallback when payload contains letters
+        const fallbackAccept = (!itemType && /[A-Za-z]/.test(value));
+        if (itemType !== 'preamp' && !fallbackAccept) { cell.classList.remove('drop-target'); return; }
         if (value) {
-          cell.textContent = value;
+          // render as a draggable legend-style badge
+          // preserve color info from drag if present
+          const styleOverride = {};
+          try { styleOverride.bg = event.dataTransfer.getData('text/x-item-bg'); } catch (e) {}
+          try { styleOverride.border = event.dataTransfer.getData('text/x-item-border'); } catch (e) {}
+          try { styleOverride.color = event.dataTransfer.getData('text/x-item-color'); } catch (e) {}
+          const badge = createLegendBadge(value, 'preamp', (styleOverride.bg || styleOverride.border || styleOverride.color) ? styleOverride : null);
+          cell.innerHTML = '';
+          cell.appendChild(badge);
         }
         cell.classList.remove('drop-target');
       });
       cell.addEventListener('dblclick', () => {
         cell.textContent = '';
+      });
+    });
+
+    // instrument drop targets
+    instrDropCells.forEach((cell) => {
+      cell.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragleave', () => {
+        cell.classList.remove('drop-target');
+      });
+      cell.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const raw = (event.dataTransfer && event.dataTransfer.getData) ? event.dataTransfer.getData('text/plain') : '';
+        const value = (raw || '').trim();
+        const itemType = (() => { try { return event.dataTransfer.getData('text/x-item-type'); } catch (e) { return ''; } })() || '';
+        // allow instrument drops by explicit type, or fallback when payload is non-numeric text
+        const fallbackAccept = (!itemType && value && !/^\d+$/.test(value));
+        if (itemType !== 'instrument' && !fallbackAccept) { cell.classList.remove('drop-target'); return; }
+        if (value) {
+          // If dropped value already ends with a number, use as-is; otherwise auto-number
+          const endsWithNumber = /\s\d+$/i.test(value);
+          const label = endsWithNumber ? value : nextLabelFor(value);
+          const styleOverride = {};
+          try { styleOverride.bg = event.dataTransfer.getData('text/x-item-bg'); } catch (e) {}
+          try { styleOverride.border = event.dataTransfer.getData('text/x-item-border'); } catch (e) {}
+          try { styleOverride.color = event.dataTransfer.getData('text/x-item-color'); } catch (e) {}
+          const badge = createLegendBadge(label, 'instrument', (styleOverride.bg || styleOverride.border || styleOverride.color) ? styleOverride : null);
+          cell.innerHTML = '';
+          cell.appendChild(badge);
+        }
+        cell.classList.remove('drop-target');
+      });
+      // allow double-click to clear instrument cell
+      cell.addEventListener('dblclick', () => { cell.textContent = ''; });
+    });
+
+    // Wall mount cells: accept cable drops and allow clearing
+    wallCells.forEach((cell) => {
+      cell.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        try { event.dataTransfer.dropEffect = 'copy'; } catch (e) {}
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragleave', () => {
+        cell.classList.remove('drop-target');
+      });
+      cell.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const itemType = (() => { try { return event.dataTransfer.getData('text/x-item-type'); } catch (e) { return ''; } })();
+        // accept only cable drops here (or numeric payloads as fallback)
+        const raw = (event.dataTransfer && event.dataTransfer.getData) ? event.dataTransfer.getData('text/plain') : '';
+        const value = (raw || '').trim();
+        if (itemType !== 'cable' && !/^\d+$/.test(value)) { cell.classList.remove('drop-target'); return; }
+        if (value) {
+          if (/^\d+$/.test(value)) {
+            const n = parseInt(value, 10);
+            const styleOverride = {};
+            try { styleOverride.bg = event.dataTransfer.getData('text/x-item-bg'); } catch (e) {}
+            try { styleOverride.border = event.dataTransfer.getData('text/x-item-border'); } catch (e) {}
+            try { styleOverride.color = event.dataTransfer.getData('text/x-item-color'); } catch (e) {}
+            const badge = createCableBadge(n, (styleOverride.bg||styleOverride.border||styleOverride.color) ? styleOverride : null);
+            cell.innerHTML = '';
+            cell.appendChild(badge);
+          } else {
+            cell.textContent = value;
+          }
+        }
+        cell.classList.remove('drop-target');
+      });
+      cell.addEventListener('dblclick', () => { cell.textContent = ''; });
+      // when user types a number and blurs, convert to badge(s)
+      cell.addEventListener('blur', () => {
+        const v = (cell.textContent || '').trim();
+        const nums = v.match(/\d+/g);
+        if (nums && nums.length) {
+          cell.innerHTML = '';
+          nums.forEach(n => cell.appendChild(createCableBadge(parseInt(n, 10))));
+          saveGridState();
+        }
+      });
+      cell.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); cell.blur(); }
       });
     });
   }
@@ -440,7 +791,201 @@
   for (let s = 0; s < SHEET_COUNT; s++) {
     host.appendChild(buildSheet());
   }
+
+  // Insert instruments grouped like the preamp legend, but without an outer boxed container
+  (function insertInstrumentsLegend() {
+    const slot = document.querySelector('.instruments-legend-slot') || document.getElementById('instruments-legend');
+    if (!slot) return;
+    slot.innerHTML = `
+      <div class="legend-groups">
+        <div class="legend-group legend-group-api">
+          <div class="legend-group-title">Vocals</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">vox</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-api">
+          <div class="legend-group-title">Guitars</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">guitar</span>
+            <span class="legend-item" draggable="true" data-type="instrument">bass</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-neve">
+          <div class="legend-group-title">Drums</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">kick</span>
+            <span class="legend-item" draggable="true" data-type="instrument">snare bottom</span>
+            <span class="legend-item" draggable="true" data-type="instrument">snare top</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-warm">
+          <div class="legend-group-title">Toms</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">tom 1</span>
+            <span class="legend-item" draggable="true" data-type="instrument">tom 2</span>
+            <span class="legend-item" draggable="true" data-type="instrument">tom 3</span>
+            <span class="legend-item" draggable="true" data-type="instrument">tom 4</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-vintech">
+          <div class="legend-group-title">Overheads</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">overhead</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-ssl">
+          <div class="legend-group-title">Keys</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">piano</span>
+            <span class="legend-item" draggable="true" data-type="instrument">keys</span>
+          </div>
+        </div>
+      </div>`;
+  })();
+  // Replace static .legend-item nodes with programmatic legend badges
+  function upgradeLegendItems() {
+    const items = Array.from(document.querySelectorAll('.legend-item'));
+    items.forEach(it => {
+      const text = it.textContent.trim();
+      const type = it.dataset.type || 'instrument';
+      const badge = createLegendBadge(text, type);
+      // keep any container spacing/structure by replacing the node
+      it.replaceWith(badge);
+    });
+  }
+
+  upgradeLegendItems();
+  // re-run drag/drop wiring so newly-created legend-badges get listeners
   setupDragAndDrop(document);
+
+  // Persistence: save/load grid state to localStorage
+  function saveGridState() {
+    try {
+      const sheets = Array.from(document.querySelectorAll('.sheet'));
+      const out = sheets.map(sheet => Array.from(sheet.querySelectorAll('.grid-body tr')).map(tr => {
+        const tds = tr.querySelectorAll('td');
+        // serialize wall as comma-separated cable numbers if badges present
+        let wallVal = tds[2].textContent.trim();
+        const badges = tds[2].querySelectorAll && tds[2].querySelectorAll('.cable-badge');
+        if (badges && badges.length) {
+          wallVal = Array.from(badges).map(b => b.dataset.cable || b.textContent.trim()).join(',');
+        }
+        return {
+          instrument: tds[1].textContent.trim(),
+          wall: wallVal,
+          preamp: tds[3].textContent.trim()
+        };
+      }));
+      localStorage.setItem('micConfigSheets', JSON.stringify(out));
+    } catch (e) {
+      console.error('saveGridState error', e);
+    }
+  }
+
+  function loadGridState() {
+    try {
+      const raw = localStorage.getItem('micConfigSheets');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      const sheets = Array.from(document.querySelectorAll('.sheet'));
+      data.forEach((sheetData, sIdx) => {
+        const sheet = sheets[sIdx];
+        if (!sheet) return;
+        const rows = sheet.querySelectorAll('.grid-body tr');
+        sheetData.forEach((rowData, rIdx) => {
+          const tr = rows[rIdx];
+          if (!tr) return;
+          const tds = tr.querySelectorAll('td');
+          // restore instrument cell (render as badge if non-empty)
+          const instVal = rowData.instrument || '';
+          if (instVal && instVal.trim()) {
+            tds[1].innerHTML = '';
+            tds[1].appendChild(createLegendBadge(instVal.trim(), 'instrument'));
+          } else {
+            tds[1].textContent = '';
+          }
+          // restore wall: support comma-separated numbers -> multiple cable badges
+          const wallVal = (rowData.wall || '').toString().trim();
+          if (wallVal) {
+            const nums = wallVal.match(/\d+/g);
+            if (nums && nums.length) {
+              tds[2].innerHTML = '';
+              nums.forEach(n => tds[2].appendChild(createCableBadge(parseInt(n, 10))));
+            } else {
+              tds[2].textContent = wallVal;
+            }
+          } else {
+            tds[2].textContent = '';
+          }
+          // restore preamp cell as badge if present
+          const preVal = rowData.preamp || '';
+          if (preVal && preVal.trim()) {
+            tds[3].innerHTML = '';
+            tds[3].appendChild(createLegendBadge(preVal.trim(), 'preamp'));
+          } else {
+            tds[3].textContent = '';
+          }
+        });
+      });
+    } catch (e) {
+      console.error('loadGridState error', e);
+    }
+  }
+
+  function clearGridState() {
+    localStorage.removeItem('micConfigSheets');
+    document.querySelectorAll('.grid-body tr').forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      tds[1].textContent = '';
+      tds[2].textContent = '';
+      tds[3].textContent = '';
+    });
+  }
+
+  // Attach persistence hooks to editable cells and preamp drops
+  function setupPersistenceHooks() {
+    // editable text cells
+    document.querySelectorAll('.editable-cell').forEach(cell => {
+      cell.addEventListener('input', () => saveGridState());
+      cell.addEventListener('blur', () => saveGridState());
+      // observe character data changes (for drops that modify textContent)
+      const obs = new MutationObserver(() => saveGridState());
+      obs.observe(cell, { characterData: true, childList: true, subtree: true });
+    });
+
+    // preamp cells: save when double-click clears or when content changes via drop
+    document.querySelectorAll('.preamp-cell').forEach(cell => {
+      cell.addEventListener('dblclick', () => { saveGridState(); });
+      // observe character data changes (for drops that modify textContent)
+      const obs = new MutationObserver(() => saveGridState());
+      obs.observe(cell, { characterData: true, childList: true, subtree: true });
+    });
+
+    // clear button (no confirmation)
+    const clearBtn = document.getElementById('clear-button');
+    if (clearBtn) clearBtn.addEventListener('click', () => clearGridState());
+  }
+
+  // After drag/drop setup, wire persistence and restore any saved state
+  setupPersistenceHooks();
+  loadGridState();
+  // ensure any numeric wall cells are shown as badges
+  normalizeAllWallCells();
+
+  // Align the two legends vertically: make preamp legend match instruments legend top
+  function alignLegendsVertically() {
+    const instr = document.querySelector('.instruments-legend-slot');
+    const pre = document.querySelector('.preamp-legend');
+    if (!instr || !pre) return;
+    const docTop = document.documentElement.getBoundingClientRect().top;
+    const instrTop = Math.round(instr.getBoundingClientRect().top - docTop);
+    // apply as inline style so sticky respects the computed offset
+    pre.style.top = instrTop + 'px';
+    instr.style.top = instrTop + 'px';
+  }
+  alignLegendsVertically();
+  window.addEventListener('resize', () => { setTimeout(alignLegendsVertically, 50); });
 
   // Logo inlined; loader removed.
 </script>
