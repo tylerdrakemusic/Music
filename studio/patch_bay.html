@@ -142,6 +142,19 @@
       text-overflow: ellipsis;
       resize: horizontal;
     }
+
+    /* grid wrapper for placed legend labels inside a patch bay group */
+    .group-drop-labels {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 0.28rem;
+      align-items: stretch;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.2rem 0.06rem;
+      overflow: visible;
+    }
     .label-row > .group:not(:first-child),
     .row > .group:not(:first-child) {
       border-left: 1px solid rgba(124,149,255,0.18);
@@ -287,27 +300,64 @@
       outline-offset: 2px;
     }
     .group-drop-label {
-      display: inline-block;
+      position: relative;
       box-sizing: border-box;
-      width: auto;
       min-width: 0;
-      max-width: 100%;
-      padding: 0.35rem 0.6rem;
-      border-radius: 999px;
+      height: 100%;
+      padding: 0.32rem 0.4rem;
+      border-radius: 8px;
       background: rgba(255,255,255,0.08);
       color: var(--text);
-      font-size: 0.78rem;
+      font-size: 0.74rem;
+      line-height: 1.15;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      line-height: 1.2;
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
-      resize: horizontal;
+      user-select: none;
+      cursor: default;
     }
-    .group-drop-label::-webkit-resizer,
-    .group-drop-label::-moz-resizer,
-    .group-drop-label::-ms-resizer {
-      display: none;
+    .group-drop-label .group-drop-label-name {
+      pointer-events: none;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: -0.01em;
+    }
+    .group-drop-label.span-2 { font-size: 0.66rem; padding: 0.32rem 0.25rem; }
+    .group-drop-label.span-1 {
+      font-size: 0.56rem;
+      padding: 0.32rem 0.12rem;
+      letter-spacing: -0.03em;
+    }
+    .segment-divider {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 16px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: ew-resize;
+      z-index: 5;
+      touch-action: none;
+    }
+    .segment-divider::after {
+      content: '';
+      width: 2px;
+      height: 58%;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.28);
+      transition: background 0.12s ease, height 0.12s ease;
+    }
+    .segment-divider:hover::after,
+    .segment-divider.dragging::after {
+      background: rgba(124,149,255,0.95);
+      height: 82%;
     }
     .legend-label {
       display: flex;
@@ -593,7 +643,6 @@
           <input id="legend-color-input" type="color" value="#c2c0ff" aria-label="Legend item color" />
           <input id="legend-item-input" type="text" placeholder="Add new legend item" aria-label="Legend item name" />
           <button id="legend-add-button" type="button">Add item</button>
-          <button id="legend-save-button" type="button">Save</button>
           <button id="legend-reset-button" type="button">Reset</button>
         </div>
       </div>
@@ -680,7 +729,6 @@
     const legendInput = document.getElementById('legend-item-input');
     const legendColor = document.getElementById('legend-color-input');
     const legendAddButton = document.getElementById('legend-add-button');
-    const legendSaveButton = document.getElementById('legend-save-button');
     const legendResetButton = document.getElementById('legend-reset-button');
 
     function normalizeLegendItem(item) {
@@ -731,11 +779,6 @@
       window.localStorage.setItem(assignmentKey, JSON.stringify(assignments));
     }
 
-    function persistPatchBayState() {
-      saveLegendItems(loadLegendItems());
-      saveGroupAssignments(loadGroupAssignments());
-    }
-
     function resetPatchBayState() {
       window.localStorage.removeItem(legendKey);
       window.localStorage.removeItem(assignmentKey);
@@ -744,31 +787,186 @@
       renderGroupAssignments();
     }
 
-    function updateGroupLabel(group, assignment, preserveRowGap = false) {
+    const GROUP_COLS = 8;
+
+    // Operator-friendly shorthand so assigned labels stay legible in narrow segments.
+    const SHORT_LABELS = {
+      'Attenuators In': 'Atten In', 'Attenuators Out': 'Atten Out',
+      'Summing In': 'Sum In', 'Summing Out': 'Sum Out',
+      'Normal': 'Norm',
+      'Dangerous In': 'Dang In', 'Dangerous Out': 'Dang Out',
+      'Pre Amps In': 'Pre In', 'Preamps Out': 'Pre Out',
+      'Pro Tools In': 'PT In', 'Pro Tools Out': 'PT Out',
+      'API In': 'API In', 'API Out': 'API Out',
+      'Neve In': 'Neve In', 'Neve Out': 'Neve Out',
+      'Warm In': 'Warm In', 'Warm Out': 'Warm Out',
+      'Vintech In': 'Vin In', 'Vintech Out': 'Vin Out',
+      'X Rack In': 'XR In', 'X Rack Out': 'XR Out'
+    };
+
+    function shortLabel(label) {
+      if (SHORT_LABELS[label]) return SHORT_LABELS[label];
+      const match = label.match(/^(.*?)(?:\s+(In|Out))?$/i);
+      let base = (match && match[1] ? match[1] : label).trim();
+      const dir = match && match[2] ? match[2] : '';
+      if (base.length > 6) {
+        const words = base.split(/\s+/).filter(Boolean);
+        base = words.length > 1 ? words.map((w) => w[0]).join('').toUpperCase() : base.slice(0, 5);
+      }
+      return dir ? `${base} ${dir}` : base;
+    }
+
+    // Even hole distribution: 2 items -> [4,4], 3 -> [3,3,2], 4 -> [2,2,2,2].
+    function distributeEven(n) {
+      const count = Math.min(Math.max(1, n), GROUP_COLS);
+      const base = Math.floor(GROUP_COLS / count);
+      let remainder = GROUP_COLS % count;
+      const spans = [];
+      for (let i = 0; i < count; i++) {
+        spans.push(base + (remainder > 0 ? 1 : 0));
+        if (remainder > 0) remainder--;
+      }
+      return spans;
+    }
+
+    function normalizeSpans(items) {
+      if (!items || items.length === 0) return [];
+      const spans = items.map((it) => (Number.isInteger(it.span) && it.span > 0 ? it.span : null));
+      const allValid = spans.every((s) => s !== null);
+      const sum = allValid ? spans.reduce((a, b) => a + b, 0) : 0;
+      if (allValid && sum === GROUP_COLS) return spans;
+      return distributeEven(items.length);
+    }
+
+    function computeStarts(spans) {
+      const starts = [];
+      let cursor = 1;
+      for (const span of spans) { starts.push(cursor); cursor += span; }
+      return starts;
+    }
+
+    function applySegmentFont(seg, span) {
+      seg.classList.remove('span-1', 'span-2');
+      if (span <= 1) seg.classList.add('span-1');
+      else if (span === 2) seg.classList.add('span-2');
+    }
+
+    function updateGroupLabel(group, items, preserveRowGap = false) {
       const existingWrapper = group.querySelector('.group-drop-labels');
       if (existingWrapper) existingWrapper.remove();
-      if ((assignment && assignment.length > 0) || preserveRowGap) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'group-drop-labels';
-        if (!assignment || assignment.length === 0) {
-          wrapper.classList.add('ghost');
-        } else {
-          assignment.forEach((item) => {
-            const labelEl = document.createElement('div');
-            labelEl.className = 'group-drop-label';
-            labelEl.textContent = item.label;
-            if (item.color) {
-              labelEl.style.background = hexToRgba(item.color, 0.38);
-              labelEl.style.border = `1px solid ${hexToRgba(item.color, 0.75)}`;
-            } else {
-              labelEl.style.background = 'rgba(255,255,255,0.08)';
-              labelEl.style.border = '1px solid rgba(255,255,255,0.16)';
-            }
-            wrapper.appendChild(labelEl);
-          });
-        }
+      const hasItems = items && items.length > 0;
+      if (!hasItems && !preserveRowGap) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'group-drop-labels';
+      if (!hasItems) {
+        wrapper.classList.add('ghost');
         group.appendChild(wrapper);
+        return;
       }
+
+      const groupId = group.dataset.groupId;
+      const spans = normalizeSpans(items);
+      const starts = computeStarts(spans);
+      const segEls = [];
+
+      items.forEach((item, i) => {
+        const seg = document.createElement('div');
+        seg.className = 'group-drop-label';
+        seg.style.gridColumn = `${starts[i]} / span ${spans[i]}`;
+        applySegmentFont(seg, spans[i]);
+        if (item.color) {
+          seg.style.background = hexToRgba(item.color, 0.4);
+          seg.style.border = `1px solid ${hexToRgba(item.color, 0.8)}`;
+        } else {
+          seg.style.background = 'rgba(255,255,255,0.08)';
+          seg.style.border = '1px solid rgba(255,255,255,0.16)';
+        }
+        const nameEl = document.createElement('span');
+        nameEl.className = 'group-drop-label-name';
+        nameEl.textContent = shortLabel(item.label);
+        seg.title = `${item.label} — double-click to remove`;
+        seg.appendChild(nameEl);
+        seg.addEventListener('dblclick', (event) => {
+          event.stopPropagation();
+          removeItemFromGroup(groupId, item.label);
+        });
+        wrapper.appendChild(seg);
+        segEls.push(seg);
+      });
+
+      for (let i = 0; i < items.length - 1; i++) {
+        const divider = document.createElement('div');
+        divider.className = 'segment-divider';
+        const boundaryCol = starts[i] + spans[i];
+        divider.style.left = `${((boundaryCol - 1) / GROUP_COLS) * 100}%`;
+        divider.title = 'Drag to rebalance';
+        divider.addEventListener('pointerdown', (event) =>
+          startDividerDrag(event, group, groupId, items, spans, starts, segEls, divider, i));
+        wrapper.appendChild(divider);
+      }
+
+      group.appendChild(wrapper);
+    }
+
+    // Drag the boundary between two adjacent segments. Holes are transferred
+    // between the pair (sum preserved), snapping to hole edges. Only this
+    // group's spans change, so other groups never shift.
+    function startDividerDrag(event, group, groupId, items, spans, starts, segEls, divider, i) {
+      event.preventDefault();
+      event.stopPropagation();
+      const total = spans[i] + spans[i + 1];
+      const holesBeforePair = starts[i] - 1;
+      divider.classList.add('dragging');
+
+      const onMove = (moveEvent) => {
+        const rect = group.getBoundingClientRect();
+        const colW = rect.width / GROUP_COLS || 1;
+        const holesFloat = (moveEvent.clientX - rect.left) / colW;
+        let leftHoles = Math.round(holesFloat - holesBeforePair);
+        leftHoles = Math.min(total - 1, Math.max(1, leftHoles));
+        spans[i] = leftHoles;
+        spans[i + 1] = total - leftHoles;
+        starts[i + 1] = starts[i] + spans[i];
+        segEls[i].style.gridColumn = `${starts[i]} / span ${spans[i]}`;
+        segEls[i + 1].style.gridColumn = `${starts[i + 1]} / span ${spans[i + 1]}`;
+        applySegmentFont(segEls[i], spans[i]);
+        applySegmentFont(segEls[i + 1], spans[i + 1]);
+        const boundaryCol = starts[i] + spans[i];
+        divider.style.left = `${((boundaryCol - 1) / GROUP_COLS) * 100}%`;
+      };
+
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        divider.classList.remove('dragging');
+        const current = loadGroupAssignments();
+        const arr = current[groupId];
+        if (arr && arr.length === items.length) {
+          arr.forEach((entry, idx) => { entry.span = spans[idx]; });
+          saveGroupAssignments(current);
+        }
+        renderGroupAssignments();
+      };
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    }
+
+    function removeItemFromGroup(groupId, label) {
+      const assignments = loadGroupAssignments();
+      const groupItems = assignments[groupId];
+      if (!groupItems) return;
+      const remaining = groupItems.filter((entry) => entry.label !== label);
+      if (remaining.length === 0) {
+        delete assignments[groupId];
+      } else {
+        const spans = distributeEven(remaining.length);
+        remaining.forEach((entry, idx) => { entry.span = spans[idx]; });
+        assignments[groupId] = remaining;
+      }
+      saveGroupAssignments(assignments);
+      renderGroupAssignments();
     }
 
     function renderGroupAssignments() {
@@ -795,16 +993,20 @@
       });
     }
 
-    function assignLegendToGroup(groupId, item) {
+    function assignLegendToGroup(groupId, item, insertIndex) {
       const assignments = loadGroupAssignments();
       const groupItems = assignments[groupId] || [];
-      const existing = groupItems.some((entry) => entry.label === item.label);
-      if (!existing) {
-        groupItems.push({ label: item.label, color: item.color, start: 1, width: 8 });
-        assignments[groupId] = groupItems;
-        saveGroupAssignments(assignments);
-        renderGroupAssignments();
-      }
+      if (groupItems.some((entry) => entry.label === item.label)) return;
+      if (groupItems.length >= GROUP_COLS) return; // group full (8 holes max)
+      const idx = (insertIndex === undefined || insertIndex < 0)
+        ? groupItems.length
+        : Math.min(insertIndex, groupItems.length);
+      groupItems.splice(idx, 0, { label: item.label, color: item.color });
+      const spans = distributeEven(groupItems.length);
+      groupItems.forEach((entry, i) => { entry.span = spans[i]; });
+      assignments[groupId] = groupItems;
+      saveGroupAssignments(assignments);
+      renderGroupAssignments();
     }
 
     function setupPatchBayGroups() {
@@ -836,7 +1038,19 @@
           try {
             const item = JSON.parse(payload);
             if (item && item.label) {
-              assignLegendToGroup(groupId, item);
+              // Insert at the position under the pointer; segments then redistribute evenly.
+              const rect = group.getBoundingClientRect();
+              const relX = event.clientX - rect.left;
+              const dropCol = Math.min(GROUP_COLS, Math.max(1, Math.floor((relX / Math.max(rect.width, 1)) * GROUP_COLS) + 1));
+              const current = loadGroupAssignments()[groupId] || [];
+              const spans = normalizeSpans(current);
+              const starts = computeStarts(spans);
+              let insertIndex = current.length;
+              for (let i = 0; i < current.length; i++) {
+                const mid = starts[i] + spans[i] / 2;
+                if (dropCol <= mid) { insertIndex = i; break; }
+              }
+              assignLegendToGroup(groupId, { label: item.label, color: item.color }, insertIndex);
             }
           } catch (error) {
             console.warn('Invalid legend drop payload', error);
@@ -954,9 +1168,6 @@
     }
 
     legendAddButton.addEventListener('click', addLegendItem);
-    legendSaveButton.addEventListener('click', () => {
-      persistPatchBayState();
-    });
     legendResetButton.addEventListener('click', () => {
       resetPatchBayState();
     });
