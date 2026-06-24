@@ -643,6 +643,7 @@
           <input id="legend-color-input" type="color" value="#c2c0ff" aria-label="Legend item color" />
           <input id="legend-item-input" type="text" placeholder="Add new legend item" aria-label="Legend item name" />
           <button id="legend-add-button" type="button">Add item</button>
+          <button id="legend-save-file-button" type="button">Save to File</button>
           <button id="legend-reset-button" type="button">Reset</button>
         </div>
       </div>
@@ -651,6 +652,9 @@
     </section>
   </div>
 
+  <!-- Self-contained saved state. "Save to File" rewrites this block so the
+       file carries its own data when moved between drives or machines. -->
+  <script type="application/json" id="embedded-state">null</script>
   <script>
     const legendKey = 'patchBayLegendItems';
     const defaultGroupBaseColors = {
@@ -729,6 +733,7 @@
     const legendInput = document.getElementById('legend-item-input');
     const legendColor = document.getElementById('legend-color-input');
     const legendAddButton = document.getElementById('legend-add-button');
+    const legendSaveFileButton = document.getElementById('legend-save-file-button');
     const legendResetButton = document.getElementById('legend-reset-button');
 
     function normalizeLegendItem(item) {
@@ -777,6 +782,64 @@
 
     function saveGroupAssignments(assignments) {
       window.localStorage.setItem(assignmentKey, JSON.stringify(assignments));
+    }
+
+    // --- Self-contained persistence -----------------------------------------
+    // localStorage on file:// is keyed to the file's path/origin and can be
+    // cleared by the browser, so it is unreliable once the file is moved to
+    // another drive or reopened days later. "Save to File" bakes the current
+    // state into this HTML document (the #embedded-state block) and downloads
+    // it, so the data travels inside the file itself — no external JSON or DB.
+    function readEmbeddedState() {
+      const el = document.getElementById('embedded-state');
+      if (!el) return null;
+      try {
+        const parsed = JSON.parse(el.textContent || 'null');
+        return (parsed && typeof parsed === 'object') ? parsed : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function hydrateFromEmbeddedState() {
+      // Use the baked-in state only when localStorage is empty (e.g. after a
+      // browser wipe or when the file was moved to a new path). When present,
+      // localStorage is treated as the fresher working copy.
+      const state = readEmbeddedState();
+      if (!state) return;
+      if (!window.localStorage.getItem(assignmentKey) && state.groupAssignments) {
+        window.localStorage.setItem(assignmentKey, JSON.stringify(state.groupAssignments));
+      }
+      if (!window.localStorage.getItem(legendKey) && Array.isArray(state.legendItems)) {
+        window.localStorage.setItem(legendKey, JSON.stringify(state.legendItems));
+      }
+    }
+
+    function buildSelfContainedHTML() {
+      const state = {
+        legendItems: loadLegendItems(),
+        groupAssignments: loadGroupAssignments(),
+        savedAt: new Date().toISOString()
+      };
+      const clone = document.documentElement.cloneNode(true);
+      const embedded = clone.querySelector('#embedded-state');
+      if (embedded) embedded.textContent = JSON.stringify(state);
+      // Remove transient rendered labels so the saved file rebuilds cleanly.
+      clone.querySelectorAll('.group-drop-labels').forEach((n) => n.remove());
+      return '<!DOCTYPE html>\n' + clone.outerHTML;
+    }
+
+    function saveStateToFile() {
+      const html = buildSelfContainedHTML();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'patch_bay.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     function resetPatchBayState() {
@@ -1168,6 +1231,7 @@
     }
 
     legendAddButton.addEventListener('click', addLegendItem);
+    legendSaveFileButton.addEventListener('click', saveStateToFile);
     legendResetButton.addEventListener('click', () => {
       resetPatchBayState();
     });
@@ -1179,6 +1243,7 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+      hydrateFromEmbeddedState();
       setupPatchBayGroups();
       renderLegend(loadLegendItems());
       renderGroupAssignments();

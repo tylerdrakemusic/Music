@@ -366,6 +366,7 @@
         <div class="instructions">Drag a preamp from the legend into the Preamp column. Double-click a Preamp cell to clear it. Click to edit Instrument and Wall Mount #.</div>
       </div>
       <div style="margin-left: auto; display:flex; gap:0.4rem; align-items:center;">
+        <button class="print-button screen-only save-file-button" type="button">Save to File</button>
         <button class="print-button screen-only" type="button" id="clear-button">Clear</button>
         <button class="print-button" type="button" onclick="window.print()">Print</button>
       </div>
@@ -443,6 +444,10 @@
     </div>
   </aside>
 </div>
+
+<!-- Self-contained saved state. "Save to File" rewrites this block so the
+     file carries its own data when moved between drives or machines. -->
+<script type="application/json" id="embedded-state">null</script>
 
 <script>
   const CHANNEL_COUNT = 16;
@@ -787,7 +792,65 @@
     });
   }
 
+  // --- Self-contained persistence -----------------------------------------
+  // localStorage on file:// is unreliable once the file is moved to another
+  // drive or reopened days later. "Save to File" bakes the current grid state
+  // into this HTML document (the #embedded-state block) and downloads it, so
+  // the data travels inside the file itself — no external JSON or database.
+  const ORIGINAL_PREAMP_LEGEND_HTML = (document.getElementById('preamp-legend') || {}).innerHTML || '';
+
+  function readEmbeddedState() {
+    const el = document.getElementById('embedded-state');
+    if (!el) return null;
+    try {
+      const parsed = JSON.parse(el.textContent || 'null');
+      return (parsed && typeof parsed === 'object') ? parsed : null;
+    } catch (e) { return null; }
+  }
+
+  function hydrateFromEmbeddedState() {
+    // Use the baked-in state only when localStorage is empty (e.g. after a
+    // browser wipe or when the file was moved to a new path).
+    const state = readEmbeddedState();
+    if (!state) return;
+    if (!localStorage.getItem('micConfigSheets') && state.micConfigSheets) {
+      localStorage.setItem('micConfigSheets', JSON.stringify(state.micConfigSheets));
+    }
+  }
+
+  function buildSelfContainedHTML() {
+    saveGridState();
+    let sheetsState = null;
+    try { sheetsState = JSON.parse(localStorage.getItem('micConfigSheets') || 'null'); } catch (e) {}
+    const state = { micConfigSheets: sheetsState, savedAt: new Date().toISOString() };
+    const clone = document.documentElement.cloneNode(true);
+    const embedded = clone.querySelector('#embedded-state');
+    if (embedded) embedded.textContent = JSON.stringify(state);
+    // Reset runtime-generated regions so the saved file rebuilds cleanly on open.
+    const sheetsEl = clone.querySelector('#sheets');
+    if (sheetsEl) sheetsEl.innerHTML = '';
+    const instrEl = clone.querySelector('#instruments-legend');
+    if (instrEl) instrEl.innerHTML = '';
+    const preampEl = clone.querySelector('#preamp-legend');
+    if (preampEl) preampEl.innerHTML = ORIGINAL_PREAMP_LEGEND_HTML;
+    return '<!DOCTYPE html>\n' + clone.outerHTML;
+  }
+
+  function saveStateToFile() {
+    const html = buildSelfContainedHTML();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mic_config_template.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   const host = document.getElementById('sheets');
+  host.innerHTML = '';
   for (let s = 0; s < SHEET_COUNT; s++) {
     host.appendChild(buildSheet());
   }
@@ -965,10 +1028,14 @@
     // clear button (no confirmation)
     const clearBtn = document.getElementById('clear-button');
     if (clearBtn) clearBtn.addEventListener('click', () => clearGridState());
+
+    // save-to-file buttons (self-contained state, one per sheet header)
+    document.querySelectorAll('.save-file-button').forEach((btn) => btn.addEventListener('click', saveStateToFile));
   }
 
   // After drag/drop setup, wire persistence and restore any saved state
   setupPersistenceHooks();
+  hydrateFromEmbeddedState();
   loadGridState();
   // ensure any numeric wall cells are shown as badges
   normalizeAllWallCells();
