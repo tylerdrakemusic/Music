@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 <meta charset="UTF-8">
 <title>Hyperthreat Studios — Signal Tracking</title>
 <style>
@@ -349,6 +348,31 @@
   }
   .legend-badge.instrument { min-width: 3.0rem; text-align: center; }
   .legend-badge.preamp { min-width: 3.2rem; text-align: center; }
+  #save-status {
+    position: fixed; bottom: 12px; right: 14px; z-index: 9999;
+    padding: 0.3em 0.7em; border-radius: 999px;
+    font-size: 9.5pt; font-weight: 700;
+    background: #fff; border: 1px solid #bbb;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18); color: #555;
+    pointer-events: none;
+  }
+  #save-status.ok { color: #1a7f4b; }
+  #save-status.pending { color: #9a7d00; }
+  #save-status.error { color: #b3261e; }
+  #autosave-bar {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    z-index: 10000; display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.6rem 0.9rem; border-radius: 12px;
+    background: #fff; border: 1px solid #2f6df0;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.22); color: #111; font-size: 10.5pt;
+    max-width: min(92vw, 30rem);
+  }
+  #autosave-bar button {
+    flex: 0 0 auto; padding: 0.45rem 0.85rem; border-radius: 999px;
+    border: none; background: #2f6df0; color: #fff; font-weight: 800; cursor: pointer; font-size: 10pt;
+  }
+  #autosave-bar button:hover { filter: brightness(1.05); }
+  @media print { #save-status, #autosave-bar { display: none !important; } }
 </style>
 </head>
 <body>
@@ -397,9 +421,9 @@
 <!-- single global controls now rendered in header.brand per sheet template -->
 
 <div class="global-wrap">
-  <aside class="instruments-legend-slot" id="instruments-legend" aria-label="Instruments"></aside>
+  <aside class="instruments-legend-slot" id="instruments-legend" aria-label="Instruments" style="top: 91px;"></aside>
   <div id="sheets" class="sheets-wrap"></div>
-  <aside class="preamp-legend" id="preamp-legend" aria-label="Preamp Legend">
+  <aside class="preamp-legend" id="preamp-legend" aria-label="Preamp Legend" style="top: 91px;">
     <div class="legend-groups">
       <div class="legend-group legend-group-api">
         <div class="legend-group-title">API</div>
@@ -819,21 +843,27 @@
   }
 
   function buildSelfContainedHTML() {
-    saveGridState();
-    let sheetsState = null;
-    try { sheetsState = JSON.parse(localStorage.getItem('micConfigSheets') || 'null'); } catch (e) {}
-    const state = { micConfigSheets: sheetsState, savedAt: new Date().toISOString() };
-    const clone = document.documentElement.cloneNode(true);
-    const embedded = clone.querySelector('#embedded-state');
-    if (embedded) embedded.textContent = JSON.stringify(state);
-    // Reset runtime-generated regions so the saved file rebuilds cleanly on open.
-    const sheetsEl = clone.querySelector('#sheets');
-    if (sheetsEl) sheetsEl.innerHTML = '';
-    const instrEl = clone.querySelector('#instruments-legend');
-    if (instrEl) instrEl.innerHTML = '';
-    const preampEl = clone.querySelector('#preamp-legend');
-    if (preampEl) preampEl.innerHTML = ORIGINAL_PREAMP_LEGEND_HTML;
-    return '<!DOCTYPE html>\n' + clone.outerHTML;
+    suppressSchedule = true;
+    try {
+      saveGridState();
+      let sheetsState = null;
+      try { sheetsState = JSON.parse(localStorage.getItem('micConfigSheets') || 'null'); } catch (e) {}
+      const state = { micConfigSheets: sheetsState, savedAt: new Date().toISOString() };
+      const clone = document.documentElement.cloneNode(true);
+      const embedded = clone.querySelector('#embedded-state');
+      if (embedded) embedded.textContent = JSON.stringify(state);
+      // Reset runtime-generated regions so the saved file rebuilds cleanly on open.
+      const sheetsEl = clone.querySelector('#sheets');
+      if (sheetsEl) sheetsEl.innerHTML = '';
+      const instrEl = clone.querySelector('#instruments-legend');
+      if (instrEl) instrEl.innerHTML = '';
+      const preampEl = clone.querySelector('#preamp-legend');
+      if (preampEl) preampEl.innerHTML = ORIGINAL_PREAMP_LEGEND_HTML;
+      clone.querySelectorAll('[data-runtime-ui]').forEach((n) => n.remove());
+      return '<!DOCTYPE html>\n' + clone.outerHTML;
+    } finally {
+      suppressSchedule = false;
+    }
   }
 
   function saveStateToFile() {
@@ -847,6 +877,201 @@
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // ===== AutoSave to the actual file ====================================
+  // A double-clicked file:// page cannot silently write to disk on its own, so
+  // true autosave uses the File System Access API after a one-time file pick
+  // (remembered across sessions), or the optional serve_studio.py server when
+  // opened over http. localStorage autosave + a close-warning are always on as
+  // a safety net so work is never lost.
+  const SELF_FILENAME = 'mic_config_template.html';
+  const SERVED = location.protocol === 'http:' || location.protocol === 'https:';
+  const FS_API = typeof window.showSaveFilePicker === 'function';
+  let fileHandle = null;
+  let autoSaveTimer = null;
+  let lastSavedHtml = '';
+  let dirtyToFile = false;
+  let suppressSchedule = false;
+  let autoSaveReady = false;
+  let statusEl = null;
+  let autoSaveBar = null;
+
+  function idbOpen() {
+    return new Promise((resolve) => {
+      let req;
+      try { req = indexedDB.open('studioAutoSave', 1); } catch (e) { resolve(null); return; }
+      req.onupgradeneeded = () => req.result.createObjectStore('handles');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  }
+  async function idbGet(key) {
+    const db = await idbOpen();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      const r = db.transaction('handles', 'readonly').objectStore('handles').get(key);
+      r.onsuccess = () => resolve(r.result || null);
+      r.onerror = () => resolve(null);
+    });
+  }
+  async function idbSet(key, value) {
+    const db = await idbOpen();
+    if (!db) return;
+    return new Promise((resolve) => {
+      const tx = db.transaction('handles', 'readwrite');
+      tx.objectStore('handles').put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  }
+
+  function setStatus(text, kind) {
+    if (!statusEl) {
+      statusEl = document.createElement('div');
+      statusEl.id = 'save-status';
+      statusEl.setAttribute('data-runtime-ui', '');
+      document.body.appendChild(statusEl);
+    }
+    statusEl.textContent = text;
+    statusEl.className = kind || 'idle';
+  }
+
+  function hideAutoSaveBar() {
+    if (autoSaveBar) { autoSaveBar.remove(); autoSaveBar = null; }
+  }
+  function showAutoSaveBar(message, label, onClick) {
+    hideAutoSaveBar();
+    autoSaveBar = document.createElement('div');
+    autoSaveBar.id = 'autosave-bar';
+    autoSaveBar.setAttribute('data-runtime-ui', '');
+    const span = document.createElement('span');
+    span.textContent = message;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = label;
+    btn.addEventListener('click', onClick);
+    autoSaveBar.appendChild(span);
+    autoSaveBar.appendChild(btn);
+    document.body.appendChild(autoSaveBar);
+  }
+
+  async function writeViaHandle(html) {
+    if (!fileHandle) return false;
+    try {
+      if (fileHandle.queryPermission) {
+        const p = await fileHandle.queryPermission({ mode: 'readwrite' });
+        if (p !== 'granted') return false;
+      }
+      const writable = await fileHandle.createWritable();
+      await writable.write(html);
+      await writable.close();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function doAutoSave() {
+    if (!SERVED && !fileHandle) return;
+    let html;
+    try { html = buildSelfContainedHTML(); } catch (e) { return; }
+    if (html === lastSavedHtml) { dirtyToFile = false; return; }
+    setStatus('Saving\u2026', 'pending');
+    let ok = false;
+    try {
+      if (SERVED) {
+        const res = await fetch('/__save?file=' + encodeURIComponent(SELF_FILENAME), {
+          method: 'POST', headers: { 'Content-Type': 'text/html' }, body: html
+        });
+        ok = res.ok;
+      } else {
+        ok = await writeViaHandle(html);
+      }
+    } catch (e) { ok = false; }
+    if (ok) {
+      lastSavedHtml = html;
+      dirtyToFile = false;
+      setStatus('Saved \u2713', 'ok');
+    } else {
+      dirtyToFile = true;
+      setStatus('Save failed', 'error');
+    }
+  }
+
+  function scheduleSave() {
+    if (!autoSaveReady) return;
+    dirtyToFile = true;
+    if (suppressSchedule || (!SERVED && !fileHandle)) return;
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(doAutoSave, 800);
+  }
+
+  async function turnOnFileAutoSave() {
+    if (!FS_API) return;
+    try {
+      fileHandle = await window.showSaveFilePicker({
+        suggestedName: SELF_FILENAME,
+        types: [{ description: 'HTML page', accept: { 'text/html': ['.html'] } }]
+      });
+      await idbSet(SELF_FILENAME, fileHandle);
+      hideAutoSaveBar();
+      lastSavedHtml = '';
+      await doAutoSave();
+    } catch (e) {
+      // operator cancelled the picker; the safety net stays in place
+    }
+  }
+
+  async function initAutoSave() {
+    try { lastSavedHtml = buildSelfContainedHTML(); } catch (e) { lastSavedHtml = ''; }
+    autoSaveReady = true;
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && dirtyToFile) doAutoSave();
+    });
+    window.addEventListener('beforeunload', (event) => {
+      if (SERVED && dirtyToFile) {
+        try {
+          navigator.sendBeacon('/__save?file=' + encodeURIComponent(SELF_FILENAME),
+            new Blob([buildSelfContainedHTML()], { type: 'text/html' }));
+        } catch (e) {}
+        return;
+      }
+      if (dirtyToFile && !fileHandle) {
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    });
+
+    if (SERVED) {
+      setStatus('AutoSave on \u2713', 'ok');
+      setInterval(doAutoSave, 30000);
+      return;
+    }
+    if (!FS_API) {
+      setStatus('Saved in browser', 'ok');
+      return;
+    }
+    setInterval(() => { if (fileHandle) doAutoSave(); }, 30000);
+    const saved = await idbGet(SELF_FILENAME);
+    if (saved) {
+      setStatus('AutoSave paused', 'pending');
+      showAutoSaveBar('Resume saving your work straight to its file?', 'Resume AutoSave', async () => {
+        try {
+          const perm = saved.requestPermission ? await saved.requestPermission({ mode: 'readwrite' }) : 'granted';
+          if (perm === 'granted') {
+            fileHandle = saved;
+            hideAutoSaveBar();
+            lastSavedHtml = '';
+            await doAutoSave();
+          }
+        } catch (e) {}
+      });
+    } else {
+      setStatus('Not saving to file yet', 'pending');
+      showAutoSaveBar('Turn on autosave so your work writes straight to the file.', 'Turn on AutoSave', turnOnFileAutoSave);
+    }
   }
 
   const host = document.getElementById('sheets');
@@ -944,6 +1169,7 @@
     } catch (e) {
       console.error('saveGridState error', e);
     }
+    scheduleSave();
   }
 
   function loadGridState() {
@@ -1039,6 +1265,7 @@
   loadGridState();
   // ensure any numeric wall cells are shown as badges
   normalizeAllWallCells();
+  initAutoSave();
 
   // Align the two legends vertically: make preamp legend match instruments legend top
   function alignLegendsVertically() {
@@ -1057,5 +1284,6 @@
   // Logo inlined; loader removed.
 </script>
 
-</body>
-</html>
+
+
+</body></html>
