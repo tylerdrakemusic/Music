@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HyperThreat Studios — Patch Bay</title>
@@ -359,6 +358,55 @@
       background: rgba(124,149,255,0.95);
       height: 82%;
     }
+    #save-status {
+      position: fixed;
+      bottom: 12px;
+      right: 14px;
+      z-index: 9999;
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: rgba(17,28,52,0.94);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+      color: var(--muted);
+      pointer-events: none;
+    }
+    #save-status.ok { color: #6ee7a8; }
+    #save-status.pending { color: #ffd166; }
+    #save-status.error { color: #ff8da0; }
+    #autosave-bar {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.7rem 1rem;
+      border-radius: 14px;
+      background: #14233f;
+      border: 1px solid rgba(124,149,255,0.5);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.5);
+      color: var(--text);
+      font-size: 0.9rem;
+      max-width: min(92vw, 36rem);
+    }
+    #autosave-bar button {
+      flex: 0 0 auto;
+      padding: 0.5rem 0.95rem;
+      border-radius: 999px;
+      border: none;
+      background: var(--accent);
+      color: #0a1226;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    #autosave-bar button:hover { filter: brightness(1.08); }
+    @media print { #save-status, #autosave-bar { display: none !important; } }
     .legend-label {
       display: flex;
       align-items: center;
@@ -520,114 +568,114 @@
         </div>
       </div>
       <div class="row">
-        <div class="group">
+        <div class="group" data-group-id="patch-group-1">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-2">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-3">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-        </div>
-      </div>
-      <div class="row-divider"></div>
-      <div class="row">
-        <div class="group">
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-        </div>
-        <div class="group">
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-        </div>
-        <div class="group">
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-        </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-4">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
       </div>
       <div class="row-divider"></div>
       <div class="row">
-        <div class="group">
+        <div class="group" data-group-id="patch-group-5">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-6">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-7">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-        </div>
-      </div>
-      <div class="row-divider"></div>
-      <div class="row">
-        <div class="group">
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-        </div>
-        <div class="group">
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-        </div>
-        <div class="group">
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
-        </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-8">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
       </div>
       <div class="row-divider"></div>
       <div class="row">
-        <div class="group">
+        <div class="group" data-group-id="patch-group-9">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-10">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-11">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-12">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
       </div>
       <div class="row-divider"></div>
       <div class="row">
-        <div class="group">
+        <div class="group" data-group-id="patch-group-13">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-14">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-15">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
-        <div class="group">
+        <div class="group" data-group-id="patch-group-16">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+      </div>
+      <div class="row-divider"></div>
+      <div class="row">
+        <div class="group" data-group-id="patch-group-17">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+        <div class="group" data-group-id="patch-group-18">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+        <div class="group" data-group-id="patch-group-19">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+        <div class="group" data-group-id="patch-group-20">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+      </div>
+      <div class="row-divider"></div>
+      <div class="row">
+        <div class="group" data-group-id="patch-group-21">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+        <div class="group" data-group-id="patch-group-22">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+        <div class="group" data-group-id="patch-group-23">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
+        </div>
+        <div class="group" data-group-id="patch-group-24">
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
           <div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div>
         </div>
@@ -640,15 +688,15 @@
           <h2 id="legend-title" class="legend-title">Patch Bay Legend</h2>
         </div>
         <div class="legend-controls">
-          <input id="legend-color-input" type="color" value="#c2c0ff" aria-label="Legend item color" />
-          <input id="legend-item-input" type="text" placeholder="Add new legend item" aria-label="Legend item name" />
+          <input id="legend-color-input" type="color" value="#c2c0ff" aria-label="Legend item color">
+          <input id="legend-item-input" type="text" placeholder="Add new legend item" aria-label="Legend item name">
           <button id="legend-add-button" type="button">Add item</button>
           <button id="legend-save-file-button" type="button">Save to File</button>
           <button id="legend-reset-button" type="button">Reset</button>
         </div>
       </div>
-      <div class="legend-grid" id="legend-grid"></div>
-      <div class="legend-empty" id="legend-empty"></div>
+      <div class="legend-grid" id="legend-grid"><div class="legend-group"><div class="legend-group-title">API</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="API" style="background: rgba(97, 161, 255, 0.267); border-color: rgba(97, 161, 255, 0.533); box-shadow: rgba(97, 161, 255, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">API In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="API" style="background: rgba(57, 121, 233, 0.267); border-color: rgba(57, 121, 233, 0.533); box-shadow: rgba(57, 121, 233, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">API Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">Attenuators</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="Attenuators" style="background: rgba(156, 110, 255, 0.267); border-color: rgba(156, 110, 255, 0.533); box-shadow: rgba(156, 110, 255, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Attenuators In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="Attenuators" style="background: rgba(116, 70, 233, 0.267); border-color: rgba(116, 70, 233, 0.533); box-shadow: rgba(116, 70, 233, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Attenuators Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">Dangerous</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="Dangerous" style="background: rgba(255, 113, 139, 0.267); border-color: rgba(255, 113, 139, 0.533); box-shadow: rgba(255, 113, 139, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Dangerous In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="Dangerous" style="background: rgba(233, 73, 99, 0.267); border-color: rgba(233, 73, 99, 0.533); box-shadow: rgba(233, 73, 99, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Dangerous Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">Neve</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="Neve" style="background: rgba(97, 143, 255, 0.267); border-color: rgba(97, 143, 255, 0.533); box-shadow: rgba(97, 143, 255, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Neve In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="Neve" style="background: rgba(57, 103, 233, 0.267); border-color: rgba(57, 103, 233, 0.533); box-shadow: rgba(57, 103, 233, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Neve Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">Normal</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="Normal" style="background: rgba(95, 220, 156, 0.267); border-color: rgba(95, 220, 156, 0.533); box-shadow: rgba(95, 220, 156, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Normal</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">Pre Amps</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="Pre Amps" style="background: rgba(97, 229, 255, 0.267); border-color: rgba(97, 229, 255, 0.533); box-shadow: rgba(97, 229, 255, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Pre Amps In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="Pre Amps" style="background: rgba(57, 189, 225, 0.267); border-color: rgba(57, 189, 225, 0.533); box-shadow: rgba(57, 189, 225, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Preamps Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">Pro Tools</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="Pro Tools" style="background: rgba(255, 199, 67, 0.267); border-color: rgba(255, 199, 67, 0.533); box-shadow: rgba(255, 199, 67, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Pro Tools In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="Pro Tools" style="background: rgba(227, 159, 27, 0.267); border-color: rgba(227, 159, 27, 0.533); box-shadow: rgba(227, 159, 27, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Pro Tools Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">Summing</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="Summing" style="background: rgba(255, 159, 81, 0.267); border-color: rgba(255, 159, 81, 0.533); box-shadow: rgba(255, 159, 81, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Summing In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="Summing" style="background: rgba(233, 119, 41, 0.267); border-color: rgba(233, 119, 41, 0.533); box-shadow: rgba(233, 119, 41, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Summing Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">Vintech</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="Vintech" style="background: rgba(97, 249, 231, 0.267); border-color: rgba(97, 249, 231, 0.533); box-shadow: rgba(97, 249, 231, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Vintech In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="Vintech" style="background: rgba(57, 209, 191, 0.267); border-color: rgba(57, 209, 191, 0.533); box-shadow: rgba(57, 209, 191, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Vintech Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">Warm</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="Warm" style="background: rgba(255, 233, 113, 0.267); border-color: rgba(255, 233, 113, 0.533); box-shadow: rgba(255, 233, 113, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Warm In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="Warm" style="background: rgba(233, 193, 73, 0.267); border-color: rgba(233, 193, 73, 0.533); box-shadow: rgba(233, 193, 73, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">Warm Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div><div class="legend-group"><div class="legend-group-title">X Rack</div><div class="legend-group-items"><div class="legend-item" draggable="true" data-group="X Rack" style="background: rgba(203, 126, 255, 0.267); border-color: rgba(203, 126, 255, 0.533); box-shadow: rgba(203, 126, 255, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">X Rack In</span></div><div class="legend-actions"><button type="button">Remove</button></div></div><div class="legend-item" draggable="true" data-group="X Rack" style="background: rgba(163, 86, 233, 0.267); border-color: rgba(163, 86, 233, 0.533); box-shadow: rgba(163, 86, 233, 0.533) 0px 0px 0px 1px inset, rgba(0, 0, 0, 0.14) 0px 8px 16px;"><div class="legend-label"><span class="legend-name">X Rack Out</span></div><div class="legend-actions"><button type="button">Remove</button></div></div></div></div></div>
+      <div class="legend-empty" id="legend-empty" style="display: none;"></div>
     </section>
   </div>
 
@@ -763,6 +811,7 @@
 
     function saveLegendItems(items) {
       window.localStorage.setItem(legendKey, JSON.stringify(items));
+      scheduleSave();
     }
 
     const assignmentKey = 'patchBayGroupAssignments';
@@ -782,6 +831,7 @@
 
     function saveGroupAssignments(assignments) {
       window.localStorage.setItem(assignmentKey, JSON.stringify(assignments));
+      scheduleSave();
     }
 
     // --- Self-contained persistence -----------------------------------------
@@ -816,17 +866,24 @@
     }
 
     function buildSelfContainedHTML() {
-      const state = {
-        legendItems: loadLegendItems(),
-        groupAssignments: loadGroupAssignments(),
-        savedAt: new Date().toISOString()
-      };
-      const clone = document.documentElement.cloneNode(true);
-      const embedded = clone.querySelector('#embedded-state');
-      if (embedded) embedded.textContent = JSON.stringify(state);
-      // Remove transient rendered labels so the saved file rebuilds cleanly.
-      clone.querySelectorAll('.group-drop-labels').forEach((n) => n.remove());
-      return '<!DOCTYPE html>\n' + clone.outerHTML;
+      suppressSchedule = true;
+      try {
+        const state = {
+          legendItems: loadLegendItems(),
+          groupAssignments: loadGroupAssignments(),
+          savedAt: new Date().toISOString()
+        };
+        const clone = document.documentElement.cloneNode(true);
+        const embedded = clone.querySelector('#embedded-state');
+        if (embedded) embedded.textContent = JSON.stringify(state);
+        // Remove transient rendered labels and runtime-only UI so the saved
+        // file rebuilds cleanly on open.
+        clone.querySelectorAll('.group-drop-labels').forEach((n) => n.remove());
+        clone.querySelectorAll('[data-runtime-ui]').forEach((n) => n.remove());
+        return '<!DOCTYPE html>\n' + clone.outerHTML;
+      } finally {
+        suppressSchedule = false;
+      }
     }
 
     function saveStateToFile() {
@@ -840,6 +897,202 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // ===== AutoSave to the actual file ====================================
+    // A double-clicked file:// page cannot silently write to disk on its own,
+    // so true autosave uses the File System Access API after a one-time file
+    // pick (remembered across sessions), or the optional serve_studio.py server
+    // when the page is opened over http. localStorage autosave + a close-warning
+    // are always on as a safety net so work is never lost.
+    const SELF_FILENAME = 'patch_bay.html';
+    const SERVED = location.protocol === 'http:' || location.protocol === 'https:';
+    const FS_API = typeof window.showSaveFilePicker === 'function';
+    let fileHandle = null;
+    let autoSaveTimer = null;
+    let lastSavedHtml = '';
+    let dirtyToFile = false;
+    let suppressSchedule = false;
+    let autoSaveReady = false;
+    let statusEl = null;
+    let autoSaveBar = null;
+
+    function idbOpen() {
+      return new Promise((resolve) => {
+        let req;
+        try { req = indexedDB.open('studioAutoSave', 1); } catch (e) { resolve(null); return; }
+        req.onupgradeneeded = () => req.result.createObjectStore('handles');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+    async function idbGet(key) {
+      const db = await idbOpen();
+      if (!db) return null;
+      return new Promise((resolve) => {
+        const r = db.transaction('handles', 'readonly').objectStore('handles').get(key);
+        r.onsuccess = () => resolve(r.result || null);
+        r.onerror = () => resolve(null);
+      });
+    }
+    async function idbSet(key, value) {
+      const db = await idbOpen();
+      if (!db) return;
+      return new Promise((resolve) => {
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').put(value, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    }
+
+    function setStatus(text, kind) {
+      if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'save-status';
+        statusEl.setAttribute('data-runtime-ui', '');
+        document.body.appendChild(statusEl);
+      }
+      statusEl.textContent = text;
+      statusEl.className = kind || 'idle';
+    }
+
+    function hideAutoSaveBar() {
+      if (autoSaveBar) { autoSaveBar.remove(); autoSaveBar = null; }
+    }
+    function showAutoSaveBar(message, label, onClick) {
+      hideAutoSaveBar();
+      autoSaveBar = document.createElement('div');
+      autoSaveBar.id = 'autosave-bar';
+      autoSaveBar.setAttribute('data-runtime-ui', '');
+      const span = document.createElement('span');
+      span.textContent = message;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = label;
+      btn.addEventListener('click', onClick);
+      autoSaveBar.appendChild(span);
+      autoSaveBar.appendChild(btn);
+      document.body.appendChild(autoSaveBar);
+    }
+
+    async function writeViaHandle(html) {
+      if (!fileHandle) return false;
+      try {
+        if (fileHandle.queryPermission) {
+          const p = await fileHandle.queryPermission({ mode: 'readwrite' });
+          if (p !== 'granted') return false;
+        }
+        const writable = await fileHandle.createWritable();
+        await writable.write(html);
+        await writable.close();
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function doAutoSave() {
+      if (!SERVED && !fileHandle) return;
+      let html;
+      try { html = buildSelfContainedHTML(); } catch (e) { return; }
+      if (html === lastSavedHtml) { dirtyToFile = false; return; }
+      setStatus('Saving\u2026', 'pending');
+      let ok = false;
+      try {
+        if (SERVED) {
+          const res = await fetch('/__save?file=' + encodeURIComponent(SELF_FILENAME), {
+            method: 'POST', headers: { 'Content-Type': 'text/html' }, body: html
+          });
+          ok = res.ok;
+        } else {
+          ok = await writeViaHandle(html);
+        }
+      } catch (e) { ok = false; }
+      if (ok) {
+        lastSavedHtml = html;
+        dirtyToFile = false;
+        setStatus('Saved \u2713', 'ok');
+      } else {
+        dirtyToFile = true;
+        setStatus('Save failed', 'error');
+      }
+    }
+
+    function scheduleSave() {
+      if (!autoSaveReady) return;
+      dirtyToFile = true;
+      if (suppressSchedule || (!SERVED && !fileHandle)) return;
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(doAutoSave, 800);
+    }
+
+    async function turnOnFileAutoSave() {
+      if (!FS_API) return;
+      try {
+        fileHandle = await window.showSaveFilePicker({
+          suggestedName: SELF_FILENAME,
+          types: [{ description: 'HTML page', accept: { 'text/html': ['.html'] } }]
+        });
+        await idbSet(SELF_FILENAME, fileHandle);
+        hideAutoSaveBar();
+        lastSavedHtml = '';
+        await doAutoSave();
+      } catch (e) {
+        // operator cancelled the picker; the safety net stays in place
+      }
+    }
+
+    async function initAutoSave() {
+      // Baseline so the first real edit (not the initial load) triggers a save.
+      try { lastSavedHtml = buildSelfContainedHTML(); } catch (e) { lastSavedHtml = ''; }
+      autoSaveReady = true;
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && dirtyToFile) doAutoSave();
+      });
+      window.addEventListener('beforeunload', (event) => {
+        if (SERVED && dirtyToFile) {
+          try {
+            navigator.sendBeacon('/__save?file=' + encodeURIComponent(SELF_FILENAME),
+              new Blob([buildSelfContainedHTML()], { type: 'text/html' }));
+          } catch (e) {}
+          return;
+        }
+        if (dirtyToFile && !fileHandle) {
+          event.preventDefault();
+          event.returnValue = '';
+        }
+      });
+
+      if (SERVED) {
+        setStatus('AutoSave on \u2713', 'ok');
+        setInterval(doAutoSave, 30000);
+        return;
+      }
+      if (!FS_API) {
+        setStatus('Saved in browser', 'ok');
+        return;
+      }
+      setInterval(() => { if (fileHandle) doAutoSave(); }, 30000);
+      const saved = await idbGet(SELF_FILENAME);
+      if (saved) {
+        setStatus('AutoSave paused', 'pending');
+        showAutoSaveBar('Resume saving your work straight to its file?', 'Resume AutoSave', async () => {
+          try {
+            const perm = saved.requestPermission ? await saved.requestPermission({ mode: 'readwrite' }) : 'granted';
+            if (perm === 'granted') {
+              fileHandle = saved;
+              hideAutoSaveBar();
+              lastSavedHtml = '';
+              await doAutoSave();
+            }
+          } catch (e) {}
+        });
+      } else {
+        setStatus('Not saving to file yet', 'pending');
+        showAutoSaveBar('Turn on autosave so your work writes straight to the file.', 'Turn on AutoSave', turnOnFileAutoSave);
+      }
     }
 
     function resetPatchBayState() {
@@ -1247,7 +1500,9 @@
       setupPatchBayGroups();
       renderLegend(loadLegendItems());
       renderGroupAssignments();
+      initAutoSave();
     });
   </script>
-</body>
-</html>
+
+
+</body></html>
