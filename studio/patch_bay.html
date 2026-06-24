@@ -900,14 +900,17 @@
     }
 
     // ===== AutoSave to the actual file ====================================
-    // A double-clicked file:// page cannot silently write to disk on its own,
-    // so true autosave uses the File System Access API after a one-time file
-    // pick (remembered across sessions), or the optional serve_studio.py server
-    // when the page is opened over http. localStorage autosave + a close-warning
-    // are always on as a safety net so work is never lost.
+    // A double-clicked file:// page cannot silently write to its own file, so
+    // automatic saving uses the File System Access API (Chrome/Edge) after a
+    // one-time file pick, remembered per file location so the repo copy and an
+    // external-drive copy each keep their own state. Browsers without that API
+    // (Firefox/Safari/in-editor previews) get a one-click manual save. The file
+    // also carries its own state in #embedded-state, and localStorage keeps the
+    // working copy between reopens of the same file.
     const SELF_FILENAME = 'patch_bay.html';
-    const SERVED = location.protocol === 'http:' || location.protocol === 'https:';
     const FS_API = typeof window.showSaveFilePicker === 'function';
+    // Per-location key so each copy of the file remembers its own handle.
+    const HANDLE_KEY = 'handle:' + decodeURIComponent(location.pathname);
     let fileHandle = null;
     let autoSaveTimer = null;
     let lastSavedHtml = '';
@@ -993,36 +996,31 @@
     }
 
     async function doAutoSave() {
-      if (!SERVED && !fileHandle) return;
+      if (!fileHandle) return;
       let html;
       try { html = buildSelfContainedHTML(); } catch (e) { return; }
       if (html === lastSavedHtml) { dirtyToFile = false; return; }
       setStatus('Saving\u2026', 'pending');
-      let ok = false;
-      try {
-        if (SERVED) {
-          const res = await fetch('/__save?file=' + encodeURIComponent(SELF_FILENAME), {
-            method: 'POST', headers: { 'Content-Type': 'text/html' }, body: html
-          });
-          ok = res.ok;
-        } else {
-          ok = await writeViaHandle(html);
-        }
-      } catch (e) { ok = false; }
+      const ok = await writeViaHandle(html);
       if (ok) {
         lastSavedHtml = html;
         dirtyToFile = false;
         setStatus('Saved \u2713', 'ok');
       } else {
         dirtyToFile = true;
-        setStatus('Save failed', 'error');
+        setStatus('Save failed \u2014 click Save', 'error');
       }
     }
 
     function scheduleSave() {
       if (!autoSaveReady) return;
       dirtyToFile = true;
-      if (suppressSchedule || (!SERVED && !fileHandle)) return;
+      if (suppressSchedule) return;
+      if (!fileHandle) {
+        // No automatic target yet — reflect that the change isn't on disk.
+        if (!FS_API) setStatus('Unsaved \u2014 click Save', 'error');
+        return;
+      }
       clearTimeout(autoSaveTimer);
       autoSaveTimer = setTimeout(doAutoSave, 800);
     }
@@ -1034,13 +1032,19 @@
           suggestedName: SELF_FILENAME,
           types: [{ description: 'HTML page', accept: { 'text/html': ['.html'] } }]
         });
-        await idbSet(SELF_FILENAME, fileHandle);
+        await idbSet(HANDLE_KEY, fileHandle);
         hideAutoSaveBar();
         lastSavedHtml = '';
         await doAutoSave();
       } catch (e) {
         // operator cancelled the picker; the safety net stays in place
       }
+    }
+
+    function manualSaveNow() {
+      saveStateToFile();
+      dirtyToFile = false;
+      setStatus('Saved a copy \u2713', 'ok');
     }
 
     async function initAutoSave() {
@@ -1052,33 +1056,26 @@
         if (document.visibilityState === 'hidden' && dirtyToFile) doAutoSave();
       });
       window.addEventListener('beforeunload', (event) => {
-        if (SERVED && dirtyToFile) {
-          try {
-            navigator.sendBeacon('/__save?file=' + encodeURIComponent(SELF_FILENAME),
-              new Blob([buildSelfContainedHTML()], { type: 'text/html' }));
-          } catch (e) {}
-          return;
-        }
         if (dirtyToFile && !fileHandle) {
           event.preventDefault();
           event.returnValue = '';
         }
       });
 
-      if (SERVED) {
-        setStatus('AutoSave on \u2713', 'ok');
-        setInterval(doAutoSave, 30000);
-        return;
-      }
       if (!FS_API) {
-        setStatus('Saved in browser', 'ok');
+        // No File System Access API (Firefox/Safari or an in-editor preview):
+        // we cannot write to the file automatically. Be honest and offer a
+        // one-click manual save. localStorage still keeps state for this same
+        // file location between reopens.
+        setStatus(dirtyToFile ? 'Unsaved \u2014 click Save' : 'Not saved to file', 'pending');
+        showAutoSaveBar('This browser can\u2019t auto-save to the file. Open it in Chrome or Edge for automatic saving, or click Save now to keep your work.', 'Save now', manualSaveNow);
         return;
       }
       setInterval(() => { if (fileHandle) doAutoSave(); }, 30000);
-      const saved = await idbGet(SELF_FILENAME);
+      const saved = await idbGet(HANDLE_KEY);
       if (saved) {
         setStatus('AutoSave paused', 'pending');
-        showAutoSaveBar('Resume saving your work straight to its file?', 'Resume AutoSave', async () => {
+        showAutoSaveBar('Resume saving your work straight to this file?', 'Resume AutoSave', async () => {
           try {
             const perm = saved.requestPermission ? await saved.requestPermission({ mode: 'readwrite' }) : 'granted';
             if (perm === 'granted') {
@@ -1091,7 +1088,7 @@
         });
       } else {
         setStatus('Not saving to file yet', 'pending');
-        showAutoSaveBar('Turn on autosave so your work writes straight to the file.', 'Turn on AutoSave', turnOnFileAutoSave);
+        showAutoSaveBar('Turn on autosave so your work writes straight to this file.', 'Turn on AutoSave', turnOnFileAutoSave);
       }
     }
 
