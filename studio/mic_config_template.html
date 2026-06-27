@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 <meta charset="UTF-8">
 <title>Hyperthreat Studios — Signal Tracking</title>
 <style>
@@ -131,9 +130,11 @@
     padding: 0 0.08in;
   }
   table.mic-grid td.mic-num {
-    text-align: right;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-weight: 700;
-    padding-right: 0.12in;
+    padding: 0.06in 0.08in;
     background: #fafafa;
   }
   .editable-cell {
@@ -235,8 +236,56 @@
     background: rgba(224, 224, 255, 0.55);
     border-color: #b9b3ff;
   }
+  .grid-and-legends {
+    display: flex;
+    gap: 0.12in;
+    align-items: flex-start;
+  }
+  .table-wrap { flex: 1 1 auto; }
+  .instruments-legend-slot,
+  .preamp-legend { width: 4.4rem; flex: 0 0 4.4rem; position: sticky; top: 0.95in; align-self: flex-start; z-index: 50; }
+  /* make preamp aside visually minimal (no outer legend box) and nudge it down a bit */
+  .preamp-legend { padding: 0 0.06in; background: transparent; border: none; margin-top: 0; }
+  .preamp-legend .legend-group { padding: 0.08in; border: 1px solid #ddd; background: #fff; border-radius: 0.12rem; }
+  .global-wrap { display: flex; gap: 0.12in; justify-content: center; align-items: flex-start; }
+  .sheets-wrap { flex: 0 0 auto; width: 7.35in; display: flex; flex-direction: column; gap: 0.8in; align-items: center; }
+  .sheets-wrap .sheet { margin: 0; }
+  /* instruments legend styling: smaller, colored like preamp items */
+  /* compact instruments legend (MVP): minimal containers, just small draggable items */
+  /* instruments column: narrower and compact; groups arranged vertically */
+  .instruments-legend-slot {
+    width: 4.4rem;
+    flex: 0 0 4.4rem;
+    padding: 0.02in 0.04in;
+    display: flex;
+    flex-direction: column;
+    gap: 0.04in;
+    align-items: stretch;
+    margin-top: 0; /* use sticky top for vertical alignment */
+    z-index: 60;
+    position: sticky;
+    top: 0.95in;
+    transform: translateX(-75px); /* nudge left by ~75px (additional 45px) */
+  }
+  .instruments-legend-slot .legend-groups { grid-template-columns: 1fr; gap: 0.06in; }
+  .instruments-legend-slot .legend-group { padding: 0.06in; }
+  .instruments-legend-slot .legend-group-title { font-size: 8.5pt; margin-bottom: 0.06in; }
+  .instruments-legend-slot .legend-item {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: 9pt;
+    padding: 0.06em 0.08em;
+    min-height: 1em;
+    border-radius: 0.12rem;
+    box-shadow: none;
+  }
+  /* add a little left padding to the sheets area so legend items don't visually clash */
+  .sheets-wrap { flex: 0 0 auto; width: 7.35in; display: flex; flex-direction: column; gap: 0.8in; align-items: center; padding-left: 1.0in; padding-right: 1.0in; }
   @media print {
     .legend { background: #f5f5f5; }
+    /* hide all legend sidebars/containers in print */
+    .legend, .instruments-legend, .instruments-legend-slot, .preamp-legend { display: none !important; }
     .legend-group { background: #fff; border-color: #888; }
     .legend-group-api .legend-item { background: #e6e6e6; }
     .legend-group-neve .legend-item { background: #dddddd; }
@@ -269,11 +318,61 @@
     .screen-only { display: none !important; }
     .print-only  { display: block !important; }
     body { background: #fff; }
-    .sheet { width: auto; margin: 0; }
+    /* make the sheet expand to fill printable area */
+    .sheet { width: auto; margin: 0; padding: 0.25in 0.25in 0.5in 0.25in; }
+    .sheets-wrap { padding-left: 0 !important; padding-right: 0 !important; width: 100% !important; }
+    table.mic-grid { width: 100% !important; }
     table.mic-grid tbody tr:nth-child(even) td:not(.mic-num) {
       background: #ececec;
     }
   }
+  .cable-badge {
+    display: inline-block;
+    padding: 0.12em 0.35em;
+    background: #e6f0ff;
+    border: 1px solid #8fb0ff;
+    border-radius: 0.25rem;
+    font-weight: 700;
+    font-size: 9pt;
+    color: #0b3a8a;
+  }
+  .legend-badge {
+    display: inline-block;
+    padding: 0.12em 0.28em;
+    background: #f3f3f3;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    font-weight: 700;
+    font-size: 9pt;
+    color: #111;
+  }
+  .legend-badge.instrument { min-width: 3.0rem; text-align: center; }
+  .legend-badge.preamp { min-width: 3.2rem; text-align: center; }
+  #save-status {
+    position: fixed; bottom: 12px; right: 14px; z-index: 9999;
+    padding: 0.3em 0.7em; border-radius: 999px;
+    font-size: 9.5pt; font-weight: 700;
+    background: #fff; border: 1px solid #bbb;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18); color: #555;
+    pointer-events: none;
+  }
+  #save-status.ok { color: #1a7f4b; }
+  #save-status.pending { color: #9a7d00; }
+  #save-status.error { color: #b3261e; }
+  #autosave-bar {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    z-index: 10000; display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.6rem 0.9rem; border-radius: 12px;
+    background: #fff; border: 1px solid #2f6df0;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.22); color: #111; font-size: 10.5pt;
+    max-width: min(92vw, 30rem);
+  }
+  #autosave-bar button {
+    flex: 0 0 auto; padding: 0.45rem 0.85rem; border-radius: 999px;
+    border: none; background: #2f6df0; color: #fff; font-weight: 800; cursor: pointer; font-size: 10pt;
+  }
+  #autosave-bar button:hover { filter: brightness(1.05); }
+  @media print { #save-status, #autosave-bar { display: none !important; } }
 </style>
 </head>
 <body>
@@ -282,16 +381,19 @@
   <section class="sheet">
     <header class="brand">
       <div class="logo-wrap">
-        <!-- Tyler: save Hyperthreat logo PNG to this path -->
-        <img class="screen-only" src="../Brand/hyperthreat/hyperthreat-logo.png" alt="Hyperthreat Studios">
-        <img class="print-only"  src="../Brand/hyperthreat/hyperthreat-logo-print.png" alt="Hyperthreat Studios">
+        <!-- Fallback to PNG path; loader will replace with embedded data-URI if available -->
+        <img id="ht-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAAGQCAYAAADr8i+wAAAQAElEQVR4Aey9CbxdRZXvXzdzIBBmCEHRxte04NNu2+dzeH+f+tePs20rDk9R+zk2KgJiC87aimOrDAIis6DdIggoAjIGJcwBZAgQIBCGJJAEEhIykMB9v2/dW8e6++6h9t7n7H3uTeWzf3fVrlq11qq116qqvfc5JxNM/Bc9ED2Q6YGYIJmuiQ3RA8bYBBkcHHyj8FXhKOEnYwTHbNq06W3xIva3BxRL/104UjhcGAuxdeTixYu/de211/4znrUJosLLhY8InxEOHCPY75lnnvnhTTfd9BzZG48+9IASYorM+qawv3CA0PexJZv3v+666z5xxRVX/G/ZO7SCKNBUPzhIxViAjLVmrlmzZk/hgt/97nfPthXxT994QNdosoz5lWBnYtExcSgxzOmnn27++Mc/WnvdCmJPNCjTPQz2TJY1dvjPwMDA302YMOHCmCTDDukDohiaJDNIjneJ2kN1PYuHbsjGyIULF5oTTzzRLFmyxGzYsIGqoRXElsbYH5wyc+ZM8+xnP9vMmDHj+UqSC84555xnmfivVQ/ourjk2McZojpX7EuqSdbaddtttxndf5iJEyeaSZMYhvlrgjCIsQYlhZk9e7Z57nOfS5LspYFdcP755+9mRxv/NO4Bxc8kbddPF323YFcMnVvqzvuVOmcRU9jYOXeFsUhxPtnvJcneTz/99AW///3vZ4/F8YxlmxVUE3U9TtP1eK8bh+pccczSEfcgY3EUXASy3kuSF6jugnPPPXfXsTiesWiz/D1ByfELJcf7xqL9eTbbBNHgxsQyqAsxZKceuPll7CdJdtttN/Oc5zzHbLXVVv9d5+efddZZs/IGH9vqe0DXwSXH+5001RmuCXSsANuxFerDJohfMVbLXBDNYMYlyZZbbvki3WjFJOnhBVVAkRynyu8fcGpUZycxdz7Wae0EkXMM0IxtegXkhziai4MNLkm0kvz95MmT/6Dt1s4h/SNPuAfk6wFNSifr2uzreqkuODnUr2fxQgwgHzjbqtIRCcIAEQQtAnzOEN0Y2+fG69atM93E+vXrzVNPPWWd7nQV2aWLZhPWJYlWkn+Qref/9re/3Uk0Hl3wgK4ByXGSAvBDiNO53VLhe8p5UB/7GBUeri3XuJsxgyzeYRCT2EbcQNFXBMcHdRiRIK6yiDLIjRs3mrvvvtvoBZ054YQTzJFHHml+8pOfdB1HHXWU+dWvfmVuuOEGs3r1ahv8RfbhCBxDkvAIWCvJi9luaSWJN+5Fzitol295lEty/ItjVZ2dxNx5GiVmwMqVK83VV19tfvnLX5qf/vSnXY8XYvCII46wMalH/ub+++83xGqaTSF1pROEQaLwiiuuMN/97ncNxhDAJAoGdRN/+MMfjF7+meOPP958//vfN2eeeaZ59NFHSyXJs571LLPnnnuabbfd9h+nTp16w/z581+W55jYlu0BJcKOmpmvEIdNDp3blQOqusyDmIHnrrvusklx2GGH2QA+++yzDde4mzGDLD3mtwlIsjB5L1q0KNO2ogabICyNAGYGkgcGS5DyWRUGvGnTJvaS8zVDn6f9/vndhl7+/UE6Fy9dutScd9555sILLzTLli3DVDtr5dnqxrTTTjuZ5z3vedzAz9puu+1O09L+UvV7tvA3EYMhPniO/PTfhDN0LV6B81W2yYGPKWfB8d55553mlFNOMZdeeqlZuXIlk9wqXds/Km7+0O2YkczzJPsabd+eZpfD23HsAFl2unp4fNgE8SuKynKQfR3P0iUjSI5T/vSnP+2tFeVtwlu6Dcl+q4x/iXRdu2LFCjvjkJzLly/HyUXmdpJohx12sEmy/fbbP0/br6s1E94j3BnxdK4PlAB3CguEO+TsV3P9RW1y6LpQzITjZSI97bTTzHXXXWevhwKYGe7NurZvFN7a7ZiRvLdJ7su1Y/jsrFmzjKiNlSJ70wbSSRA6FwEB8Dz22GNmzZo1nKL4OFvo4Z8///nPSxTUb5XDr3vkkUfsSkKSuJUE1diVB11goySDlYvEuPm0aYQxuT6QT137RJVtYmhSsZTzLOBo2kiOX/ziF+aaa64x9NM1XK5rSQBfBU8vsc8++/zila985UO8REYP9oSCeKHPBP6UAQq0dNnBqt/Twkqh58ecOXOWS/db5dzr3Xbr4osvNqwqocoZtGSQIBGJl615fsFvgAAH8Ob5XElgm9nesHKQHPTXtVshvO3yyy+/1jL0+M+nPvWpdS996UtXs8UusjnLlNIJgiAGCwVyWCUZ9C0LrSTLdM9DktxAknAzdtFFF9kkcRelSCaOAoyhYdhZdyzrxG9F/nXXISU5HlPb2zTRXVMko4vtA9piTdCWzk6IVeTa4OaiMfhQwF9FWTf6XHXVVY/qpo7t1jw/SbgnQX7oGCJf97+v4/zvkoPHuZpAuU99XP5+u+4NroanaUi3TZAiil1KYkgHNkE6Z2OkoCchj0yZMuUtGsxNJAlPty655BLDvZHqxsgoxpeZzu/33HOPYVvlJ4e2VW/X6j93LI64kyBF2eW3M1DOoW2BJNFN95vl/Jv5BhjbreQ9CTZGdH+lSPqUGKCO5ODrql5yrFTi/JO2VVfC0wawqyx8OzsJ4leOlbIcv1SDf7Muwl9ckihxzOOPPz5WhjDm7ZTv7Rjuvfde+11ubYHtAxxNXKt0bd6hbdWfLcMY/TOmEwSfa+leonsikuQWlySb33YLT7QHvsvNR0e85HhCCfIOXRveurdnWBc02wRRgAXdxGhG6PB1QXfXRMydO3exbtxJklt5a8p2y60kbobzbY/l+tsuLp6SwJAcbKt0DdzK8YR8/g6t7nPgaRtlr3XSXpsgycqxeH7ZZZc9LLvfoItzIUnC53z4fBiriup5khIxYUJXfKB7P/vI+i9/+Yv9TJWXHHcrad6gbdXl+Hw8oJMgVTKNPv3kBC3pS3Tx+LXFM3i6dc4555jf/va3hv0xb/6ffPJJE1HPB2vXrjVPPPGE/dgIHyLlhlzvpvhExe2Khf9fK0eT7zmksvhwcQrNg5MED7sqzjsJwsl4gC7QpnXr1u2rRDmTC8mLRD5W/eMf/7gnH63mE6ObG370ox+Z4447ztxxxx324ztaNe5QQPHZqgfHQwz5Y7AJosGNuLcgg/LgC+jH8rx58zZqpnu/LtxZrBxsBS6//HLDzXvEJeX8oPdLvs94lK4tlHnggQfcpefDjm/SNqtT4Rr6gfqxnRfTfptvt00Qv2K8lEmSGTNmfEBJ8p9aTR6ZNGnSIt3IR0yeXNsH+FI+Xaz7vesVL2/R06tFouPyGJEgfhaFlPvdIxdccMGGXXbZ5YNbbLHFHlpR9opY2zUfTJ8+/W9XrFjxv6688sqF/RwHIXHs8yTHMiJBko3j4fw3v/nN07oPeVIrytqIeV3zAT6dP3/+U+MhRvLGMO4TJG/wsS16oMgDNkG4kQH+UpNXLhIa26MHQjzQBE9eHKe1JW2yCZKsjOfRA9EDQx7oJEhaNuXV0Z12aET0QL96gBgNBWNwvJRBJ0E4iYgeiB4Y6QGbIO7+gyaXQSEU/ojogX72AHGMfdAQwOvDJohfEVLWCzf7oTd4N23a9Aw0InqgjzzgTBnUi+JBvdDks2KurhTtJEhIdrmVZquttjLTpk3j4ykTlSzTS2mMzNEDzXlgihJkKgkSEt/wJE3rJEiyIescIXo7bfbee2/Dz3q+6lWvensWb6yPHmjTAxs2bPjfEydOfK6SpN4K4lYGgr8I8PI7Q29605vMe9/7XrPPPvt8ZfXq1b8WvrV27drvbu5Yt27ddxcvXvyTs88++x+bCg75ficFw3fXr1//PfTHa7Du2/LFMVo5fuWSg7gtiu2061VpBdliiy3Mi170IvOa17zG7LHHHpMk+D3K1K/IoEM3Z+hiHLpx48ZD//jHPx54xhlnvFB+aerYXgGA7w/ZnP3vjf3LKu8nbMsF4KeH5B+KpdFJEJddSHDlPKpgsDfq8MgQ7kc2a+A3/MDH6n/zm9/Yr6JS1xSUmPYrr1yPiEH7jUc9QLL/vwy+IUHK+AV+rl0nQTixCPyDMjLTGfHUU0/Z/0RHS/1mSfED38/WymH4ETutqIGerM+Gz9HPNQCcb87Q9so44A8X7FU8bRMEAYCgLwv6AZJlcwc/rM1P+7O6VrkYdfpw3eJ1eNquoi4O8Qd+KYPkNbAJkqyM59U8wBarjeSoZm3sFeKBEQlSJtMi7+Coe64Qh/eKJ16P0dejik+S12dEgiQb43n0wObuAZsgVfZqVbJzc+jTVkDhW3RDI6qtJvgvCZsgycp4Hj0QPTDkgU6CuBtMHk9OmjTJ/t4R5c0d+KXKjDzk3mb+8ijT2YhGV86j8DG2zf36+uPnAYvzGf4BNkHcM3R+dZDfO7r22mvNVVddZfjVvM0N/Hdh/GeT/JYW7zX48Tm2oDhrPIExMTbGyFgZM2Pf3K434yXWAf99AwnCxOGutU2QW265xSbEz372M/Otb33L8CuERx55pDniiCM2Oxx++OHmcIFfDwT/9V//Ze6//377fB3nFcE5tmlaZJdrxy7eLHPNTzrpJMMYud6HH364HffmeM0ZM7+Oedlll9nrPCpBzjvvvIFzzjlngI9JLFq0yP72KrPLGEJXbeZlH2/D+U1ffiX++uuvt58OwHEu0NIowdcW0uxJq8M+dglnnnmmYWyMcdmyZYYxb67X242bt+/4RxgQ7GFXkNtvv/0CJca/q+bz2pMdpL3Y5o4D5YfPKiHOZftJ8PB2Vv4Z04fGYz+jpOtt7rrrLjuWyZMn36ixfl7X/EBhs77u8s9BcsrBmli+IpytsrEJMmfOnGuuvPLKk7UP+5H2ZIdHXH2EfHGU9uXv2GOPPc7ney8KpFEvBuXE1Doc2zSybPHrsYkb+gcffNB+VkkBwX8Z8SaNlet+RLzuVx8uX/xYfvi5cAX+sglCISLdA294wxuu2muvvczUqVNtMqRzjZ1a7j9Wr15tx6IEuV0B8ejYsb55S2OCFPj8xS9+sZk1a1bnG2n+jJxWRhz10CaBziJgD0+v2DY6Xuoisj1gE0SPd98kfF04RrPLkeMJjz/++JErVqz42R/+8IcDst2Q3TJjxgzD9iqbY2y1dCMxFCdvW7du3fGi4y5WVq1adfRNN910mB5cvZMraxNE+9KXaVb5F1Xspxu1/eXEcQPdgO5/8803f/KMM87YR+MrfTDjAvnEbkuKaGkFXepQZJffXleltmn/Sw8tPqYt2v6SNW5iRS/I99fTy0+dffbZH9dTvldpbEM36Xq8Nbhhw4ZBDTwoCHxn93NZyWHuu+8+w38yuWDBgkEGHFHfA4qXZxQv9p1BP1//MrYp2e2jfP7LPj20GnRP+ewKotXDNmrZNGvXrrXQ8jmm/z8/xqHtldH7HXPbbbdVjgpWDzqXcTb8TUI7ADuxoTPETvjqgImUBHHxMtZjBfsZi55cmQsvvNBQdv6xCUIQ4FgoyTIe05ovlwAAEABJREFUwFh0L2UeffTRTvC4QZel+CYUZWV3iz/UPsdXVy/+1TbLjIdYYRwkPf/xq1ZH+1sLzj82QdzJeKIEAssm2yxoX44tGtVXHiBWdA8+wqYRCUJQjVeMGHXJE3xCF2gomJXo0xRC7fL5qtrG6uHLGS9l/OHGQhmMSBAqIqIHogf+6gGbION1RmA2+OtQq5XK+Kaahu70YqxFcGPphsYiXWO1PekbmyBU1h0QMnqNqjbWtauM3rq6qvYPsdHJhteVq1CXaMipgio6y/apYhd9kno6CZJsCDnn5pcbG71gaeQbiOjhJgq9IfZtzjz9NnauWdOxgj701vGFTZCyM4JTyCOxhx56yPDlm+uuu85+6Wru3Lmm2+D59A033GDuvPNOs2LFCvtokWwPgbO1Kq3qm6r6qvYL8YUbS1Udfr8QfY6HfjwO5nsnXEOuJde023Hi5PGNWGKS2CRGnR0hFFt92ATxK0LKKOJXBH//+9+bo48+2hx11FGWHnvssYZvJXYbyHV6TjvtNHPHHXcYnluH2Bp52vUAMzgv3gjaE044wfBNVa4l17TbceLkHXPMMTYmOb/iiivsl+mqeqGTIAS9E0I5C/DwlnrOnDmGBGFGWL58uTWCN5K9wJo1awxfWnr44Yc735OnDudn2enqsZcysyflKqB/WVTRU6ePsw8ZrpxFHU9Vn9AvS7Zfjx54iRE+wsEuY8mSJfZacv16ESvI5BuCxCSfoOBrtHz/BVt829LKPg92c95JEE5CwD0Ab6dvvPFG+1EU3ResVt1h2u99RPhED/ERJcTRGtimVatW2V/t1nmIyZGnJQ9wffhIys0332wIUsUG96q/U7x8TOWPC72Kl49qyAdJ/72sXiSjzisdNkHIFgWe/UhGCCVByFANlO9JHKKZ4StaQk++5pprju8VkK+962d23333w4XOF5hC7K3kmeFOZXwz3KVx4j6LFeILx1PDSPu1XeQgA5oF2pnRuRfgxakC9kpdx3coXk5UnJwg9CRepOMkxcrhu+yyy3uf97znbZw5cyZxGhTf2OzDJoiryBqoq4ePMp9xYmbQ+TO6+fqzaGPHPvvsM+clL3mJ4f9JxJYQ1DUuRIfjqauran+nP5RW1eP6heiBl5tk4oWy+swVbexT1R/+8IdvffWrX33/brvtZhNEuguTBB4fNkGYJYEGUCgAPm6Q4ZWgQW2xnhZt7Nhrr7027brrrkZ6C20dtrGWbYzXyYEWoZayGp2xi+7QIsBXB84nRXpo1wRqPxY/rG/TMG2E7Ljjjs/sscceT2+55ZaVY8UmSFlrGTh9tGSiuPMTKdT1GtOmTRsgOXqtJ8rvvge0JW80VhjB1Kn8J7dhal1c08+hkyA0hoLO8DKTUG4SzEjoBuiF5sHnoVwFefKz2qroqdMny46i+qo6i+SmtbcRL+hMsyWtDl9QD6UftJMgnERED7Trgf7TbhOEbCFzyqDNoYTaiY3wQquirG+q6qnbj3GGoq6useITxhnqE8dHHx82QfyKkDLCQvgiz/j2wOYQB50EYbCASwrNAzyAm3Ro08A2dEKLAF83UKSHdvQ4SrlJoDcU3bALXciBhgDeNuBsQ7cr51H4fNgEKbtkosAX0mSZF07oL4M69pX1TR1dVfvyTqqMP+Ctqot+zieUkVUE+NpCkW1+OzZyDnWwCeJOIo0eGLceqDiwToKQOaFAF7zMJJSbBrpDgW2Ol3IVuP5laNO+KWMbPoC/jo30D4XTB20aoTY6Puzz/dJJEFfpGIsogtq8Bymyz2/H1jrAN8hDBjQP8LQBZxO6XTmPwlcXyEcGtAhtxYq7dkX2uXbG46OTIH5lLEcPRA8MecAmCFnGqcuiEAp/Wwixz/HUtZGHAk6Gk5lHHW/TFJvQCS0CfHVQJD/Zji7qoG0A3SFIs80mCA0hAhwP/G3C2RFK69oaqge+urqq9kd3KKrq8PuF6HITr9+v6XKInUke38ZOgviViXI8jR7YbD1gE4RMd1mEJ1w5hMLfJNyHFdEZah988FeB7xvkhKKKrjp9Qu3y+arqC/UJ8p0+yvSDNgn0O32U8+DzOVttgtCQ1zGtjT5tIc2evLq6dubJ9tvq6qnT37ejqFxHj+tbpMNvd33aoL4dIeWkjZ0ESTbE8+iB6AEz9B/osJyEZJfP06bzfDuKynXtLOubuvqq9O/X76T7vqsyrm70KYqPZHtSZ2cFSTLmnSeFVD8v39Pdg2AfvaFFgK8OiuQn2+voqto3aUPReVU9rl+RfL/d9WmD+naElJM2dhIk2RDPoweiB2pssVw2srw37UinO4RiG3ws95TLgn70px+0CI7Pf8FIXa/h7EKPK2dRn4dyWTifZMlP1iOfOmjTKGMrtmEnoAw6K0hZQXRuGwykCN2wsUiHa++GrqoysIG+0DzA0w3k6Uhr64bOOjLSbEqrS+roJEiyoZ/P3cBCbIQ3hK8bPE3q6oa9m4uMOtfFJgirh+8sBBbB52+6jG3ohGZicJCfJIKtFvBNkQ6/vZayGp19G0LKNVR1flmx13rq2Oj6htiY5HF9oTZBKCSZQs7p1zTY24fY5vPUtdGXlVdGD+3QpoHeUNS1reykgV11dVbtj25Af2gW3JiSH8u3CeIaszqn1TuF0KaRZk9WnbONdlcuQ8v6BtlVddG3CnhQgs4qqKKPPmV0OX58SblJhNrpbPL5qbMJQiEieiB6YLQHOgniZ05RebSYZmuK7Etrr2Nhmrysujp66vbNsilZX1cPKwEykQMtAnxtAdvQDQ0BvD5sgrgBhwhwPL6QJsv+m3RnSx6ta1uab/L00VZXZ5X+6C2DKjr8PmV0wev3bbKM7hC465y0zSZIsjKeRw9EDwx5oJMgIVnm8wx1b+evb0dIua6VITrgqaunTn/0h6KOHvq62bYpfeisg1A7HZ//JMsmSJUBO2F1DK/a19ftylnU6aDdlatSZISiqo6q/ULt8vmq6qKfL6eo7PihTcPFNnpD7ISPPlBgE4RCRPRA9MBoD4xIkKIM89tHi2quxrcjpFzHMmaTEB2Op44uY0zl7k5/CK2sZLij7xOqmtCJnioIsc3nQUfqFssNGga/Q1oZnrZQ9k06djIGaFU43yCnCFV11O2HXciAhgDeOgjRAU8dHd3oiw1l4evtrCBlhLiA8QU1WcZW9EFD4M8I9CsDxgo/ehylnAV4mob/Jh3dWba5enjqADn0hxbB+Q/+NlBkX7I9aWMnQZIN8Tx6IHog8YUpHJLMqLRz+ABt0KaB3lBgG7zQqqB/WbAVrKqvSr+y9qGjzuyOPmRA8+Dz1NGHnCrIs821YRdlJ58ydZx3VhAqy4DObaCtN+mMtcg/8LSFItsGB4c+/g8fNjpKuSwIHvqHoqz8bvKXtZUx+fo7CeJXxnL0QPTAkAdsgpTNsqGu7f0ly0OAhfBB6wAZRXA+rKOnTt8i+5LtdR5cYGdSXtE5fdpCkW20Z9lmE4RGmMqCfm2gjJ117XOB36TOKjaXtQ/+KnroU9Yn9GkLjDMEbkxJOzsJkmyI59ED0QOJp1hkGk6B5gEeAA+0aaC3LJghqtpZRhc64Ic2CacTGgJsgw9aBfTtYPj7/2nnTjZtrtwkdXqhZeBsHLGCVBHgBDVF/cenIfbWtYvECtHj89TVWba//6LQtyOrXFZ+kt/5hPosHcl6eNuAswPdrpxF4UnCJggDBlkd0+qTgpo8d/ag05XTKO3uZlR0kPOymDBhggHqb38lJU2PX1dWfrf4fRvyyuhjLNCqwB8AOXm6aCOuqurpRj9sKIOkTpsgycrxcs5FnDZtmg1svT+pNFb6T5061UycOHFcuAWfTJ482fqkavBOnz7d4Jfx4pO8C9sJmjJZ5njzBPeyzenPo1x8gmGXXXYx2223nZk5c+ZzP/jBD+5U1i71/W8zZswwU6ZM6QRVlt6ysrvJ72xCpisnKT4hqHfaaSf8YbbeeuvZn/jEJ7agTxlss802L8QnfqIldbnzMnJ7wevsCKVJG2yC4LhQAY4PQZShTQO9RWBMbAH23HNP89rXvta87nWvm/3Wt771onnz5n1i/vz571uwYMH7F2Tg3nvv/T8PPPDA/1m6dOkvt9pqqw8rkOwQ3f1PkW7a0W87NfQHnUXAJiaNvfbay7zmNa8xr3/96/d+4xvfiE/+JcQnDz744Afkk3PkjzeTIOjrtU+64T7sDAG6HB++4twmCAUHx5BHHW8bVFslO5Pn2ee3aQUwL33pS80rX/lKs9tuu71o0qRJxwn/qUD5pWbTLPxKbeD9rBwEwbp164J+UbANn6DTH3NReeeddzYvf/nLrU9mzZr1SvnjZI031yfy16+E08X3T6wcXIe1a9cafFOkD/vaAoFeZJ/fnrRzVIIkGcb6uS6q4R5iyy23NOydubjUAVaYJKhnzFx4kuKxxx4zjzzyiFmzZo1NTNrGOhgjvsAn3EswCVAHkv7g3NUnffLkk0+OdVcU2m8TpGyWuYwrlN4jBqc/lG7cuNFwMVeuXGmWL19utE0wS5YsScXixYvNww8/bLTFMvfdd5+ljz/+uGHGDNHHkAkqaJMIsc3n4dEwSc/Yli1bZieBUJ9oq2VWrVoVtHo4nU36wtfl9IdSvy9lmyAUQgXAB3+bwIayIMDXr19vVq9ebS8uyZIHAoAA2rBhQ9DWKmlPk/7BRvSjExqKpnyCXW0h1BeOL2mnTZAqKwiCEMrFodwUWObRiz5oWdCvLMroQDb80CaBzqqoYmcZXciHnzij3CTQiz5oAnbL7Nf5fM5WmyA0REQPRA+M9kAnQcgYP5tCyqPFNVMTYlsbPG70Y+EepGn/ON80Td040evKeRQ+HzZBSA4q6ego5TzA1xacXeh35X6h2NQG3PjR7cr9QLGnTRDbZfyQtNUmSLIynkcPRA8MeaCTIHWybEhUc3+drWhkO9MvwB5sgzYN9AL09os/sAN72gZ+CUXSVpsgZZehwcGhD8bSLymwiXMcD3iWz/uNfgGPkd2FaMIPvg78Adw7n37xCS9b/SePvs1NlN31CKHY4/goA5sgFFxDGUq/psFLqptvvtmceeaZ5sQTTzSnnHKKOfXUU1vHySefbC644ALDxy8I1Cb9smjRInP77bebc889t+98gk28U+JtfJM+cbrKxDO8rp+jNkFYCWgMhevcBr3uuusGLr74YnP55ZfboOBt98KFC03buPfee+2beWbLphPkmmuuMZdccom59NJLza233mo/AdC2P9CPT5jQWOmHfTLQRsyExjV8SftsgiQr+/n8lltueXDZsmWnyeEnTp48+cRJkyb1DSZOnHiifHeiHP0rTToLVG7kmD9//sqlS5ei96R+8wnXh2uFT+SM64UxdXQSRAMY9WYxr66tUd5www236d+HFBQfE+1LaLvzAWFuUz6aN2/eEk0cH5NPPtrPPpFtZzflE6cnL4aTba6PT22CaLazyeEakh3duePj3PF2m3oduSIAABAASURBVEZ50QPd9IAfq5RDQaxjh00QClSEdoYfXmhE9EA/e4A4dcBOV86i8PjoJIhfGcvRA9EDQx6wCcLqwWlWVqXVwx8RPTAWPEB8p8Vwsi5tLDZBaEgyF53TJyJ6oN89EJocLt6T47EJUkVIlsCkgj46j6Zshh5wcVqGkg/OVTZB3Emk0QPRAyM90EmQMhkG70gx8Sx6oD894GIVWoS0EdgEYUkp6pxsTxMW66IH+s0DybgtOk/abxOEyqKOyXb6REQP9LsHXNxipyvnUfh82ARxK4hryBNAG3xQQDkieqBfPeBim1gtAmOAx6c2QaiIiB6IHhjtgREJQvaEYrSoWBM90J8eCI1p+JIjsAnCMgRgADBB8wBPRPRAv3sgL4bT2pLjsQlCZRpzVh38EdEDY8EDxDB2QkMAr49OgviVsdxHHoimtOoBmyD+9ioky+DBakcpR0QP9KMHiNFQYL/jpQxsglDwG1y5iNIvInqgnz3gYhgbXTmPwufDJkjZFcQXEMvRA/3sgbxkSGtLjsUmSLIynkcPRA8MeaCTIGnZlFc31D3+HcseGO+2X3HFFXaIeXHst1nmxB+bIGW3WL5QfvMoITOeRg/0jQeqxjb9GIRNEArAD/yiMvwR0QP97oGiOE62J8djE4RsAUnmrPOkkHgePdCvHsiK4az65DhsgiQr43n0QPTAkAc6CUJGUQUNAbwR0QMZHuib6pBYdjxpRtsEKbO9QhiCoIByRPRAv3qAGAXYBw0FOUEfmyAUXEe/7OrSKHxt4NZbb33hXXfd9ev58+efdv3115923XXX9Q2uueaa0y666KLTjjrqqLM+/elPv6op/9x55527yien3XHHHafPmzevb/zBtcEnl1566WknnHDCWfvtt9+7m/KJ00Ogp8VvVp3r56hNkLJCEO4ENE1XrFgxe+3ate+ZPHnyvtOnT98X2g+YMmXKvpMmTdp32bJl+yow3ins0ZRvHnnkkZmrV6/ed+LEiR+YNm1aX/mEa7Ny5cp9NZm9U/j7pnzi6yFeQ+D3cWWbIO5kLNDFixcPPvTQQ0ZON/xvSryH6QdgCzbNnTvX3Hjjjda+pvy5ZMkSw//D8dhjj/WdT9asWWOuvfZaC/zTlE+6paeTICEZ5vN0y4Cycp544gmjGdP+JzELFiww2lb0BbTNMZohLdavX192WLX4taoarVzm/vvvN/3kE67NTTfdZLTNMly37vwvU+Vc5cdsaNnXYBOELRYoI8Dx+sKaKPM/OIENGzYY/h8+Zqh+AUHAStKEH5I6uH6spNp+mn7xB9eH/36NCWNgYMBgY9LuXp8Tp+iAhsDxQoFNEAogRIDjgb8tYENbuvP0DgwMmIGBgTyWnrVFn6S7Fr+EIk3CiARJY4h10QObiwdIpORYbYKw9AEYAOU8wJMU1OQ5+kGejW21YVeTvnC62hpvnl62wrQ7G9ug6OeaAMp5gAf4dtoE8SvGQjk5iLFgc7SxPQ8QL6DQghQGmyBkFQKqIEVmT6s2bdpknJ0ocuV+o9jWFLg577fxp9nTlD+SerCFOmgRHB85QdkmCIWijn47/G3CtyWkjK0DAwP2BppHjaEYGBjqE6LD8aCrDTj9oRQbBwYGTKgvHN/AwIDhX6ge+OBvCwQ6NoQAG+GDOtgEKSMEAcAJaItiQyjYC+tNs3n44Yfte4Lbb7/dFIH3CbyQ5NFtGf+MBX/gN3zCI1heMDLW+fPnB/kEH/IYeSz4hGvBWMuAPj5sglARKsQ5hj5tgAsbaiv2wU8Q/OlPfzIXXXSRufTSS82cOXPM5Zdfngna4YP/qquuMkuXLrXP8Iv0oq8tYJvTTTkL8LBNXbhwofUDY2Ssef6gzfnk4osvtm/Fly9f3tnqZuny69HbBrABvdAiwJdEJ0GSDePl/PHHH7cf/bj77rvtxz94acWenSDJAu3wMcPec889ZtGiRfYjHAMDQ9uLfvWNC4Ai+whuPg5DkrBCMlbGnOUP6mmHD3/iSyYd6gcG+tsnRb7w2/Gff07ZJgirAoChCHQCjo+yMaZR4nTnUQxiTHxOiRUAXu2j5w4MDLxPbe8SfXcWxPdu4R3iO0Y8hrf29Nd58KzJygV/U8C+ImALdrFN4qMpjE24UPX7AJUzfTLc/s/y6WnoWbdunV1VVV/oE5+HcpPA1lA4u+B3ZZsg7oSGULg+bdBQGwkG9wE+BfzySZMmvefee+/9tWbO32plOLMA5953332fnjVr1q932GEHM3nyZHtDW6S7DX+gE7uggHIW8MnKlSvN8Ox/z9SpU98tf5wF8vxBu3x3jlbTD+2yyy6Xb7vtttYnSqrCBMEW7GoD6C4L384RCeI3jIcywcBMh4M0ngV33XXXYtFSx1577XWrAsJMmzbN9huWZcv99ifENnzCiojt4l+om/M1lMtgzz33vGHnnXc2U6ZMsU8Gy/Qda7w2QbRsBs0CcqhdVqFtDhT9IWBcBAS2in8TtCxmz55tttlmGztb0ldyCn0FX9PALnRCs0C78wk8nFfBbrvttmnmzJk2QeiPTORlAZ62UGRb0uaknTZBqEwyFp3Tpw2wNSiyLa1dW4FKd5PMktqa2e0V402T7dfB0zS4gfZtCCnXsXH69OkDbsuJnF7rQ0cdhNjneJJ6bIJUybIsgUkF9c9HS0A3tdAiwAfgg9YBMvLgZMPjyk1RdIairk3Ei5NRpNPnc+UmqbMPna6cReEBrp2yTRAKfqUrp1HHC20LaXbl1dWxk2DIk+23wVtHV52+vh0h5Tq66Buiw/HA3xacDWWob6tNEC5sqADH6wtpssw9Rait8HXDNuQUAb+gCz5o00BvKLANXmgVMFb6l0EVPd3oU8ZGeJM6bYIkK+N59ED0wJAHOgnisgeah6Fu7f519mGFK+dR+KrCny2RkaeHNnjagNMNDUEdG51PkNFrXeioA+yjP7QI8CVhE4QB01AkgHZ4oQ48QaFvk3C6Qyh2OT7KIxB4Qn9YoUVwfNAm4exCpysnqbt28ADaoVVA31AgH170U24S6K0CZ6NNEE4wvowg+rSFMnbCW8fOsn6pq6+KrUxS6C2DKnpcn7HgE2crtI5fbIKUGTAKAUqhTaPse5Bu2MdYQ9ANXVVlhNgHj5Pvl11dGUr/EJSR2QveKrHt22ETxK8oKjun6MVbEetm145v+n3QTdvYtL5u+7+TIAwEoACaB3jaBLahHxoCeKuizAyELVX11O2H7jKoM8GV8UndcdXt73yCHFfOo/D5sAlSZsBJ4b6wpspJG/LOscm1U64C17+IItvx4FPOm4LTG0KxyfFRrgLXvwytoqdunzL2+bzu+tkEwQi/MaRMnzZQ9kUhY6ljJ45CRijq6KrTN9Q+x1dH11jxCWN04w2l9PHRSRBXiSDK0CzQ3iacXdjgymmU9m4A2ciBFgG+tpFnYy9sy9NHWy90lpGJDYA+0CzQnoRNENfBNXKeN0s4vrYpdoagG3aiBznQLLh2aBvALvRC8wBPN1Gki/Zu6isjy9dNOS+uaU/KtgniKmEAnOfdxDke+NoA+kGR7hCeIhm0OzmOUpeGova0Pt2qc7odzZMbwpPXnzZkOHCeBXiy2pqqxwaAvry4pj2JToIUZRYK0pAU2MR5mh1pdc4W2ly5LC1zz+Nk19HnZOTQUU18QxCdoUAAvFxzymVB3zJAPvxV9dG/KtAbCnQ4XsrAJogznEYqoXmAp01gG/qhIYC3DkJ0OJ46eur0dfpDaB09rm+IHsfj+rRFsQPdxDnlPMDnwyYIFXmd0tro0waafpMe4tSkf9rwS9KGovM6No4VnzDGsrbSx0cnQfzKWI4eiB4Y8oBNkLJZ5manIRHN/3X6Q2ldC0P1wFdXV9X+6A5FVR1+v1Bd8Pn9mi6jvwyS9tkEodIXEpIwrg+0afi2FpWxDR7GRLks6Ef/UCAfXm7uKTcFdJbFaNvCapxP4C6jE/6mUdY++BkfwFabIJzQEAo6toWy9yCMqa6tyCiDuvqq9G/avlB9VcbSzT7YiTxoCOD1YROEipDOjsfxQ9uCs6WI1rWPycOXkafP52uy7L4Pgs48+/w2eKsCnzhZyHDlLApPW8iyKa0+zcZOgqQ1ZtUhPKutifq29Tcxxio62vBLGzqr+CakT9pYbIIkZwSEwZwF2ttEll1Z9XVtzZKbVl9XV9X+abZk1VXV4fdzsqlz5TwKXxtwse1059lIm+Nz1CYIJ04QTCGgD3zQtoD+ImCb46FcFmX9UkdXWdt8fvRyDi0D+pRFWZ8gf3Bw0P5sLeWm4fxRZDd2wQuFF2oTxJ3QWAYIaBo8HSpjI7x1bURGKOrqqto/1D74qupw/YgX5JSB69s0LWMjvEn7bIJQ6RqhRYC/TRTZ57fXtbNsMNTVV7W/P+aQclU9rh86KEPzAE+byLPNb3PXOWmrTRDX6HcoKicFNXle1t66thX5ItleV1+V/s4G+rpyFoWnDvA//bPk+/WOF/424NuSV86yzSZIVmOsjx7Y3D3QSZC87Eprw3HUQ5tE2ReF2IadgHJZMAPSNwRONryu3AR170HQWxZV7QvVg3zHS7kXyJPpdJelTqZNkGQQJM+Twl3ntqizB/2unEXhqYss2Wn1dXVV7Z9mS1ZdVR2uX1F8JPW6fm1QbEGvTylnAV4fNkGoyOqQV0+/NpFnm99W10ZkIQMaAnibRohdPk9d+3xZIeW6+ur0xz76Q/MATxKdBEk2xPPogegBY2yCJJdMHJOXabTB0xbQXwZ17Ez6pkhvHV11+mIX/aFFgK8OxopPGGNdW22CIAgUOdZvd/zcIFJuCmVfFGIXdkOrgv4h8OVjp3/e63KIfY4HWyhDq4L+oUAHvAQr5SaBXh/Y4J/nlY0xf11BXEeMz+tEm+OBtgFsCEVd+5xfmtJX1d5Q+xxfVT3082W4chGlXxsosstvT7Ovs4LACAM0BGV/PgXZ3UKIfT5PXb2+rJByXX1V+ju76OvKeRS+OsiTnWyro6du36QtWeduIkzqswniGrM6J+sRQh20aZR9D1LXziq+adonbHMZZyjq2lfGJ3V11e0f6hPHl9RnEyRZGc+jB6IHhjzQSRCXQaGU7vBCmwZ6HYpmM2yDFz7KVUD/sqiip04fZx/jdOUiCm9VnUWy09qr6qrTz40xzZ5kHXpcHWVgEwQhrqEMRUAmetiAjYiHhgDeqnC+oX+vdaGjKpxt9HflLApPHTifZMlP1tfR1Y2+SXvyzpP6bIJQmdcprY0+bSHNnqy6btmYJd+v75auKnJ8O/LKVWSn9cnTkWxL699UXdKWovOkXZ0ESTbE8+iB6IGMN+lls6xJR/ICrsg+194Nu8puJ9DdDb1lZTi90BCUle/zO59QF6ILHnjbALrLIGnjiBWkrCD4kwKbOEcvQBc0FPBXQah8+JDvKOWmgM5QYJPjpVwFrn8IRT58JBblJoFegE5oHnweZ6tNEE4AnX0mzvMAbxvIsynZVteZRSHuAAAQAElEQVQ+5xfkIguaB3iaRtn3INhfx0bfJ8gKQR19dfqG2ObzJHXZBElWxvPogeiBIQ90EsTPIsp5s8RQ1/b+Yl8Z1LW0jC546+qr0h+9oagi3+9DbHCOPkcpp4H2NpFmU15d0labIAyYTjRCQwBvGyj7UZO6NjrfhPgEnrr6qvZHdxlU1eP6NanL6axKQ21FPrxQB5sgnNBQBfRtGlXspE9VO11faB6cfHhILHfeBEUnQBc0D46nqo30y5Of1YbeplHWVuzDfiiwCVJFCJ3bghsAtAglbRzFXuaxsrNllJAGKpzuENoNc9CDHGgR4GsLzjb0u3Iehc+HTRAq8jqltdGnDbQRsGnjz6prwydOZ5ZNafWuTxU6libUtLEX1fk+6SSIXxnL0QPRA0MesAnCjADILKqhRYCvLRTZ5rfXtdH5xZeZV66rr0p/999A0zfPNtcGX104WaG0rr6q/UPtgy9Nh00Q1wBTCOB3fJSbhtNdhhLoVe0sowcd8EObBDrLoqp9+LKMLvTATz/KTWHOnDkGvWWAbfA7W22CcEJlGSCoLTg70e/KWRSeOuieb+pYUdw3a/xZ9cUS8zmy5Cbr86X0vpXrh5akXVnn8PqwCeJXxHL0QPTAXz3QSZCsjMqq/6uIZkvJF4Voz7LR1cNTB05OEa2jo27fItv89iZ1MYOjeyz8yEeaX2yCuEEwkBCkCWqyLsRGx1PXLucb5DiZeRS+NpBnk9/WLdt8mVllfNctfVXlZNmWV+/rsglChevgl11dHoW/aeTZk9VWx8YsmXn1vK+po7Ns3zxb0tqQTz20LAh8vy/lENCvrK66/CF2+Tzo49zZ2kkQGiLGqAei2T3zgE0QsoWsQQs0BPC2AX9mxk5nO+U01LWxSH5SZ119Vfr73wehf9Km5LnjgVZFUmbeeVUd3ejn7EKWK2dRxwN1sAnCSVanrHr6tIUsm7Lqu2EnspEDLQJ8TaPIpmR7HfvKThrorqOvTl90l0FSl00QBgxCBSWFNH0eaid8dW0r45du6Ktqr9MNLUJVHX6/Ih1+u9+v6bJvR0g5aZ9NEFcZIiDJw/Lu+jdFkzYUnWMXPNAqoG8InGx4Xbkpis4ywC74oWVRZdKoqqusbWn86A6B6wuvK49IEFcZafSA88DmTm2ClJ0R/Axr2oHJF4XYkgfsox1aBWPFN4wxFPgBXmhV0L8Mquqp26/s9UvqswlC5VgYLHaCMrbCS586cDKgRaijp07fIruS7XV0EXSuf1Ju2rnjbYOm2VNU59tpE4QBF3VKtvtCmi47W9DrylkUnrrIkp1WX1dX1f5ptmTVVdXh+pWNF9evDZrlg6z6pI02QZKV8Tx6IHpgyAOdBMnKqKL6ITHN/XX3IGgsYxu89CmLMrMlstEDKDcFniSiswzq2hbqF/Q4u+jD+TAaIeh2iijnwedzttoE4cR1hMmVsyg8bSLLrqz6urZmyU2rr6urav80W7Lq0EEbtAqIF/ohIwTwtoUQ+5I8vq02QahIMhWd06ctFNnm2rmQlOvY6WQgJw+Or46uOn3zbEtrq/vx8zSZWXV1xlW3r7suWbYl65P6OgmSbIjn0QPjwQMTJkwwTAagyngm0IksgyazKescXgcpHnTlpmiWXcn6btmDXGRBiwBfG8Aup5dyHuCjHVoFxAv9y6CKnrp9dtxxx8EttthicNq0aYZEKbI3TZ9NEBoYNLRICO0TJ050Cieo3yT6NQ0lZtAX8rELm2UnxdKgH/3Lwv/UcWmlFTqUsc+JZ2yuXJaW1Qd/WR3V+Yd67r333hO32267Sdtss42ZPHlyqXgZkpDyH+jQwGDyMHXqVENWindAyfIy0caO6dOnDwpmypQpdunMs9O11TXOyQmhdXVV7R9im89TVQ/9SCxkUYbmAR4Pje42FKPPnzVr1u477bSTndCZtPJsdW2evWYCJzw63bhxo1m3bp3hN5aoY4aGJoEQEmTbbbe1SSK+g7WUzUjy9epceidvv/32ZquttrIJkqcHW7mYeTyxrbwHCDTiZP369abIv2xtJk3qbDIml9dWvYdi5QuKzclbb7214VE4tipeMwXSTqPPYxPkySefHADLly83y5YtMyQMwZUFBsyyNXPmTGbyPbV8fQrBTUAzwit32WUXg24GBLLs5AJyIbFLF2oAWhZ58rP0ltVRl5+Ln2VLVn0dnYqVCatWrTKPPPKInVSRlaVHOwzDii//s8VpbLdxwgknvEoT+fuJE+Lg8ccfR38qsJ8FYu3atS7hO7FiE2T16tWLV65c+SjJAQiqrAG7egZNZsoI5B+0++67z6LQSxx//PG7aU/5MZZMkhQ70edscpQ6knzFihUG5zAjqG0p9VWgvqmOTdZXkd2tPklb8s7r6lyzZs3ixx57zDz66KNG5UzfMLmQGASpbpaNkuVVO+yww1vq6g/pL71f0RbL2vbAAw+YJ554wpbT/IKdin8DhmWvVcw8QdkmiAL9RCXJl8UwyCrC7MAymibM1UmA2XLLLQ0DlzG7KAMPRmAvIZ0HSecO6JSthox39iQpYyBBhsexTvTbVWzDeUnZeefooB3aJNAZCuxyvJTLYsmSJcfLv7eSJKJ2++LkJSmyZ8yYYbTdMUymSpIvqq4zQ6vc9ePEE0/8Z02gr9fOxq5yixYtMopPqyfNPm4tWA3dhCvG4xVrvxAdugeZM2fOpoULF16i2fZIgo7g0zJqMw6mNKCIG2UGDxXPJ3fddde/E+3JoSXzeTL646xczFrMCmwtVDdKn8Zht4rQ4fb/0Jj+MooxVlTywOLFi9fKt4cIdmbmejCRpAkjThSsRpOwnUyVIGyR353G24264447brKu+ZeJSZLi3nvvNSRxmmzx2dsJdk2sMMM8V2li/YHq7uHcriAUgAbzVc20t5McCih7w646myhplD7M5prVWT5n6PxQoSeHLsDnNSNshfD777/fsNJRTtolPsN+E6fQJp5btdR+T7TygZwyqKyoRscy9sFbQ5XtunTp0gsUK6eQJPgaitw00EHXwO44SBadEyc9uWFXjPxf6fhHUaNENg8++KCRnVJpRsUxsbJy5UobS5TFtF67of1FNwr2GJEgCrrVyvADlHmDZBRAeNqgXR2GsIqwfEriB7WKvEK0q4dWjxfIrg/jZAZEgrB6oMTZAeWc2UzZb2cGZgjVHypHraWtCnCcZNiu0CJYxhb+YBdqoUWArxvQtWdCXcqESqxw35emGx8q8AxxwjXUdfkHPWjZtxs2+DJOPvnkbXR+CLHItumee+4xunVQ1ejkoJLdEvdRbK1kE09Fv6UcuJE2hxEJQqX2YpdqkIfTiWBEiM5HZZ+row/bHlYSBTEvDr9CXTehJP2cLsY0dN53331GS+Aoe9CnxLazATYzYNWdrNXkfNHaB7oRAs0DPG0gz6a0tm7Y+PDDDz8k2V/D7wQiftf5qGvj6ghcdhua4eH5aDds8GUoTj4j2X8j2JXj4Ycftk+lnH5H6UMyKxlsAg3HypWKqx/S5mNUgtCoQGdmmMuAuRFj+aQ+DSjFIN5LMDtopniTZoeu7TG1p5wl+W/CuawMJAgXZHhQHZOYpbBVCYHzwT2y5csdhljoiQc0oR6vGPgtscKEmhcruh52FWEyVfkVO++882u7ZZTi5O8k82BiEDsWLFhgH+Ik4wR9LlaUEDaBxLNMY9hPbZ2tlcr2SE0QDfpJdfoXZdkK9pcoJCglhMBLBYaRJJrpEZz2XoT60pAdX1Jy7CJbzJ133pm6emAXWyvZbZ+ooETO2k8zxBLKdaBZKXW86EwDuqjnIlBuAqz26ATog+bB56FcF/LRp3V9HmYVIV7yYkXX0t6w6yZ6QD76nnRPFGofmtQPluxtGPddd91l7z8opwE7dQ9l77FRLJ79NLHeRjmJ1ASBSbP1Per4RQbLoAlAOSIzWBTI9iaM7ZaC89V6ofdG5NSB3ns8X3I/QtLpPsI89NBDNuORKdusLZSxUclgX1qJn6qfa3a4hEI34HQVUXTBA20a6A0BdsEH7RYUK0sl88tcB4KP1UTBb6+P6kdQrg8xAhTU/0PvtN5f1w6tHrMUc29X0tmnl9yjKmGtWF8/Fdy7yt5OrKj9JO08zqItDZkJArOC7ngN9FyWzZW624dK4IgB++cEMntMqPp9VTJqPe+WjH/ToLdAL4/rSFJfH2Xx2Md42Me5dD6kLdnXRbtyIB+5oeiK0gpCQu2Dr4L4wi4KulPlqwu4VtywE4joSkI89oODxImuE3K/8JznPGcahapQon1ecbITCXr33XcbrQapMcoEr2Sw8YJd0ne/Eon3MiqmH7kJQhcp/5wEL/efVFCfBmYH9pfMDsroV2h2qPyk4thjj/0HydhXy6ZhOXQ3XOhwuinztEKJbF8Eca6Bf1UXq/Jbcyc70vIekP+/oIB7kokMkAxpUsRnP37CtlzX+AVacT6cxhdSN7zL+CSTMnHCS0HFK0+kRnXHJmJFNtp2xcrnVPfoKEavojBB9BhsoQZ6CDMCMwNLKAZIeGqWYihJwuwgR3xJN2JbevqCi+p7iGaFydJtWDI1ENvX6eWEgTIjkLzip+oCrSSnUOgmnM4Q2k29ZWSF2ObzlJEdyqt7QPbx32cmJ1YU+KkxwjUlTrxV5PM77LCDfccVqsvxSdaXFCdbEp/cmBOf/jgpw8t9GsnBCkesqP4ExcrZtOWhMEHorCA8SQLPQTgDR5nOUwcPPyvI8Ozwd+L7V+rK4Oijj36FZpb3sHowKLd6SFZHpxxjH9HJNvP0009T/6R0HCJ09UAPehEKzYPPQ7lJ5NmVbMMu6qDdhoL1PzSB3szKTrCSLOhKgiBlIiVOVH6e7Pi4UOrQ+7FXaofzAeJkyZIl9tGudFsZvj7q2HZxLz18Pe/T5Poly1jwJyhBkCElBwmPMluTJAyc+iQwjNXDzQ4a/MHaau2c5Ms7V3J8UY4ekD6zcOFCmwiSM6ILM4ZuxO1Tq+G2H8gJt45giieNe0APUtbperDVMsQKICiThhAnusb2wQ6rifocOHv27O2TfHnnkvtVJUcnTtwuI9mHeiZSJYXdWqmdrdUy0cIjOEG0HN0vaYeQGCQIAyeAGWgSGqzdY7KSqMynfD+nvkHHMccc8zrNCm/VwO2nRdleoYfOTo8cY2/EsIM6td2st7SjXvKovisHOkLRFYUVhITa5/gqqAjuom35xdJzAjsNVhGozlnlR0CxYeOEVUST4rPEF/x64Gc/+9k/qc8bSDLuPdhloAMjoYCyZNqXx6xo6BN+rlg+h7YQBCcIwjRjn6LgPDtkq8WswCrCANR3P+0x/1Y05GD1sB8V4cmVBmP7MGDACcnJjEDiaMA4/RBmLtq6DY0X+cHotv4Qeaym+CYUITLr8siWr+n6PMy1IkmYvVU3yo/EB1st4kXXcn/Fya5FuvVY134gkUmUsfPkCh3083VIvyF+vImUrVWpl8elEgQDFDA81XqEcsORggAAEABJREFUgaOYFcU3ypU1WPuNQ1YRrQhbKdtzH6chW6vHO7Q9ey0DZ1ZwTyRoQy4UfSQHSYoO1Z2gveVFoj070F0GPTMkRzD20QwNAby9hO4deUn7NRKDLU7WDTvXkAQZXkV2lE0HCkXHhxUn/4Pk4v1YMk4YPwLQS6yQKOhR3YFKpOWiwUfpBFFG3i9ldqslZXaf6QzytVLHrMDgoWr7kJ5o/U/R1OMb3/gGttgPmjEr8EEzEtBnVnLaj1crIexMpLbFctTXRHt3RMmVPaDH7Sfpml3INodY4bomhbk4YbdBnCi2Pql71r9J8rnzI488cmuVD2USZdvknlypn6qHDsro0o7HwMO5cJxi93dDHOF/Ccpw7mFOKT5VWXkWszhBDGWgaWBmIEm0ivBBRl4eDksZSeSU94nnZTgp7YkE3OhhRmAV4Vz46vBMpWJvDl1gm4xpY0urwwrqoU0CnQCd0Dw4HsZGuZfQzuEQrSJPsoKw61DcjPIn+tlpECvi31q2Z375TvGxvybFPQTDyqGttf10hfp05KJDD2zsw53h+ntkQ6UP0VZKEAakjPyoDLmRQSsz7dOkYWM6hnKuoLcfUBse/Fu0x/wY/X3opeBOOv8uTkLe7bffbt92qs7KgjIjKBnsVzylm6rjpfckCr0G4whFr23Jkh9qn+PLktPtet2w36Lr9VmuHys/ieJs8CkBz2f52DbJBu5ZXyM64tDj/79XPH2ZOGGiJE7YRsHky0IPsaKk4KkVX519n1awUlsrZILKCaIMXSUBn5URmzBSBtgvpviGujKDHl5F1MV8ZebMmdtScFCi7a+Z4dkavOGplXsi4foz07FSMXDq1G+R6oKeY4u31iE9nSRFdxFqKavRucguv72Gmkpdh7dav3NbLahvjyuzbSJOtIoMqG7UjK9E+7piabraDFsr7lMpO2AcWyrtcOyELX4S5BuKm3m0VUHlBEGZkmSujPs+swMJgnE6p2kEMJSsH15Fdpcj+NaW5Tn11FNJjE+pzt5fcO/BVoo+MEA5ly77ZItz6fiK9FWaEZAZ0bwHdM2+qIlwNSsIuwQmnqQVTJAkCLGg6/xa7Tbe7nhOPvnk12uVeQdtWpXs+zG22uJzLDY+iBN0DNdfql3G4R2GCoVaCYI+GfQtDfx6glhBazNXzrCzrk+1QtjvJEOFzz7/+c/fnf56f3GQBr2dZg3Ddz0eeeSREX1xpGaAzmf7JfN3Wk1Op29TkM4RNhWdh9rVTb4im5Lt3dQdIktbovmy4TsENQnCKkI/1Y3wrVYI+25EyQDtPPnUTfxXmWDpz+oheXQf0VdxYbfmxIwaVykumYhr/Vhd7QSRIRsU3Adqq7WRrRaDl2EjDMcJ4us89lWCbL/77rsfcO655+6qBPmYtlz2ebVbPeB1fViVGDiDVt0a0UNpbwrSN2ossiO1ztlEOz5w572mrODoQG8IfF7KTWHbbbf9ifw5j8mUWMFHSXsVSySGjRVNnC9773vf+9bzzjvv7YqT/4/Vhce6TKSKN2s2/SkgU5O1IYE4V/3XpeMOynXQjQQxyuarZND3MI5VBGPTjGJW0ExgtttuO/OsZz3rg3LWaUqOGcwafKREe9UR3XACqwfyWDKF73Rj0COUxJPGPKAJcIOu4ed1XQfZBjH5KW5G6SceuGHXFsvsscceh2l7fhg/VEh88WUoYsLvpDiyKwcyh+sv0qR65HC5FulKgmCB9nqHydDrGLSC2O4HGbwP+Fgmn/vc5xqtIDtoz/laVhySQ86z2zN4XB/acAbnqp+n8o9FGz/QXwaNGyiF/W6fTLSHni7Nka0/Z4vF9VWyjFqNlUT2p2X33HNPs/POO79QK80LdO3tN0r5uSfFmZUlOZaSGLQP169S/QFqqLW1Un97dC1BJI2t1gEazFMMHKNl6KjBKynsc2vuNebNm2cuvPBCc+WVV9rPyzh+ybLJoqSzSyYOE76g+g1CowdO9+1y5SzaqHGeMuzhFBoCeNuCtthfk18fIEaAyqPihN0GW0cSYu7cueaCCy4wxAuxhd2MEQoPWyuoYoSqr2oXcyeFbqCbCcJW6xoZ9R2MZRVhltD5iEMJZH/t7uabbzZz5swxV199dedjysMDtAmkJdK+paeznHGcZojLKEcEeaCvmTQ5Pqpr+i3ihIBPxglxQBvJcf3115vLL7/c3HDDDfbrtOrXGRuJRZwQa8P1F+r8qA5DFwpdTRDs0az/PRl7LTMDg09bQqnjvgIenMNA1aczi1CvhLDvVSRzo9qPFm3t8G0rKrdlZJFdfntbNvp6FQO/1XW9ny0511vnneuPrWqzuwjaAfcf1Dsgi3rFm93OK6lWqu0g6ruJrieIjNugwf2QAZPZDEKGjxg85+LrHJw70I/kIIGGGU5UorX+PQ9nXygdtr0xEmqXz6fr1Jh9SUWa6R+TfvthRhKE6+3bRjnZhzpAPQnD1op+nKv+h93cWiET9CJBeKJwlgZ/PqsDSQJFWRE0SPtREg3UJpRmhQclp2s/wFCkP7Y36wHN/qfpmp9HfGgStPebIRYoJuxLZWIL/uE4OZFyt9GTBMFI3WR9QvcbdzNwAp6MlzNs4GdRVhtmBVYRDfoZyflXOSH3S/Xi6enBxcBelEDzAE9bcHah35WzKDz9Atn4GcWJvWHXtbbbatXlxgl8Lk40jg3q/xHF2SMqd/3oWYKsWLHiYVnLD4oNynh7w+2CLekA8dl9pGYU///z+KmW4fNpaxtJe/PO27CVG9o8m9LaqtvZ3Z665os0GXa+osskmRUnjIPVhuRgzOpHIn1b8dW130BLjq5nCYIi3Uvw1csjGAxZz36RQSaBQ1hl4KFNfRdq8P8u2vqBbdhUBm0YHWpfG7YV6dSL5l/Lz2cTJwp2u9VKG49WCrbv9jsewzKvUsx8f7jcE9LTBMFibbW4h5hP5rvBU++DNq0WdnlVYjArfEkJs8LnieXx7QEF/6HCKiZRt4okR0z8ECdKJpr4rwp4ITjq93Rp7BZ6niCaHZ7QbLC/7iue4WkFg5cjSAILygwaxzAo8Z6jWeHXlPsFssnaGkKxGT5ok3A6oaFo0r4iXZoQF8juw7hXJU6YNHXe8Tvn2pHYrfiwrH/X+Q3D5Z6RnicIlmsgvOQ7nMEr+O2PBjN42nCGnGNfDup8lVaQrv+2leRWPpitsDUUlRXV7BhqH3w1VfWsu+LkJxJ+LclAXGhS1amxscEkyuRqK4y5UjHTs1+xGdZhSSMJgqYpU6Z8Q8F2O4NnqWTw7DkZOGUlBl9u+Y4GvgD+iM3QA8ZsUgIfol3FIMnArkIxYx/wKC5sosgr61V3oOgmoedHYwmyfPny1RoYj/SeYfAkCcnBTMEo5Zhr5QRmEE77CrKts9SHlNswPsQun6cNG0N06qnWFeL7KbsNYoMdh1YWe+M+PIl+Q/WVvyEo2aWOxhIEqzTYObpIP2HwSobOl+rVNqjBs7Xq6Q2X9JQ+lNTByVFaeBc7yK9jws6QIWsF+Xf5fREriBKm8+hfff+suPkP0caORhOEUU2dOvWbGvytDJ6tFXXC0UoeZg4V47G5e0BJsFwJfygTKVtylXHJOsUNW6unOWkKjScIWy0NeH/haYFZjxdF32xqwFX0YCf9oKHQxaRLI+BeLtSuJF8jBlZQou33f8mHv/Ps/bq2ViP+g80KYkt3aTxBsHB4tXD3G7zz6NsfYNBFIomDwfjagBdImba6sbRhXxWd2nb/m/pt1Njm6p611pflJKfS0UqCYKkG/0MN/Bsa+BmcR0QPJD2grRbvRvafOHEi96eNbq2cLa0liFaRR7VksrVq5HGdG3AVqkTOnJWTbVXkd6OPswNZrpxF4RkrUIwcp0SZ25a9rSVIWwMuq9dtSwg2+kLzAE8byLMpra0NG8eizpggY/GqRZsb80BMkABXp83ARXUBYrvKUmRPVntXjeiRMNle639LrmNWQILUER/7Rg/U94Ae6AyeccYZE+tLKi8hJkiBz/RWt+9v0BmCZtkxYSe2VsG73/3urvzOVVndMUECPDYWgq+MjfAGDLuvWLSK8BXsxm2KCdK4y6PCseSBmCAFV8t/zMvMW4QCcT1p9j6vFLTN6okR41RouwkyRpxKUmAqNBTcu9CnKYTa5fM1ZdtY1hMTZCxfvWh7zz0QE6TAxWW2WAWietrsrwxF5Z4aMs6ExwQJuKBFAZds1xOXAKndZUnaUHTeXe3jV1pMkPF7bePIuuCBcZsgXfCNFVFmi8WsbTu18AfdANXQPMATEeaBmCBhfopcm6kHYoIEXPi82TjZhjjqoE0CnaHALnhZHSlHZHsgJki2b2wLQUQwhcJ2avhPle+kN2zimFUXE2TMXrpoeBMeiAkS6GVvBcn8OAei4IO2AXQXoQ27xrLOmCBj+epF23vugZggAS5mVoYNWgT42gB2oRdaBPgiwjwQEyTMT5FrM/VATJCCC1/2KZabvQvEdr3Z6S1Lu27IOBMYE6SvLmg0pt88EBMk4IqUmZUDxPWEpYyN8PbEiHEoNCZIwUUtu8UqENezZoI+FD0zYhwKjgkyDi9qHFL3PBATJMCXoTMzfAHiesKC7jLoiRHjUGhMkHF4UVOHFCsreSAmSIDbQmZm7lUQ5Xib/NGGsh9WxE6ArdCIbA/EBMn2jW0h8AmkUNhOLfwJtc/xdcPEjevXXybckIen1q/ff8OGDc8f5jlX+rdO6lbb6wQrJ609yd/keUyQJr0ddc3e+NRTR/tuGFy7drbOvyT05RETpOCyuBUENs1umZ/kdW3wtQH0O72U8+D46tLJ06a9VngJGBgcPMrJmzR1aqd+yrRpnXraxff8TevXH0NZNm69ceLE76k8alVRXV8cMUH64jKMbSPKWj9ozEs3btjwpac3bPgeCVO2f5P8MUECvK2ZrnDl8HkCRHadxdcfUu66AeECL7Gsg4PvJFEoDxhzHbQfEROkH6/K+LbpEiXGqW6Itjw4eK077zcaE6Tgirh7kJBZGR7EOUq5KaAzFNgEL7QNDN+XXMLKMVxuw4wgnTFBgtzU/0z8miPof0uHLNSN/aGTpk371NBZ//6NCRJwbZhtAazQLNDeBqZMmWK22GILM23aNEOSZNnn6tuwsaLO1rvFBOndJdAOonfCfcm777672Xnnnc12221nJk6caB8o+O2xXN0DMUEKfOfuQWBzM3AWhWfChI5L/yfnTWC33XZ7iUsSVhBnc5ad1HfbrknTp5+qbdPQO5GBgSd8+VOnTr3DtYkOPcXyGPL6emytFDtXsxXtY0Dppk2bzLp168zq1asN5TyTCc5JkybZbY743qctz3NEe35sv/32+82ePdvMmDHDrF+/PlcfyQFymWJjxwMxQTquSC8wGxN0S5cuNU8++aRlIsDSQCNbHKDy1ur7MdGeHgcffPCblBgv33bbbc2aNWvMqlWr7BYrzT7qZJNt76lR40h4TJCCi6mAWszKsWHDhsIVBMaRIH4AAAkxSURBVFFssVhFoOr7f1W3g9CzQ8n42enTpxs+PXzvvffaJGYlS1NIgmzcuNHILtus84dsYbP8EzbomCAFftLW6hdKkD8LNkEIRAWWnYWzKMlBkAq7Tp48+YMFKio3f/7zn3+5EuSN2sqZJUuWmPvvv98mCgLTbCM5wHDbCvU9DN6IbA/EBMn2jWt5WjPuQQqq9SSJSxDXmEaVGPZpElTt/ypsIXT9kPzP6AbYJsWCBQvMypUr3f3PKF0ag3HJQaP6fkVbx4WUI7I9EBMk2zedFgXWPJ38gCDzk0RJk7qSiNcmCCuJyn+rVeS9ol09DjnkkL0l/11srx599FGzcOFCu8KhJM2up556yiYS7cIfNaaficajwAMxQQoc5JoVYN9T+SaSJHQVUQDbGV0B+xn1nSh07ZANn9bqMRWB99xzj3nsscesLs6TcEk9XL9Gdn1+uBxJgQdighQ4yGtep/InFOyrFJx2tiZZdJ67imgrQ+C+WKtI1+5FdO/xAt0/fJi35zxdu/POO40SWOaZUbZgq1aLzo257DlIvLdZ5vin0AOVEqRQ6jhlUKDdoKF9icRgVobqPPNQMNqtFgxKJGZtO+NzXgeSdbBWjy1Ezfz5882yZctIwlEiaZfNna2V7Pmlzk8YxRgrMj0QEyTTNekNCrBjFHgXkxwuSXQ+auamDgnazhig8t6a9fcRrXV87nOf+1vJeQ/3HiRG3r0HqwcYVrhEth86XI4k0AMxQQId5bMp4A9WAjxJkgC/LVnWrG0TBCpwL1LrM1qS8SlWD1Fz9913m+XLl2euHiSw7LQmiZ/vfcf3HtYb4X9igoT7qsOpPfytOvk2ycEMDSUQ0yC+ToKo/DLN/m8WrXQcdNBBs5WcH+S9BzflJIhssbKSukkObBuu/51Wj1MsY/xTygMxQUq566/MCsAf6ewaghAQiDpPPTR72yQZbtx/mJYmSo6PTpkyZTslmeGtOVssZCcFkbCyz2771LZS9v2baDwqeKDfEqTCEFrrslGaP6fE2KgAtE+JVLZBmaTiswkyHMxvmDRp0iupK4MDDzxwG/X/KKvHE088YXgxqBd9VkRSH8lBktCotq+LLhDiUcEDMUEqOM11USBeraA9S0FonxRBXVuSiq+TJOLjXiTJknuu1eMDWj2ercfF9qUgHy1J60CyguG2G5QoI36Harg+kkAPxAQJdFQOG2/Y1ykQO0miBBi1ktBfQe5uqN+pYH8BdSHYf//9pyrB9mP14BPFd911l1m7dq3t6uvCBiWt1W0bjTlW9GkhHhU9EBOkouNcN9383qQg/a5gt1kEqWtLUgW5TRDRKZrlg7+PrS3Zu7Ry7K2kMosWLTIPPZT+MIrk8PSfLx0nJW2I5+U8EBOknL9SuRWUP1CCsJ2xSaJyKp8Sw26zhhvfL7q7UHio3/6sHtxz8NacVSTZSclgdQ/XP6FzXkwOn0ZS1QObUYJUdVFQvw0KYj7xq7h8OnerJT67ikjqTK0MnxTNPXRz/hbxvUzvPsyDDz5oVxAlpO1DIgLOpbiztVLdN8VwhxCPmh6ICVLTga67tjdXKvj/Q8FpZ3KC1rX5VDx2FYGK9yNq21nIPHTfcgBvzXnfcccdd9iv/tLXdZAMm5CevstUPsK1R1rPAzFB6vlvRG8lyRdVcaECtBO0BHASBDgQ785KgENFU48DDjjgXVo9Xs/26r777rNvzlkpYHYyOQfD5w+r/GG1xxtzOaEbR0yQbnjxrzIGFaAH63Q1AUuiqDzqIDmUGG6r9SEx7CaMOvRC0H6dlq/7snrwnXP6OkanA0qd2kjQ9Dt4GCJKeyAmSGmXFXaYr4D9ttDZalFOwpOynZKFrZZXZYzuPV6n+ldx78FTq7Sv0yoZrQ46Sv7ZOj+NckT3PBATpBu+TMjQysHHUK5U0NoAhiZY7OqhGd9StX1c2FboHGo7gK2Vtm2GJ1e8PVddp1067DZuuGKFdMSnVsPO6CaJCdJNb/5Vlibzp/nE71MEMlAA26dMPiXggbqxxep8oeoLX/jCS7W9egs357wxT36kHXlSoG6dg4+TxO+Xd9zRvUJMkO75MimJ//OC9yOFq8hwR37cYRrlrbba6jNaPQZIBN6aP/74426loXmEPCUc302JHyexnun+n5gg3fdpR6IC/Ls6+YswIqg5d2AFATp//o477vjWY489dvYOO+ywz8yZMw0/xsD3zdlmDfNYOZIrdns8qQSJWyvrit78iQnSG786qWt1o81Wa9T2SoFt62B0wT979uxPz5gx45uzZs3S7mq6/cQuH2mHB34SA3A+jO+I3iLEo0ceiAnSI8c6sZr9L1X5SBfgUJ2POEiQXXbZxbzwhS989ZZbbvlRnlwtXrzYsL3auHGjoZ0O9AWUVXeNkuUHlCN654GYIL3zbUeyAvkbOrmH4HbQuT04nzx5siFB9FLQ8L7jkksuMZdddpndYlkm/ZEMu71SkWOTbtJ537KJk4jeeSAmSO9860t+XDO+/VYfgU5SOMCkYLefsbr44ovNCSecYE4//XRzyy232F9CVD+7FfP7qQ+Pka8SjUePPRATpMcOduKVBOeobP/zSj85VGdXhtWrVxu2VXycnR9i4LNXtAGXHJSF23T+bdF4NOCBmCANONmpUGBzw36LSxCfwsNqoZv6Efcc6mMTiHaBj7DwUnGNyvFowAMxQRpwsqeCN96fUmJsEuzWyWtLLcLnGlT+msrXCN04oowAD8QECXBSl1nmaqX4iYLdJgg0Sz6rh9d+hfiOFOLRoAdigjTobKdKgf8tlW8n+LMgHptA4uNYJ77PqfCMEI8GPRATpEFne6q4l7BPtRT4fiJ0WKh3J1pxfqjyjUI8GvZATJCGHe6pu0CB/3POSQYfrB7UD+NGnfORleHTSJr0QEyQJr2d0KXA/7Kq7hM6qwiJwvkwntH5QSrn/9e1YuivY/xYExOk3Wu5XAlwiDNBZVe0VCsM3y3/kz2Jf1rxQEyQVtw+QulvlBj/KdhVxKN3aoXh10lGMMeTZj0QE6RZf2dp44cbHk00chO/KlEXTxv2QEyQhh2eoe4B1fODCyL24BcRz7Ol+KdVD8QEadX9I5STFBepZoXwJSEeaR5ouC4mSMMOL1D3VbV/QnhEiEcfeOD/AQAA///PgpEeAAAABklEQVQDAMVOgUI3v1wmAAAAAElFTkSuQmCC" alt="Hyperthreat Studios">
       </div>
       <div class="title-block">
         <h1>Hyperthreat Studios</h1>
         <div class="subtitle">Mic Configuration</div>
         <div class="instructions">Drag a preamp from the legend into the Preamp column. Double-click a Preamp cell to clear it. Click to edit Instrument and Wall Mount #.</div>
       </div>
-      <button class="print-button" type="button" onclick="window.print()">Print</button>
+      <div style="margin-left: auto; display:flex; gap:0.4rem; align-items:center;">
+        <button class="print-button screen-only save-file-button" type="button">Save to File</button>
+        <button class="print-button screen-only" type="button" id="clear-button">Clear</button>
+        <button class="print-button" type="button" onclick="window.print()">Print</button>
+      </div>
     </header>
 
     <table class="mic-grid">
@@ -312,59 +414,208 @@
       <tbody class="grid-body"></tbody>
     </table>
 
-    <section class="legend">
-      <h2>Preamp Legend</h2>
-      <div class="legend-groups">
-        <div class="legend-group legend-group-api">
-          <div class="legend-group-title">API</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">API 1</span>
-            <span class="legend-item" draggable="true">API 2</span>
-          </div>
-        </div>
-        <div class="legend-group legend-group-neve">
-          <div class="legend-group-title">NEVE</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">NEVE 1</span>
-            <span class="legend-item" draggable="true">NEVE 2</span>
-          </div>
-        </div>
-        <div class="legend-group legend-group-ssl">
-          <div class="legend-group-title">SSL</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">SSL 1</span>
-            <span class="legend-item" draggable="true">SSL 2</span>
-            <span class="legend-item" draggable="true">SSL 3</span>
-            <span class="legend-item" draggable="true">SSL 4</span>
-          </div>
-        </div>
-        <div class="legend-group legend-group-warm">
-          <div class="legend-group-title">WARM</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">WARM 1:1</span>
-            <span class="legend-item" draggable="true">WARM 1:2</span>
-            <span class="legend-item" draggable="true">WARM 2:1</span>
-            <span class="legend-item" draggable="true">WARM 2:2</span>
-          </div>
-        </div>
-        <div class="legend-group legend-group-vintech">
-          <div class="legend-group-title">VINTECH</div>
-          <div class="legend-group-items">
-            <span class="legend-item" draggable="true">VINTECH 1</span>
-            <span class="legend-item" draggable="true">VINTECH 2</span>
-            <span class="legend-item" draggable="true">VINTECH 3</span>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- preamp legend removed from per-sheet template; rendered globally below -->
   </section>
 </template>
 
-<div id="sheets"></div>
+<!-- single global controls now rendered in header.brand per sheet template -->
+
+<div class="global-wrap">
+  <aside class="instruments-legend-slot" id="instruments-legend" aria-label="Instruments" style="top: 91px;"></aside>
+  <div id="sheets" class="sheets-wrap"></div>
+  <aside class="preamp-legend" id="preamp-legend" aria-label="Preamp Legend" style="top: 91px;">
+    <div class="legend-groups">
+      <div class="legend-group legend-group-api">
+        <div class="legend-group-title">API</div>
+        <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="preamp">API 1</span>
+            <span class="legend-item" draggable="true" data-type="preamp">API 2</span>
+        </div>
+      </div>
+      <div class="legend-group legend-group-neve">
+        <div class="legend-group-title">NEVE</div>
+          <div class="legend-group-items">
+          <span class="legend-item" draggable="true" data-type="preamp">NEVE 1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">NEVE 2</span>
+        </div>
+      </div>
+      <div class="legend-group legend-group-ssl">
+        <div class="legend-group-title">SSL</div>
+        <div class="legend-group-items">
+          <span class="legend-item" draggable="true" data-type="preamp">SSL 1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">SSL 2</span>
+          <span class="legend-item" draggable="true" data-type="preamp">SSL 3</span>
+          <span class="legend-item" draggable="true" data-type="preamp">SSL 4</span>
+        </div>
+      </div>
+      <div class="legend-group legend-group-warm">
+        <div class="legend-group-title">WARM</div>
+        <div class="legend-group-items">
+          <span class="legend-item" draggable="true" data-type="preamp">WARM 1:1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">WARM 1:2</span>
+          <span class="legend-item" draggable="true" data-type="preamp">WARM 2:1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">WARM 2:2</span>
+        </div>
+      </div>
+      <div class="legend-group legend-group-vintech">
+        <div class="legend-group-title">VINTECH</div>
+        <div class="legend-group-items">
+          <span class="legend-item" draggable="true" data-type="preamp">VINTECH 1</span>
+          <span class="legend-item" draggable="true" data-type="preamp">VINTECH 2</span>
+          <span class="legend-item" draggable="true" data-type="preamp">VINTECH 3</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Self-contained saved state. "Save to File" rewrites this block so the
+     file carries its own data when moved between drives or machines. -->
+<script type="application/json" id="embedded-state">null</script>
 
 <script>
   const CHANNEL_COUNT = 16;
   const SHEET_COUNT = 2; // front + back, identical for duplex
+
+  // Compute the next numbered label for a base instrument name (e.g., "guitar" -> "guitar 3")
+  function nextLabelFor(base) {
+    const rows = Array.from(document.querySelectorAll('.grid-body tr'));
+    const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp('^' + esc + '(?:\\s*(\\d+))?$', 'i');
+    let max = 0;
+    rows.forEach(r => {
+      const instrCell = r.querySelector('.editable-cell[data-col="instrument"]');
+      if (!instrCell) return;
+      const txt = instrCell.textContent.trim();
+      const m = txt.match(re);
+      if (m) {
+        if (m[1]) {
+          const n = parseInt(m[1], 10);
+          if (!isNaN(n) && n > max) max = n;
+        } else if (txt.length > 0) {
+          max = Math.max(max, 1);
+        }
+      }
+    });
+    return base + ' ' + (max + 1);
+  }
+
+  // Cable color mapping (16 visually distinct hues)
+  function cableColorFor(n) {
+    const idx = ((n - 1) % 16 + 16) % 16; // 0-based
+    const hue = Math.round((idx / 16) * 360);
+    const bg = `hsl(${hue} 85% 88%)`;
+    const border = `hsl(${hue} 75% 60%)`;
+    const text = '#111';
+    return { bg, border, text };
+  }
+
+  function createCableBadge(n) {
+    const span = document.createElement('span');
+    span.className = 'cable-badge';
+    span.textContent = String(n);
+    span.dataset.cable = String(n);
+    const c = cableColorFor(Number(n));
+    const bg = (arguments[1] && arguments[1].bg) ? arguments[1].bg : c.bg;
+    const border = (arguments[1] && arguments[1].border) ? arguments[1].border : c.border;
+    const textColor = (arguments[1] && arguments[1].color) ? arguments[1].color : c.text;
+    span.style.backgroundColor = bg;
+    span.style.borderColor = border;
+    span.style.color = textColor;
+    span.dataset.bg = bg;
+    span.dataset.border = border;
+    span.dataset.color = textColor;
+    span.draggable = true;
+    span.addEventListener('dragstart', (ev) => {
+      try { ev.dataTransfer.setData('text/plain', String(n)); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-type', 'cable'); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-bg', span.style.backgroundColor); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-border', span.style.borderColor); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-color', span.style.color); } catch (e) {}
+      ev.dataTransfer.effectAllowed = 'copy';
+      span.classList.add('dragging');
+    });
+    span.addEventListener('dragend', () => span.classList.remove('dragging'));
+    return span;
+  }
+
+  function normalizeWallCell(cell) {
+    if (!cell) return;
+    const text = (cell.textContent || '').trim();
+    const nums = text.match(/\d+/g);
+    const hasBadges = cell.querySelector && cell.querySelector('.cable-badge');
+    if (hasBadges) return; // already badges
+    if (nums && nums.length) {
+      cell.innerHTML = '';
+      nums.forEach(n => cell.appendChild(createCableBadge(parseInt(n, 10))));
+    }
+  }
+
+  function normalizeAllWallCells() {
+    const wallCells = document.querySelectorAll('.editable-cell[data-col="wall"]');
+    wallCells.forEach(c => normalizeWallCell(c));
+  }
+
+  // legend badges for instruments/preamps
+  function pickColorForLabel(label) {
+    const l = (label || '').toLowerCase();
+    // explicit palette overrides requested by user
+    if (l.includes('vox') || l.includes('vocal')) {
+      // pink
+      return { bg: `hsl(330 70% 92%)`, border: `hsl(330 60% 70%)`, text: '#111' };
+    }
+    if (l.includes('guitar')) {
+      // green
+      return { bg: `hsl(140 60% 92%)`, border: `hsl(140 55% 65%)`, text: '#081d08' };
+    }
+    if (l.includes('bass')) {
+      // orange
+      return { bg: `hsl(24 85% 92%)`, border: `hsl(24 75% 60%)`, text: '#2b1600' };
+    }
+    // drums / toms / overheads -> yellow
+    if (/(kick|snare|tom|overhead|drum)/i.test(l)) {
+      return { bg: `hsl(52 90% 92%)`, border: `hsl(52 80% 60%)`, text: '#2b2600' };
+    }
+    // piano / keys -> purple
+    if (/(piano|key|keys)/i.test(l)) {
+      return { bg: `hsl(270 65% 92%)`, border: `hsl(270 60% 68%)`, text: '#1a0730' };
+    }
+    // deterministic hash to hue for everything else
+    let h = 0;
+    for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) >>> 0;
+    const hue = Math.round((h % 360));
+    return { bg: `hsl(${hue} 70% 92%)`, border: `hsl(${hue} 60% 70%)`, text: '#111' };
+  }
+
+  function createLegendBadge(text, kind, styleOverride) {
+    const span = document.createElement('span');
+    span.className = 'legend-badge ' + (kind || 'instrument');
+    span.textContent = text;
+    span.dataset.kind = kind || 'instrument';
+    const c = pickColorForLabel(text.toLowerCase());
+    // apply computed or override styles
+    const bg = (styleOverride && styleOverride.bg) ? styleOverride.bg : c.bg;
+    const border = (styleOverride && styleOverride.border) ? styleOverride.border : c.border;
+    const color = (styleOverride && styleOverride.color) ? styleOverride.color : c.text;
+    span.style.backgroundColor = bg;
+    span.style.borderColor = border;
+    span.style.color = color;
+    span.dataset.bg = bg;
+    span.dataset.border = border;
+    span.dataset.color = color;
+    span.draggable = true;
+    span.addEventListener('dragstart', (ev) => {
+      try { ev.dataTransfer.setData('text/plain', text); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-type', kind || 'instrument'); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-bg', span.style.backgroundColor); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-border', span.style.borderColor); } catch (e) {}
+      try { ev.dataTransfer.setData('text/x-item-color', span.style.color); } catch (e) {}
+      ev.dataTransfer.effectAllowed = 'copy';
+      span.classList.add('dragging');
+    });
+    span.addEventListener('dragend', () => span.classList.remove('dragging'));
+    return span;
+  }
 
   function buildSheet() {
     const tpl = document.getElementById('sheet-template');
@@ -374,17 +625,21 @@
       const tr = document.createElement('tr');
       const tdNum = document.createElement('td');
       tdNum.className = 'mic-num';
-      tdNum.textContent = i;
+      // render the cable number as a colored draggable badge
+      tdNum.appendChild(createCableBadge(i));
       const tdInstrument = document.createElement('td');
       tdInstrument.className = 'editable-cell';
+      tdInstrument.dataset.col = 'instrument';
       tdInstrument.contentEditable = 'true';
       tdInstrument.dataset.placeholder = 'Instrument';
       const tdWall = document.createElement('td');
       tdWall.className = 'editable-cell';
+      tdWall.dataset.col = 'wall';
       tdWall.contentEditable = 'true';
       tdWall.dataset.placeholder = 'Wall Mount #';
       const tdPreamp = document.createElement('td');
       tdPreamp.className = 'preamp-cell';
+      tdPreamp.dataset.col = 'preamp';
       tdPreamp.dataset.dropTarget = 'true';
       tr.appendChild(tdNum);
       tr.appendChild(tdInstrument);
@@ -398,10 +653,26 @@
   function setupDragAndDrop(container) {
     const legendItems = container.querySelectorAll('.legend-item');
     const dropCells = container.querySelectorAll('.preamp-cell');
+    const instrDropCells = container.querySelectorAll('.editable-cell[data-col="instrument"]');
+    const numCells = container.querySelectorAll('.mic-num');
+    const wallCells = container.querySelectorAll('.editable-cell[data-col="wall"]');
 
     legendItems.forEach((item) => {
       item.addEventListener('dragstart', (event) => {
-        event.dataTransfer.setData('text/plain', item.textContent);
+        const text = item.textContent.trim();
+        const type = item.dataset.type || 'preamp';
+        try { event.dataTransfer.setData('text/plain', text); } catch (e) {}
+        try { event.dataTransfer.setData('text/x-item-type', type); } catch (e) {}
+        try {
+          const computed = pickColorForLabel(text.toLowerCase());
+          const cs = window.getComputedStyle ? window.getComputedStyle(item) : null;
+          const bg = (cs && cs.backgroundColor) ? cs.backgroundColor : (item.style.backgroundColor || computed.bg);
+          const border = (cs && cs.borderColor) ? cs.borderColor : (item.style.borderColor || computed.border);
+          const color = (cs && cs.color) ? cs.color : (item.style.color || computed.text);
+          event.dataTransfer.setData('text/x-item-bg', bg);
+          event.dataTransfer.setData('text/x-item-border', border);
+          event.dataTransfer.setData('text/x-item-color', color);
+        } catch (e) {}
         event.dataTransfer.effectAllowed = 'copy';
         item.classList.add('dragging');
       });
@@ -409,6 +680,8 @@
         item.classList.remove('dragging');
       });
     });
+
+    // cable badges inside .mic-num cells are already draggable via createCableBadge()
 
     dropCells.forEach((cell) => {
       cell.addEventListener('dragover', (event) => {
@@ -425,9 +698,22 @@
       });
       cell.addEventListener('drop', (event) => {
         event.preventDefault();
-        const value = event.dataTransfer.getData('text/plain');
+        const valueRaw = event.dataTransfer.getData('text/plain') || '';
+        const value = valueRaw.trim();
+        const itemType = (() => { try { return event.dataTransfer.getData('text/x-item-type'); } catch (e) { return ''; } })() || '';
+        // accept preamp by explicit type, or fallback when payload contains letters
+        const fallbackAccept = (!itemType && /[A-Za-z]/.test(value));
+        if (itemType !== 'preamp' && !fallbackAccept) { cell.classList.remove('drop-target'); return; }
         if (value) {
-          cell.textContent = value;
+          // render as a draggable legend-style badge
+          // preserve color info from drag if present
+          const styleOverride = {};
+          try { styleOverride.bg = event.dataTransfer.getData('text/x-item-bg'); } catch (e) {}
+          try { styleOverride.border = event.dataTransfer.getData('text/x-item-border'); } catch (e) {}
+          try { styleOverride.color = event.dataTransfer.getData('text/x-item-color'); } catch (e) {}
+          const badge = createLegendBadge(value, 'preamp', (styleOverride.bg || styleOverride.border || styleOverride.color) ? styleOverride : null);
+          cell.innerHTML = '';
+          cell.appendChild(badge);
         }
         cell.classList.remove('drop-target');
       });
@@ -435,14 +721,565 @@
         cell.textContent = '';
       });
     });
+
+    // instrument drop targets
+    instrDropCells.forEach((cell) => {
+      cell.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragleave', () => {
+        cell.classList.remove('drop-target');
+      });
+      cell.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const raw = (event.dataTransfer && event.dataTransfer.getData) ? event.dataTransfer.getData('text/plain') : '';
+        const value = (raw || '').trim();
+        const itemType = (() => { try { return event.dataTransfer.getData('text/x-item-type'); } catch (e) { return ''; } })() || '';
+        // allow instrument drops by explicit type, or fallback when payload is non-numeric text
+        const fallbackAccept = (!itemType && value && !/^\d+$/.test(value));
+        if (itemType !== 'instrument' && !fallbackAccept) { cell.classList.remove('drop-target'); return; }
+        if (value) {
+          // If dropped value already ends with a number, use as-is; otherwise auto-number
+          const endsWithNumber = /\s\d+$/i.test(value);
+          const label = endsWithNumber ? value : nextLabelFor(value);
+          const styleOverride = {};
+          try { styleOverride.bg = event.dataTransfer.getData('text/x-item-bg'); } catch (e) {}
+          try { styleOverride.border = event.dataTransfer.getData('text/x-item-border'); } catch (e) {}
+          try { styleOverride.color = event.dataTransfer.getData('text/x-item-color'); } catch (e) {}
+          const badge = createLegendBadge(label, 'instrument', (styleOverride.bg || styleOverride.border || styleOverride.color) ? styleOverride : null);
+          cell.innerHTML = '';
+          cell.appendChild(badge);
+        }
+        cell.classList.remove('drop-target');
+      });
+      // allow double-click to clear instrument cell
+      cell.addEventListener('dblclick', () => { cell.textContent = ''; });
+    });
+
+    // Wall mount cells: accept cable drops and allow clearing
+    wallCells.forEach((cell) => {
+      cell.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        try { event.dataTransfer.dropEffect = 'copy'; } catch (e) {}
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        cell.classList.add('drop-target');
+      });
+      cell.addEventListener('dragleave', () => {
+        cell.classList.remove('drop-target');
+      });
+      cell.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const itemType = (() => { try { return event.dataTransfer.getData('text/x-item-type'); } catch (e) { return ''; } })();
+        // accept only cable drops here (or numeric payloads as fallback)
+        const raw = (event.dataTransfer && event.dataTransfer.getData) ? event.dataTransfer.getData('text/plain') : '';
+        const value = (raw || '').trim();
+        if (itemType !== 'cable' && !/^\d+$/.test(value)) { cell.classList.remove('drop-target'); return; }
+        if (value) {
+          if (/^\d+$/.test(value)) {
+            const n = parseInt(value, 10);
+            const styleOverride = {};
+            try { styleOverride.bg = event.dataTransfer.getData('text/x-item-bg'); } catch (e) {}
+            try { styleOverride.border = event.dataTransfer.getData('text/x-item-border'); } catch (e) {}
+            try { styleOverride.color = event.dataTransfer.getData('text/x-item-color'); } catch (e) {}
+            const badge = createCableBadge(n, (styleOverride.bg||styleOverride.border||styleOverride.color) ? styleOverride : null);
+            cell.innerHTML = '';
+            cell.appendChild(badge);
+          } else {
+            cell.textContent = value;
+          }
+        }
+        cell.classList.remove('drop-target');
+      });
+      cell.addEventListener('dblclick', () => { cell.textContent = ''; });
+      // when user types a number and blurs, convert to badge(s)
+      cell.addEventListener('blur', () => {
+        const v = (cell.textContent || '').trim();
+        const nums = v.match(/\d+/g);
+        if (nums && nums.length) {
+          cell.innerHTML = '';
+          nums.forEach(n => cell.appendChild(createCableBadge(parseInt(n, 10))));
+          saveGridState();
+        }
+      });
+      cell.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); cell.blur(); }
+      });
+    });
+  }
+
+  // --- Self-contained persistence -----------------------------------------
+  // localStorage on file:// is unreliable once the file is moved to another
+  // drive or reopened days later. "Save to File" bakes the current grid state
+  // into this HTML document (the #embedded-state block) and downloads it, so
+  // the data travels inside the file itself — no external JSON or database.
+  const ORIGINAL_PREAMP_LEGEND_HTML = (document.getElementById('preamp-legend') || {}).innerHTML || '';
+
+  function readEmbeddedState() {
+    const el = document.getElementById('embedded-state');
+    if (!el) return null;
+    try {
+      const parsed = JSON.parse(el.textContent || 'null');
+      return (parsed && typeof parsed === 'object') ? parsed : null;
+    } catch (e) { return null; }
+  }
+
+  function hydrateFromEmbeddedState() {
+    // Use the baked-in state only when localStorage is empty (e.g. after a
+    // browser wipe or when the file was moved to a new path).
+    const state = readEmbeddedState();
+    if (!state) return;
+    if (!localStorage.getItem('micConfigSheets') && state.micConfigSheets) {
+      localStorage.setItem('micConfigSheets', JSON.stringify(state.micConfigSheets));
+    }
+  }
+
+  function buildSelfContainedHTML() {
+    suppressSchedule = true;
+    try {
+      saveGridState();
+      let sheetsState = null;
+      try { sheetsState = JSON.parse(localStorage.getItem('micConfigSheets') || 'null'); } catch (e) {}
+      const state = { micConfigSheets: sheetsState, savedAt: new Date().toISOString() };
+      const clone = document.documentElement.cloneNode(true);
+      const embedded = clone.querySelector('#embedded-state');
+      if (embedded) embedded.textContent = JSON.stringify(state);
+      // Reset runtime-generated regions so the saved file rebuilds cleanly on open.
+      const sheetsEl = clone.querySelector('#sheets');
+      if (sheetsEl) sheetsEl.innerHTML = '';
+      const instrEl = clone.querySelector('#instruments-legend');
+      if (instrEl) instrEl.innerHTML = '';
+      const preampEl = clone.querySelector('#preamp-legend');
+      if (preampEl) preampEl.innerHTML = ORIGINAL_PREAMP_LEGEND_HTML;
+      clone.querySelectorAll('[data-runtime-ui]').forEach((n) => n.remove());
+      return '<!DOCTYPE html>\n' + clone.outerHTML;
+    } finally {
+      suppressSchedule = false;
+    }
+  }
+
+  function saveStateToFile() {
+    const html = buildSelfContainedHTML();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mic_config_template.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // ===== AutoSave to the actual file ====================================
+  // A double-clicked file:// page cannot silently write to its own file, so
+  // automatic saving uses the File System Access API (Chrome/Edge) after a
+  // one-time file pick, remembered per file location so the repo copy and an
+  // external-drive copy each keep their own state. Browsers without that API
+  // (Firefox/Safari/in-editor previews) get a one-click manual save. The file
+  // also carries its own state in #embedded-state, and localStorage keeps the
+  // working copy between reopens of the same file.
+  const SELF_FILENAME = 'mic_config_template.html';
+  const FS_API = typeof window.showSaveFilePicker === 'function';
+  // Per-location key so each copy of the file remembers its own handle.
+  const HANDLE_KEY = 'handle:' + decodeURIComponent(location.pathname);
+  let fileHandle = null;
+  let autoSaveTimer = null;
+  let lastSavedHtml = '';
+  let dirtyToFile = false;
+  let suppressSchedule = false;
+  let autoSaveReady = false;
+  let statusEl = null;
+  let autoSaveBar = null;
+
+  function idbOpen() {
+    return new Promise((resolve) => {
+      let req;
+      try { req = indexedDB.open('studioAutoSave', 1); } catch (e) { resolve(null); return; }
+      req.onupgradeneeded = () => req.result.createObjectStore('handles');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  }
+  async function idbGet(key) {
+    const db = await idbOpen();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      const r = db.transaction('handles', 'readonly').objectStore('handles').get(key);
+      r.onsuccess = () => resolve(r.result || null);
+      r.onerror = () => resolve(null);
+    });
+  }
+  async function idbSet(key, value) {
+    const db = await idbOpen();
+    if (!db) return;
+    return new Promise((resolve) => {
+      const tx = db.transaction('handles', 'readwrite');
+      tx.objectStore('handles').put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  }
+
+  function setStatus(text, kind) {
+    if (!statusEl) {
+      statusEl = document.createElement('div');
+      statusEl.id = 'save-status';
+      statusEl.setAttribute('data-runtime-ui', '');
+      document.body.appendChild(statusEl);
+    }
+    statusEl.textContent = text;
+    statusEl.className = kind || 'idle';
+  }
+
+  function hideAutoSaveBar() {
+    if (autoSaveBar) { autoSaveBar.remove(); autoSaveBar = null; }
+  }
+  function showAutoSaveBar(message, label, onClick) {
+    hideAutoSaveBar();
+    autoSaveBar = document.createElement('div');
+    autoSaveBar.id = 'autosave-bar';
+    autoSaveBar.setAttribute('data-runtime-ui', '');
+    const span = document.createElement('span');
+    span.textContent = message;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = label;
+    btn.addEventListener('click', onClick);
+    autoSaveBar.appendChild(span);
+    autoSaveBar.appendChild(btn);
+    document.body.appendChild(autoSaveBar);
+  }
+
+  async function writeViaHandle(html) {
+    if (!fileHandle) return false;
+    try {
+      if (fileHandle.queryPermission) {
+        const p = await fileHandle.queryPermission({ mode: 'readwrite' });
+        if (p !== 'granted') return false;
+      }
+      const writable = await fileHandle.createWritable();
+      await writable.write(html);
+      await writable.close();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function doAutoSave() {
+    if (!fileHandle) return;
+    let html;
+    try { html = buildSelfContainedHTML(); } catch (e) { return; }
+    if (html === lastSavedHtml) { dirtyToFile = false; return; }
+    setStatus('Saving\u2026', 'pending');
+    const ok = await writeViaHandle(html);
+    if (ok) {
+      lastSavedHtml = html;
+      dirtyToFile = false;
+      setStatus('Saved \u2713', 'ok');
+    } else {
+      dirtyToFile = true;
+      setStatus('Save failed \u2014 click Save', 'error');
+    }
+  }
+
+  function scheduleSave() {
+    if (!autoSaveReady) return;
+    dirtyToFile = true;
+    if (suppressSchedule) return;
+    if (!fileHandle) {
+      if (!FS_API) setStatus('Unsaved \u2014 click Save', 'error');
+      return;
+    }
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(doAutoSave, 800);
+  }
+
+  async function turnOnFileAutoSave() {
+    if (!FS_API) return;
+    try {
+      fileHandle = await window.showSaveFilePicker({
+        suggestedName: SELF_FILENAME,
+        types: [{ description: 'HTML page', accept: { 'text/html': ['.html'] } }]
+      });
+      await idbSet(HANDLE_KEY, fileHandle);
+      hideAutoSaveBar();
+      lastSavedHtml = '';
+      await doAutoSave();
+    } catch (e) {
+      // operator cancelled the picker; the safety net stays in place
+    }
+  }
+
+  function manualSaveNow() {
+    saveStateToFile();
+    dirtyToFile = false;
+    setStatus('Saved a copy \u2713', 'ok');
+  }
+
+  async function initAutoSave() {
+    try { lastSavedHtml = buildSelfContainedHTML(); } catch (e) { lastSavedHtml = ''; }
+    autoSaveReady = true;
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && dirtyToFile) doAutoSave();
+    });
+    window.addEventListener('beforeunload', (event) => {
+      if (dirtyToFile && !fileHandle) {
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    });
+
+    if (!FS_API) {
+      // No File System Access API (Firefox/Safari or an in-editor preview):
+      // we cannot write to the file automatically. Be honest and offer a
+      // one-click manual save. localStorage still keeps state for this same
+      // file location between reopens.
+      setStatus(dirtyToFile ? 'Unsaved \u2014 click Save' : 'Not saved to file', 'pending');
+      showAutoSaveBar('This browser can\u2019t auto-save to the file. Open it in Chrome or Edge for automatic saving, or click Save now to keep your work.', 'Save now', manualSaveNow);
+      return;
+    }
+    setInterval(() => { if (fileHandle) doAutoSave(); }, 30000);
+    const saved = await idbGet(HANDLE_KEY);
+    if (saved) {
+      setStatus('AutoSave paused', 'pending');
+      showAutoSaveBar('Resume saving your work straight to this file?', 'Resume AutoSave', async () => {
+        try {
+          const perm = saved.requestPermission ? await saved.requestPermission({ mode: 'readwrite' }) : 'granted';
+          if (perm === 'granted') {
+            fileHandle = saved;
+            hideAutoSaveBar();
+            lastSavedHtml = '';
+            await doAutoSave();
+          }
+        } catch (e) {}
+      });
+    } else {
+      setStatus('Not saving to file yet', 'pending');
+      showAutoSaveBar('Turn on autosave so your work writes straight to this file.', 'Turn on AutoSave', turnOnFileAutoSave);
+    }
   }
 
   const host = document.getElementById('sheets');
+  host.innerHTML = '';
   for (let s = 0; s < SHEET_COUNT; s++) {
     host.appendChild(buildSheet());
   }
+
+  // Insert instruments grouped like the preamp legend, but without an outer boxed container
+  (function insertInstrumentsLegend() {
+    const slot = document.querySelector('.instruments-legend-slot') || document.getElementById('instruments-legend');
+    if (!slot) return;
+    slot.innerHTML = `
+      <div class="legend-groups">
+        <div class="legend-group legend-group-api">
+          <div class="legend-group-title">Vocals</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">vox</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-api">
+          <div class="legend-group-title">Guitars</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">guitar</span>
+            <span class="legend-item" draggable="true" data-type="instrument">bass</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-neve">
+          <div class="legend-group-title">Drums</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">kick</span>
+            <span class="legend-item" draggable="true" data-type="instrument">snare bottom</span>
+            <span class="legend-item" draggable="true" data-type="instrument">snare top</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-warm">
+          <div class="legend-group-title">Toms</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">tom 1</span>
+            <span class="legend-item" draggable="true" data-type="instrument">tom 2</span>
+            <span class="legend-item" draggable="true" data-type="instrument">tom 3</span>
+            <span class="legend-item" draggable="true" data-type="instrument">tom 4</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-vintech">
+          <div class="legend-group-title">Overheads</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">overhead</span>
+          </div>
+        </div>
+        <div class="legend-group legend-group-ssl">
+          <div class="legend-group-title">Keys</div>
+          <div class="legend-group-items">
+            <span class="legend-item" draggable="true" data-type="instrument">piano</span>
+            <span class="legend-item" draggable="true" data-type="instrument">keys</span>
+          </div>
+        </div>
+      </div>`;
+  })();
+  // Replace static .legend-item nodes with programmatic legend badges
+  function upgradeLegendItems() {
+    const items = Array.from(document.querySelectorAll('.legend-item'));
+    items.forEach(it => {
+      const text = it.textContent.trim();
+      const type = it.dataset.type || 'instrument';
+      const badge = createLegendBadge(text, type);
+      // keep any container spacing/structure by replacing the node
+      it.replaceWith(badge);
+    });
+  }
+
+  upgradeLegendItems();
+  // re-run drag/drop wiring so newly-created legend-badges get listeners
   setupDragAndDrop(document);
+
+  // Persistence: save/load grid state to localStorage
+  function saveGridState() {
+    try {
+      const sheets = Array.from(document.querySelectorAll('.sheet'));
+      const out = sheets.map(sheet => Array.from(sheet.querySelectorAll('.grid-body tr')).map(tr => {
+        const tds = tr.querySelectorAll('td');
+        // serialize wall as comma-separated cable numbers if badges present
+        let wallVal = tds[2].textContent.trim();
+        const badges = tds[2].querySelectorAll && tds[2].querySelectorAll('.cable-badge');
+        if (badges && badges.length) {
+          wallVal = Array.from(badges).map(b => b.dataset.cable || b.textContent.trim()).join(',');
+        }
+        return {
+          instrument: tds[1].textContent.trim(),
+          wall: wallVal,
+          preamp: tds[3].textContent.trim()
+        };
+      }));
+      localStorage.setItem('micConfigSheets', JSON.stringify(out));
+    } catch (e) {
+      console.error('saveGridState error', e);
+    }
+    scheduleSave();
+  }
+
+  function loadGridState() {
+    try {
+      const raw = localStorage.getItem('micConfigSheets');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      const sheets = Array.from(document.querySelectorAll('.sheet'));
+      data.forEach((sheetData, sIdx) => {
+        const sheet = sheets[sIdx];
+        if (!sheet) return;
+        const rows = sheet.querySelectorAll('.grid-body tr');
+        sheetData.forEach((rowData, rIdx) => {
+          const tr = rows[rIdx];
+          if (!tr) return;
+          const tds = tr.querySelectorAll('td');
+          // restore instrument cell (render as badge if non-empty)
+          const instVal = rowData.instrument || '';
+          if (instVal && instVal.trim()) {
+            tds[1].innerHTML = '';
+            tds[1].appendChild(createLegendBadge(instVal.trim(), 'instrument'));
+          } else {
+            tds[1].textContent = '';
+          }
+          // restore wall: support comma-separated numbers -> multiple cable badges
+          const wallVal = (rowData.wall || '').toString().trim();
+          if (wallVal) {
+            const nums = wallVal.match(/\d+/g);
+            if (nums && nums.length) {
+              tds[2].innerHTML = '';
+              nums.forEach(n => tds[2].appendChild(createCableBadge(parseInt(n, 10))));
+            } else {
+              tds[2].textContent = wallVal;
+            }
+          } else {
+            tds[2].textContent = '';
+          }
+          // restore preamp cell as badge if present
+          const preVal = rowData.preamp || '';
+          if (preVal && preVal.trim()) {
+            tds[3].innerHTML = '';
+            tds[3].appendChild(createLegendBadge(preVal.trim(), 'preamp'));
+          } else {
+            tds[3].textContent = '';
+          }
+        });
+      });
+    } catch (e) {
+      console.error('loadGridState error', e);
+    }
+  }
+
+  function clearGridState() {
+    localStorage.removeItem('micConfigSheets');
+    document.querySelectorAll('.grid-body tr').forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      tds[1].textContent = '';
+      tds[2].textContent = '';
+      tds[3].textContent = '';
+    });
+  }
+
+  // Attach persistence hooks to editable cells and preamp drops
+  function setupPersistenceHooks() {
+    // editable text cells
+    document.querySelectorAll('.editable-cell').forEach(cell => {
+      cell.addEventListener('input', () => saveGridState());
+      cell.addEventListener('blur', () => saveGridState());
+      // observe character data changes (for drops that modify textContent)
+      const obs = new MutationObserver(() => saveGridState());
+      obs.observe(cell, { characterData: true, childList: true, subtree: true });
+    });
+
+    // preamp cells: save when double-click clears or when content changes via drop
+    document.querySelectorAll('.preamp-cell').forEach(cell => {
+      cell.addEventListener('dblclick', () => { saveGridState(); });
+      // observe character data changes (for drops that modify textContent)
+      const obs = new MutationObserver(() => saveGridState());
+      obs.observe(cell, { characterData: true, childList: true, subtree: true });
+    });
+
+    // clear button (no confirmation)
+    const clearBtn = document.getElementById('clear-button');
+    if (clearBtn) clearBtn.addEventListener('click', () => clearGridState());
+
+    // save-to-file buttons (self-contained state, one per sheet header)
+    document.querySelectorAll('.save-file-button').forEach((btn) => btn.addEventListener('click', saveStateToFile));
+  }
+
+  // After drag/drop setup, wire persistence and restore any saved state
+  setupPersistenceHooks();
+  hydrateFromEmbeddedState();
+  loadGridState();
+  // ensure any numeric wall cells are shown as badges
+  normalizeAllWallCells();
+  initAutoSave();
+
+  // Align the two legends vertically: make preamp legend match instruments legend top
+  function alignLegendsVertically() {
+    const instr = document.querySelector('.instruments-legend-slot');
+    const pre = document.querySelector('.preamp-legend');
+    if (!instr || !pre) return;
+    const docTop = document.documentElement.getBoundingClientRect().top;
+    const instrTop = Math.round(instr.getBoundingClientRect().top - docTop);
+    // apply as inline style so sticky respects the computed offset
+    pre.style.top = instrTop + 'px';
+    instr.style.top = instrTop + 'px';
+  }
+  alignLegendsVertically();
+  window.addEventListener('resize', () => { setTimeout(alignLegendsVertically, 50); });
+
+  // Logo inlined; loader removed.
 </script>
 
-</body>
-</html>
+
+
+</body></html>
