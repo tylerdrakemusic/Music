@@ -129,3 +129,4 @@ catalog/sheet_music/
 
 # Workspace-local git worktrees
 .worktrees/
+Brand/hyperthreat/*.b64.txt
