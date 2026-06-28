@@ -495,11 +495,11 @@ HTML = r"""
 
   <div class="scale-controls">
     <label class="scale-ctrl-label">BPM
-      <input id="scale-bpm" class="scale-ctrl-input" type="number" value="60" min="40" max="200" oninput="scaleSetBpm(this.value)">
+      <input id="scale-bpm" class="scale-ctrl-input" type="number" value="160" min="40" max="200" oninput="scaleSetBpm(this.value)">
     </label>
     <button class="btn-scale-tap" onclick="scaleTap()">Tap</button>
     <label class="scale-ctrl-label">Reps
-      <input id="scale-reps" class="scale-ctrl-input" type="number" value="4" min="1" max="20">
+      <input id="scale-reps" class="scale-ctrl-input" type="number" value="2" min="1" max="20">
     </label>
     <label class="scale-ctrl-label">Duration (min)
       <input id="scale-duration" class="scale-ctrl-input" type="number" value="0" min="0" max="300">
@@ -752,6 +752,20 @@ async function createSession() {
     if (!clickBuf) clickBuf = await loadBuffer('/click/click.wav');
   }
 
+  async function playCountIn(beats, countInBpm, shouldStop) {
+    await ensureBuffers();
+    const ctx = getCtx();
+    if (ctx.state === 'suspended') await ctx.resume();
+    const beatIntervalMs = Math.round(60000 / Math.max(20, Math.min(300, parseInt(countInBpm) || 120)));
+    for (let beat = 0; beat < beats; beat++) {
+      if (shouldStop && shouldStop()) return false;
+      playBuf(beat === 0 ? accentBuf : clickBuf, ctx.currentTime + 0.01);
+      updateDots(beat);
+      if (beat < beats - 1) await sleep(beatIntervalMs);
+    }
+    return !(shouldStop && shouldStop());
+  }
+
   function playBuf(buf, time) {
     if (!buf) return;
     const ctx = getCtx();
@@ -866,6 +880,10 @@ async function createSession() {
     }
     if (tapTimes.length > 8) tapTimes.shift();
   };
+
+  window.metroCountIn = function(beats, countInBpm, shouldStop) {
+    return playCountIn(beats, countInBpm, shouldStop);
+  };
 })();
 // ---------------------------------------------------------------------------
 // Scales tab (FR-20260517-guitar-trainer-scale-exercises)
@@ -873,7 +891,7 @@ async function createSession() {
 (function initScales() {
   let _positions = [];
   let _currentPos = 0;
-  let _scaleBpm = 60;
+  let _scaleBpm = 160;
   let _scalePlaying = false;
   let _scaleStopFlag = false;
   let _currentKey = 'C';
@@ -1361,7 +1379,7 @@ async function createSession() {
     if (_scalePlaying) { _scaleStopFlag = true; return; }
     const pos = _positions[_currentPos];
     if (!pos) return;
-    const reps = Math.max(1, Math.min(20, parseInt(document.getElementById('scale-reps').value) || 4));
+    const reps = Math.max(1, Math.min(20, parseInt(document.getElementById('scale-reps').value) || 2));
     const noteDurationMs = Math.round(60000 / _scaleBpm);
     const {sequence, allAsc} = buildScalePlayback(pos.notes, _currentKey, _currentMode);
     _scalePlaying = true;
@@ -1369,6 +1387,19 @@ async function createSession() {
     const btn = document.getElementById('scale-play-btn');
     btn.textContent = '⏹ Stop';
     const status = document.getElementById('scale-status');
+    status.textContent = 'Count-in 1/4';
+    if (window.metroCountIn) {
+      const countInOk = await window.metroCountIn(4, _scaleBpm, () => _scaleStopFlag);
+      if (!countInOk || _scaleStopFlag) {
+        _scalePlaying = false;
+        _scaleStopFlag = false;
+        btn.textContent = '▶ Play';
+        drawFretboard(pos.notes, -1);
+        drawStaves(_currentKey, _currentMode, -1);
+        status.textContent = '';
+        return;
+      }
+    }
     for (let rep = 0; rep < reps && !_scaleStopFlag; rep++) {
       for (let i = 0; i < sequence.length && !_scaleStopFlag; i++) {
         status.textContent = `Rep ${rep + 1}/${reps} — note ${i + 1}/${sequence.length}`;
@@ -1391,7 +1422,7 @@ async function createSession() {
   };
 
   window.scaleSetBpm = function(v) {
-    _scaleBpm = Math.max(40, Math.min(200, parseInt(v) || 60));
+    _scaleBpm = Math.max(40, Math.min(200, parseInt(v) || 160));
   };
 
   window.scaleTap = function() {
