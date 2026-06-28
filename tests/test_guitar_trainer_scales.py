@@ -134,7 +134,7 @@ def test_scale_positions_counts() -> None:
     assert len(SCALE_POSITIONS["Bb"]) == 11, f"SCALE_POSITIONS['Bb'] has {len(SCALE_POSITIONS['Bb'])} positions, expected 11"
     assert len(SCALE_POSITIONS["B"]) == 11, f"SCALE_POSITIONS['B'] has {len(SCALE_POSITIONS['B'])} positions, expected 11"
     assert len(SCALE_POSITIONS["E"]) == 11, f"SCALE_POSITIONS['E'] has {len(SCALE_POSITIONS['E'])} positions, expected 11"
-    assert len(SCALE_POSITIONS["F#"]) == 11, f"SCALE_POSITIONS['F#'] has {len(SCALE_POSITIONS['F#'])} positions, expected 11"
+    assert len(SCALE_POSITIONS["F#"]) == 10, f"SCALE_POSITIONS['F#'] has {len(SCALE_POSITIONS['F#'])} positions, expected 10"
     assert len(SCALE_POSITIONS["Eb"]) == 10, f"SCALE_POSITIONS['Eb'] has {len(SCALE_POSITIONS['Eb'])} positions, expected 10"
     assert len(SCALE_POSITIONS["A"]) == 11, f"SCALE_POSITIONS['A'] has {len(SCALE_POSITIONS['A'])} positions, expected 11"
     assert len(SCALE_POSITIONS["Db"]) == 10, f"SCALE_POSITIONS['Db'] has {len(SCALE_POSITIONS['Db'])} positions, expected 10"
@@ -300,6 +300,15 @@ def test_eb_major_max_fret() -> None:
             )
 
 
+def test_f_sharp_major_max_fret() -> None:
+    """No note in any F# position may exceed fret 22 (22-fret board)."""
+    for i, pos in enumerate(SCALE_POSITIONS["F#"]):
+        for note in pos["notes"]:
+            assert note["fret"] <= 22, (
+                f"F# Position {i+1} note fret={note['fret']} exceeds 22"
+            )
+
+
 def test_caged_positions_have_instructor_phrases() -> None:
     """Each instructor phrase must be non-empty and mention a fret number."""
     for i, pos in enumerate(CAGED_POSITIONS):
@@ -418,13 +427,17 @@ def test_api_scale_positions_f_returns_12(client) -> None:
     assert all("F major" in p["instructor_phrase"] for p in data)
 
 
-def test_api_scale_positions_f_sharp_returns_11(client) -> None:
-    """GET /api/scale-positions?key=F%23 must return a list of exactly 11 F# major positions."""
+def test_api_scale_positions_f_sharp_returns_10(client) -> None:
+    """GET /api/scale-positions?key=F%23 must return a list of exactly 10 F# major positions.
+
+    Position 11 (Rock shape at the 21st fret) was removed because it runs off the
+    22-fret board (FR-20260627 demo bug fix).
+    """
     resp = client.get("/api/scale-positions?key=F%23")
     assert resp.status_code == 200
     data = resp.get_json()
     assert isinstance(data, list)
-    assert len(data) == 11
+    assert len(data) == 10
     assert all("F# major" in p["instructor_phrase"] for p in data)
 
 
