@@ -204,7 +204,6 @@ _POSITION_DATA: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("E_shape", 14,  "Position 8 — E shape (14th fret)",           "Low E string", "Start on the 14th fret of the low E string — F# major E shape."),
         ("D_shape", 14,  "Position 9 — D shape (14th fret)",           "Low E string", "Start on the 14th fret of the low E string — F# major D shape."),
         ("C_shape", 21,  "Position 10 — C shape (21st fret)",         "A string",     "Start on the 21st fret of the A string — F# major C shape one octave up."),
-        ("rock",    21,  "Position 11 — 石 Rock shape (21st fret)",    "A string",     "Start on the 21st fret of the A string for F# major 石 Rock shape (high octave)."),
     ],
     "Db": [
         ("rock",    4,  "Position 1 — 石 Rock shape (4th fret)",       "A string",     "Start on the 4th fret of the A string for D-flat major 石 Rock shape."),
