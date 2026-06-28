@@ -130,7 +130,7 @@ def _append_log(
 
 
 def buildModePhrase(pos: dict, mode: str, key: str = "C") -> str:
-    """Build the instructor phrase for mode-based Dorian/Aeolian training."""
+    """Build the instructor phrase for mode-based Dorian/Phrygian/Aeolian training."""
     shape_name = pos.get("label", "")
     shape_name = re.sub(r"^Position \d+ — ", "", shape_name)
     shape_name = re.sub(r"\s*\([^)]*\)$", "", shape_name)
@@ -194,6 +194,8 @@ def buildModePhrase(pos: dict, mode: str, key: str = "C") -> str:
         if mode == "Ionian"
         else "root of the Dorian scale"
         if mode == "Dorian"
+        else "root of the Phrygian scale"
+        if mode == "Phrygian"
         else "root of the Aeolian scale"
         if mode == "Aeolian"
         else "root"
@@ -471,7 +473,7 @@ HTML = r"""
     <label>Position
       <select id="scale-position" class="scale-select" onchange="onPositionChange()"></select>
     </label>
-    <span class="scale-legend">
+    <span class="scale-legend" id="scale-legend">
       <span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#ff0080"/></svg>Root</span>
       <span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#fb5607"/></svg>3rd</span>
       <span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#00e5cc"/></svg>5th</span>
@@ -961,9 +963,11 @@ async function createSession() {
       ? 'tonic root'
       : mode === 'Dorian'
         ? 'root of the Dorian scale'
-        : mode === 'Aeolian'
-          ? 'root of the Aeolian scale'
-          : 'root';
+        : mode === 'Phrygian'
+          ? 'root of the Phrygian scale'
+          : mode === 'Aeolian'
+            ? 'root of the Aeolian scale'
+            : 'root';
     let phrase = `Start on the ${rootLabel} ${tonicName}`;
     if (tonicLocation) {
       phrase += `, ${tonicLocation}`;
@@ -979,9 +983,10 @@ async function createSession() {
     const pos = _positions[_currentPos];
     if (!pos) return;
     let phrase = pos.instructor_phrase;
-    if (_currentMode === 'Aeolian' || _currentMode === 'Dorian') {
+    if (_currentMode === 'Aeolian' || _currentMode === 'Dorian' || _currentMode === 'Phrygian') {
       phrase = buildModePhrase(pos, _currentMode);
     }
+    updateLegend();
     // Load instructor audio — include phrase as cache-buster so URL changes when phrase changes
     const audio = document.getElementById('instructor-audio');
     audio.onerror = () => {};
@@ -1038,6 +1043,7 @@ async function createSession() {
   // Interval color map: root=hot-pink, major 3rd=red-orange, perfect 5th=hot-teal, other=grey
   const DOT_FILL  = {
     root: '#ff0080',
+    minor_second: '#8338ec',
     third: '#fb5607',
     fifth: '#00e5cc',
     minor_third: '#fb5607',
@@ -1047,6 +1053,7 @@ async function createSession() {
   };
   const DOT_TEXT  = {
     root: '#ffffff',
+    minor_second: '#ffffff',
     third: '#ffffff',
     fifth: '#000000',
     minor_third: '#ffffff',
@@ -1056,6 +1063,7 @@ async function createSession() {
   };
   const DOT_STROKE = {
     root: '#000000',
+    minor_second: '#000000',
     third: '#000000',
     fifth: '#000000',
     minor_third: '#000000',
@@ -1065,12 +1073,36 @@ async function createSession() {
   };
   const PLAYING_COLOR = '#ffe066';
 
+  // Mode-aware legend — which colored degrees to surface for the current mode.
+  const LEGEND_BY_MODE = {
+    Dorian:   [['#ff0080', 'Root'], ['#fb5607', '♭3'], ['#00e5cc', '5th'], ['#ffd166', '6th']],
+    Phrygian: [['#ff0080', 'Root'], ['#8338ec', '♭2'], ['#fb5607', '♭3'], ['#00e5cc', '5th']],
+    Aeolian:  [['#ff0080', 'Root'], ['#fb5607', '♭3'], ['#00e5cc', '5th'], ['#00b4d8', '♭7']],
+  };
+  const LEGEND_DEFAULT = [['#ff0080', 'Root'], ['#fb5607', '3rd'], ['#00e5cc', '5th']];
+
+  function updateLegend() {
+    const el = document.getElementById('scale-legend');
+    if (!el) return;
+    const items = LEGEND_BY_MODE[_currentMode] || LEGEND_DEFAULT;
+    el.innerHTML = items.map(([color, label]) =>
+      `<span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}"/></svg>${label}</span>`
+    ).join('');
+  }
+
   function getDotTypeForMode(interval, key, mode) {
     if (mode === 'Dorian') {
       if (interval === 0) return 'root';
       if (interval === 3) return 'minor_third';
       if (interval === 7) return 'fifth';
       if (interval === 9) return 'major_sixth';
+      return 'other';
+    }
+    if (mode === 'Phrygian') {
+      if (interval === 0) return 'root';
+      if (interval === 1) return 'minor_second';
+      if (interval === 3) return 'minor_third';
+      if (interval === 7) return 'fifth';
       return 'other';
     }
     if (mode === 'Aeolian') {
@@ -1156,8 +1188,8 @@ async function createSession() {
     Aeolian:    [0, 2, 3, 5, 7, 8, 10, 12],
     Locrian:    [0, 1, 3, 5, 6, 8, 10, 12],
   };
-  const STAFF_COLORS = { root: '#ff0080', third: '#fb5607', minor_third: '#fb5607', fifth: '#00e5cc', major_sixth: '#ffd166', other: '#555555' };
-  const STAFF_TEXT   = { root: '#fff',    third: '#fff',    minor_third: '#fff',    fifth: '#000',    major_sixth: '#000',    other: '#fff'    };
+  const STAFF_COLORS = { root: '#ff0080', minor_second: '#8338ec', third: '#fb5607', minor_third: '#fb5607', fifth: '#00e5cc', major_sixth: '#ffd166', other: '#555555' };
+  const STAFF_TEXT   = { root: '#fff',    minor_second: '#fff',    third: '#fff',    minor_third: '#fff',    fifth: '#000',    major_sixth: '#000',    other: '#fff'    };
   // Key signature accidental counts (positive = sharps, negative = flats)
   const KEY_SIGS = { C: 0, Db: -5, D: 2, Eb: -3, E: 4, F: -1, 'F#': 6, G: 1, Ab: -4, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
   const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
@@ -1248,15 +1280,21 @@ async function createSession() {
           : degInterval === 7 ? 'fifth'
           : degInterval === 9 ? 'major_sixth'
           : 'other'
-        : mode === 'Aeolian'
+        : mode === 'Phrygian'
           ? degInterval === 0 ? 'root'
+            : degInterval === 1 ? 'minor_second'
             : degInterval === 3 ? 'minor_third'
             : degInterval === 7 ? 'fifth'
             : 'other'
-          : degInterval === 0 ? 'root'
-            : degInterval === 4 ? 'third'
-            : degInterval === 7 ? 'fifth'
-            : 'other';
+          : mode === 'Aeolian'
+            ? degInterval === 0 ? 'root'
+              : degInterval === 3 ? 'minor_third'
+              : degInterval === 7 ? 'fifth'
+              : 'other'
+            : degInterval === 0 ? 'root'
+              : degInterval === 4 ? 'third'
+              : degInterval === 7 ? 'fifth'
+              : 'other';
       const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
       const noteFill  = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
       const textFill  = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
@@ -1279,13 +1317,21 @@ async function createSession() {
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  function getDorianAccentType(midi) {
-    if (_currentMode !== 'Dorian') return 'normal';
+  function getModeAccentType(midi) {
     const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
     const interval = (midi % 12 - rootPc + 12) % 12;
-    if (interval === 0) return 'root';
-    if (interval === 3) return 'minor_third';
-    if (interval === 9) return 'major_sixth';
+    if (_currentMode === 'Dorian') {
+      if (interval === 0) return 'root';
+      if (interval === 3) return 'minor_third';
+      if (interval === 9) return 'major_sixth';
+      return 'normal';
+    }
+    if (_currentMode === 'Phrygian') {
+      if (interval === 0) return 'root';
+      if (interval === 1) return 'minor_second';
+      if (interval === 3) return 'minor_third';
+      return 'normal';
+    }
     return 'normal';
   }
 
@@ -1296,7 +1342,7 @@ async function createSession() {
     if (!freq) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = accentType === 'root' || accentType === 'minor_third' || accentType === 'major_sixth'
+    osc.type = accentType === 'root' || accentType === 'minor_second' || accentType === 'minor_third' || accentType === 'major_sixth'
       ? 'triangle'
       : 'sine';
     osc.frequency.value = freq;
@@ -1328,7 +1374,7 @@ async function createSession() {
         status.textContent = `Rep ${rep + 1}/${reps} — note ${i + 1}/${sequence.length}`;
         drawFretboard(pos.notes, allAsc.indexOf(sequence[i]));
         drawStaves(_currentKey, _currentMode, sequence[i].midi);
-        const accentType = getDorianAccentType(sequence[i].midi);
+        const accentType = getModeAccentType(sequence[i].midi);
         await playNote(sequence[i].midi, noteDurationMs * 0.85, accentType);
         await sleep(noteDurationMs);
       }
