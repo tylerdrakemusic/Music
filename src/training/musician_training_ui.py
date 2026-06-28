@@ -734,6 +734,10 @@ async function createSession() {
   const tapTimes = [];
   const MAX_TAP_GAP_MS = 3000;
 
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   function getCtx() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     return audioCtx;
@@ -757,12 +761,20 @@ async function createSession() {
     const ctx = getCtx();
     if (ctx.state === 'suspended') await ctx.resume();
     const beatIntervalMs = Math.round(60000 / Math.max(20, Math.min(300, parseInt(countInBpm) || 120)));
+    const beatIntervalSec = beatIntervalMs / 1000;
+    const startTime = ctx.currentTime + 0.05;
+    const status = document.getElementById('scale-status');
     for (let beat = 0; beat < beats; beat++) {
       if (shouldStop && shouldStop()) return false;
-      playBuf(beat === 0 ? accentBuf : clickBuf, ctx.currentTime + 0.01);
-      updateDots(beat);
-      if (beat < beats - 1) await sleep(beatIntervalMs);
+      const beatTime = startTime + (beat * beatIntervalSec);
+      playBuf(beat === 0 ? accentBuf : clickBuf, beatTime);
+      setTimeout(() => {
+        if (shouldStop && shouldStop()) return;
+        if (status) status.textContent = `Count-in ${beat + 1}/${beats}`;
+        updateDots(beat);
+      }, Math.max(0, (beatTime - ctx.currentTime) * 1000));
     }
+    await sleep((beats * beatIntervalMs) + 50);
     return !(shouldStop && shouldStop());
   }
 
