@@ -623,6 +623,28 @@ def test_scale_log_get_returns_list(client, mem_conn) -> None:
 
 
 # ---------------------------------------------------------------------------
+# HTML / JS defaults
+# ---------------------------------------------------------------------------
+
+def test_scale_defaults_are_160_bpm_and_2_reps(client) -> None:
+    """The Scales tab must default to 160 BPM and 2 reps."""
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.data.decode("utf-8")
+    assert 'id="scale-bpm"' in html
+    assert 'value="160"' in html
+    assert 'id="scale-reps"' in html
+    assert 'value="2"' in html
+
+
+def test_scale_js_has_four_beat_count_in() -> None:
+    """Scale playback must call the metronome count-in helper before MIDI notes."""
+    trainer_src = (PROJECT_ROOT / "src" / "training" / "musician_training_ui.py").read_text(encoding="utf-8")
+    assert "metroCountIn(4, _scaleBpm" in trainer_src
+    assert "Count-in 1/4" in trainer_src
+
+
+# ---------------------------------------------------------------------------
 # /api/instructor-audio — graceful degradation
 # ---------------------------------------------------------------------------
 
