@@ -134,7 +134,7 @@ def test_scale_positions_counts() -> None:
     assert len(SCALE_POSITIONS["Bb"]) == 11, f"SCALE_POSITIONS['Bb'] has {len(SCALE_POSITIONS['Bb'])} positions, expected 11"
     assert len(SCALE_POSITIONS["B"]) == 11, f"SCALE_POSITIONS['B'] has {len(SCALE_POSITIONS['B'])} positions, expected 11"
     assert len(SCALE_POSITIONS["E"]) == 11, f"SCALE_POSITIONS['E'] has {len(SCALE_POSITIONS['E'])} positions, expected 11"
-    assert len(SCALE_POSITIONS["F#"]) == 11, f"SCALE_POSITIONS['F#'] has {len(SCALE_POSITIONS['F#'])} positions, expected 11"
+    assert len(SCALE_POSITIONS["F#"]) == 10, f"SCALE_POSITIONS['F#'] has {len(SCALE_POSITIONS['F#'])} positions, expected 10"
     assert len(SCALE_POSITIONS["Eb"]) == 10, f"SCALE_POSITIONS['Eb'] has {len(SCALE_POSITIONS['Eb'])} positions, expected 10"
     assert len(SCALE_POSITIONS["A"]) == 11, f"SCALE_POSITIONS['A'] has {len(SCALE_POSITIONS['A'])} positions, expected 11"
     assert len(SCALE_POSITIONS["Db"]) == 10, f"SCALE_POSITIONS['Db'] has {len(SCALE_POSITIONS['Db'])} positions, expected 10"
@@ -300,6 +300,15 @@ def test_eb_major_max_fret() -> None:
             )
 
 
+def test_f_sharp_major_max_fret() -> None:
+    """No note in any F# position may exceed fret 22 (22-fret board)."""
+    for i, pos in enumerate(SCALE_POSITIONS["F#"]):
+        for note in pos["notes"]:
+            assert note["fret"] <= 22, (
+                f"F# Position {i+1} note fret={note['fret']} exceeds 22"
+            )
+
+
 def test_caged_positions_have_instructor_phrases() -> None:
     """Each instructor phrase must be non-empty and mention a fret number."""
     for i, pos in enumerate(CAGED_POSITIONS):
@@ -418,13 +427,17 @@ def test_api_scale_positions_f_returns_12(client) -> None:
     assert all("F major" in p["instructor_phrase"] for p in data)
 
 
-def test_api_scale_positions_f_sharp_returns_11(client) -> None:
-    """GET /api/scale-positions?key=F%23 must return a list of exactly 11 F# major positions."""
+def test_api_scale_positions_f_sharp_returns_10(client) -> None:
+    """GET /api/scale-positions?key=F%23 must return a list of exactly 10 F# major positions.
+
+    Position 11 (Rock shape at the 21st fret) was removed because it runs off the
+    22-fret board (FR-20260627 demo bug fix).
+    """
     resp = client.get("/api/scale-positions?key=F%23")
     assert resp.status_code == 200
     data = resp.get_json()
     assert isinstance(data, list)
-    assert len(data) == 11
+    assert len(data) == 10
     assert all("F# major" in p["instructor_phrase"] for p in data)
 
 
@@ -620,6 +633,28 @@ def test_scale_log_get_returns_list(client, mem_conn) -> None:
     assert resp.status_code == 200
     data = resp.get_json()
     assert isinstance(data, list)
+
+
+# ---------------------------------------------------------------------------
+# HTML / JS defaults
+# ---------------------------------------------------------------------------
+
+def test_scale_defaults_are_160_bpm_and_2_reps(client) -> None:
+    """The Scales tab must default to 160 BPM and 2 reps."""
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.data.decode("utf-8")
+    assert 'id="scale-bpm"' in html
+    assert 'value="160"' in html
+    assert 'id="scale-reps"' in html
+    assert 'value="2"' in html
+
+
+def test_scale_js_has_four_beat_count_in() -> None:
+    """Scale playback must call the metronome count-in helper before MIDI notes."""
+    trainer_src = (PROJECT_ROOT / "src" / "training" / "musician_training_ui.py").read_text(encoding="utf-8")
+    assert "metroCountIn(4, _scaleBpm" in trainer_src
+    assert "Count-in 1/4" in trainer_src
 
 
 # ---------------------------------------------------------------------------
@@ -1062,3 +1097,132 @@ def test_fretboard_dot_radius_increased(html: str) -> None:
     """Non-active dot radius must be 9 (was 7)."""
     # The radius assignment for non-active dots
     assert ": 9;" in html or "? 10 : 9" in html
+
+
+# ---------------------------------------------------------------------------
+# FR-20260627-guitar-trainer-phrygian-mode
+# Phrygian mode: correct TTS (root of the Phrygian scale = 3rd degree of the
+# parent major), ♭2/♭3 characteristic coloring on fretboard + staff, violet
+# ♭2 (#8338ec), root+♭2+♭3 triangle audio accents, and a mode-aware legend.
+# ---------------------------------------------------------------------------
+
+# ── TTS / instructor phrase (Python buildModePhrase mirror) ────────────────
+
+def test_build_mode_phrase_phrygian_uses_phrygian_root_label() -> None:
+    """Phrygian phrase must name the Phrygian scale root, not the major phrase."""
+    pos = ui.SCALE_POSITIONS["C"][0]
+    phrase = ui.buildModePhrase(pos, "Phrygian")
+
+    assert phrase.startswith("Start on the root of the Phrygian scale")
+    assert "Phrygian scale" in phrase
+    assert phrase.endswith("shape.")
+
+
+def test_build_mode_phrase_phrygian_all_major_keys() -> None:
+    """Phrygian phrase must use the Phrygian root label for every supported key."""
+    keys = ["C", "G", "F", "D", "Bb", "B", "E", "F#", "Db", "A", "Ab", "Eb"]
+    for key in keys:
+        pos = ui.SCALE_POSITIONS[key][0]
+        phrase = ui.buildModePhrase(pos, "Phrygian", key)
+
+        assert phrase.startswith("Start on the root of the Phrygian scale"), f"{key}: {phrase}"
+        assert phrase.endswith("shape."), f"{key}: {phrase}"
+
+
+def test_build_mode_phrase_phrygian_names_third_degree_root() -> None:
+    """Phrygian starts on the 3rd degree of the parent major (C→E, G→B, F→A)."""
+    cases = {"C": "E", "G": "B", "F": "A"}
+    for key, expected_root in cases.items():
+        pos = ui.SCALE_POSITIONS[key][0]
+        phrase = ui.buildModePhrase(pos, "Phrygian", key)
+        assert f"Phrygian scale {expected_root}" in phrase, f"{key}: {phrase}"
+
+
+def test_scale_log_phrygian_insert(client, mem_conn) -> None:
+    """POST /api/scale-log must persist Phrygian sessions with the selected mode."""
+    resp = client.post(
+        "/api/scale-log",
+        data=json.dumps(
+            {"scale": "C_phrygian", "position": 3, "bpm": 80, "reps": 4, "key": "C", "mode": "Phrygian"}
+        ),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["ok"] is True
+
+    row = mem_conn.execute("SELECT * FROM scale_practice_log").fetchone()
+    assert row is not None
+    assert row["mode"] == "Phrygian"
+    assert row["scale"] == "C_phrygian"
+    assert row["key"] == "C"
+    assert row["position"] == 3
+
+
+# ── Fretboard coloring (JS) ────────────────────────────────────────────────
+
+def test_html_phrygian_flat2_violet_color(html: str) -> None:
+    """The ♭2 characteristic color (violet #8338ec) must be defined in the JS."""
+    assert "#8338ec" in html
+
+
+def test_html_phrygian_minor_second_dot_type(html: str) -> None:
+    """A 'minor_second' interval/dot type must exist for the Phrygian ♭2."""
+    assert "minor_second" in html
+
+
+def test_html_phrygian_fretboard_branch(html: str) -> None:
+    """getDotTypeForMode must special-case Phrygian and color the ♭2 (minor_second)."""
+    fn_start = html.index("function getDotTypeForMode")
+    fn_body = html[fn_start:fn_start + 900]
+    assert "Phrygian" in fn_body, "getDotTypeForMode must handle Phrygian"
+    assert "minor_second" in fn_body, "Phrygian branch must color the ♭2 as minor_second"
+
+
+# ── Staff coloring (JS) ────────────────────────────────────────────────────
+
+def test_html_phrygian_staff_color_defined(html: str) -> None:
+    """STAFF_COLORS must define the minor_second (♭2) color for the staff."""
+    assert "STAFF_COLORS" in html
+    sc_idx = html.index("STAFF_COLORS")
+    sc_block = html[sc_idx:sc_idx + 260]
+    assert "minor_second" in sc_block, "STAFF_COLORS must define minor_second"
+
+
+def test_html_phrygian_staff_branch(html: str) -> None:
+    """drawSingleStaff colorKey logic must special-case Phrygian."""
+    ds_start = html.index("function drawSingleStaff")
+    ds_body = html[ds_start:ds_start + 5000]
+    assert "Phrygian" in ds_body, "drawSingleStaff must color Phrygian degrees"
+
+
+# ── TTS phrasing + routing (JS) ────────────────────────────────────────────
+
+def test_html_js_phrygian_root_label(html: str) -> None:
+    """JS buildModePhrase must produce the 'root of the Phrygian scale' label."""
+    assert "root of the Phrygian scale" in html
+
+
+def test_html_phrygian_phrase_override(html: str) -> None:
+    """onPositionChange must route Phrygian through buildModePhrase (not the major phrase)."""
+    fn_start = html.index("window.onPositionChange")
+    fn_body = html[fn_start:fn_start + 800]
+    assert "Phrygian" in fn_body, "onPositionChange must override the phrase for Phrygian"
+
+
+# ── Audio accents (JS) ─────────────────────────────────────────────────────
+
+def test_html_phrygian_audio_accent(html: str) -> None:
+    """Accent function must be generalized and accent Phrygian's characteristic notes."""
+    assert "getModeAccentType" in html, "accent fn must be generalized to getModeAccentType"
+    fn_start = html.index("function getModeAccentType")
+    fn_body = html[fn_start:fn_start + 900]
+    assert "Phrygian" in fn_body, "getModeAccentType must accent Phrygian notes"
+    assert "minor_second" in fn_body, "Phrygian accents must include the ♭2 (minor_second)"
+
+
+# ── Mode-aware legend (JS) ─────────────────────────────────────────────────
+
+def test_html_mode_aware_legend(html: str) -> None:
+    """The color legend must be mode-aware (addressable container + updater fn)."""
+    assert 'id="scale-legend"' in html, "legend container must be addressable"
+    assert "updateLegend" in html, "a mode-aware updateLegend function must exist"
