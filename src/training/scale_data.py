@@ -107,9 +107,13 @@ _TEMPLATES: dict[str, tuple[int, list[list[int]]]] = {
         [2,  0], [2,  2],
         [1, -1], [1,  0], [1,  2],
     ]),
-    # Open D-string anchor; string 6 omitted (muted — no D below open D string).
+    # Open D-string anchor. The low E string (string 6) carries the same notes
+    # as the high e string an octave down (E, F#, G at root_fret deltas 0/2/3);
+    # included so modal tonics that fall on the low E string (e.g. the Lydian
+    # 4th degree — G in D major, A♭ in E♭ major) start from the lowest root.
     # Notes are the standard D_shape pattern shifted -2 frets to land at open position.
     "D_shape_open": (4, [
+        [6,  0], [6,  2], [6,  3],   # low E: E (2nd/octave), F# (3rd), G (4th)
         [5,  0], [5,  2], [5,  4],   # A:  open A(5th),  B(6th),  C#(7th)
         [4,  0], [4,  2], [4,  4],   # D:  open D(root), E(2nd),  F#(3rd)
         [3,  0], [3,  2], [3,  4],   # G:  open G(4th),  A(5th),  B(6th)

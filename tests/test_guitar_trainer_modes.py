@@ -132,3 +132,61 @@ def test_build_phrase_dorian_unchanged() -> None:
     pos = SCALE_POSITIONS["C"][0]
     phrase = build_mode_phrase(pos, "Dorian", key="C", include_callout=False)
     assert "root of the Dorian scale" in phrase
+
+
+# ---------------------------------------------------------------------------
+# Lydian tonic lands on the low E string in the open D-shape (FR follow-up).
+# The D-shape open position originally muted string 6 (no D below the open D
+# string), but the Lydian tonic is the 4th degree and sits on the low E string
+# within the position — the scale should start from that lowest root.
+# ---------------------------------------------------------------------------
+
+def test_d_lydian_position1_includes_low_e_root() -> None:
+    """D major Lydian (tonic G) position 1 must include G on the low E string, fret 3."""
+    pos = SCALE_POSITIONS["D"][0]
+    low_e = [n for n in pos["notes"] if n["string"] == 6]
+    assert low_e, "D position 1 must include low E string notes"
+    # G2 = midi 43 on the low E string is fret 3.
+    assert any(n["fret"] == 3 and n["midi"] == 43 for n in low_e), (
+        f"expected G (midi 43) on low E fret 3, got {sorted(n['fret'] for n in low_e)}"
+    )
+
+
+def test_eb_lydian_position1_includes_low_e_root() -> None:
+    """Eb major Lydian (tonic Ab) position 1 must include Ab on the low E string, fret 4."""
+    pos = SCALE_POSITIONS["Eb"][0]
+    low_e = [n for n in pos["notes"] if n["string"] == 6]
+    assert low_e, "Eb position 1 must include low E string notes"
+    # Ab2 = midi 44 on the low E string is fret 4.
+    assert any(n["fret"] == 4 and n["midi"] == 44 for n in low_e), (
+        f"expected Ab (midi 44) on low E fret 4, got {sorted(n['fret'] for n in low_e)}"
+    )
+
+
+def test_d_lydian_phrase_starts_on_low_e_fret_3() -> None:
+    """The spoken Lydian phrase for D must start on the low E string at fret 3."""
+    pos = SCALE_POSITIONS["D"][0]
+    phrase = build_mode_phrase(pos, "Lydian", key="D", include_callout=False)
+    assert "root of the Lydian scale" in phrase
+    assert "low E string at fret 3" in phrase, phrase
+
+
+def test_eb_lydian_phrase_starts_on_low_e_fret_4() -> None:
+    """The spoken Lydian phrase for Eb must start on the low E string at fret 4."""
+    pos = SCALE_POSITIONS["Eb"][0]
+    phrase = build_mode_phrase(pos, "Lydian", key="Eb", include_callout=False)
+    assert "root of the Lydian scale" in phrase
+    assert "low E string at fret 4" in phrase, phrase
+
+
+def test_d_eb_position1_low_e_notes_stay_in_scale() -> None:
+    """Added low E notes must remain within the parent major scale."""
+    d_pcs = {2, 4, 6, 7, 9, 11, 1}    # D major
+    eb_pcs = {3, 5, 7, 8, 10, 0, 2}   # Eb major
+    for n in SCALE_POSITIONS["D"][0]["notes"]:
+        if n["string"] == 6:
+            assert n["midi"] % 12 in d_pcs
+    for n in SCALE_POSITIONS["Eb"][0]["notes"]:
+        if n["string"] == 6:
+            assert n["midi"] % 12 in eb_pcs
+
