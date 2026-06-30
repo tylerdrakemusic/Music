@@ -22,6 +22,13 @@ from utils.init_db import get_connection  # noqa: E402
 from training.practice_stats import get_practice_stats  # noqa: E402
 from training.scale_data import SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence  # noqa: E402
 from training.scale_tts import get_instructor_audio  # noqa: E402
+from training.mode_spec import (  # noqa: E402
+    MODE_SPEC,
+    DEGREE_COLORS,
+    DEGREE_TEXT,
+    DEGREE_STROKE,
+    build_mode_phrase as buildModePhrase,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Keep TRAINING_DIR for the ephemeral _run_*.json temp files used by focused_musician_training.py
@@ -127,85 +134,6 @@ def _append_log(
     )
     conn.commit()
     conn.close()
-
-
-def buildModePhrase(pos: dict, mode: str, key: str = "C") -> str:
-    """Build the instructor phrase for mode-based Dorian/Phrygian/Aeolian training."""
-    shape_name = pos.get("label", "")
-    shape_name = re.sub(r"^Position \d+ — ", "", shape_name)
-    shape_name = re.sub(r"\s*\([^)]*\)$", "", shape_name)
-    shape_name = re.sub(r"\s*shape\s*$", "", shape_name, flags=re.IGNORECASE).strip()
-    shape_name = re.sub(r"([A-G])#", r"\1 sharp", shape_name)
-    shape_name = re.sub(r"([A-G])b", r"\1 flat", shape_name)
-
-    key_pc_map = {
-        "C": 0,
-        "Db": 1,
-        "C#": 1,
-        "D": 2,
-        "Eb": 3,
-        "D#": 3,
-        "E": 4,
-        "F": 5,
-        "F#": 6,
-        "Gb": 6,
-        "G": 7,
-        "Ab": 8,
-        "G#": 8,
-        "A": 9,
-        "Bb": 10,
-        "A#": 10,
-        "B": 11,
-    }
-    mode_root_offsets = {
-        "Ionian": 0,
-        "Dorian": 2,
-        "Phrygian": 4,
-        "Lydian": 5,
-        "Mixolydian": 7,
-        "Aeolian": 9,
-        "Locrian": 11,
-    }
-    root_pc = (key_pc_map.get(key, 0) + mode_root_offsets.get(mode, 0)) % 12
-    note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-    flat_note_names = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
-    raw_tonic_name = flat_note_names[root_pc] if key in {"F", "Bb", "Eb", "Ab", "Db", "Gb"} else note_names[root_pc]
-    tonic_name = re.sub(r"^([A-G])#$", r"\1 sharp", raw_tonic_name)
-    tonic_name = re.sub(r"^([A-G])b$", r"\1 flat", tonic_name)
-
-    tonic = None
-    notes = pos.get("notes", [])
-    for note in notes:
-        if note.get("midi", -1) % 12 == root_pc:
-            if tonic is None or note.get("midi", 0) < tonic.get("midi", 0):
-                tonic = note
-
-    tonic_location = ""
-    if tonic is not None:
-        string_names = {1: "high e", 2: "B", 3: "G", 4: "D", 5: "A", 6: "low E"}
-        string_name = string_names.get(tonic.get("string", 0), "unknown")
-        if tonic.get("fret", 0) == 0:
-            tonic_location = f"on the open {string_name} string"
-        else:
-            tonic_location = f"on the {string_name} string at fret {tonic.get('fret', 0)}"
-
-    root_label = (
-        "tonic root"
-        if mode == "Ionian"
-        else "root of the Dorian scale"
-        if mode == "Dorian"
-        else "root of the Phrygian scale"
-        if mode == "Phrygian"
-        else "root of the Aeolian scale"
-        if mode == "Aeolian"
-        else "root"
-    )
-    phrase = f"Start on the {root_label} {tonic_name}"
-    if tonic_location:
-        phrase += f", {tonic_location}"
-    if shape_name:
-        phrase += f" and go up and down the {shape_name} shape."
-    return phrase.strip()
 
 
 # ---------------------------------------------------------------------------
@@ -908,6 +836,7 @@ async function createSession() {
   let _scaleStopFlag = false;
   let _currentKey = 'C';
   let _currentMode = 'Ionian';
+  let _calloutPending = false;  // when true, next phrase appends the mode's characteristic-note callout (set on mode switch only)
   const _scaleTapTimes = [];
   const MAX_TAP_GAP_MS = 3000;
 
@@ -944,6 +873,7 @@ async function createSession() {
 
   window.onModeChange = function() {
     _currentMode = document.getElementById('scale-mode').value || 'Ionian';
+    _calloutPending = true;  // surface the characteristic-note callout once, on this switch
     if (_positions.length) {
       const sel = document.getElementById('scale-position');
       sel.innerHTML = _positions.map((p, i) =>
@@ -968,7 +898,7 @@ async function createSession() {
     return tonicNotes.reduce((best, note) => note.midi < best.midi ? note : best, tonicNotes[0]);
   }
 
-  function buildModePhrase(pos, mode) {
+  function buildModePhrase(pos, mode, includeCallout) {
     const shapeName = pos.label.replace(/^Position \d+ — /, '').replace(/\s*\([^)]*\)$/, '')
       .replace(/\s*shape\s*$/i, '')
       .trim()
@@ -989,21 +919,17 @@ async function createSession() {
         tonicLocation = `on the ${stringName} string at fret ${tonic.fret}`;
       }
     }
-    const rootLabel = mode === 'Ionian'
-      ? 'tonic root'
-      : mode === 'Dorian'
-        ? 'root of the Dorian scale'
-        : mode === 'Phrygian'
-          ? 'root of the Phrygian scale'
-          : mode === 'Aeolian'
-            ? 'root of the Aeolian scale'
-            : 'root';
+    const spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
+    const rootLabel = mode === 'Ionian' ? 'tonic root' : `root of the ${spec.tts_label} scale`;
     let phrase = `Start on the ${rootLabel} ${tonicName}`;
     if (tonicLocation) {
       phrase += `, ${tonicLocation}`;
     }
     if (shapeName) {
       phrase += ` and go up and down the ${shapeName} shape.`;
+    }
+    if (includeCallout && spec.characteristic) {
+      phrase += ` — ${spec.characteristic.callout}.`;
     }
     return phrase.trim();
   }
@@ -1013,9 +939,12 @@ async function createSession() {
     const pos = _positions[_currentPos];
     if (!pos) return;
     let phrase = pos.instructor_phrase;
-    if (_currentMode === 'Aeolian' || _currentMode === 'Dorian' || _currentMode === 'Phrygian') {
-      phrase = buildModePhrase(pos, _currentMode);
+    const spec = MODE_SPEC[_currentMode];
+    // Modes with a dedicated colored degree set get a mode-aware spoken phrase.
+    if (spec && (Object.keys(spec.degrees).length > 3 || spec.characteristic)) {
+      phrase = buildModePhrase(pos, _currentMode, _calloutPending);
     }
+    _calloutPending = false;
     updateLegend();
     // Load instructor audio — include phrase as cache-buster so URL changes when phrase changes
     const audio = document.getElementById('instructor-audio');
@@ -1029,15 +958,14 @@ async function createSession() {
 
   // ── SVG fretboard renderer ───────────────────────────────────────────────
   const KEY_PC = {C:0, Db:1, D:2, E:4, F:5, 'F#':6, G:7, A:9, B:11, Bb:10, 'A#':10, Eb:3, 'D#':3, Ab:8};
-  const MODE_ROOT_OFFSETS = {
-    Ionian: 0,
-    Dorian: 2,
-    Phrygian: 4,
-    Lydian: 5,
-    Mixolydian: 7,
-    Aeolian: 9,
-    Locrian: 11,
-  };
+  // Single source of truth — injected from training/mode_spec.py (FR-20260629).
+  const MODE_SPEC = {{ mode_spec | tojson }};
+  const DEGREE_COLORS = {{ degree_colors | tojson }};
+  const DEGREE_TEXT   = {{ degree_text | tojson }};
+  const DEGREE_STROKE = {{ degree_stroke | tojson }};
+  const MODE_ROOT_OFFSETS = Object.fromEntries(
+    Object.entries(MODE_SPEC).map(([m, s]) => [m, s.root_offset])
+  );
 
   const PC_NAMES      = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const PC_NAMES_FLAT = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
@@ -1070,81 +998,28 @@ async function createSession() {
   }
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
-  // Interval color map: root=hot-pink, major 3rd=red-orange, perfect 5th=hot-teal, other=grey
-  const DOT_FILL  = {
-    root: '#ff0080',
-    minor_second: '#8338ec',
-    third: '#fb5607',
-    fifth: '#00e5cc',
-    minor_third: '#fb5607',
-    major_sixth: '#ffd166',
-    leading: '#00b4d8',
-    other: '#555555',
-  };
-  const DOT_TEXT  = {
-    root: '#ffffff',
-    minor_second: '#ffffff',
-    third: '#ffffff',
-    fifth: '#000000',
-    minor_third: '#ffffff',
-    major_sixth: '#000000',
-    leading: '#ffffff',
-    other: '#ffffff',
-  };
-  const DOT_STROKE = {
-    root: '#000000',
-    minor_second: '#000000',
-    third: '#000000',
-    fifth: '#000000',
-    minor_third: '#000000',
-    major_sixth: '#000000',
-    leading: '#000000',
-    other: '#333333',
-  };
+  // Degree colors are driven by mode_spec.py (DEGREE_COLORS/TEXT/STROKE) so the
+  // fretboard, staff, and legend all render from one palette.
+  const DOT_FILL   = DEGREE_COLORS;
+  const DOT_TEXT   = DEGREE_TEXT;
+  const DOT_STROKE = DEGREE_STROKE;
   const PLAYING_COLOR = '#ffe066';
-
-  // Mode-aware legend — which colored degrees to surface for the current mode.
-  const LEGEND_BY_MODE = {
-    Dorian:   [['#ff0080', 'Root'], ['#fb5607', '♭3'], ['#00e5cc', '5th'], ['#ffd166', '6th']],
-    Phrygian: [['#ff0080', 'Root'], ['#8338ec', '♭2'], ['#fb5607', '♭3'], ['#00e5cc', '5th']],
-    Aeolian:  [['#ff0080', 'Root'], ['#fb5607', '♭3'], ['#00e5cc', '5th'], ['#00b4d8', '♭7']],
-  };
-  const LEGEND_DEFAULT = [['#ff0080', 'Root'], ['#fb5607', '3rd'], ['#00e5cc', '5th']];
 
   function updateLegend() {
     const el = document.getElementById('scale-legend');
     if (!el) return;
-    const items = LEGEND_BY_MODE[_currentMode] || LEGEND_DEFAULT;
+    const spec = MODE_SPEC[_currentMode] || MODE_SPEC['Ionian'];
+    const intervals = Object.keys(spec.degrees).map(Number).sort((a, b) => a - b);
+    const items = intervals.map(i => [DEGREE_COLORS[spec.degrees[i].type], spec.degrees[i].label]);
     el.innerHTML = items.map(([color, label]) =>
       `<span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}"/></svg>${label}</span>`
     ).join('');
   }
 
   function getDotTypeForMode(interval, key, mode) {
-    if (mode === 'Dorian') {
-      if (interval === 0) return 'root';
-      if (interval === 3) return 'minor_third';
-      if (interval === 7) return 'fifth';
-      if (interval === 9) return 'major_sixth';
-      return 'other';
-    }
-    if (mode === 'Phrygian') {
-      if (interval === 0) return 'root';
-      if (interval === 1) return 'minor_second';
-      if (interval === 3) return 'minor_third';
-      if (interval === 7) return 'fifth';
-      return 'other';
-    }
-    if (mode === 'Aeolian') {
-      const aeolianRootPc = findModeRootPitchClass(key, mode);
-      const aeolianInterval = (interval + 12) % 12;
-      if (aeolianInterval === 0) return 'root';
-      if (aeolianInterval === 3) return 'minor_third';
-      if (aeolianInterval === 7) return 'fifth';
-      if (aeolianInterval === 10) return 'leading';
-      return 'other';
-    }
-    return interval === 0 ? 'root' : interval === 4 ? 'third' : interval === 7 ? 'fifth' : 'other';
+    const spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
+    const deg = spec.degrees[((interval % 12) + 12) % 12];
+    return deg ? deg.type : 'other';
   }
 
   window.drawFretboard = function(notes, activeIdx) {
@@ -1209,17 +1084,11 @@ async function createSession() {
 
   // ── Staff notation renderer (FR-20260530-guitar-trainer-staff-notation) ──
   const MAJOR_INTERVALS = [0, 2, 4, 5, 7, 9, 11, 12];
-  const MODE_SCALE_INTERVALS = {
-    Ionian:     [0, 2, 4, 5, 7, 9, 11, 12],
-    Dorian:     [0, 2, 3, 5, 7, 9, 10, 12],
-    Phrygian:   [0, 1, 3, 5, 7, 8, 10, 12],
-    Lydian:     [0, 2, 4, 6, 7, 9, 11, 12],
-    Mixolydian: [0, 2, 4, 5, 7, 9, 10, 12],
-    Aeolian:    [0, 2, 3, 5, 7, 8, 10, 12],
-    Locrian:    [0, 1, 3, 5, 6, 8, 10, 12],
-  };
-  const STAFF_COLORS = { root: '#ff0080', minor_second: '#8338ec', third: '#fb5607', minor_third: '#fb5607', fifth: '#00e5cc', major_sixth: '#ffd166', other: '#555555' };
-  const STAFF_TEXT   = { root: '#fff',    minor_second: '#fff',    third: '#fff',    minor_third: '#fff',    fifth: '#000',    major_sixth: '#000',    other: '#fff'    };
+  const MODE_SCALE_INTERVALS = Object.fromEntries(
+    Object.entries(MODE_SPEC).map(([m, s]) => [m, s.intervals])
+  );
+  const STAFF_COLORS = DEGREE_COLORS;
+  const STAFF_TEXT   = DEGREE_TEXT;
   // Key signature accidental counts (positive = sharps, negative = flats)
   const KEY_SIGS = { C: 0, Db: -5, D: 2, Eb: -3, E: 4, F: -1, 'F#': 6, G: 1, Ab: -4, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
   const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
@@ -1304,27 +1173,8 @@ async function createSession() {
       const noteY    = baseY - idx * 5;
       const noteX    = noteXStart + idx * noteXSpacing;
       const degInterval = (pc - modeRootPc + 12) % 12;
-      const colorKey = mode === 'Dorian'
-        ? degInterval === 0 ? 'root'
-          : degInterval === 3 ? 'minor_third'
-          : degInterval === 7 ? 'fifth'
-          : degInterval === 9 ? 'major_sixth'
-          : 'other'
-        : mode === 'Phrygian'
-          ? degInterval === 0 ? 'root'
-            : degInterval === 1 ? 'minor_second'
-            : degInterval === 3 ? 'minor_third'
-            : degInterval === 7 ? 'fifth'
-            : 'other'
-          : mode === 'Aeolian'
-            ? degInterval === 0 ? 'root'
-              : degInterval === 3 ? 'minor_third'
-              : degInterval === 7 ? 'fifth'
-              : 'other'
-            : degInterval === 0 ? 'root'
-              : degInterval === 4 ? 'third'
-              : degInterval === 7 ? 'fifth'
-              : 'other';
+      const _spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
+      const colorKey = (_spec.degrees[degInterval] && _spec.degrees[degInterval].type) || 'other';
       const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
       const noteFill  = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
       const textFill  = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
@@ -1348,21 +1198,12 @@ async function createSession() {
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
   function getModeAccentType(midi) {
+    const spec = MODE_SPEC[_currentMode] || MODE_SPEC['Ionian'];
     const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
     const interval = (midi % 12 - rootPc + 12) % 12;
-    if (_currentMode === 'Dorian') {
-      if (interval === 0) return 'root';
-      if (interval === 3) return 'minor_third';
-      if (interval === 9) return 'major_sixth';
-      return 'normal';
-    }
-    if (_currentMode === 'Phrygian') {
-      if (interval === 0) return 'root';
-      if (interval === 1) return 'minor_second';
-      if (interval === 3) return 'minor_third';
-      return 'normal';
-    }
-    return 'normal';
+    if (!spec.accents.includes(interval)) return 'normal';
+    const deg = spec.degrees[interval];
+    return (deg && deg.type) || 'normal';
   }
 
   async function playNote(midi, durationMs, accentType = 'normal') {
@@ -1372,7 +1213,7 @@ async function createSession() {
     if (!freq) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = accentType === 'root' || accentType === 'minor_second' || accentType === 'minor_third' || accentType === 'major_sixth'
+    osc.type = accentType === 'root' || accentType === 'minor_second' || accentType === 'minor_third' || accentType === 'major_sixth' || accentType === 'sharp_fourth'
       ? 'triangle'
       : 'sine';
     osc.frequency.value = freq;
@@ -1564,7 +1405,17 @@ def index():
     sessions = _list_sessions()
     log = _load_log()
     stats = get_practice_stats()
-    return render_template_string(HTML, sessions=sessions, log=log, freq_table=MIDI_TO_FREQ, stats=stats)
+    return render_template_string(
+        HTML,
+        sessions=sessions,
+        log=log,
+        freq_table=MIDI_TO_FREQ,
+        stats=stats,
+        mode_spec=MODE_SPEC,
+        degree_colors=DEGREE_COLORS,
+        degree_text=DEGREE_TEXT,
+        degree_stroke=DEGREE_STROKE,
+    )
 
 
 @app.route("/health")
