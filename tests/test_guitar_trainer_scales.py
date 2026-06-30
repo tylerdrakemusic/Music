@@ -1171,53 +1171,67 @@ def test_html_phrygian_minor_second_dot_type(html: str) -> None:
 
 
 def test_html_phrygian_fretboard_branch(html: str) -> None:
-    """getDotTypeForMode must special-case Phrygian and color the ♭2 (minor_second)."""
+    """getDotTypeForMode must derive the dot type from the injected MODE_SPEC,
+    and MODE_SPEC must color the Phrygian ♭2 as minor_second."""
     fn_start = html.index("function getDotTypeForMode")
     fn_body = html[fn_start:fn_start + 900]
-    assert "Phrygian" in fn_body, "getDotTypeForMode must handle Phrygian"
-    assert "minor_second" in fn_body, "Phrygian branch must color the ♭2 as minor_second"
+    assert "MODE_SPEC" in fn_body, "getDotTypeForMode must read from MODE_SPEC"
+    assert "degrees" in fn_body, "getDotTypeForMode must look up spec.degrees"
+    # MODE_SPEC is injected as JSON; the Phrygian ♭2 -> minor_second mapping must be present.
+    assert '"Phrygian"' in html, "MODE_SPEC must include Phrygian"
+    assert "minor_second" in html, "MODE_SPEC must map the Phrygian ♭2 to minor_second"
 
 
 # ── Staff coloring (JS) ────────────────────────────────────────────────────
 
 def test_html_phrygian_staff_color_defined(html: str) -> None:
-    """STAFF_COLORS must define the minor_second (♭2) color for the staff."""
+    """Staff colors must come from the shared DEGREE_COLORS table, which defines
+    the minor_second (♭2) color."""
     assert "STAFF_COLORS" in html
-    sc_idx = html.index("STAFF_COLORS")
-    sc_block = html[sc_idx:sc_idx + 260]
-    assert "minor_second" in sc_block, "STAFF_COLORS must define minor_second"
+    # STAFF_COLORS now aliases the injected DEGREE_COLORS single source of truth.
+    assert "DEGREE_COLORS" in html, "STAFF_COLORS must alias DEGREE_COLORS"
+    assert "minor_second" in html, "DEGREE_COLORS must define minor_second"
 
 
 def test_html_phrygian_staff_branch(html: str) -> None:
-    """drawSingleStaff colorKey logic must special-case Phrygian."""
+    """drawSingleStaff colorKey logic must derive degree color from MODE_SPEC."""
     ds_start = html.index("function drawSingleStaff")
     ds_body = html[ds_start:ds_start + 5000]
-    assert "Phrygian" in ds_body, "drawSingleStaff must color Phrygian degrees"
+    assert "MODE_SPEC" in ds_body, "drawSingleStaff must color degrees from MODE_SPEC"
+    assert "degrees" in ds_body, "drawSingleStaff must look up spec.degrees"
 
 
 # ── TTS phrasing + routing (JS) ────────────────────────────────────────────
 
 def test_html_js_phrygian_root_label(html: str) -> None:
-    """JS buildModePhrase must produce the 'root of the Phrygian scale' label."""
-    assert "root of the Phrygian scale" in html
+    """JS buildModePhrase must build the root label from the mode's tts_label,
+    and MODE_SPEC must carry the Phrygian tts_label."""
+    assert "root of the " in html, "buildModePhrase must build a 'root of the ... scale' label"
+    assert "tts_label" in html, "buildModePhrase must use spec.tts_label"
+    assert '"tts_label": "Phrygian"' in html or '"tts_label":"Phrygian"' in html, \
+        "MODE_SPEC must carry the Phrygian tts_label"
 
 
 def test_html_phrygian_phrase_override(html: str) -> None:
-    """onPositionChange must route Phrygian through buildModePhrase (not the major phrase)."""
+    """onPositionChange must route colored-degree modes through buildModePhrase
+    via the injected MODE_SPEC (not the plain major phrase)."""
     fn_start = html.index("window.onPositionChange")
     fn_body = html[fn_start:fn_start + 800]
-    assert "Phrygian" in fn_body, "onPositionChange must override the phrase for Phrygian"
+    assert "buildModePhrase" in fn_body, "onPositionChange must call buildModePhrase"
+    assert "MODE_SPEC" in fn_body, "onPositionChange must consult MODE_SPEC to decide"
 
 
 # ── Audio accents (JS) ─────────────────────────────────────────────────────
 
 def test_html_phrygian_audio_accent(html: str) -> None:
-    """Accent function must be generalized and accent Phrygian's characteristic notes."""
+    """Accent function must be generalized and derive accents from MODE_SPEC,
+    which includes the Phrygian ♭2 (minor_second)."""
     assert "getModeAccentType" in html, "accent fn must be generalized to getModeAccentType"
     fn_start = html.index("function getModeAccentType")
     fn_body = html[fn_start:fn_start + 900]
-    assert "Phrygian" in fn_body, "getModeAccentType must accent Phrygian notes"
-    assert "minor_second" in fn_body, "Phrygian accents must include the ♭2 (minor_second)"
+    assert "MODE_SPEC" in fn_body, "getModeAccentType must read accents from MODE_SPEC"
+    assert "accents" in fn_body, "getModeAccentType must check spec.accents"
+    assert "minor_second" in html, "MODE_SPEC must include the Phrygian ♭2 (minor_second)"
 
 
 # ── Mode-aware legend (JS) ─────────────────────────────────────────────────
