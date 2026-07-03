@@ -1,0 +1,241 @@
+{
+  "title": "99 Red Balloons",
+  "artist": "Nena",
+  "key": "E",
+  "bpm": "?",
+  "notes": "By West German band Nena, 1983, originally '99 Luftballons'. English version protest song about Cold War nukes.",
+  "sections": [
+    {
+      "name": "Intro",
+      "annotation": "Hold synth on low E",
+      "lines": []
+    },
+    {
+      "name": "Verse 1",
+      "annotation": "church-like synth chords plus vocal",
+      "lines": [
+        {
+          "chords": "E F#m",
+          "lyrics": "You and I in a little toy shop"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "Buy a bag of balloons with the money we got"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "Set them free at the break of dawn"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "Till one by one, they were gone"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "Back at base, bugs in the software"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "Flash the message: Something's out there..."
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "Floating in the summer sky"
+        },
+        {
+          "chords": "A B E F#m A B",
+          "lyrics": "99 Red Balloons go by..."
+        }
+      ]
+    },
+    {
+      "name": "Interlude 1",
+      "annotation": "16 bars Main theme: Drums, synth, bass",
+      "lines": []
+    },
+    {
+      "name": "Verse 2",
+      "annotation": "Full band",
+      "lines": [
+        {
+          "chords": "E F#m",
+          "lyrics": "99 Red Balloons"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "Floating in the summer sky"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "Panic bells, it's red alert"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "There's something here from somewhere else"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "The war machine springs to life"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "Opens up one eager eye"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "Focusing it on the sky"
+        },
+        {
+          "chords": "A B E (hold)",
+          "lyrics": "Where 99 Red Balloons go by..."
+        }
+      ]
+    },
+    {
+      "name": "Interlude 2",
+      "annotation": "8 bars with synth on melody",
+      "lines": []
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        {
+          "chords": "E F#m",
+          "lyrics": "99 Decision trees"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "99 ministers meet"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "To worry, worry; super scurry"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "Call the troops out in a hurry"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "This is what we've waited for"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "This is it, boys, this is war"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "The president is on the line"
+        },
+        {
+          "chords": "A B E F#m A B",
+          "lyrics": "As 99 Red Balloons go by..."
+        }
+      ]
+    },
+    {
+      "name": "Interlude 3",
+      "annotation": "12 bars like Interlude 1",
+      "lines": []
+    },
+    {
+      "name": "Verse 4",
+      "lines": [
+        {
+          "chords": "E F#m",
+          "lyrics": "99 knights of the air"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "Ride super high-tech jet fighters"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "Everyone's a super hero"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "Everyone's a Captain Kirk"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "With orders to identify"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "To clarify and classify"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "Scramble in the summer sky"
+        },
+        {
+          "chords": "A B E F#m",
+          "lyrics": "As 99 Red Balloons go by..."
+        }
+      ]
+    },
+    {
+      "name": "Interlude 4",
+      "annotation": "synth repeats melody",
+      "lines": [
+        {
+          "chords": "A B E F#m A B"
+        },
+        {
+          "chords": "A B E F#m A B",
+          "lyrics": "As 99 Red Balloons go by..."
+        },
+        {
+          "chords": "A B E F#m A B"
+        },
+        {
+          "chords": "A B E F#m A B (stop)"
+        }
+      ]
+    },
+    {
+      "name": "Verse 5",
+      "annotation": "church-like synth chords plus vocal",
+      "lines": [
+        {
+          "chords": "E F#m",
+          "lyrics": "99 dreams I have had"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "In every one a red balloon"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "It's all over and I'm standing pretty"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "In the dust that was a city"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "If I could find a souveneir"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "Just to prove the world was here"
+        },
+        {
+          "chords": "E F#m",
+          "lyrics": "And here is a red balloon"
+        },
+        {
+          "chords": "A B",
+          "lyrics": "I think of you and let it go..."
+        }
+      ]
+    },
+    {
+      "name": "Outro",
+      "annotation": "synth slides up high, end",
+      "lines": []
+    }
+  ]
+}

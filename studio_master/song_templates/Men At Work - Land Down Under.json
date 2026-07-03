@@ -1,0 +1,213 @@
+{
+  "title": "Land Down Under",
+  "artist": "Men At Work",
+  "key": "Bm",
+  "bpm": "?",
+  "notes": "Recorded by Australian rock band Men at Work, released 1980. Written by Colin Hay and Ron Strykert.",
+  "sections": [
+    {
+      "name": "Intro",
+      "annotation": "marimba lick, then flute",
+      "lines": [
+        {
+          "chords": "| Bm | A | Bm | G A | (x2)"
+        }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "Travelling in a fried-out Kombi"
+        },
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "On a hippy trail, head full of zombie"
+        },
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "I met a strange lady, she made me nervous"
+        },
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "She took me in and gave me breakfast, and she said"
+        }
+      ]
+    },
+    {
+      "name": "Chorus 1",
+      "lines": [
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Do you come from a land down under"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Where women glow, and men plunder?"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Can't you hear, can't you hear the thunder?"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "You better run, you better take cover"
+        }
+      ]
+    },
+    {
+      "name": "Interlude 1",
+      "annotation": "flute",
+      "lines": [
+        {
+          "chords": "| Bm | A | Bm | G A | (x2)"
+        }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "Buying bread from a man in Brussels, he was"
+        },
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "Six foot four and full of muscles"
+        },
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "I said: do you speak-a my language?"
+        },
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "He just smiled and gave me a Vegemite sandwich, and he said"
+        }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "lines": [
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "I come from a land down under"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Where beer does flow and men chunder"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Can't you hear, can't you hear the thunder?"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "You better run, you better take cover yee-ah"
+        }
+      ]
+    },
+    {
+      "name": "Interlude 2",
+      "annotation": "flute improv",
+      "lines": [
+        {
+          "chords": "| Bm | A | Bm | G A | (x4)"
+        },
+        {
+          "chords": "| D | A | Bm | G A | (x2) (like intro)"
+        }
+      ]
+    },
+    {
+      "name": "Verse 3",
+      "lines": [
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "Lying in a den in Bombay"
+        },
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "With a slack jaw and not much to say"
+        },
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "I said to the man: are you trying to tempt me?"
+        },
+        {
+          "chords": "Bm A Bm G A",
+          "lyrics": "Because I come from the land of plenty, and he said"
+        }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "lines": [
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Do you come from a land down under yee-yah"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Where women glow, and men plunder?"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Can't you hear, can't you hear the thunder? yee-ah"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "You better run, you better take cover We are"
+        }
+      ]
+    },
+    {
+      "name": "Chorus 4",
+      "lines": [
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Living in a land down under"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Where women glow, and men plunder?"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Can't you hear, can't you hear the thunder?"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "You better run, you better take cover"
+        }
+      ]
+    },
+    {
+      "name": "Chorus 5",
+      "annotation": "outro",
+      "lines": [
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Living in a land down under"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Where women glow, and men plunder"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "Can't you hear, can't you hear the thunder? Ooh yeah"
+        },
+        {
+          "chords": "D A Bm G A",
+          "lyrics": "You better run, you better take cover We are"
+        }
+      ]
+    },
+    {
+      "name": "Outro",
+      "annotation": "repeat and fade",
+      "lines": []
+    }
+  ]
+}
