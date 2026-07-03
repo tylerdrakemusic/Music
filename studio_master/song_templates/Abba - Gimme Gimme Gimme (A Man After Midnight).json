@@ -1,0 +1,79 @@
+{
+  "title": "Gimme Gimme Gimme (A Man After Midnight)",
+  "artist": "Abba",
+  "key": "Dm",
+  "bpm": "?",
+  "notes": "A disco song released in 1979. Agnetha Faltskog sang the lead vocals. Written by Benny Andersson and Bjorn Ulvaeus, inspired by Donna Summer's hit Hot Stuff.",
+  "sections": [
+    { "name": "Intro", "annotation": "sounds like guitar, synth strings on 2nd time, tacit on last measure", "lines": [
+      { "chords": "Dm Dm#5 C Dm Dm#5 Dm C Dm x2" },
+      { "chords": "Dm F Am Dm x2" }
+    ] },
+    { "name": "Verse 1", "lines": [
+      { "chords": "Dm N.C.", "lyrics": "Half past twelve" },
+      { "chords": "G", "lyrics": "And I'm watching the late show in my flat all alone" },
+      { "chords": "Dm", "lyrics": "How I hate to spend the evening on my own" },
+      { "chords": "", "lyrics": "Autumn winds" },
+      { "chords": "G", "lyrics": "Blowing outside the window as I look around the room" },
+      { "chords": "Dm", "lyrics": "And it makes me so depressed to see the gloom" }
+    ] },
+    { "name": "Pre-chorus 1", "lines": [
+      { "chords": "Gm6/Bb", "lyrics": "There's not a soul out there" },
+      { "chords": "Gm Dm/A A", "lyrics": "No one to hear my prayer" }
+    ] },
+    { "name": "Chorus 1", "lines": [
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight" },
+      { "chords": "Bb Dm C Dm", "lyrics": "Won't somebody help me chase these shadows away" },
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight" },
+      { "chords": "Bb Dm C Dm", "lyrics": "Take me through the darkness to the break of the day" }
+    ] },
+    { "name": "Interlude 1", "annotation": "feature synth, like 2nd half of intro", "lines": [
+      { "chords": "Dm F Am Dm x2" }
+    ] },
+    { "name": "Verse 2", "lines": [
+      { "chords": "Dm N.C.", "lyrics": "Movie stars" },
+      { "chords": "G", "lyrics": "Find the end of the rainbow, with that fortune to win" },
+      { "chords": "Dm", "lyrics": "It's so different from the world I'm living in" },
+      { "chords": "", "lyrics": "Tired of T.V." },
+      { "chords": "G", "lyrics": "I open the window and I gaze into the night" },
+      { "chords": "Dm", "lyrics": "But there's nothing there to see, no one in sight" }
+    ] },
+    { "name": "Pre-chorus 2", "lines": [
+      { "chords": "Gm6/Bb", "lyrics": "There's not a soul out there" },
+      { "chords": "Gm Dm/A A", "lyrics": "No one to hear my prayer" }
+    ] },
+    { "name": "Chorus 2", "lines": [
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight" },
+      { "chords": "Bb Dm C Dm", "lyrics": "Won't somebody help me chase these shadows away" },
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight" },
+      { "chords": "Bb Dm C Dm", "lyrics": "Take me through the darkness to the break of the day" },
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight..." },
+      { "chords": "Bb Dm C Dm", "lyrics": "Ah ah ah ah" },
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight..." },
+      { "chords": "Bb Dm C Dm", "lyrics": "Ah ah ah ah" }
+    ] },
+    { "name": "Instrumental", "annotation": "Drums and bass, guitar/synth accents", "lines": [
+      { "chords": "Dm Dm C Dm x12" }
+    ] },
+    { "name": "Pre-chorus 3", "lines": [
+      { "chords": "Gm6/Bb", "lyrics": "There's not a soul out there" },
+      { "chords": "Gm Dm/A A", "lyrics": "No one to hear my prayer" }
+    ] },
+    { "name": "Chorus 3", "lines": [
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight" },
+      { "chords": "Bb Dm C Dm", "lyrics": "Won't somebody help me chase these shadows away" },
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight" },
+      { "chords": "Bb Dm C Dm", "lyrics": "Take me through the darkness to the break of the day" }
+    ] },
+    { "name": "Chorus 4", "lines": [
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight" },
+      { "chords": "Bb Dm C Dm", "lyrics": "Won't somebody help me chase these shadows away" },
+      { "chords": "Dm Bb Cadd9 Dm", "lyrics": "Gimme gimme gimme a man after midnight" },
+      { "chords": "Bb Dm C Dm", "lyrics": "Take me through the darkness to the break of the day" }
+    ] },
+    { "name": "Outro", "annotation": "Like 2nd half of intro", "lines": [
+      { "chords": "Dm F Am Dm x2" },
+      { "chords": "Dm", "lyrics": "(hold chord)" }
+    ] }
+  ]
+}

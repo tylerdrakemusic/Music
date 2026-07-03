@@ -1,0 +1,234 @@
+{
+  "title": "Mony Mony (Billy Idol Live Version)",
+  "artist": "Billy Idol",
+  "key": "F",
+  "bpm": "?",
+  "notes": "Written by Tommy James and the Shondells, 1968. Covered by Billy Idol in 1981.",
+  "sections": [
+    {
+      "name": "Intro",
+      "annotation": "8 bars, Bass & Drums only, guitar scratch, Vocal ad-lib",
+      "lines": [
+        {
+          "chords": "F"
+        }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        {
+          "chords": "F F Bb F",
+          "lyrics": "Here she come now, say my Mony Mony"
+        },
+        {
+          "chords": "F F Bb F",
+          "lyrics": "Shoot it up come on, a Mony Mony"
+        },
+        {
+          "chords": "F F Bb F",
+          "lyrics": "Hey, she look good, now I feel alright, now"
+        },
+        {
+          "chords": "F Bb",
+          "lyrics": "I said a don't stop now A come on Mony Come on yeah"
+        }
+      ]
+    },
+    {
+      "name": "Chorus 1",
+      "lines": [
+        {
+          "chords": "C",
+          "lyrics": "I say Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah"
+        },
+        {
+          "chords": "F",
+          "lyrics": "'Cause you make me feel Mony Mony"
+        },
+        {
+          "chords": "F",
+          "lyrics": "So good Mony Mony"
+        },
+        {
+          "chords": "F",
+          "lyrics": "So good Mony Mony"
+        },
+        {
+          "chords": "F",
+          "lyrics": "Yes I feel alright Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "So fine Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "So fine Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "It's so fine Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "Yes, I feel alright"
+        },
+        {
+          "chords": "C",
+          "lyrics": "I say Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah"
+        }
+      ]
+    },
+    {
+      "name": "Interlude",
+      "annotation": "4 measures, mostly bass & drums & hand claps, ends with guitar lick",
+      "lines": []
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        {
+          "chords": "F F Bb F",
+          "lyrics": "Wake it, shake it, Mony Mony"
+        },
+        {
+          "chords": "F F Bb F",
+          "lyrics": "I said a shotgun dead, and a come on, Mony"
+        },
+        {
+          "chords": "F F Bb F",
+          "lyrics": "Don't stop cookin', 'cause I feel too good yeah"
+        },
+        {
+          "chords": "F Bb",
+          "lyrics": "Well don't stop now, a come on, Mony Come on yeah"
+        }
+      ]
+    },
+    {
+      "name": "Chorus 2",
+      "annotation": "same as Chorus 1",
+      "lines": [
+        {
+          "chords": "C",
+          "lyrics": "I say Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah"
+        },
+        {
+          "chords": "F",
+          "lyrics": "'Cause you make me feel Mony Mony"
+        },
+        {
+          "chords": "F",
+          "lyrics": "So good Mony Mony"
+        },
+        {
+          "chords": "F",
+          "lyrics": "So good Mony Mony"
+        },
+        {
+          "chords": "F",
+          "lyrics": "Yes I feel alright Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "So fine Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "So fine Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "It's so fine Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "Yes, I feel alright"
+        },
+        {
+          "chords": "C",
+          "lyrics": "I say Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah"
+        }
+      ]
+    },
+    {
+      "name": "Break",
+      "annotation": "4 bars drums & handclaps, 4*theme1 |F1 . F2 Eb C|Bb...|guit improv",
+      "lines": []
+    },
+    {
+      "name": "Bridge",
+      "annotation": "continue theme1, background vocals in harmony",
+      "lines": [
+        {
+          "chords": "F",
+          "lyrics": "Ooh I love you Mony Mon, Mon, Mony, Say I do"
+        },
+        {
+          "chords": "F",
+          "lyrics": "Ooh I love you Mony Mon, Mon, Mony, Yes I do"
+        },
+        {
+          "chords": "F",
+          "lyrics": "Ooh I love you Mony Mon, Mon, Mony, Say I do"
+        },
+        {
+          "chords": "F",
+          "lyrics": "Ooh I love you Mony Mon, Mon, Mony,"
+        }
+      ]
+    },
+    {
+      "name": "Chorus 3",
+      "lines": [
+        {
+          "chords": "C",
+          "lyrics": "I said Mony Yeah Mony Yeah Yeah Yeah Yeah Yeah Yeah Yeah"
+        }
+      ]
+    },
+    {
+      "name": "Chorus 4",
+      "annotation": "~2 bar break with guitar screech, drum fill",
+      "lines": [
+        {
+          "chords": "F",
+          "lyrics": "Woah! Mony Mony"
+        },
+        {
+          "chords": "F",
+          "lyrics": "So good Mony Mony"
+        },
+        {
+          "chords": "F",
+          "lyrics": "So good Mony Mony"
+        },
+        {
+          "chords": "F",
+          "lyrics": "I said c'mon c'mon Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "c'mon Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "So fine Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "It's so fine Mony Mony"
+        },
+        {
+          "chords": "Bb",
+          "lyrics": "Do ya feel alright? Mony Mony"
+        },
+        {
+          "chords": "C",
+          "lyrics": "I say Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah Yeah"
+        }
+      ]
+    }
+  ]
+}
