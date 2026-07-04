@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -134,3 +135,23 @@ class TestRenderValidationHtml:
         html = out.read_text(encoding="utf-8")
         assert html.count('class="diff-row mismatch"') == 1
         assert html.count('class="diff-row ok"') == 1
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# resolve_bpm
+# ─────────────────────────────────────────────────────────────────────────────
+class TestResolveBpm:
+    def test_uses_automated_lookup_result_when_found(self, mocker):
+        mocker.patch(
+            "utils.chord_sheet_output.lookup_bpm",
+            return_value=SimpleNamespace(bpm=102.0, title="Josie", artist="Steely Dan"),
+        )
+        assert cso.resolve_bpm("Josie", "Steely Dan") == "102"
+
+    def test_falls_back_to_manual_bpm_when_lookup_returns_none(self, mocker):
+        mocker.patch("utils.chord_sheet_output.lookup_bpm", return_value=None)
+        assert cso.resolve_bpm("Obscure Song", "Unknown Artist", manual_bpm="128") == "128"
+
+    def test_falls_back_to_unknown_marker_when_no_lookup_and_no_manual_value(self, mocker):
+        mocker.patch("utils.chord_sheet_output.lookup_bpm", return_value=None)
+        assert cso.resolve_bpm("Obscure Song", "Unknown Artist") == "?"
