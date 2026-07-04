@@ -189,3 +189,65 @@ def test_hook_candidate_returns_503_when_ollama_unavailable(client, monkeypatch)
     assert res.status_code == 503
     data = res.get_json()
     assert data["error"] == "Ollama not available"
+
+
+def test_fallback_uses_fast_timeout_on_non_final_attempts_when_no_timeout_given(monkeypatch):
+    """A hung/broken primary model must not block the whole request behind the
+    full generation timeout — only the final fallback candidate gets the full
+    (unbounded) timeout budget."""
+    seen_timeouts: list[float | None] = []
+
+    class SlowThenFastOllama:
+        def __init__(self, *args, **kwargs):
+            self.model = kwargs.get("model")
+
+        def list_models(self):
+            return [
+                {"name": "llama3.3:70b"},
+                {"name": "llama3:70b"},
+                {"name": "llama3.1:8b"},
+            ]
+
+        def generate(self, prompt, timeout=None):
+            seen_timeouts.append(timeout)
+            if self.model in ("llama3.3:70b", "llama3:70b"):
+                raise Exception("Cannot reach Ollama at http://127.0.0.1:11434: timed out")
+            return "Fast fallback success"
+
+    monkeypatch.setattr(dash_mod, "_OllamaClient", SlowThenFastOllama, raising=False)
+
+    result = dash_mod._generate_with_ollama_fallback("Test prompt")
+
+    assert result == "Fast fallback success"
+    # Non-final attempts (llama3.3:70b, llama3:70b) must use a bounded fast-fail
+    # timeout, not None (unbounded).
+    assert seen_timeouts[0] is not None and seen_timeouts[0] <= 30.0
+    assert seen_timeouts[1] is not None and seen_timeouts[1] <= 30.0
+    # Final attempt (llama3.1:8b) keeps the caller's original timeout (None = full budget).
+    assert seen_timeouts[2] is None
+
+
+def test_fallback_respects_explicit_timeout_for_all_attempts(monkeypatch):
+    """When the caller passes an explicit timeout, every attempt should use it
+    unchanged — the fast-fail default only applies when timeout is None."""
+    seen_timeouts: list[float | None] = []
+
+    class ExplicitTimeoutOllama:
+        def __init__(self, *args, **kwargs):
+            self.model = kwargs.get("model")
+
+        def list_models(self):
+            return [{"name": "llama3.3:70b"}, {"name": "llama3.1:8b"}]
+
+        def generate(self, prompt, timeout=None):
+            seen_timeouts.append(timeout)
+            if self.model == "llama3.3:70b":
+                raise Exception("timed out waiting for response")
+            return "Explicit timeout success"
+
+    monkeypatch.setattr(dash_mod, "_OllamaClient", ExplicitTimeoutOllama, raising=False)
+
+    result = dash_mod._generate_with_ollama_fallback("Test prompt", timeout=42.0)
+
+    assert result == "Explicit timeout success"
+    assert seen_timeouts == [42.0, 42.0]
