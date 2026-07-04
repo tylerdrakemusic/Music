@@ -66,6 +66,21 @@ class TestLookupBpmSuccess:
         assert "Fleetwood Mac" in kwargs["params"]["lookup"]
         assert kwargs["params"]["api_key"] == "test-key"
 
+    def test_sends_browser_like_headers_to_avoid_cloudflare_block(self, mocker):
+        mock_get = mocker.patch("utils.bpm_lookup.requests.get")
+        mock_get.return_value = _FakeResponse(
+            status_code=200,
+            json_data={"search": [{"title": "Josie", "tempo": "102"}]},
+        )
+
+        bpm_lookup.lookup_bpm("Josie", "Steely Dan")
+
+        _, kwargs = mock_get.call_args
+        headers = kwargs["headers"]
+        assert "python-requests" not in headers["User-Agent"]
+        assert "Mozilla" in headers["User-Agent"]
+        assert headers["Accept"] == "application/json, text/plain, */*"
+
 
 class TestLookupBpmNoMatch:
     def test_returns_none_on_empty_search_results(self, mocker):

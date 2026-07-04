@@ -23,6 +23,20 @@ import requests
 API_BASE_URL = "https://api.getsongbpm.com/search/"
 DEFAULT_TIMEOUT = 10.0
 
+# Cloudflare in front of api.getsongbpm.com blocks the default
+# `python-requests/x.x` User-Agent with a bot-challenge page. Sending
+# realistic browser headers avoids the challenge.
+REQUEST_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://getsongbpm.com/",
+    "Origin": "https://getsongbpm.com",
+}
+
 
 @dataclass
 class BpmResult:
@@ -52,7 +66,9 @@ def lookup_bpm(title: str, artist: str, timeout: float = DEFAULT_TIMEOUT) -> Opt
     }
 
     try:
-        response = requests.get(API_BASE_URL, params=params, timeout=timeout)
+        response = requests.get(
+            API_BASE_URL, params=params, headers=REQUEST_HEADERS, timeout=timeout
+        )
     except requests.RequestException:
         return None
 
