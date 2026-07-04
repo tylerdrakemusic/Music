@@ -19,12 +19,29 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from utils.bpm_lookup import lookup_bpm
+
 _TYLER_NAMES = {"tyler james drake", "tyler drake", "tyler"}
 
 
 def is_tyler_original(artist: str) -> bool:
     """Return True when `artist` refers to Tyler James Drake (an original)."""
     return (artist or "").strip().lower() in _TYLER_NAMES
+
+
+def resolve_bpm(title: str, artist: str, manual_bpm: str | None = None) -> str:
+    """Resolve a song's BPM: try the automated GetSongBPM lookup first, then
+    fall back to `manual_bpm` (Tyler's manual entry), then `"?"` if unknown.
+
+    Never raises — `lookup_bpm` already swallows all failure/no-match cases
+    and returns `None`.
+    """
+    result = lookup_bpm(title, artist)
+    if result is not None:
+        return str(int(round(result.bpm)))
+    if manual_bpm:
+        return manual_bpm
+    return "?"
 
 
 def _sanitize_filename(name: str) -> str:
