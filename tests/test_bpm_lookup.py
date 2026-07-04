@@ -102,6 +102,21 @@ class TestLookupBpmNoMatch:
 
         assert result is None
 
+    def test_returns_none_on_dict_shaped_no_match_response(self, mocker):
+        """Real GetSongBPM no-match responses use a dict, not an empty list:
+        {"search": {"error": "no result"}}. Indexing this with [0] would
+        raise KeyError if not guarded against.
+        """
+        mock_get = mocker.patch("utils.bpm_lookup.requests.get")
+        mock_get.return_value = _FakeResponse(
+            status_code=200,
+            json_data={"search": {"error": "no result"}},
+        )
+
+        result = bpm_lookup.lookup_bpm("Some Obscure Song", "Unknown Artist")
+
+        assert result is None
+
 
 class TestLookupBpmErrors:
     def test_returns_none_on_http_error_status(self, mocker):

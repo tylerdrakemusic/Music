@@ -81,7 +81,7 @@ def lookup_bpm(title: str, artist: str, timeout: float = DEFAULT_TIMEOUT) -> Opt
         return None
 
     results = data.get("search") if isinstance(data, dict) else None
-    if not results:
+    if not isinstance(results, list) or not results:
         return None
 
     match = results[0]
