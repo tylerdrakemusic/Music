@@ -1,0 +1,5 @@
+
+{
+  "error": "LLM parse incomplete: missing or negligible song content",
+  "raw": "{\n  \u0022title\u0022: \u0022Caroline Song\u0022,\n  \u0022artist\u0022: \u0022Neil Diamond\u0022,\n  \u0022key\u0022: \u0022Horns and Keys\u0022,\n  \u0022bpm\u0022: \u002260 BPM\u0022\n}"
+}
