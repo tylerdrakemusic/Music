@@ -27,6 +27,13 @@ from analysis.rhyme_utils import build_suffix_map, get_phonetic_group, last_word
 
 CATALOG_ROOT = Path(__file__).resolve().parent.parent.parent / "catalog"
 
+# Chord Sheets tab is temporarily disabled — the Ollama-based parsing flow
+# (BFX-20260630-chord-sheet-ollama-timeout, CLOSED) proved unreliable and is
+# being replaced by a different approach in a future FR. Backend routes and
+# parsing code remain intact; only the UI tab is hidden. Flip to True (or
+# remove) to re-enable once the replacement approach lands.
+ENABLE_CHORD_SHEETS = False
+
 # ── Ollama (optional) ─────────────────────────────────────────────────────────
 _OLLAMA_AVAILABLE = False
 _OLLAMA_BASE_URL = None
@@ -150,7 +157,13 @@ def _select_fallback_ollama_models(client, selected_model: str) -> list[str]:
     return candidates
 
 
-def _generate_with_ollama_fallback(prompt: str, timeout: float | None = None) -> str:
+_OLLAMA_FALLBACK_PROBE_TIMEOUT = 20.0  # seconds — fast-fail budget for non-final
+# fallback attempts, so a hung/broken model (e.g. a truncated blob) can't block
+# the whole request behind the full generation timeout when a working fallback
+# model is available.
+
+
+def _generate_with_ollama_fallback(prompt: str, timeout: float | None = None, **kwargs) -> str:
     selected_model = _OLLAMA_MODEL
     models_to_try = [selected_model]
     client = _OllamaClient(model=selected_model)
@@ -171,10 +184,18 @@ def _generate_with_ollama_fallback(prompt: str, timeout: float | None = None) ->
         )
 
     last_exc: Exception | None = None
-    for model in models_to_try:
+    last_index = len(models_to_try) - 1
+    for index, model in enumerate(models_to_try):
         client = _OllamaClient(model=model)
+        # Only the final candidate gets the caller's full timeout budget.
+        # Earlier candidates use a short probe timeout when the caller didn't
+        # specify one, so a broken/stuck model fails fast instead of blocking
+        # a working fallback model for the full generation window.
+        attempt_timeout = timeout
+        if timeout is None and index != last_index:
+            attempt_timeout = _OLLAMA_FALLBACK_PROBE_TIMEOUT
         try:
-            return client.generate(prompt, timeout=timeout)
+            return client.generate(prompt, timeout=attempt_timeout, **kwargs)
         except Exception as exc:
             last_exc = exc
             if _should_fallback(exc):
@@ -184,6 +205,63 @@ def _generate_with_ollama_fallback(prompt: str, timeout: float | None = None) ->
     if last_exc is not None:
         raise last_exc
     raise RuntimeError("Ollama generation failed: no fallback model could produce output.")
+
+
+def _strip_markdown_json_fences(text: str) -> str:
+    """Strip a leading/trailing ```json or ``` fence from an LLM response.
+
+    Some models wrap JSON output in markdown code fences even when explicitly
+    instructed not to. This strips a single leading fence (optionally tagged
+    ``json``) and a single trailing fence, leaving unfenced responses untouched.
+    """
+    stripped = text.strip()
+    match = re.match(r"^```(?:json)?\s*\n?(.*?)\n?```\s*$", stripped, flags=re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return stripped
+
+
+def _chord_sheet_transcribed_char_count(parsed: dict) -> int:
+    """Return the total transcribed *lyric* character count across all sections.
+
+    Only counts the ``lyrics`` field of ``{chords, lyrics}`` line objects. Bare
+    chord-only line strings (no lyrics key) do not count, since a section full
+    of chord tokens with no lyric text is exactly the "negligible content"
+    failure mode this check exists to catch.
+    """
+    total = 0
+    sections = parsed.get("sections")
+    if not isinstance(sections, list):
+        return 0
+    for section in sections:
+        if not isinstance(section, dict):
+            continue
+        lines = section.get("lines")
+        if not isinstance(lines, list):
+            continue
+        for line in lines:
+            if isinstance(line, dict):
+                total += len(str(line.get("lyrics", "")))
+    return total
+
+
+def _chord_sheet_parse_is_incomplete(parsed: dict, raw_text: str) -> bool:
+    """Return True if *parsed* looks like a near-empty shell of the submitted song.
+
+    Regression guard for BFX-20260630-chord-sheet-ollama-timeout (fix iteration 3):
+    smaller models (e.g. llama3.1:8b) have been observed returning technically
+    valid JSON with title/artist/key/bpm but with ``sections`` missing entirely,
+    or present but containing only bare chord tokens and no lyric text. Both are
+    unusable as a chord sheet. Flag as incomplete when the total transcribed
+    lyric character count across all sections is negligible relative to the
+    submitted raw chord chart length.
+    """
+    sections = parsed.get("sections")
+    if not sections:
+        return True
+    transcribed = _chord_sheet_transcribed_char_count(parsed)
+    threshold = max(10, int(len(raw_text) * 0.05))
+    return transcribed < threshold
 
 
 app = Flask(__name__, template_folder="templates")
@@ -797,7 +875,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <button class="tab-btn" onclick="switchTab('signatures', this)">🔐 Release Signatures</button>
   <button class="tab-btn" onclick="switchTab('release-ops', this)">📡 Release Ops</button>
   <button class="tab-btn" onclick="switchTab('radio', this)">📻 Radio</button>
-  <button class="tab-btn" onclick="switchTab('chord-sheets', this); csLoadSongs()">📄 Chord Sheets</button>
+  {% if enable_chord_sheets %}<button class="tab-btn" onclick="switchTab('chord-sheets', this); csLoadSongs()">📄 Chord Sheets</button>{% endif %}
   <a href="/rhymes" class="tab-btn" style="text-decoration:none;">🎼 Rhyme Grouper</a>
   <a href="/links" class="tab-btn" style="text-decoration:none;">🔗 Artist Links</a>
 </div>
@@ -909,6 +987,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   </div>
 </div>
 
+{% if enable_chord_sheets %}
 <div id="tab-chord-sheets" class="tab-content">
   <div style="max-width:900px;">
     <h3 style="color:var(--accent2);margin-bottom:20px;">📄 Chord Sheets</h3>
@@ -957,6 +1036,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
     <div id="cs-status" style="margin-top:12px;font-size:13px;color:var(--text-muted);"></div>
   </div>
 </div>
+{% endif %}
 
 <!-- Delete confirmation modal -->
 <div class="modal-overlay" id="deleteModal">
@@ -1971,7 +2051,7 @@ function csSetStatus(msg) {
 
 @app.route("/")
 def index():
-    return render_template_string(DASHBOARD_HTML)
+    return render_template_string(DASHBOARD_HTML, enable_chord_sheets=ENABLE_CHORD_SHEETS)
 
 
 @app.route("/health")
@@ -2960,35 +3040,72 @@ def chord_sheet_parse():
     if not raw_text:
         return jsonify({"error": "raw_text is required"}), 400
 
-    # Build schema example from an existing template
-    schema_example = ""
-    try:
-        sample = next(_CHORD_SHEET_TEMPLATES_DIR.glob("*.json"))
-        schema_example = sample.read_text(encoding="utf-8")
-    except StopIteration:
-        pass
-
+    # NOTE: do not embed a real, fully-populated template file here. An earlier
+    # version dumped an existing song's full JSON (including real title/artist/
+    # lyrics) into the prompt as a "schema example", and smaller models (e.g.
+    # llama3.1:8b) would echo that example song back instead of parsing the
+    # submitted raw_text. Describe the schema abstractly instead, but DO show a
+    # generic (non-song) structural example so the model can see what a fully
+    # transcribed sections array looks like.
     prompt = (
         "You are a music data parser. Convert the following chord chart to JSON.\n"
-        "Return ONLY valid JSON matching this schema example:\n"
-        f"{schema_example}\n\n"
-        "The JSON must have these fields: title, artist, key, bpm, sections "
-        "(array of section objects with name and lines). "
-        "Each line is either a string or an object with chords and lyrics keys.\n\n"
+        "The JSON must have these fields: title (string), artist (string), "
+        "key (string), bpm (string), sections (array of section objects each "
+        "with a name and a lines array). Each line is either a string or an "
+        "object with chords and lyrics keys.\n\n"
+        "CRITICAL: sections must include EVERY section present in the raw chord "
+        "chart below (e.g. Intro, Verse 1, Verse 2, Chorus, Bridge, Outro) in the "
+        "same order they appear. For EACH section, transcribe EVERY line of "
+        "chords and lyrics verbatim from the raw chord chart into that section's "
+        "lines array — do not summarize, truncate, deduplicate, or omit any "
+        "line. If a section has no lyrics (an instrumental line), still include "
+        "the chords with an empty lyrics string.\n\n"
+        "Generic structural example (illustrating the expected shape only — do "
+        "NOT copy this example's names or text into your answer):\n"
+        "{\n"
+        '  "title": "<song title>", "artist": "<artist>", "key": "<key>", '
+        '"bpm": "<bpm>",\n'
+        '  "sections": [\n'
+        '    {"name": "Intro", "lines": [{"chords": "<chord line 1>", "lyrics": ""}]},\n'
+        '    {"name": "Verse 1", "lines": [\n'
+        '      {"chords": "<chord line 1>", "lyrics": "<lyric line 1>"},\n'
+        '      {"chords": "<chord line 2>", "lyrics": "<lyric line 2>"}\n'
+        "    ]},\n"
+        '    {"name": "Chorus", "lines": [\n'
+        '      {"chords": "<chord line 1>", "lyrics": "<lyric line 1>"}\n'
+        "    ]},\n"
+        '    {"name": "Outro", "lines": [{"chords": "<chord line 1>", "lyrics": "<lyric line 1>"}]}\n'
+        "  ]\n"
+        "}\n\n"
+        "IMPORTANT: Use ONLY the title, artist, key, and lyrics found in the "
+        "raw chord chart below. Do not invent or substitute a different song.\n\n"
         f"Raw chord chart:\n{raw_text}\n\n"
-        "Return ONLY the JSON object, no explanation, no code block markers."
+        "Return ONLY the JSON object. Do not include any explanation or "
+        "markdown code block markers (no ```)."
     )
 
     try:
-        llm_response = _generate_with_ollama_fallback(prompt)
+        llm_response = _generate_with_ollama_fallback(
+            prompt,
+            options={"num_predict": -1, "num_ctx": 8192},
+        )
     except Exception as exc:
         return jsonify({"error": f"Ollama error: {exc}"}), 503
 
     try:
-        parsed = json.loads(llm_response)
-        return jsonify({"json_string": json.dumps(parsed, ensure_ascii=False)})
+        parsed = json.loads(_strip_markdown_json_fences(llm_response))
     except (json.JSONDecodeError, ValueError):
         return jsonify({"error": "LLM parse failed", "raw": llm_response}), 422
+
+    if _chord_sheet_parse_is_incomplete(parsed, raw_text):
+        return jsonify({
+            "error": "LLM parse incomplete: missing or negligible song content",
+            "raw": llm_response,
+        }), 422
+
+    return jsonify({"json_string": json.dumps(parsed, ensure_ascii=False)})
+
+
 
 
 @app.route("/chord-sheet/save-json", methods=["POST"])
