@@ -13,6 +13,10 @@ A structured project to organize, track, and drive Tyler's music career:
 - **Performance** — Gig management, setlists, practice logging
 - **Distribution** — Release planning across streaming platforms
 
+## Acknowledgements
+
+BPM data for the agentic chord-sheet workflow is looked up via [GetSongBPM.com](https://getsongbpm.com), which provides a free public API for song tempo data.
+
 ## Key Paths
 
 | Resource | Path |
