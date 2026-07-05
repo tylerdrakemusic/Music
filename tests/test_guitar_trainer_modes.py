@@ -190,3 +190,46 @@ def test_d_eb_position1_low_e_notes_stay_in_scale() -> None:
         if n["string"] == 6:
             assert n["midi"] % 12 in eb_pcs
 
+
+# ---------------------------------------------------------------------------
+# Mixolydian ♭7 highlight (FR-20260703-guitar-trainer-mixolydian-fix)
+# ---------------------------------------------------------------------------
+
+def test_mixolydian_flat_seventh_degree_type() -> None:
+    degrees = MODE_SPEC["Mixolydian"]["degrees"]
+    assert degrees[10]["type"] == "flat_seventh"
+    assert degrees[10]["label"] == "♭7"
+    # Root / third / fifth keep the standard palette types.
+    assert degrees[0]["type"] == "root"
+    assert degrees[4]["type"] == "third"
+    assert degrees[7]["type"] == "fifth"
+
+
+def test_mixolydian_accents_include_flat_seventh() -> None:
+    assert 10 in MODE_SPEC["Mixolydian"]["accents"]
+
+
+def test_mixolydian_characteristic_is_flattened_seventh() -> None:
+    ch = MODE_SPEC["Mixolydian"]["characteristic"]
+    assert ch is not None
+    assert ch["interval"] == 10
+    assert "seventh" in ch["name"].lower()
+    assert ch.get("callout")
+
+
+def test_mixolydian_major_sixth_not_colored() -> None:
+    """Interval 9 (major 6th) must stay uncolored/gray per Tyler's instruction."""
+    assert 9 not in MODE_SPEC["Mixolydian"]["degrees"]
+
+
+def test_flat_seventh_palette_entries_exist_and_distinct() -> None:
+    assert "flat_seventh" in DEGREE_COLORS
+    color = DEGREE_COLORS["flat_seventh"]
+    assert color.startswith("#")
+    other_colors = {v for k, v in DEGREE_COLORS.items() if k != "flat_seventh"}
+    assert color not in other_colors
+
+    from training.mode_spec import DEGREE_TEXT, DEGREE_STROKE
+    assert "flat_seventh" in DEGREE_TEXT
+    assert "flat_seventh" in DEGREE_STROKE
+

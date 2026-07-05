@@ -891,11 +891,27 @@ async function createSession() {
     return pos.label;
   }
 
+  function findRootNoteInAsc(allAsc, rootPc) {
+    return allAsc.find(n => n.midi % 12 === rootPc) || null;
+  }
+
+  function buildAscDeduped(notes) {
+    const sorted = notes.slice().sort((a, b) => a.midi - b.midi);
+    const seen = new Set();
+    const allAsc = [];
+    for (const n of sorted) {
+      if (!seen.has(n.midi)) {
+        seen.add(n.midi);
+        allAsc.push(n);
+      }
+    }
+    return allAsc;
+  }
+
   function findTonicStart(pos, mode) {
     const rootPc = findModeRootPitchClass(_currentKey, mode);
-    const tonicNotes = pos.notes.filter(n => n.midi % 12 === rootPc);
-    if (!tonicNotes.length) return null;
-    return tonicNotes.reduce((best, note) => note.midi < best.midi ? note : best, tonicNotes[0]);
+    const allAsc = buildAscDeduped(pos.notes);
+    return findRootNoteInAsc(allAsc, rootPc);
   }
 
   function buildModePhrase(pos, mode, includeCallout) {
@@ -978,17 +994,9 @@ async function createSession() {
   }
 
   function buildScalePlayback(notes, key, mode) {
-    const sorted = notes.slice().sort((a, b) => a.midi - b.midi);
-    const seen = new Set();
-    const allAsc = [];
-    for (const n of sorted) {
-      if (!seen.has(n.midi)) {
-        seen.add(n.midi);
-        allAsc.push(n);
-      }
-    }
+    const allAsc = buildAscDeduped(notes);
     const rootPc = findModeRootPitchClass(key, mode);
-    const rootNote = allAsc.find(n => n.midi % 12 === rootPc);
+    const rootNote = findRootNoteInAsc(allAsc, rootPc);
     const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
     const asc       = allAsc.slice(rootIdx);
     const desc      = allAsc.slice(rootIdx === 0 ? 1 : 0, -1).reverse();
