@@ -6,8 +6,8 @@ FR-20260524-scale-data-sqlite-migration
 Run from f:\\❤Music:
     $env:PYTHONUTF8="1"; C:\\G\\python.exe tools/seed_scale_data.py
 
-Idempotent — templates use INSERT OR IGNORE; positions use upsert so phrase
-edits in source code propagate on re-run.
+Idempotent — templates and positions both upsert, so offset/phrase edits in
+source code propagate on re-run instead of being masked by stale DB rows.
 """
 from __future__ import annotations
 
@@ -191,7 +191,6 @@ _POSITIONS: dict[str, list[tuple[str, int, str, str, str]]] = {
         ("E_shape", 14,  "Position 8 — E shape (14th fret)",           "Low E string", "Start on the 14th fret of the low E string — F# major E shape."),
         ("D_shape", 14,  "Position 9 — D shape (14th fret)",           "Low E string", "Start on the 14th fret of the low E string — F# major D shape."),
         ("C_shape", 21,  "Position 10 — C shape (21st fret)",         "A string",     "Start on the 21st fret of the A string — F# major C shape one octave up."),
-        ("rock",    21,  "Position 11 — 石 Rock shape (21st fret)",    "A string",     "Start on the 21st fret of the A string for F# major 石 Rock shape (high octave)."),
     ],
     "Eb": [
         ("D_shape_open", 1,  "Position 1 — D shape (1st fret)",          "D string",     "Start on the 1st fret of the D string — E-flat major D shape."),
@@ -266,26 +265,31 @@ def seed(conn) -> None:
         """
     )
 
-    # Seed templates
+    # Seed templates — upsert so offset edits in source (e.g. new low-E-string
+    # notes for modal tonics) propagate on re-run instead of being silently
+    # ignored by a stale row from a prior seeding.
     for shape_name, (root_string, offsets) in _TEMPLATES.items():
         conn.execute(
-            "INSERT OR IGNORE INTO guitar_scale_templates "
-            "(shape_name, root_string, note_offsets) VALUES (?, ?, ?)",
+            "INSERT INTO guitar_scale_templates "
+            "(shape_name, root_string, note_offsets) VALUES (?, ?, ?) "
+            "ON CONFLICT(shape_name) DO UPDATE SET "
+            "root_string=excluded.root_string, "
+            "note_offsets=excluded.note_offsets",
             (shape_name, root_string, json.dumps(offsets)),
         )
 
-    # Seed positions — upsert so phrase edits in source propagate on re-run
+    # Seed positions — delete-then-insert per key so a shrinking source table
+    # (fewer positions than a prior seed) can't leave orphaned stale rows that
+    # silently override scale_data.py's in-code generation via the DB overlay.
     for key_name, positions in _POSITIONS.items():
+        conn.execute(
+            "DELETE FROM guitar_scale_positions WHERE key_name = ?", (key_name,)
+        )
         for order, (shape_name, root_fret, label, rsn, phrase) in enumerate(positions):
             conn.execute(
                 "INSERT INTO guitar_scale_positions "
                 "(key_name, position_order, shape_name, label, root_string_name, "
-                "root_fret, instructor_phrase) VALUES (?, ?, ?, ?, ?, ?, ?) "
-                "ON CONFLICT(key_name, position_order) DO UPDATE SET "
-                "shape_name=excluded.shape_name, label=excluded.label, "
-                "root_string_name=excluded.root_string_name, "
-                "root_fret=excluded.root_fret, "
-                "instructor_phrase=excluded.instructor_phrase",
+                "root_fret, instructor_phrase) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (key_name, order, shape_name, label, rsn, root_fret, phrase),
             )
 

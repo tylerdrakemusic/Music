@@ -36,6 +36,7 @@ DEGREE_COLORS: dict[str, str] = {
     "fifth": "#00e5cc",
     "major_sixth": "#ffd166",
     "leading": "#00b4d8",
+    "flat_seventh": "#d62828",  # NEW — Mixolydian ♭7 (deep orange-red, reads as "flattened")
     "other": "#555555",
 }
 DEGREE_TEXT: dict[str, str] = {
@@ -47,6 +48,7 @@ DEGREE_TEXT: dict[str, str] = {
     "fifth": "#000000",
     "major_sixth": "#000000",
     "leading": "#ffffff",
+    "flat_seventh": "#ffffff",
     "other": "#ffffff",
 }
 DEGREE_STROKE: dict[str, str] = {
@@ -58,6 +60,7 @@ DEGREE_STROKE: dict[str, str] = {
     "fifth": "#000000",
     "major_sixth": "#000000",
     "leading": "#000000",
+    "flat_seventh": "#000000",
     "other": "#333333",
 }
 
@@ -143,9 +146,18 @@ MODE_SPEC: dict[str, ModeSpec] = {
         "root_offset": 7,
         "intervals": (0, 2, 4, 5, 7, 9, 10, 12),
         "tts_label": "Mixolydian",
-        "degrees": {0: _deg("root", "Root"), 4: _deg("third", "3rd"), 7: _deg("fifth", "5th")},
-        "accents": (),
-        "characteristic": None,
+        "degrees": {
+            0: _deg("root", "Root"),
+            4: _deg("third", "3rd"),
+            7: _deg("fifth", "5th"),
+            10: _deg("flat_seventh", "♭7"),
+        },
+        "accents": (10,),
+        "characteristic": {
+            "interval": 10,
+            "name": "flattened seventh",
+            "callout": "listen for the flattened seventh, the Mixolydian sound",
+        },
     },
     "Aeolian": {
         "root_offset": 9,
