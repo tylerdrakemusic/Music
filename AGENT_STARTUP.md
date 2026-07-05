@@ -36,6 +36,7 @@
 | **❤music-production** | Album production tracking — Bloom, track status, mixing pipeline |
 | **❤music-performance** | Gig logging, practice tracking, CopperCreek band management |
 | **❤music-signatures** | Binary signature analysis — audio file forensics, hash/entropy extraction, Suno/Pro Tools provenance, release_signatures table |
+| **❤music-guitar-tech** | Guitar-legend persona matching, HX Stomp `.hlx` preset generation/validation, `guitar_tone_profiles` |
 | **⊕workspace-hygiene** | Unified workspace hygiene — archiving completed tasks, pruning stale files, DB hygiene, agent infrastructure audit |
 
 ## 3. Artist Summary

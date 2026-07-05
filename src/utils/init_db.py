@@ -345,6 +345,23 @@ CREATE TABLE IF NOT EXISTS duplicate_groups (
 );
 
 CREATE INDEX IF NOT EXISTS idx_dup_groups_sha256 ON duplicate_groups(sha256);
+
+-- ── Guitar tone profiles (FR-20260705-guitar-tech-persona-agent) ──────────
+-- Persona-matched HX Stomp tone recipes generated for catalog songs.
+CREATE TABLE IF NOT EXISTS guitar_tone_profiles (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    catalog_song_id INTEGER NOT NULL REFERENCES catalog_songs(id) ON DELETE CASCADE,
+    persona         TEXT NOT NULL,
+    rationale       TEXT,
+    hlx_filename    TEXT NOT NULL,
+    status          TEXT NOT NULL DEFAULT 'proposed'
+                    CHECK(status IN ('proposed','approved','rejected')),
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(catalog_song_id, persona)
+);
+
+CREATE INDEX IF NOT EXISTS idx_guitar_tone_profiles_song ON guitar_tone_profiles(catalog_song_id);
 """
 
 _SEED_SQL = """
