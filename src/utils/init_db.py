@@ -25,6 +25,42 @@ if _ENV_DB_PATH:
 else:
     DB_PATH = DEFAULT_DB_PATH if DEFAULT_DB_PATH.exists() else LEGACY_DB_PATH
 
+
+def resolve_worktree_db_path(start: Path, max_levels: int = 5) -> Path | None:
+    """Walk up from `start` looking for src/data/heartmusic.db.
+
+    Git worktrees under `<main>/.worktrees/<branch>/` have their own empty
+    `data/` dir, so the default DB_PATH resolution above finds no DB there.
+    This walks up parent directories to find the main project root's live DB.
+    Returns None if not found within `max_levels` levels (e.g. when actually
+    running from the main tree, where the default DB_PATH is already correct).
+    """
+    candidate = start
+    for _ in range(max_levels):
+        db = candidate / "src" / "data" / "heartmusic.db"
+        if db.exists():
+            return db
+        candidate = candidate.parent
+    return None
+
+
+def use_worktree_aware_db_path(start: Path) -> None:
+    """Switch module-level DB_PATH to the main project's live DB if `start`
+    is inside a git worktree that lacks its own data.
+
+    Call once, near the top of any `tools/*.py` script that touches
+    heartmusic.db directly, before importing `get_connection`:
+
+        _ROOT = Path(__file__).resolve().parent.parent
+        import utils.init_db as init_db
+        init_db.use_worktree_aware_db_path(_ROOT)
+        from utils.init_db import get_connection
+    """
+    global DB_PATH
+    resolved = resolve_worktree_db_path(start)
+    if resolved is not None:
+        DB_PATH = resolved
+
 _SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
