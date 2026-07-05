@@ -33,6 +33,11 @@
 - [ ] Ambient_Swells_Everything_I_Need.hlx — EXP → Volume
 - [ ] Acoustic_Smooth_Warm.hlx — EXP → Volume
 - [ ] CarnivalLeadTone.hlx — EXP → Volume
+- [ ] I_Can_t_Go_for_That.hlx — EXP → Volume
+- [ ] 25_or_6_to_4.hlx — EXP → Volume
+- [ ] Black_Magic_Woman.hlx — EXP → Volume
+- [ ] Pick_Up_the_Pieces.hlx — EXP → Volume
+- [ ] The_Letter.hlx — EXP → Volume
 
 ---
 
@@ -70,3 +75,8 @@
 - [ ] Ambient_Swells_Everything_I_Need.hlx
 - [ ] Acoustic_Smooth_Warm.hlx
 - [ ] CarnivalLeadTone.hlx
+- [ ] I_Can_t_Go_for_That.hlx
+- [ ] 25_or_6_to_4.hlx
+- [ ] Black_Magic_Woman.hlx
+- [ ] Pick_Up_the_Pieces.hlx
+- [ ] The_Letter.hlx
