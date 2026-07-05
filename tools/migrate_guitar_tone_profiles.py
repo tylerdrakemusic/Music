@@ -11,29 +11,10 @@ from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
 
-
-def _resolve_db_path() -> Path | None:
-    """Return path to heartmusic.db, handling worktree layouts transparently.
-
-    In a git worktree (<main>/.worktrees/<branch>/), init_db.DB_PATH resolves
-    to the worktree's own (empty) data/ dir. Walk up to find the main
-    project root's live DB instead.
-    """
-    candidate = _ROOT
-    for _ in range(5):
-        db = candidate / "src" / "data" / "heartmusic.db"
-        if db.exists():
-            return db
-        candidate = candidate.parent
-    return None
-
-
 sys.path.insert(0, str(_ROOT / "src"))
 import utils.init_db as _init_db_module  # noqa: E402
 
-_resolved = _resolve_db_path()
-if _resolved is not None:
-    _init_db_module.DB_PATH = _resolved
+_init_db_module.use_worktree_aware_db_path(_ROOT)
 
 from utils.init_db import get_connection  # noqa: E402
 
