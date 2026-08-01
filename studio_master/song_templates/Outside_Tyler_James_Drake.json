@@ -1,0 +1,69 @@
+{
+  "title": "Outside",
+  "artist": "Tyler James Drake",
+  "original_artist": "Tyler James Drake",
+  "key": "Em",
+  "bpm": "101",
+  "sections": [
+    {
+      "name": "Woodwind Instrumental",
+      "lines": [
+        { "chords": "Em7 | Em7 | Em7 |Em7 | F#ø | F#ø | B7 | B7 " },
+        { "chords": "Em7 | Em7 | Em7 |Em7 | F#ø | F#ø | B7 | B7" }
+      ]
+    },
+    {
+      "name": "Verse 1",
+      "lines": [
+        { "chords": "Em7 | Em7 | Em7 |Em7", "lyrics": "Hey my bell, I want to share what I'm afraid of." },
+        { "chords": "F#ø | F#ø | B7 | B7", "lyrics": "Will it heal me?  That's all I need to find the heart that I believe in" },
+        { "chords": "Em7 | Em7 | Em7 |Em7", "lyrics": "You reveal a part of me that I've concealed love" },
+        { "chords": "F#ø | F#ø | B7 | B7", "lyrics": "Can I shed my fear?  That's all I need, to break a pattern of defensive." }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Am | Bm", "lyrics": "Outside looking in.  Just the skin I'm in" },
+        { "chords": "Am | Bm", "lyrics": "Inside.  Looking out.  Damage where I've been" },
+        { "chords": "Am | Bm", "lyrics": "Outside looking in.  Hidden in my sin" },
+        { "chords": "Am | Bm", "lyrics": "Inside reaching out.  Can I let you..." }
+      ]
+    },
+    {
+      "name": "Verse 2",
+      "lines": [
+        { "chords": "Em7 | Em7 | Em7 |Em7", "lyrics": "Hey my dear, you won't hear the thoughts I'm made of" },
+        { "chords": "F#ø | F#ø | B7 | B7", "lyrics": "Can you feel me?  That's all I need.  Vulnerability evaded." },
+        { "chords": "Em7 | Em7 | Em7 |Em7", "lyrics": "Letting go.  In hope that you'll never deceive me." },
+        { "chords": "F#ø | F#ø | B7 | B7", "lyrics": "Can I believe?  Can I concede?  Trusting you to trust in me love" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Am | Bm", "lyrics": "Outside looking in.  Just the skin I'm in" },
+        { "chords": "Am | Bm", "lyrics": "Inside.  Looking out.  Damage where I've been" },
+        { "chords": "Am | Bm", "lyrics": "Outside looking in.  Hidden in my sin" },
+        { "chords": "Am | Bm", "lyrics": "Inside reaching out.  Can I let you in." }
+      ]
+    },
+    {
+      "name": "Bridge",
+      "lines": [
+        { "chords": "C | D | C | D", "lyrics": "Don't use it against me." },
+        { "chords": "C | D | C | D", "lyrics": "All I share so intensely" },
+        { "chords": "C | D | C | D", "lyrics": "Been cursed in the past.  Again and again" }
+      ]
+    },
+    {
+      "name": "Chorus",
+      "lines": [
+        { "chords": "Am | Bm", "lyrics": "Outside looking in.  Just the skin I'm in" },
+        { "chords": "Am | Bm", "lyrics": "Inside.  Looking out.  Damage where I've been" },
+        { "chords": "Am | Bm", "lyrics": "Outside looking in.  Hidden in my sin" },
+        { "chords": "Am | Bm", "lyrics": "Inside reaching out.  Can I let you in." }
+      ]
+    }
+  ]
+}
