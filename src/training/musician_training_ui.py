@@ -1014,6 +1014,22 @@ async function createSession() {
     const sequence  = [...asc, ...desc, ...returnAsc];
     return {sequence, allAsc};
   }
+
+  // Returns pos.notes augmented with the synthetic root on low E when the mode root falls
+  // at root_fret-1 on string 6 (e.g. Locrian root B at fret 7 in G/river shapes).
+  function getEffectiveNotes(pos) {
+    if (!pos) return [];
+    const notes = (pos.notes || []).slice();
+    const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
+    if (pos.root_fret > 0) {
+      const synthFret = pos.root_fret - 1;
+      const synthMidi = 40 + synthFret;
+      if (synthMidi % 12 === rootPc && !notes.some(n => n.string === 6 && n.fret === synthFret)) {
+        notes.push({string: 6, fret: synthFret, midi: synthMidi});
+      }
+    }
+    return notes;
+  }
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
   // Degree colors are driven by mode_spec.py (DEGREE_COLORS/TEXT/STROKE) so the
@@ -1079,18 +1095,8 @@ async function createSession() {
     // Open-string notes appear to the LEFT of the nut
     const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
-    const sorted = (notes || []).slice().sort((a,b) => a.midi - b.midi);
-    // Synthesize root dot on low E at root_fret-1 when mode root lands there (e.g. Locrian root 1 fret below G/river anchor).
-    // Only adds the dot when the pitch class matches exactly; no effect on other modes.
-    const _synPos = _positions[_currentPos];
-    if (_synPos && _synPos.root_fret > 0) {
-      const synthFret = _synPos.root_fret - 1;
-      const synthMidi = 40 + synthFret;  // open low E2 = MIDI 40
-      if (synthMidi % 12 === rootPc && !sorted.some(n => n.string === 6 && n.fret === synthFret)) {
-        sorted.push({string: 6, fret: synthFret, midi: synthMidi});
-        sorted.sort((a,b) => a.midi - b.midi);
-      }
-    }
+    const sorted = getEffectiveNotes(_positions[_currentPos]).slice().sort((a,b) => a.midi - b.midi);
+    const _synPos = null;  // synthetic note now handled by getEffectiveNotes
     sorted.forEach((n, i) => {
       const row = n.string - 1;  // string 1→row 0 (top), string 6→row 5 (bottom)
       const y = TOP + row * strGap;
@@ -1265,7 +1271,7 @@ async function createSession() {
     if (!pos) return;
     const reps = Math.max(1, Math.min(20, parseInt(document.getElementById('scale-reps').value) || 2));
     const noteDurationMs = Math.round(60000 / _scaleBpm);
-    const {sequence, allAsc} = buildScalePlayback(pos.notes, _currentKey, _currentMode);
+    const {sequence, allAsc} = buildScalePlayback(getEffectiveNotes(pos), _currentKey, _currentMode);
     _scalePlaying = true;
     _scaleStopFlag = false;
     const btn = document.getElementById('scale-play-btn');
