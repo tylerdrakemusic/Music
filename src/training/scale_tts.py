@@ -44,10 +44,13 @@ def _normalize_phrase(phrase: str) -> str:
     '#'      → ' sharp'  (ElevenLabs reads bare '#' as 'hash')
     'A major'→ 'Ay major' (ElevenLabs soft-pronounces the letter A otherwise)
     'A shape'→ 'Ay shape' (ElevenLabs soft-pronounces the letter A otherwise)
+    '石'     → stripped   (CAGED shape prefix; English word follows, e.g. '石 Rock')
+    '川'     → stripped   (CAGED shape prefix; English word follows, e.g. '川 River')
     """
     phrase = phrase.replace("#", " sharp")
     phrase = phrase.replace("A major", "Ay major")
     phrase = phrase.replace("A shape", "Ay shape")
+    phrase = phrase.replace("石 ", "").replace("川 ", "")
     return phrase
 
 
@@ -89,7 +92,7 @@ def get_instructor_audio(phrase: str, cache_dir: Path) -> Path | None:
         url = f"{_API_BASE}/text-to-speech/{_VOICE_ID}"
         payload = _json.dumps({
             "text": tts_text,
-            "model_id": "eleven_monolingual_v1",
+            "model_id": "eleven_multilingual_v2",  # eleven_monolingual_v1 deprecated Feb 2024
             "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
         }).encode("utf-8")
         req = urllib.request.Request(
