@@ -266,6 +266,15 @@ def build_mode_phrase(
         if note.get("midi", -1) % 12 == root_pc:
             if tonic is None or note.get("midi", 0) < tonic.get("midi", 0):
                 tonic = note
+    # Prefer low E string when root falls within 2 frets of the position anchor — covers
+    # modes like Locrian whose root is one fret below the Ionian anchor on the same shape.
+    if tonic is None or tonic.get("string") != 6:
+        base_fret = (root_pc - 4 + 12) % 12  # open low E = pc E2 = pc 4
+        root_fret = pos.get("root_fret") or 0
+        octave = round((root_fret - base_fret) / 12)
+        near_fret = base_fret + 12 * octave
+        if 0 <= near_fret <= 22 and abs(near_fret - root_fret) <= 2:
+            tonic = {"string": 6, "fret": near_fret}
     tonic_location = ""
     if tonic is not None:
         string_name = _STRING_NAMES.get(tonic.get("string", 0), "unknown")

@@ -921,18 +921,39 @@ async function createSession() {
       .replace(/([A-G])#/g, '$1 sharp')
       .replace(/([A-G])b/g, '$1 flat');
     const tonic = findTonicStart(pos, mode);
+    // Prefer low E string for the TTS location when root falls within 2 frets of the position anchor.
+    // This lets Locrian (root one fret below Ionian anchor) announce from low E without adding
+    // phantom fretboard dots to the template for other modes.
+    let tonicOverride = tonic;
+    if (!tonic || tonic.string !== 6) {
+      const baseFret = ((modeRootPc - 4 + 12) % 12);  // open low E = pc 4
+      const nearFret = baseFret + 12 * Math.round((pos.root_fret - baseFret) / 12);
+      if (nearFret >= 0 && nearFret <= 22 && Math.abs(nearFret - pos.root_fret) <= 2) {
+        tonicOverride = {string: 6, fret: nearFret};
+      }
+    }
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
     const modeRootPc = findModeRootPitchClass(_currentKey, mode);
     const rawTonicName = noteNames[modeRootPc] || 'D';
     const tonicName = rawTonicName.replace(/^([A-G])#$/, '$1 sharp').replace(/^([A-G])b$/, '$1 flat');
     const stringNames = {1: 'high e', 2: 'B', 3: 'G', 4: 'D', 5: 'A', 6: 'low E'};
+    // Prefer low E when root falls within 2 frets of the position anchor (e.g. Locrian root 1 fret below G/river anchor).
+    // No fretboard dots are added — this is TTS location only.
+    let effectiveTonic = tonic;
+    if (!tonic || tonic.string !== 6) {
+      const baseFret = ((modeRootPc - 4 + 12) % 12);  // open low E = pc 4 (E2)
+      const nearFret = baseFret + 12 * Math.round((pos.root_fret - baseFret) / 12);
+      if (nearFret >= 0 && nearFret <= 22 && Math.abs(nearFret - pos.root_fret) <= 2) {
+        effectiveTonic = {string: 6, fret: nearFret};
+      }
+    }
     let tonicLocation = '';
-    if (tonic) {
-      const stringName = stringNames[tonic.string] || 'unknown';
-      if (tonic.fret === 0) {
+    if (effectiveTonic) {
+      const stringName = stringNames[effectiveTonic.string] || 'unknown';
+      if (effectiveTonic.fret === 0) {
         tonicLocation = `on the open ${stringName} string`;
       } else {
-        tonicLocation = `on the ${stringName} string at fret ${tonic.fret}`;
+        tonicLocation = `on the ${stringName} string at fret ${effectiveTonic.fret}`;
       }
     }
     const spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
