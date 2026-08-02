@@ -202,9 +202,13 @@ def test_locrian_flat_fifth_degree_type() -> None:
 def test_flat_fifth_color_is_distinct() -> None:
     c = DEGREE_COLORS["flat_fifth"]
     assert c.startswith("#")
+    # Must differ from every other Locrian-visible degree so the tritone reads unambiguously.
     assert c not in {
         DEGREE_COLORS["root"],
+        DEGREE_COLORS["minor_second"],
+        DEGREE_COLORS["minor_third"],
         DEGREE_COLORS["fifth"],
+        DEGREE_COLORS["flat_seventh"],
         DEGREE_COLORS["sharp_fourth"],
         DEGREE_COLORS["other"],
     }

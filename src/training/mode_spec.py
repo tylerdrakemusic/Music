@@ -34,7 +34,7 @@ DEGREE_COLORS: dict[str, str] = {
     "minor_third": "#fb5607",
     "sharp_fourth": "#b15dff",   # NEW — Lydian ♯4 (bright violet, distinct)
     "fifth": "#00e5cc",
-    "flat_fifth": "#ff6b35",       # NEW — Locrian ♭5 (vivid orange, reads as "danger/diminished")
+    "flat_fifth": "#b5f53e",       # NEW — Locrian ♭5 (acid lime, clearly distinct from ♭3 orange)
     "major_sixth": "#ffd166",
     "leading": "#00b4d8",
     "flat_seventh": "#d62828",  # NEW — Mixolydian ♭7 (deep orange-red, reads as "flattened")
@@ -47,7 +47,7 @@ DEGREE_TEXT: dict[str, str] = {
     "minor_third": "#ffffff",
     "sharp_fourth": "#ffffff",
     "fifth": "#000000",
-    "flat_fifth": "#ffffff",
+    "flat_fifth": "#000000",
     "major_sixth": "#000000",
     "leading": "#ffffff",
     "flat_seventh": "#ffffff",

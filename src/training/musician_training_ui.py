@@ -1221,7 +1221,9 @@ async function createSession() {
     if (!freq) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = accentType === 'root' || accentType === 'minor_second' || accentType === 'minor_third' || accentType === 'major_sixth' || accentType === 'sharp_fourth'
+    osc.type = accentType === 'root' || accentType === 'minor_second' || accentType === 'minor_third'
+        || accentType === 'flat_fifth' || accentType === 'flat_seventh'
+        || accentType === 'major_sixth' || accentType === 'sharp_fourth'
       ? 'triangle'
       : 'sine';
     osc.frequency.value = freq;
