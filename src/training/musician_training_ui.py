@@ -921,17 +921,6 @@ async function createSession() {
       .replace(/([A-G])#/g, '$1 sharp')
       .replace(/([A-G])b/g, '$1 flat');
     const tonic = findTonicStart(pos, mode);
-    // Prefer low E string for the TTS location when root falls within 2 frets of the position anchor.
-    // This lets Locrian (root one fret below Ionian anchor) announce from low E without adding
-    // phantom fretboard dots to the template for other modes.
-    let tonicOverride = tonic;
-    if (!tonic || tonic.string !== 6) {
-      const baseFret = ((modeRootPc - 4 + 12) % 12);  // open low E = pc 4
-      const nearFret = baseFret + 12 * Math.round((pos.root_fret - baseFret) / 12);
-      if (nearFret >= 0 && nearFret <= 22 && Math.abs(nearFret - pos.root_fret) <= 2) {
-        tonicOverride = {string: 6, fret: nearFret};
-      }
-    }
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
     const modeRootPc = findModeRootPitchClass(_currentKey, mode);
     const rawTonicName = noteNames[modeRootPc] || 'D';
@@ -1091,6 +1080,17 @@ async function createSession() {
     const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
     const sorted = (notes || []).slice().sort((a,b) => a.midi - b.midi);
+    // Synthesize root dot on low E at root_fret-1 when mode root lands there (e.g. Locrian root 1 fret below G/river anchor).
+    // Only adds the dot when the pitch class matches exactly; no effect on other modes.
+    const _synPos = _positions[_currentPos];
+    if (_synPos && _synPos.root_fret > 0) {
+      const synthFret = _synPos.root_fret - 1;
+      const synthMidi = 40 + synthFret;  // open low E2 = MIDI 40
+      if (synthMidi % 12 === rootPc && !sorted.some(n => n.string === 6 && n.fret === synthFret)) {
+        sorted.push({string: 6, fret: synthFret, midi: synthMidi});
+        sorted.sort((a,b) => a.midi - b.midi);
+      }
+    }
     sorted.forEach((n, i) => {
       const row = n.string - 1;  // string 1→row 0 (top), string 6→row 5 (bottom)
       const y = TOP + row * strGap;
