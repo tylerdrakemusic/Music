@@ -68,7 +68,7 @@ _TEMPLATES: dict[str, tuple[int, list[list[int]]]] = {
         [1,  0], [1,  2], [1,  4], [1,  5],
     ]),
     "G_shape": (6, [
-        [6, -1], [6,  0],             # leading tone + root on string 6; -1 anchors Locrian b-root on low E
+        [6,  0],                      # root on string 6 at root_fret
         [5, -3], [5, -1], [5,  0],
         [4, -3], [4, -1], [4,  1],
         [3, -3], [3, -1],
@@ -100,7 +100,7 @@ _TEMPLATES: dict[str, tuple[int, list[list[int]]]] = {
         [1, -2], [1,  0], [1,  2],
     ]),
     "river": (6, [
-        [6, -1], [6,  0], [6,  2],    # leading tone + root + 2nd on string 6
+        [6,  0], [6,  2],             # root on string 6 at root_fret
         [5, -1], [5,  0], [5,  2],
         [4, -1], [4,  1], [4,  2],
         [3, -1], [3,  1], [3,  2],
