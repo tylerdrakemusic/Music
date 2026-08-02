@@ -47,10 +47,11 @@ def _normalize_phrase(phrase: str) -> str:
     '石'     → stripped   (CAGED shape prefix; English word follows, e.g. '石 Rock')
     '川'     → stripped   (CAGED shape prefix; English word follows, e.g. '川 River')
     """
+    phrase = phrase.replace("\u77f3", "").replace("\u5ddd", "")  # strip CJK shape prefixes (石 Rock, 川 River)
+    phrase = phrase.replace("  ", " ").strip()  # collapse any double-space left after prefix removal
     phrase = phrase.replace("#", " sharp")
     phrase = phrase.replace("A major", "Ay major")
     phrase = phrase.replace("A shape", "Ay shape")
-    phrase = phrase.replace("石 ", "").replace("川 ", "")
     return phrase
 
 
