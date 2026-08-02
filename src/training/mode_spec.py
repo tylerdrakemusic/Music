@@ -34,6 +34,7 @@ DEGREE_COLORS: dict[str, str] = {
     "minor_third": "#fb5607",
     "sharp_fourth": "#b15dff",   # NEW — Lydian ♯4 (bright violet, distinct)
     "fifth": "#00e5cc",
+    "flat_fifth": "#ff6b35",       # NEW — Locrian ♭5 (vivid orange, reads as "danger/diminished")
     "major_sixth": "#ffd166",
     "leading": "#00b4d8",
     "flat_seventh": "#d62828",  # NEW — Mixolydian ♭7 (deep orange-red, reads as "flattened")
@@ -46,6 +47,7 @@ DEGREE_TEXT: dict[str, str] = {
     "minor_third": "#ffffff",
     "sharp_fourth": "#ffffff",
     "fifth": "#000000",
+    "flat_fifth": "#ffffff",
     "major_sixth": "#000000",
     "leading": "#ffffff",
     "flat_seventh": "#ffffff",
@@ -58,6 +60,7 @@ DEGREE_STROKE: dict[str, str] = {
     "minor_third": "#000000",
     "sharp_fourth": "#000000",
     "fifth": "#000000",
+    "flat_fifth": "#000000",
     "major_sixth": "#000000",
     "leading": "#000000",
     "flat_seventh": "#000000",
@@ -176,9 +179,19 @@ MODE_SPEC: dict[str, ModeSpec] = {
         "root_offset": 11,
         "intervals": (0, 1, 3, 5, 6, 8, 10, 12),
         "tts_label": "Locrian",
-        "degrees": {0: _deg("root", "Root"), 4: _deg("third", "3rd"), 7: _deg("fifth", "5th")},
-        "accents": (),
-        "characteristic": None,
+        "degrees": {
+            0: _deg("root", "Root"),
+            1: _deg("minor_second", "♭2"),
+            3: _deg("minor_third", "♭3"),
+            6: _deg("flat_fifth", "♭5"),
+            10: _deg("flat_seventh", "♭7"),
+        },
+        "accents": (1, 6),
+        "characteristic": {
+            "interval": 6,
+            "name": "flattened fifth",
+            "callout": "listen for the flattened fifth and flattened second, the Locrian sound",
+        },
     },
 }
 
