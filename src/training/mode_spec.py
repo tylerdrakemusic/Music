@@ -34,6 +34,7 @@ DEGREE_COLORS: dict[str, str] = {
     "minor_third": "#fb5607",
     "sharp_fourth": "#b15dff",   # NEW — Lydian ♯4 (bright violet, distinct)
     "fifth": "#00e5cc",
+    "flat_fifth": "#b5f53e",       # NEW — Locrian ♭5 (acid lime, clearly distinct from ♭3 orange)
     "major_sixth": "#ffd166",
     "leading": "#00b4d8",
     "flat_seventh": "#d62828",  # NEW — Mixolydian ♭7 (deep orange-red, reads as "flattened")
@@ -46,6 +47,7 @@ DEGREE_TEXT: dict[str, str] = {
     "minor_third": "#ffffff",
     "sharp_fourth": "#ffffff",
     "fifth": "#000000",
+    "flat_fifth": "#000000",
     "major_sixth": "#000000",
     "leading": "#ffffff",
     "flat_seventh": "#ffffff",
@@ -58,6 +60,7 @@ DEGREE_STROKE: dict[str, str] = {
     "minor_third": "#000000",
     "sharp_fourth": "#000000",
     "fifth": "#000000",
+    "flat_fifth": "#000000",
     "major_sixth": "#000000",
     "leading": "#000000",
     "flat_seventh": "#000000",
@@ -176,9 +179,19 @@ MODE_SPEC: dict[str, ModeSpec] = {
         "root_offset": 11,
         "intervals": (0, 1, 3, 5, 6, 8, 10, 12),
         "tts_label": "Locrian",
-        "degrees": {0: _deg("root", "Root"), 4: _deg("third", "3rd"), 7: _deg("fifth", "5th")},
-        "accents": (),
-        "characteristic": None,
+        "degrees": {
+            0: _deg("root", "Root"),
+            1: _deg("minor_second", "♭2"),
+            3: _deg("minor_third", "♭3"),
+            6: _deg("flat_fifth", "♭5"),
+            10: _deg("flat_seventh", "♭7"),
+        },
+        "accents": (1, 6),
+        "characteristic": {
+            "interval": 6,
+            "name": "flattened fifth",
+            "callout": "listen for the flattened fifth and flattened second, the Locrian sound",
+        },
     },
 }
 
@@ -253,6 +266,15 @@ def build_mode_phrase(
         if note.get("midi", -1) % 12 == root_pc:
             if tonic is None or note.get("midi", 0) < tonic.get("midi", 0):
                 tonic = note
+    # Prefer low E string when root falls within 2 frets of the position anchor — covers
+    # modes like Locrian whose root is one fret below the Ionian anchor on the same shape.
+    if tonic is None or tonic.get("string") != 6:
+        base_fret = (root_pc - 4 + 12) % 12  # open low E = pc E2 = pc 4
+        root_fret = pos.get("root_fret") or 0
+        octave = round((root_fret - base_fret) / 12)
+        near_fret = base_fret + 12 * octave
+        if 0 <= near_fret <= 22 and abs(near_fret - root_fret) <= 2:
+            tonic = {"string": 6, "fret": near_fret}
     tonic_location = ""
     if tonic is not None:
         string_name = _STRING_NAMES.get(tonic.get("string", 0), "unknown")
