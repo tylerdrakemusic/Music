@@ -926,13 +926,23 @@ async function createSession() {
     const rawTonicName = noteNames[modeRootPc] || 'D';
     const tonicName = rawTonicName.replace(/^([A-G])#$/, '$1 sharp').replace(/^([A-G])b$/, '$1 flat');
     const stringNames = {1: 'high e', 2: 'B', 3: 'G', 4: 'D', 5: 'A', 6: 'low E'};
+    // Prefer low E when root falls within 2 frets of the position anchor (e.g. Locrian root 1 fret below G/river anchor).
+    // No fretboard dots are added — this is TTS location only.
+    let effectiveTonic = tonic;
+    if (!tonic || tonic.string !== 6) {
+      const baseFret = ((modeRootPc - 4 + 12) % 12);  // open low E = pc 4 (E2)
+      const nearFret = baseFret + 12 * Math.round((pos.root_fret - baseFret) / 12);
+      if (nearFret >= 0 && nearFret <= 22 && Math.abs(nearFret - pos.root_fret) <= 2) {
+        effectiveTonic = {string: 6, fret: nearFret};
+      }
+    }
     let tonicLocation = '';
-    if (tonic) {
-      const stringName = stringNames[tonic.string] || 'unknown';
-      if (tonic.fret === 0) {
+    if (effectiveTonic) {
+      const stringName = stringNames[effectiveTonic.string] || 'unknown';
+      if (effectiveTonic.fret === 0) {
         tonicLocation = `on the open ${stringName} string`;
       } else {
-        tonicLocation = `on the ${stringName} string at fret ${tonic.fret}`;
+        tonicLocation = `on the ${stringName} string at fret ${effectiveTonic.fret}`;
       }
     }
     const spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
@@ -1004,6 +1014,22 @@ async function createSession() {
     const sequence  = [...asc, ...desc, ...returnAsc];
     return {sequence, allAsc};
   }
+
+  // Returns pos.notes augmented with the synthetic root on low E when the mode root falls
+  // at root_fret-1 on string 6 (e.g. Locrian root B at fret 7 in G/river shapes).
+  function getEffectiveNotes(pos) {
+    if (!pos) return [];
+    const notes = (pos.notes || []).slice();
+    const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
+    if (pos.root_fret > 0) {
+      const synthFret = pos.root_fret - 1;
+      const synthMidi = 40 + synthFret;
+      if (synthMidi % 12 === rootPc && !notes.some(n => n.string === 6 && n.fret === synthFret)) {
+        notes.push({string: 6, fret: synthFret, midi: synthMidi});
+      }
+    }
+    return notes;
+  }
   // Standard guitar fret dot positions
   const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19, 21]);
   // Degree colors are driven by mode_spec.py (DEGREE_COLORS/TEXT/STROKE) so the
@@ -1069,7 +1095,8 @@ async function createSession() {
     // Open-string notes appear to the LEFT of the nut
     const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
-    const sorted = (notes || []).slice().sort((a,b) => a.midi - b.midi);
+    const sorted = getEffectiveNotes(_positions[_currentPos]).slice().sort((a,b) => a.midi - b.midi);
+    const _synPos = null;  // synthetic note now handled by getEffectiveNotes
     sorted.forEach((n, i) => {
       const row = n.string - 1;  // string 1→row 0 (top), string 6→row 5 (bottom)
       const y = TOP + row * strGap;
@@ -1221,7 +1248,9 @@ async function createSession() {
     if (!freq) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = accentType === 'root' || accentType === 'minor_second' || accentType === 'minor_third' || accentType === 'major_sixth' || accentType === 'sharp_fourth'
+    osc.type = accentType === 'root' || accentType === 'minor_second' || accentType === 'minor_third'
+        || accentType === 'flat_fifth' || accentType === 'flat_seventh'
+        || accentType === 'major_sixth' || accentType === 'sharp_fourth'
       ? 'triangle'
       : 'sine';
     osc.frequency.value = freq;
@@ -1242,7 +1271,7 @@ async function createSession() {
     if (!pos) return;
     const reps = Math.max(1, Math.min(20, parseInt(document.getElementById('scale-reps').value) || 2));
     const noteDurationMs = Math.round(60000 / _scaleBpm);
-    const {sequence, allAsc} = buildScalePlayback(pos.notes, _currentKey, _currentMode);
+    const {sequence, allAsc} = buildScalePlayback(getEffectiveNotes(pos), _currentKey, _currentMode);
     _scalePlaying = true;
     _scaleStopFlag = false;
     const btn = document.getElementById('scale-play-btn');

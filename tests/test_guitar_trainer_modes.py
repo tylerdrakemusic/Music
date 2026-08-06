@@ -179,6 +179,67 @@ def test_eb_lydian_phrase_starts_on_low_e_fret_4() -> None:
     assert "low E string at fret 4" in phrase, phrase
 
 
+# ---------------------------------------------------------------------------
+# Locrian-specific (FR-20260801-locrian-mode-complete)
+# ---------------------------------------------------------------------------
+
+def test_locrian_degrees_map_only_scale_intervals() -> None:
+    degrees = MODE_SPEC["Locrian"]["degrees"]
+    intervals = set(MODE_SPEC["Locrian"]["intervals"])
+    for interval in degrees:
+        assert interval in intervals, f"degree interval {interval} not in Locrian scale"
+
+
+def test_locrian_flat_fifth_degree_type() -> None:
+    degrees = MODE_SPEC["Locrian"]["degrees"]
+    assert degrees[6]["type"] == "flat_fifth"
+    assert degrees[0]["type"] == "root"
+    assert degrees[1]["type"] == "minor_second"
+    assert degrees[3]["type"] == "minor_third"
+    assert degrees[10]["type"] == "flat_seventh"
+
+
+def test_flat_fifth_color_is_distinct() -> None:
+    c = DEGREE_COLORS["flat_fifth"]
+    assert c.startswith("#")
+    # Must differ from every other Locrian-visible degree so the tritone reads unambiguously.
+    assert c not in {
+        DEGREE_COLORS["root"],
+        DEGREE_COLORS["minor_second"],
+        DEGREE_COLORS["minor_third"],
+        DEGREE_COLORS["fifth"],
+        DEGREE_COLORS["flat_seventh"],
+        DEGREE_COLORS["sharp_fourth"],
+        DEGREE_COLORS["other"],
+    }
+
+
+def test_locrian_characteristic_is_flat_fifth() -> None:
+    ch = MODE_SPEC["Locrian"]["characteristic"]
+    assert ch is not None
+    assert ch["interval"] == 6
+    assert "fifth" in ch["name"].lower()
+    assert ch.get("callout")
+
+
+def test_locrian_characteristic_callout_mentions_flat_second() -> None:
+    ch = MODE_SPEC["Locrian"]["characteristic"]
+    assert ch is not None
+    assert "second" in ch["callout"].lower()
+
+
+def test_locrian_accents_include_flat_two_and_flat_five() -> None:
+    assert set(MODE_SPEC["Locrian"]["accents"]) == {1, 6}
+
+
+def test_locrian_legend_includes_flat_five() -> None:
+    items = legend_items("Locrian")
+    labels = [label for _color, label in items]
+    colors = [color for color, _label in items]
+    assert any("5" in lbl for lbl in labels)
+    assert DEGREE_COLORS["flat_fifth"] in colors
+
+
 def test_d_eb_position1_low_e_notes_stay_in_scale() -> None:
     """Added low E notes must remain within the parent major scale."""
     d_pcs = {2, 4, 6, 7, 9, 11, 1}    # D major
