@@ -22,7 +22,7 @@ from utils.init_db import get_connection  # noqa: E402
 from training.practice_stats import get_practice_stats  # noqa: E402
 from training.scale_data import (  # noqa: E402
     SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence,
-    PENTATONIC_POSITIONS, _MINOR_PENTA_POSITIONS,
+    PENTATONIC_POSITIONS, _MINOR_PENTA_POSITIONS, BOX_PENTA_POSITIONS,
 )
 from training.scale_tts import get_instructor_audio  # noqa: E402
 from training.mode_spec import (  # noqa: E402
@@ -876,10 +876,28 @@ async function createSession() {
       );
       _positions = await r.json();
     } catch (e) { console.error('scale positions load failed', e); return; }
+
     const sel = document.getElementById('scale-position');
-    sel.innerHTML = _positions.map((p, i) =>
-      `<option value="${i}">${formatPositionLabel(p)}</option>`
-    ).join('');
+    const hasGroups = _positions.length && _positions[0].group;
+    if (hasGroups) {
+      // Option B: grouped <optgroup> — Box Positions then CAGED Shapes
+      const boxItems  = _positions.filter(p => p.group === 'box');
+      const cagedItems = _positions.filter(p => p.group === 'caged');
+      let html = `<optgroup label="── Box Positions (${boxItems.length})">`;
+      boxItems.forEach((p, i) => {
+        html += `<option value="${i}">${p.label}</option>`;
+      });
+      html += `</optgroup><optgroup label="── CAGED Shapes">`;
+      cagedItems.forEach((p, i) => {
+        html += `<option value="${boxItems.length + i}">${p.label}</option>`;
+      });
+      html += '</optgroup>';
+      sel.innerHTML = html;
+    } else {
+      sel.innerHTML = _positions.map((p, i) =>
+        `<option value="${i}">${formatPositionLabel(p)}</option>`
+      ).join('');
+    }
     onPositionChange();
     drawStaves(key, _currentMode, -1);
   }
@@ -1694,25 +1712,41 @@ def api_scale_positions():
         positions = SCALE_POSITIONS.get(key)
         if positions is None:
             abort(400)
-    elif family == "major_pentatonic":
-        positions = PENTATONIC_POSITIONS.get(key)
-        if not positions:
-            abort(400)
-    else:  # minor_pentatonic
-        positions = _MINOR_PENTA_POSITIONS.get(key)
-        if not positions:
+        return jsonify([
+            {
+                "label": p["label"],
+                "root_string": p["root_string"],
+                "root_fret": p["root_fret"],
+                "instructor_phrase": p["instructor_phrase"],
+                "notes": p["notes"],
+            }
+            for p in positions
+        ])
+    else:
+        # Pentatonic: return box positions (group="box") then CAGED positions (group="caged")
+        box_list = BOX_PENTA_POSITIONS.get(key, {}).get(family, [])
+        caged_list = (
+            PENTATONIC_POSITIONS.get(key, [])
+            if family == "major_pentatonic"
+            else _MINOR_PENTA_POSITIONS.get(key, [])
+        )
+        if not box_list and not caged_list:
             abort(400)
 
-    return jsonify([
-        {
-            "label": p["label"],
-            "root_string": p["root_string"],
-            "root_fret": p["root_fret"],
-            "instructor_phrase": p["instructor_phrase"],
-            "notes": p["notes"],
-        }
-        for p in positions
-    ])
+        def _fmt(p, group):
+            return {
+                "label": p["label"],
+                "root_string": p["root_string"],
+                "root_fret": p["root_fret"],
+                "instructor_phrase": p["instructor_phrase"],
+                "notes": p["notes"],
+                "group": group,
+            }
+
+        return jsonify(
+            [_fmt(p, "box") for p in box_list] +
+            [_fmt(p, "caged") for p in caged_list]
+        )
 
 
 @app.route("/api/scale-log", methods=["GET", "POST"])

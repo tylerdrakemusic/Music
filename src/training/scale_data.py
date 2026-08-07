@@ -540,6 +540,91 @@ _MINOR_PENTA_POSITIONS: dict[str, list["CagedPosition"]] = {
     for key in SCALE_POSITIONS
 }
 
+# ---------------------------------------------------------------------------
+# Traditional 5-box pentatonic positions (FR-20260806, Option B grouped dropdown)
+#
+# Each box covers a ~5-fret window on the neck.  Notes are derived directly
+# from open-string tuning and pentatonic pitch-class sets — independent of the
+# CAGED filter above.
+#
+# For minor pentatonic the root is the relative minor of *key* (5B design:
+# key=C → A minor penta root).
+#
+# Box anchors are placed at each scale degree ascending from the root on
+# string 6 (low E).  The window for box N is [anchor, anchor+4].
+# ---------------------------------------------------------------------------
+
+# Open-string PCs: string 6=low E(4) … string 1=high e(4)
+_OPEN_PC: dict[int, int] = {6: 4, 5: 9, 4: 2, 3: 7, 2: 11, 1: 4}
+
+_MAJ_PENTA_PCS_SET: frozenset[int] = frozenset({0, 2, 4, 7, 9})
+_MIN_PENTA_PCS_SET: frozenset[int] = frozenset({0, 3, 5, 7, 10})
+
+
+def _box_positions_for_key(key: str, family: str) -> list["CagedPosition"]:
+    """Return 5 classic box positions for *key* + *family*."""
+    from training.pentatonic_spec import PENTATONIC_SPEC, _KEY_PC as _PSPEC_KEY_PC
+
+    spec = PENTATONIC_SPEC[family]
+    # intervals[:-1] gives the 5 unique intervals (last is octave repeat)
+    unique_intervals = list(spec["intervals"][:-1])
+
+    if family == "minor_pentatonic":
+        root_pc = (_PSPEC_KEY_PC.get(key, 0) + _RELATIVE_MINOR_OFFSET) % 12
+    else:
+        root_pc = _PSPEC_KEY_PC.get(key, 0)
+
+    penta_pcs: frozenset[int] = (
+        _MAJ_PENTA_PCS_SET if family == "major_pentatonic" else _MIN_PENTA_PCS_SET
+    )
+
+    # Root fret on string 6 (lowest root in first position, ≥ 0)
+    str6_open_pc = _OPEN_PC[6]
+    root_fret_str6 = (root_pc - str6_open_pc) % 12
+
+    # Box N anchors at root_fret_str6 + interval[N]
+    positions: list[CagedPosition] = []
+    for box_num, interval in enumerate(unique_intervals, 1):
+        anchor = root_fret_str6 + interval
+
+        notes: list[ScaleNote] = []
+        for str_num in range(6, 0, -1):  # low E → high e
+            open_pc = _OPEN_PC[str_num]
+            for fret in range(anchor, anchor + 5):
+                if fret > 24:
+                    break
+                pc = (open_pc + fret) % 12
+                # pc relative to root_pc
+                rel = (pc - root_pc) % 12
+                if rel in penta_pcs:
+                    midi = _OPEN_MIDI[str_num] + fret
+                    notes.append(ScaleNote(string=str_num, fret=fret, midi=midi))
+
+        label = f"Box {box_num} — {anchor}th fret"
+        phrase = (
+            f"Box {box_num} — start on the {anchor}th fret — "
+            f"{key} {spec['tts_label']}."
+        )
+        positions.append(CagedPosition(
+            label=label,
+            root_string="low E string",
+            root_fret=anchor,
+            instructor_phrase=phrase,
+            notes=notes,
+        ))
+
+    return positions
+
+
+# BOX_PENTA_POSITIONS[key][family] = list of 5 CagedPosition
+BOX_PENTA_POSITIONS: dict[str, dict[str, list["CagedPosition"]]] = {
+    key: {
+        "major_pentatonic": _box_positions_for_key(key, "major_pentatonic"),
+        "minor_pentatonic": _box_positions_for_key(key, "minor_pentatonic"),
+    }
+    for key in SCALE_POSITIONS
+}
+
 
 def get_pentatonic_sequence(
     position_idx: int,

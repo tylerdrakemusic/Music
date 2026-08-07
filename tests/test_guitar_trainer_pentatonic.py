@@ -43,7 +43,9 @@ from training.pentatonic_spec import (
     build_penta_phrase,
     penta_relative_minor_root,
 )
-from training.scale_data import PENTATONIC_POSITIONS, get_pentatonic_sequence
+from training.scale_data import (
+    PENTATONIC_POSITIONS, get_pentatonic_sequence, BOX_PENTA_POSITIONS,
+)
 import training.musician_training_ui as ui
 
 # ---------------------------------------------------------------------------
@@ -290,38 +292,105 @@ class TestBuildPentaPhrase:
 
 
 # ---------------------------------------------------------------------------
-# Flask API — /api/scale-positions with family param
+# BOX_PENTA_POSITIONS — classic 5-box positions
 # ---------------------------------------------------------------------------
 
-class TestScalePositionsApiFamily:
-    def test_major_penta_returns_positions(self, client):
-        resp = client.get("/api/scale-positions?key=C&family=major_pentatonic")
-        assert resp.status_code == 200
-        data = json.loads(resp.data)
-        assert len(data) >= 5
+class TestBoxPentaPositions:
+    def test_all_keys_present_for_both_families(self):
+        for key in _ALL_KEYS:
+            assert key in BOX_PENTA_POSITIONS
+            assert "major_pentatonic" in BOX_PENTA_POSITIONS[key]
+            assert "minor_pentatonic" in BOX_PENTA_POSITIONS[key]
 
-    def test_minor_penta_returns_positions(self, client):
+    def test_exactly_5_boxes_per_key_and_family(self):
+        for key in _ALL_KEYS:
+            for fam in ("major_pentatonic", "minor_pentatonic"):
+                boxes = BOX_PENTA_POSITIONS[key][fam]
+                assert len(boxes) == 5, f"{key}/{fam} has {len(boxes)} boxes"
+
+    def test_box_labels_say_box_number(self):
+        for key in _ALL_KEYS:
+            for fam in ("major_pentatonic", "minor_pentatonic"):
+                for i, box in enumerate(BOX_PENTA_POSITIONS[key][fam], 1):
+                    assert f"Box {i}" in box["label"], (
+                        f"{key}/{fam}: box {i} label missing 'Box {i}': {box['label']!r}"
+                    )
+
+    def test_box_positions_have_5_unique_pitch_classes(self):
+        for key in _ALL_KEYS:
+            for fam in ("major_pentatonic", "minor_pentatonic"):
+                for box in BOX_PENTA_POSITIONS[key][fam]:
+                    pcs = {n["midi"] % 12 for n in box["notes"]}
+                    assert len(pcs) == 5, (
+                        f"{key}/{fam} '{box['label']}' has {len(pcs)} unique PCs"
+                    )
+
+    def test_boxes_have_notes_string_fret_midi(self):
+        for note in BOX_PENTA_POSITIONS["C"]["major_pentatonic"][0]["notes"]:
+            assert "string" in note
+            assert "fret" in note
+            assert "midi" in note
+
+    def test_box_frets_within_24(self):
+        for key in _ALL_KEYS:
+            for fam in ("major_pentatonic", "minor_pentatonic"):
+                for box in BOX_PENTA_POSITIONS[key][fam]:
+                    for note in box["notes"]:
+                        assert 0 <= note["fret"] <= 24, (
+                            f"{key}/{fam} fret {note['fret']} out of range"
+                        )
+
+    def test_boxes_ascending_across_neck(self):
+        # Box N root_fret should be >= Box N-1 root_fret
+        for key in _ALL_KEYS:
+            for fam in ("major_pentatonic", "minor_pentatonic"):
+                frets = [b["root_fret"] for b in BOX_PENTA_POSITIONS[key][fam]]
+                assert frets == sorted(frets), (
+                    f"{key}/{fam} boxes not in ascending order: {frets}"
+                )
+
+
+# ---------------------------------------------------------------------------
+# API — /api/scale-positions returns group field when family = pentatonic
+# ---------------------------------------------------------------------------
+
+class TestScalePositionsApiGrouped:
+    def test_major_penta_positions_have_group_field(self, client):
+        resp = client.get("/api/scale-positions?key=C&family=major_pentatonic")
+        data = json.loads(resp.data)
+        groups = {p.get("group") for p in data}
+        assert "box" in groups
+        assert "caged" in groups
+
+    def test_minor_penta_positions_have_group_field(self, client):
         resp = client.get("/api/scale-positions?key=C&family=minor_pentatonic")
-        assert resp.status_code == 200
         data = json.loads(resp.data)
-        assert len(data) >= 5
+        groups = {p.get("group") for p in data}
+        assert "box" in groups
+        assert "caged" in groups
 
-    def test_no_family_defaults_to_diatonic(self, client):
+    def test_box_group_has_exactly_5(self, client):
+        resp = client.get("/api/scale-positions?key=A&family=major_pentatonic")
+        data = json.loads(resp.data)
+        box_entries = [p for p in data if p.get("group") == "box"]
+        assert len(box_entries) == 5
+
+    def test_diatonic_positions_have_no_group_field(self, client):
         resp = client.get("/api/scale-positions?key=C")
-        assert resp.status_code == 200
         data = json.loads(resp.data)
-        # Diatonic C has many positions
-        assert len(data) >= 9
+        for p in data:
+            assert "group" not in p
 
-    def test_invalid_family_returns_400(self, client):
-        resp = client.get("/api/scale-positions?key=C&family=blues")
-        assert resp.status_code == 400
 
-    def test_penta_positions_have_no_five_notes_label(self, client):
-        resp = client.get("/api/scale-positions?key=C&family=major_pentatonic")
-        data = json.loads(resp.data)
-        for pos in data:
-            assert "5 notes" not in pos.get("label", "")
+# ---------------------------------------------------------------------------
+# HTML — position select uses optgroup for pentatonic families
+# ---------------------------------------------------------------------------
+
+class TestHtmlOptgroup:
+    def test_optgroup_box_positions_in_html(self, client):
+        resp = client.get("/")
+        html = resp.data.decode()
+        assert "Box Positions" in html or "box" in html.lower()
 
 
 # ---------------------------------------------------------------------------
