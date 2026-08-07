@@ -20,7 +20,10 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 from utils.init_db import get_connection  # noqa: E402
 from training.practice_stats import get_practice_stats  # noqa: E402
-from training.scale_data import SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence  # noqa: E402
+from training.scale_data import (  # noqa: E402
+    SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence,
+    PENTATONIC_POSITIONS, _MINOR_PENTA_POSITIONS,
+)
 from training.scale_tts import get_instructor_audio  # noqa: E402
 from training.mode_spec import (  # noqa: E402
     MODE_SPEC,
@@ -232,7 +235,11 @@ HTML = r"""
   .scale-status{font-size:.8rem;color:#6fdc6f;min-height:18px;margin-bottom:10px}
   .scale-log-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
   .scale-log-table th{color:var(--muted);text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)}
-  .scale-log-table td{padding:4px 8px;border-bottom:1px solid #222;color:#aaa}</style>
+  .scale-log-table td{padding:4px 8px;border-bottom:1px solid #222;color:#aaa}
+  /* Pentatonic family pill toggle (FR-20260806) */
+  .family-btn{padding:6px 13px;background:#111;color:#ccc;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:background .12s,color .12s}
+  .family-btn:first-child{border-right:1px solid var(--border)}
+  .family-btn-active{background:var(--accent);color:#fff}</style>
 </style>
 </head>
 <body>
@@ -387,7 +394,13 @@ HTML = r"""
         <option value="B">B major / G# minor</option>
       </select>
     </label>
-    <label>Mode
+    <label style="gap:4px">Family</label>
+    <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:5px;overflow:hidden">
+      <button id="family-btn-diatonic"       onclick="onFamilyChange('diatonic')"       class="family-btn family-btn-active">Diatonic</button>
+      <button id="family-btn-major_penta"    onclick="onFamilyChange('major_penta')"    class="family-btn">Maj Penta</button>
+      <button id="family-btn-minor_penta"    onclick="onFamilyChange('minor_penta')"    class="family-btn" style="border-left:1px solid var(--border)">Min Penta</button>
+    </div>
+    <label id="scale-mode-label">Mode
       <select id="scale-mode" class="scale-select" onchange="onModeChange()">
         <option value="Ionian">Ionian</option>
         <option value="Dorian">Dorian</option>
@@ -836,6 +849,7 @@ async function createSession() {
   let _scaleStopFlag = false;
   let _currentKey = 'C';
   let _currentMode = 'Ionian';
+  let _currentFamily = 'diatonic';  // FR-20260806: diatonic | major_penta | minor_penta
   let _calloutPending = false;  // when true, next phrase appends the mode's characteristic-note callout (set on mode switch only)
   const _scaleTapTimes = [];
   const MAX_TAP_GAP_MS = 3000;
@@ -852,8 +866,14 @@ async function createSession() {
   // ── Load positions from server ───────────────────────────────────────────
   async function loadScalePositions(key) {
     key = key || 'C';
+    const family = _currentFamily === 'diatonic' ? 'diatonic'
+                 : _currentFamily === 'major_penta' ? 'major_pentatonic'
+                 : 'minor_pentatonic';
     try {
-      const r = await fetch('/api/scale-positions?key=' + encodeURIComponent(key));
+      const r = await fetch(
+        '/api/scale-positions?key=' + encodeURIComponent(key) +
+        '&family=' + encodeURIComponent(family)
+      );
       _positions = await r.json();
     } catch (e) { console.error('scale positions load failed', e); return; }
     const sel = document.getElementById('scale-position');
@@ -897,6 +917,29 @@ async function createSession() {
     _positions = [];
     loadScalePositions(_currentKey);
     drawStaves(_currentKey, _currentMode, -1);
+  };
+
+  // FR-20260806: pill toggle between Diatonic / Maj Penta / Min Penta
+  window.onFamilyChange = function(family) {
+    _currentFamily = family;
+    const isDiatonic = family === 'diatonic';
+    // Update pill button active states
+    ['diatonic', 'major_penta', 'minor_penta'].forEach(f => {
+      const btn = document.getElementById('family-btn-' + f);
+      if (btn) {
+        btn.classList.toggle('family-btn-active', f === family);
+        btn.style.background = f === family ? 'var(--accent)' : '#111';
+        btn.style.color      = f === family ? '#fff' : '#ccc';
+      }
+    });
+    // Show/hide Mode selector (only relevant for diatonic)
+    const modeLbl = document.getElementById('scale-mode-label');
+    if (modeLbl) {
+      modeLbl.style.opacity       = isDiatonic ? '1' : '0.3';
+      modeLbl.style.pointerEvents = isDiatonic ? '' : 'none';
+    }
+    _positions = [];
+    loadScalePositions(_currentKey);
   };
 
   window.onModeChange = function() {
@@ -1634,11 +1677,32 @@ def delete_session():
 
 @app.route("/api/scale-positions")
 def api_scale_positions():
-    """Return positions for the given key as JSON. Query param: ?key=C (default) or ?key=G."""
+    """Return positions for the given key as JSON.
+
+    Query params:
+        key=C               (default) — key root
+        family=diatonic     (default) — also accepts major_pentatonic | minor_pentatonic
+    """
     key = request.args.get("key", "C").strip()
-    positions = SCALE_POSITIONS.get(key)
-    if positions is None:
+    family = request.args.get("family", "diatonic").strip()
+
+    _VALID_FAMILIES = {"diatonic", "major_pentatonic", "minor_pentatonic"}
+    if family not in _VALID_FAMILIES:
         abort(400)
+
+    if family == "diatonic":
+        positions = SCALE_POSITIONS.get(key)
+        if positions is None:
+            abort(400)
+    elif family == "major_pentatonic":
+        positions = PENTATONIC_POSITIONS.get(key)
+        if not positions:
+            abort(400)
+    else:  # minor_pentatonic
+        positions = _MINOR_PENTA_POSITIONS.get(key)
+        if not positions:
+            abort(400)
+
     return jsonify([
         {
             "label": p["label"],
