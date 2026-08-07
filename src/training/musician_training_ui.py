@@ -864,8 +864,36 @@ async function createSession() {
     drawStaves(key, _currentMode, -1);
   }
 
+  // ── Mode root label (FR-20260806-guitar-trainer-mode-root-label) ────────
+  // Semitone offset of each mode tonic above the key root, matching MODE_SPEC.
+  const MODE_ROOT_OFFSET = {Ionian:0,Dorian:2,Phrygian:4,Lydian:5,Mixolydian:7,Aeolian:9,Locrian:11};
+  const CHROMATIC_PC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const ENHARMONIC_PC = {Db:'C#',Eb:'D#',Gb:'F#',Ab:'G#',Bb:'A#'};
+  const FLAT_KEY_SET = ['F','Bb','Eb','Ab','Db','Gb'];
+  const TO_FLAT = {'C#':'D♭','D#':'E♭','F#':'G♭','G#':'A♭','A#':'B♭'};
+
+  function modeRootNote(keyVal, mode) {
+    const resolved = ENHARMONIC_PC[keyVal] || keyVal;
+    const idx = CHROMATIC_PC.indexOf(resolved);
+    const rootIdx = (idx + (MODE_ROOT_OFFSET[mode] || 0)) % 12;
+    const raw = CHROMATIC_PC[rootIdx];
+    if (FLAT_KEY_SET.includes(keyVal) && TO_FLAT[raw]) return TO_FLAT[raw];
+    return raw.replace('#', '♯');
+  }
+
+  function populateModeSelect(keyVal) {
+    const modes = ['Ionian','Dorian','Phrygian','Lydian','Mixolydian','Aeolian','Locrian'];
+    const sel = document.getElementById('scale-mode');
+    const current = sel.value || _currentMode;
+    sel.innerHTML = modes.map(m =>
+      `<option value="${m}" ${m===current?'selected':''}>${modeRootNote(keyVal, m)} ${m}</option>`
+    ).join('');
+    _currentMode = sel.value || 'Ionian';
+  }
+
   window.onKeyChange = function() {
     _currentKey = document.getElementById('scale-key').value || 'C';
+    populateModeSelect(_currentKey);
     _positions = [];
     loadScalePositions(_currentKey);
     drawStaves(_currentKey, _currentMode, -1);
@@ -1358,6 +1386,8 @@ async function createSession() {
       ).join('');
     } catch(e) { console.warn('scale log load failed', e); }
   }
+
+  populateModeSelect(_currentKey); // seed on page load (FR-20260806-guitar-trainer-mode-root-label)
 })();
 </script>
 </body>
