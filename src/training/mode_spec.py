@@ -16,6 +16,7 @@ Public API:
     DEGREE_STROKE  : dict[str, str]    — degree type → stroke color
     legend_items(mode)                 — [(color, label), …] for the legend
     build_mode_phrase(pos, mode, key, include_callout=False) -> str
+    mode_root_note(key, mode) -> str   — display note name (♭/♯) for dropdown label (FR-20260806)
 """
 from __future__ import annotations
 
@@ -233,6 +234,16 @@ def _spoken_note_name(pc: int, key: str) -> str:
     name = re.sub(r"^([A-G])#$", r"\1 sharp", raw)
     name = re.sub(r"^([A-G])b$", r"\1 flat", name)
     return name
+
+
+def mode_root_note(key: str, mode: str) -> str:
+    """Display note name (using ♭/♯) for the mode tonic relative to *key*.
+
+    Used as the prefix in the mode dropdown label, e.g. "D Dorian" when key=C.
+    """
+    pc = mode_root_pitch_class(key, mode)
+    raw = _FLAT_NAMES[pc] if key in _FLAT_KEYS else _SHARP_NAMES[pc]
+    return raw.replace("b", "♭").replace("#", "♯")
 
 
 def build_mode_phrase(
