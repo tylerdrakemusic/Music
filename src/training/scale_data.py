@@ -5,9 +5,14 @@ FR-20260524-scale-data-sqlite-migration — migrated from hardcoded Python to
 SQLite-backed template generation. Supports C major, G major, F major.
 
 Public API (unchanged):
-    SCALE_POSITIONS : dict[str, list[CagedPosition]]
-    CAGED_POSITIONS : list[CagedPosition]   (C major alias)
-    MIDI_TO_FREQ    : dict[int, float]
+    SCALE_POSITIONS   : dict[str, list[CagedPosition]]
+    CAGED_POSITIONS   : list[CagedPosition]   (C major alias)
+    MIDI_TO_FREQ      : dict[int, float]
+    get_scale_sequence(position_idx, key='C') -> list[int]
+
+Added (FR-20260806-guitar-trainer-pentatonic-scales):
+    PENTATONIC_POSITIONS  : dict[str, list[CagedPosition]]  — 5-note positions, all 12 keys
+    get_pentatonic_sequence(position_idx, key, family) -> list[int]
     get_scale_sequence(position_idx, key='C') -> list[int]
 """
 from __future__ import annotations
@@ -442,3 +447,125 @@ def get_scale_sequence(position_idx: int, key: str = "C") -> list[int]:
             asc.append(midi)
     desc = list(reversed(asc[:-1]))
     return asc + desc
+
+
+# ---------------------------------------------------------------------------
+# Pentatonic positions (FR-20260806-guitar-trainer-pentatonic-scales)
+#
+# Strategy: derive from existing diatonic SCALE_POSITIONS by filtering each
+# position's notes to only those whose pitch-class (relative to the key root)
+# matches the pentatonic intervals.
+#
+# Major pentatonic: {0, 2, 4, 7, 9}
+# Minor pentatonic: {0, 3, 5, 7, 10} — rooted at the relative minor of *key*
+#   (5B design: key selector = relative major; A min penta lives under key=C)
+#
+# Position labels use CAGED shape style (3B), no "5 notes" text.
+# ---------------------------------------------------------------------------
+
+_MAJOR_PENTA_PCS: frozenset[int] = frozenset({0, 2, 4, 7, 9})
+_MINOR_PENTA_PCS: frozenset[int] = frozenset({0, 3, 5, 7, 10})
+
+# Pitch-class of each key root
+_KEY_PC: dict[str, int] = {
+    "C": 0, "Db": 1, "C#": 1, "D": 2, "Eb": 3, "D#": 3, "E": 4, "F": 5,
+    "F#": 6, "Gb": 6, "G": 7, "Ab": 8, "G#": 8, "A": 9, "Bb": 10, "A#": 10, "B": 11,
+}
+_RELATIVE_MINOR_OFFSET = 9  # semitones above major tonic → relative minor root
+
+
+def _filter_to_pentatonic(
+    position: "CagedPosition",
+    key_root_pc: int,
+    allowed_pcs: frozenset[int],
+    minor_root_pc: int | None = None,
+) -> "CagedPosition | None":
+    """Return a copy of *position* keeping only notes in *allowed_pcs*.
+
+    For minor pentatonic, intervals are measured from *minor_root_pc*.
+    Returns None if fewer than 5 notes remain.
+    """
+    root_pc = minor_root_pc if minor_root_pc is not None else key_root_pc
+    filtered: list[ScaleNote] = []
+    for note in position["notes"]:
+        rel = (note["midi"] - root_pc) % 12
+        if rel in allowed_pcs:
+            filtered.append(note)
+
+    if len(filtered) < 5:
+        return None
+
+    # Remove "5 notes" text if accidentally present; keep shape name (3B)
+    label = position["label"].replace(", 5 notes", "").replace(" (5 notes)", "")
+
+    return CagedPosition(
+        label=label,
+        root_string=position["root_string"],
+        root_fret=position["root_fret"],
+        instructor_phrase=position["instructor_phrase"],
+        notes=filtered,
+    )
+
+
+def _build_pentatonic_positions_for_key(key: str) -> dict[str, list["CagedPosition"]]:
+    """Return {family: [positions]} for one key by filtering diatonic positions."""
+    diatonic = SCALE_POSITIONS.get(key, [])
+    key_root_pc = _KEY_PC.get(key, 0)
+    minor_root_pc = (key_root_pc + _RELATIVE_MINOR_OFFSET) % 12
+
+    major_positions: list[CagedPosition] = []
+    minor_positions: list[CagedPosition] = []
+
+    for pos in diatonic:
+        maj = _filter_to_pentatonic(pos, key_root_pc, _MAJOR_PENTA_PCS)
+        if maj is not None:
+            major_positions.append(maj)
+        mn = _filter_to_pentatonic(pos, key_root_pc, _MINOR_PENTA_PCS, minor_root_pc)
+        if mn is not None:
+            minor_positions.append(mn)
+
+    return {"major_pentatonic": major_positions, "minor_pentatonic": minor_positions}
+
+
+# Build the full table at import time (cheap — filters in-memory lists)
+# PENTATONIC_POSITIONS[key] = major pentatonic positions for that key.
+# Use get_pentatonic_positions(key, family) for either family.
+PENTATONIC_POSITIONS: dict[str, list["CagedPosition"]] = {
+    key: _build_pentatonic_positions_for_key(key)["major_pentatonic"]
+    for key in SCALE_POSITIONS
+}
+
+_MINOR_PENTA_POSITIONS: dict[str, list["CagedPosition"]] = {
+    key: _build_pentatonic_positions_for_key(key)["minor_pentatonic"]
+    for key in SCALE_POSITIONS
+}
+
+
+def get_pentatonic_sequence(
+    position_idx: int,
+    key: str = "C",
+    family: str = "major_pentatonic",
+) -> list[int]:
+    """Return ascending MIDI sequence (root … root+octave) for a pentatonic position."""
+    from training.pentatonic_spec import PENTATONIC_SPEC  # local import avoids circular
+    if family not in PENTATONIC_SPEC:
+        raise ValueError(f"Unknown pentatonic family {family!r}")
+
+    if family == "major_pentatonic":
+        positions = PENTATONIC_POSITIONS.get(key, [])
+    else:
+        positions = _MINOR_PENTA_POSITIONS.get(key, [])
+
+    if not positions:
+        raise ValueError(f"No pentatonic positions for key={key!r} family={family!r}")
+    if not 0 <= position_idx < len(positions):
+        raise ValueError(f"position_idx must be 0-{len(positions) - 1}, got {position_idx}")
+
+    notes = positions[position_idx]["notes"]
+    seen: set[int] = set()
+    asc: list[int] = []
+    for midi in sorted(n["midi"] for n in notes):
+        if midi not in seen:
+            seen.add(midi)
+            asc.append(midi)
+    return asc
