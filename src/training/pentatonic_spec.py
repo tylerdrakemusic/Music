@@ -108,6 +108,15 @@ def penta_relative_minor_root(key: str) -> str:
     return raw
 
 
+def _spoken_key(key: str) -> str:
+    """Convert a key symbol to a TTS-readable string (e.g. 'Db' → 'D flat')."""
+    return (
+        key.replace("#", " sharp")
+           .replace("b", " flat")
+           .strip()
+    )
+
+
 def build_penta_phrase(pos: dict, key: str, family: str) -> str:
     """Return a TTS instructor phrase for a pentatonic position.
 
@@ -117,18 +126,21 @@ def build_penta_phrase(pos: dict, key: str, family: str) -> str:
     if spec is None:
         raise ValueError(f"Unknown pentatonic family: {family!r}")
 
-    label = pos.get("label", "")
     root_fret = pos.get("root_fret", 0)
     string_name = pos.get("root_string", "A string")
+    label = pos.get("label", "")
+    box_part = label.split("—")[0].strip()
 
     if family == "minor_pentatonic":
         minor_root = penta_relative_minor_root(key)
+        spoken_root = _spoken_key(minor_root)
         return (
-            f"Start on the {root_fret} fret of the {string_name} — "
-            f"{minor_root} minor pentatonic, {label.split('—')[0].strip()}."
+            f"Start on the {root_fret}th fret of the {string_name} — "
+            f"{spoken_root} minor pentatonic, {box_part}."
         )
     else:
+        spoken_key = _spoken_key(key)
         return (
-            f"Start on the {root_fret} fret of the {string_name} — "
-            f"{key} major pentatonic, {label.split('—')[0].strip()}."
+            f"Start on the {root_fret}th fret of the {string_name} — "
+            f"{spoken_key} major pentatonic, {box_part}."
         )
