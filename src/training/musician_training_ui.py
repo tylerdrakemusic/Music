@@ -75,6 +75,18 @@ def _scan_muzic() -> list[dict]:
 
 app = Flask(__name__)
 
+
+def _flag_enabled(env_var: str) -> bool:
+    """Read a boolean feature-flag env var; defaults to enabled when unset."""
+    return os.environ.get(env_var, "true").lower() != "false"
+
+
+# FR-20260808: cloud (Fly.io) deploys can disable the exercise-card workflow
+# and/or the scale practice log via env vars — routes are structurally
+# removed from app.url_map (not just hidden), see registration block below.
+ENABLE_EXERCISE_CARDS: bool = _flag_enabled("ENABLE_EXERCISE_CARDS")
+ENABLE_SCALE_LOG: bool = _flag_enabled("ENABLE_SCALE_LOG")
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -258,19 +270,22 @@ HTML = r"""
     <h1>🎸 Lead Guitar Trainer</h1>
     <p class="sub">Focused interval training — loop lead parts, control speed, build muscle memory</p>
   </div>
+  {% if enable_scale_log %}
   <div class="streak-badge" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 16px;font-size:0.85rem;text-align:center;min-width:160px;flex-shrink:0">
     <div style="font-size:1.4rem;font-weight:700;">🔥 {{ stats.streak_days }} day{{ 's' if stats.streak_days != 1 else '' }}</div>
     <div style="opacity:0.7;margin-top:2px;">{{ stats.week_minutes }} min this week</div>
     <div style="opacity:0.5;margin-top:2px;font-size:0.75rem;">Last: {{ stats.last_practiced or 'never' }}</div>
   </div>
+  {% endif %}
 </div>
 
 <!-- Tab navigation (FR-20260517-guitar-trainer-scale-exercises) -->
 <div class="tab-nav" id="tab-nav">
-  <button class="tab-btn active" id="tab-btn-exercises" onclick="switchTab('exercises')">🎸 Exercises</button>
-  <button class="tab-btn" id="tab-btn-scales" onclick="switchTab('scales')">🎵 Scales</button>
+  {% if enable_exercise_cards %}<button class="tab-btn active" id="tab-btn-exercises" onclick="switchTab('exercises')">🎸 Exercises</button>{% endif %}
+  <button class="tab-btn{% if not enable_exercise_cards %} active{% endif %}" id="tab-btn-scales" onclick="switchTab('scales')">🎵 Scales</button>
 </div>
 
+{% if enable_exercise_cards %}
 <div id="tab-exercises" class="tab-panel">
 <!-- Metronome (FR-20260425-guitar-trainer-metronome) -->
 <div class="metronome" id="metro-panel">
@@ -380,9 +395,10 @@ HTML = r"""
   </details>
 </div><!-- /log-section -->
 </div><!-- /tab-exercises -->
+{% endif %}
 
 <!-- Scales & Arpeggios tab panel (FR-20260517-guitar-trainer-scale-exercises) -->
-<div id="tab-scales" class="tab-panel" style="display:none">
+<div id="tab-scales" class="tab-panel"{% if enable_exercise_cards %} style="display:none"{% endif %}>
   <div class="scales-header">
     <h2>🎵 Scales &amp; Arpeggios</h2>
   </div>
@@ -460,6 +476,7 @@ HTML = r"""
 
   <div class="scale-status" id="scale-status"></div>
 
+  {% if enable_scale_log %}
   <details style="margin-top:16px">
     <summary style="cursor:pointer;color:var(--accent);font-weight:600;font-size:.9rem;user-select:none">Scale Practice Log</summary>
     <div style="margin-top:8px" id="scale-log-wrap">
@@ -469,7 +486,9 @@ HTML = r"""
       </table>
     </div>
   </details>
+  {% endif %}
 </div><!-- /tab-scales -->
+
 
 <script>
 const _saveTimers = {};
@@ -573,10 +592,16 @@ function renderCatalog(files) {
     `<div class="catalog-item" data-path="${f.path.replace(/"/g,'&quot;')}" data-name="${f.name.replace(/"/g,'&quot;')}">${f.name}</div>`
   ).join('') + (files.length > 80 ? `<div style="padding:6px 10px;font-size:.72rem;color:var(--muted)">${files.length - 80} more — type to filter</div>` : '');
 }
-document.getElementById('catalog-list').addEventListener('click', e => {
-  const item = e.target.closest('.catalog-item');
-  if (item) selectFile(item.dataset.path, item.dataset.name);
-});
+// catalog-list only exists in the New Training File card, which is gated behind
+// ENABLE_EXERCISE_CARDS (FR-20260808) -- null-guard so a disabled flag doesn't
+// throw and halt every later top-level statement in this script tag.
+const catalogListEl = document.getElementById('catalog-list');
+if (catalogListEl) {
+  catalogListEl.addEventListener('click', e => {
+    const item = e.target.closest('.catalog-item');
+    if (item) selectFile(item.dataset.path, item.dataset.name);
+  });
+}
 function selectFile(path, name) {
   _selectedPath = path;
   document.getElementById('new-path').value = '';
@@ -589,7 +614,11 @@ function selectFile(path, name) {
   document.getElementById('new-selected-text').textContent = title + (artist ? '  ·  ' + artist : '');
 }
 document.addEventListener('click', e => {
-  if (!e.target.closest('.new-card')) document.getElementById('catalog-dropdown').style.display = 'none';
+  if (!e.target.closest('.new-card')) {
+    // catalog-dropdown is also gated behind ENABLE_EXERCISE_CARDS -- guard it too.
+    const dropdownEl = document.getElementById('catalog-dropdown');
+    if (dropdownEl) dropdownEl.style.display = 'none';
+  }
 });
 
 function buildCardHTML(s) {
@@ -866,10 +895,14 @@ async function createSession() {
 
   // ── Tab switching ────────────────────────────────────────────────────────
   window.switchTab = function(name) {
-    document.getElementById('tab-exercises').style.display = name === 'exercises' ? '' : 'none';
-    document.getElementById('tab-scales').style.display   = name === 'scales'    ? '' : 'none';
-    document.getElementById('tab-btn-exercises').classList.toggle('active', name === 'exercises');
-    document.getElementById('tab-btn-scales').classList.toggle('active', name === 'scales');
+    const exPanel = document.getElementById('tab-exercises');
+    const scPanel = document.getElementById('tab-scales');
+    const exBtn = document.getElementById('tab-btn-exercises');
+    const scBtn = document.getElementById('tab-btn-scales');
+    if (exPanel) exPanel.style.display = name === 'exercises' ? '' : 'none';
+    if (scPanel) scPanel.style.display = name === 'scales'    ? '' : 'none';
+    if (exBtn) exBtn.classList.toggle('active', name === 'exercises');
+    if (scBtn) scBtn.classList.toggle('active', name === 'scales');
     if (name === 'scales' && !_positions.length) loadScalePositions(_currentKey);
   };
 
@@ -1511,6 +1544,12 @@ async function createSession() {
   }
 
   populateModeSelect(_currentKey); // seed on page load (FR-20260806-guitar-trainer-mode-root-label)
+  {% if not enable_exercise_cards %}
+  // FR-20260808: exercise cards off -> Scales tab is pre-rendered active server-side,
+  // but nothing ever calls switchTab('scales') (normally the tab button's onclick) --
+  // so loadScalePositions() never fired and the Position select / fretboard stayed empty.
+  switchTab('scales');
+  {% endif %}
 })();
 </script>
 </body>
@@ -1518,7 +1557,6 @@ async function createSession() {
 """
 
 
-@app.route("/art")
 def album_art():
     """Return embedded album art bytes for a given audio file path.
 
@@ -1571,7 +1609,6 @@ def album_art():
         return Response(status=204)
 
 
-@app.route("/catalog")
 def catalog():
     return jsonify(_scan_muzic())
 
@@ -1592,9 +1629,16 @@ def click_audio(filename: str) -> Response:
 
 @app.route("/")
 def index():
-    sessions = _list_sessions()
-    log = _load_log()
-    stats = get_practice_stats()
+    # FR-20260808: sessions/log read guitar_exercises/guitar_training_log --
+    # the same tables backing /api/sessions and /api/log, which are gated
+    # behind ENABLE_EXERCISE_CARDS. Skip the DB calls when the flag is off
+    # so a cloud deploy with no DB driver installed doesn't 500 on '/'.
+    sessions = _list_sessions() if ENABLE_EXERCISE_CARDS else []
+    log = _load_log() if ENABLE_EXERCISE_CARDS else []
+    if ENABLE_EXERCISE_CARDS or ENABLE_SCALE_LOG:
+        stats = get_practice_stats()
+    else:
+        stats = {"streak_days": 0, "week_minutes": 0, "last_practiced": None}
     return render_template_string(
         HTML,
         sessions=sessions,
@@ -1608,6 +1652,8 @@ def index():
         penta_degree_colors=PENTATONIC_DEGREE_COLORS,
         penta_degree_text=PENTATONIC_DEGREE_TEXT,
         penta_degree_stroke=PENTATONIC_DEGREE_STROKE,
+        enable_exercise_cards=ENABLE_EXERCISE_CARDS,
+        enable_scale_log=ENABLE_SCALE_LOG,
     )
 
 
@@ -1616,7 +1662,6 @@ def health():
     return jsonify({"status": "ok", "ready": True})
 
 
-@app.route("/save", methods=["POST"])
 def save():
     data = request.get_json(force=True)
     exercise_id = data.get("id")
@@ -1636,7 +1681,6 @@ def save():
         return jsonify({"ok": False, "error": str(e)})
 
 
-@app.route("/launch", methods=["POST"])
 def launch():
     data = request.get_json(force=True)
     exercise_id = data.get("id")
@@ -1678,7 +1722,6 @@ def launch():
         return jsonify({"ok": False, "error": str(e)})
 
 
-@app.route("/create", methods=["POST"])
 def create():
     data = request.get_json(force=True)
     title = (data.get("title") or "").strip()
@@ -1700,12 +1743,10 @@ def create():
         return jsonify({"ok": False, "error": str(e)})
 
 
-@app.route("/api/sessions")
 def api_sessions():
     return jsonify(_list_sessions())
 
 
-@app.route("/api/log", methods=["GET", "POST"])
 def api_log():
     if request.method == "GET":
         return jsonify(_load_log())
@@ -1739,7 +1780,6 @@ def api_log():
         return jsonify({"ok": False, "error": str(e)})
 
 
-@app.route("/delete", methods=["POST"])
 def delete_session():
     data = request.get_json(force=True)
     exercise_id = data.get("id")
@@ -1814,7 +1854,6 @@ def api_scale_positions():
         )
 
 
-@app.route("/api/scale-log", methods=["GET", "POST"])
 def api_scale_log():
     if request.method == "GET":
         try:
@@ -1915,6 +1954,29 @@ def api_instructor_audio():
         mimetype="audio/mpeg",
         headers={"Cache-Control": "no-cache"},
     )
+
+
+# ---------------------------------------------------------------------------
+# Feature-flag route registration (FR-20260808-scale-trainer-flyio-deploy)
+#
+# These routes are conditionally exposed via app.add_url_rule() rather than
+# @app.route() so that disabled routes are structurally absent from
+# app.url_map (a request to a disabled path 404s at the routing layer, not
+# inside the view function).
+# ---------------------------------------------------------------------------
+
+if ENABLE_EXERCISE_CARDS:
+    app.add_url_rule("/save", view_func=save, methods=["POST"])
+    app.add_url_rule("/launch", view_func=launch, methods=["POST"])
+    app.add_url_rule("/create", view_func=create, methods=["POST"])
+    app.add_url_rule("/delete", view_func=delete_session, methods=["POST"])
+    app.add_url_rule("/catalog", view_func=catalog)
+    app.add_url_rule("/art", view_func=album_art)
+    app.add_url_rule("/api/sessions", view_func=api_sessions)
+    app.add_url_rule("/api/log", view_func=api_log, methods=["GET", "POST"])
+
+if ENABLE_SCALE_LOG:
+    app.add_url_rule("/api/scale-log", view_func=api_scale_log, methods=["GET", "POST"])
 
 
 # ---------------------------------------------------------------------------

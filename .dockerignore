@@ -1,0 +1,28 @@
+# FR-20260808-scale-trainer-flyio-deploy — keep the Docker build context to
+# just what src/training/musician_training_ui.py needs.
+.git/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.db-journal
+*.wav
+.worktrees/
+output/
+tmp/
+logs/
+proof/
+reports/
+research/
+docs/
+tests/
+data/
+catalog/
+lyrics/
+Songwriting/
+Brand/
+bands/
+click/
+HelixFiles/
+copyrights/
