@@ -314,7 +314,7 @@ class TestBoxPentaPositions:
             assert "minor_pentatonic" in BOX_PENTA_POSITIONS[key]
 
     def test_exactly_5_boxes_per_key_and_family(self):
-        # Full-neck tiling with anchor cap at fret 20: most keys get 7-10 boxes;
+        # Full-neck tiling with anchor cap at fret 18: most keys get 7-10 boxes;
         # high-root keys (e.g. F# minor penta root at fret 11) may get only 4.
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
@@ -322,14 +322,18 @@ class TestBoxPentaPositions:
                 assert len(boxes) >= 4, f"{key}/{fam} has only {len(boxes)} boxes"
 
     def test_full_neck_coverage(self):
-        # At least one box should anchor at or above the 12th fret for each key
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
                 high_boxes = [b for b in BOX_PENTA_POSITIONS[key][fam] if b["root_fret"] >= 12]
                 assert high_boxes, f"{key}/{fam} has no boxes at or above fret 12"
 
+    def test_open_position_boxes_present(self):
+        # octave -12 should yield boxes anchored at low fret numbers
+        for fam in ("major_pentatonic", "minor_pentatonic"):
+            low_boxes = [b for b in BOX_PENTA_POSITIONS["A"][fam] if b["root_fret"] <= 5]
+            assert low_boxes, f"A/{fam} has no open-position boxes"
+
     def test_box_labels_say_box_number(self):
-        # Labels say "Box N" where N is 1-5 (repeated across octaves)
         import re
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
@@ -339,12 +343,11 @@ class TestBoxPentaPositions:
                     )
 
     def test_box_positions_have_5_unique_pitch_classes(self):
-        # Boxes at the very edge of the neck (fret 22+) may clip; allow >= 4
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
                 for box in BOX_PENTA_POSITIONS[key][fam]:
                     pcs = {n["midi"] % 12 for n in box["notes"]}
-                    min_pcs = 4 if box["root_fret"] >= 22 else 5
+                    min_pcs = 4 if box["root_fret"] >= 18 else 5
                     assert len(pcs) >= min_pcs, (
                         f"{key}/{fam} '{box['label']}' has only {len(pcs)} unique PCs"
                     )
@@ -355,23 +358,41 @@ class TestBoxPentaPositions:
             assert "fret" in note
             assert "midi" in note
 
-    def test_box_frets_within_24(self):
+    def test_box_frets_within_22(self):
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
                 for box in BOX_PENTA_POSITIONS[key][fam]:
                     for note in box["notes"]:
-                        assert 0 <= note["fret"] <= 24, (
-                            f"{key}/{fam} fret {note['fret']} out of range"
+                        assert 0 <= note["fret"] <= 22, (
+                            f"{key}/{fam} fret {note['fret']} outside 0-22"
                         )
 
     def test_boxes_ascending_across_neck(self):
-        # Box N root_fret should be >= Box N-1 root_fret
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
                 frets = [b["root_fret"] for b in BOX_PENTA_POSITIONS[key][fam]]
                 assert frets == sorted(frets), (
                     f"{key}/{fam} boxes not in ascending order: {frets}"
                 )
+
+    def test_major_penta_phrase_uses_major_root(self):
+        # C major penta — phrase should say "C" not "A"
+        box = BOX_PENTA_POSITIONS["C"]["major_pentatonic"][0]
+        assert "C" in box["instructor_phrase"]
+        assert "major" in box["instructor_phrase"]
+        assert "minor" not in box["instructor_phrase"]
+
+    def test_minor_penta_phrase_uses_relative_minor_root(self):
+        # key=C, minor penta → A minor; phrase must say "A" not "C"
+        box = BOX_PENTA_POSITIONS["C"]["minor_pentatonic"][0]
+        assert "A" in box["instructor_phrase"]
+        assert "minor" in box["instructor_phrase"]
+        assert "C minor" not in box["instructor_phrase"]
+
+    def test_minor_penta_phrase_no_raw_accidental(self):
+        # Db minor penta → phrase must not contain "Db" (spoken as "D flat")
+        for box in BOX_PENTA_POSITIONS["Db"]["minor_pentatonic"]:
+            assert "Db" not in box["instructor_phrase"]
 
 
 # ---------------------------------------------------------------------------
