@@ -24,6 +24,10 @@ from training.scale_data import (  # noqa: E402
     SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence,
     PENTATONIC_POSITIONS, _MINOR_PENTA_POSITIONS, BOX_PENTA_POSITIONS,
 )
+
+# FR-20260806: CAGED-derived pentatonic shapes are deferred until design is settled.
+# Flip to True to re-enable the CAGED optgroup in the position dropdown.
+PENTA_CAGED_ENABLED: bool = False
 from training.scale_tts import get_instructor_audio  # noqa: E402
 from training.mode_spec import (  # noqa: E402
     MODE_SPEC,
@@ -1152,6 +1156,19 @@ async function createSession() {
   function updateLegend() {
     const el = document.getElementById('scale-legend');
     if (!el) return;
+    if (_currentFamily !== 'diatonic') {
+      const degMap = PENTA_DEGREE_MAP[_currentFamily] || {};
+      // Show only root and fifth for minor penta (Option B dominant palette)
+      const pentaLabels = _currentFamily === 'minor_penta'
+        ? [[0,'Root'],[3,'\u266d3'],[5,'4th'],[7,'5th'],[10,'\u266d7']]
+        : [[0,'Root'],[2,'2nd'],[4,'3rd'],[7,'5th'],[9,'6th']];
+      el.innerHTML = pentaLabels.map(([iv, label]) => {
+        const dt = degMap[iv] || 'root';
+        const color = PENTA_DEGREE_COLORS[dt] || '#555';
+        return `<span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}"/></svg>${label}</span>`;
+      }).join('');
+      return;
+    }
     const spec = MODE_SPEC[_currentMode] || MODE_SPEC['Ionian'];
     const intervals = Object.keys(spec.degrees).map(Number).sort((a, b) => a - b);
     const items = intervals.map(i => [DEGREE_COLORS[spec.degrees[i].type], spec.degrees[i].label]);
@@ -1320,20 +1337,35 @@ async function createSession() {
       html += `<text x="${sx}" y="${sy}" fill="#aaa" font-size="14" font-family="serif" dominant-baseline="central" data-keysig="${clef}">${sigSymbol}</text>`;
     }
     const intervals = MODE_SCALE_INTERVALS[mode] ?? MAJOR_INTERVALS;
-    // Draw 8 diatonic note circles
-    for (let idx = 0; idx < intervals.length; idx++) {
-      const interval = intervals[idx];
-      const pc       = (modeRootPc + interval) % 12;
+    const isPentaStaff = _currentFamily !== 'diatonic';
+    const pentaRootPc  = effectiveRootPc(key, mode);
+    const pentaDegMap  = PENTA_DEGREE_MAP[_currentFamily] || {};
+    const pentaIntervals = _currentFamily === 'minor_penta'
+      ? [0, 3, 5, 7, 10, 12] : [0, 2, 4, 7, 9, 12];
+    const staffIntervals = isPentaStaff ? pentaIntervals : intervals;
+    const staffRootPc    = isPentaStaff ? pentaRootPc    : modeRootPc;
+    // Draw note circles
+    for (let idx = 0; idx < staffIntervals.length; idx++) {
+      const interval = staffIntervals[idx];
+      const pc       = (staffRootPc + interval) % 12;
       const noteName = noteNames[pc];
       const noteY    = baseY - idx * 5;
       const noteX    = noteXStart + idx * noteXSpacing;
-      const degInterval = (pc - modeRootPc + 12) % 12;
-      const _spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
-      const colorKey = (_spec.degrees[degInterval] && _spec.degrees[degInterval].type) || 'other';
+      let noteFill, textFill;
+      if (isPentaStaff) {
+        const relInterval = (pc - staffRootPc + 12) % 12;
+        const dt = pentaDegMap[relInterval] || 'other';
+        noteFill = PENTA_DEGREE_COLORS[dt] || '#555';
+        textFill = PENTA_DEGREE_TEXT[dt]   || '#fff';
+      } else {
+        const degInterval = (pc - modeRootPc + 12) % 12;
+        const _spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
+        const colorKey = (_spec.degrees[degInterval] && _spec.degrees[degInterval].type) || 'other';
+        noteFill = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
+        textFill = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
+      }
       const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
-      const noteFill  = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
-      const textFill  = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
-      // Ledger line if note is above/below staff
+      if (isHighlit) { noteFill = '#ffe066'; textFill = '#000'; }
       if (noteY < lineYs[0] - 3 || noteY > lineYs[4] + 3) {
         html += `<line x1="${noteX - 10}" y1="${noteY}" x2="${noteX + 10}" y2="${noteY}" stroke="#888" stroke-width="1"/>`;
       }
@@ -1757,9 +1789,9 @@ def api_scale_positions():
             for p in positions
         ])
     else:
-        # Pentatonic: return box positions (group="box") then CAGED positions (group="caged")
+        # Pentatonic: box positions (group="box"); CAGED group gated by feature flag
         box_list = BOX_PENTA_POSITIONS.get(key, {}).get(family, [])
-        caged_list = (
+        caged_list = [] if not PENTA_CAGED_ENABLED else (
             PENTATONIC_POSITIONS.get(key, [])
             if family == "major_pentatonic"
             else _MINOR_PENTA_POSITIONS.get(key, [])
