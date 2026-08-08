@@ -562,12 +562,15 @@ _MIN_PENTA_PCS_SET: frozenset[int] = frozenset({0, 3, 5, 7, 10})
 
 
 def _box_positions_for_key(key: str, family: str) -> list["CagedPosition"]:
-    """Return 5 classic box positions for *key* + *family*."""
+    """Return classic box positions for *key* + *family*, tiled across the full neck.
+
+    The 5 box shapes repeat every 12 frets.  All anchors in [0, 24] are
+    included so the entire fretboard is covered even for high-fret keys.
+    """
     from training.pentatonic_spec import PENTATONIC_SPEC, _KEY_PC as _PSPEC_KEY_PC
 
     spec = PENTATONIC_SPEC[family]
-    # intervals[:-1] gives the 5 unique intervals (last is octave repeat)
-    unique_intervals = list(spec["intervals"][:-1])
+    unique_intervals = list(spec["intervals"][:-1])  # 5 intervals, no octave repeat
 
     if family == "minor_pentatonic":
         root_pc = (_PSPEC_KEY_PC.get(key, 0) + _RELATIVE_MINOR_OFFSET) % 12
@@ -578,31 +581,45 @@ def _box_positions_for_key(key: str, family: str) -> list["CagedPosition"]:
         _MAJ_PENTA_PCS_SET if family == "major_pentatonic" else _MIN_PENTA_PCS_SET
     )
 
-    # Root fret on string 6 (lowest root in first position, ≥ 0)
     str6_open_pc = _OPEN_PC[6]
+    # Lowest root fret on str6 in [0,11]
     root_fret_str6 = (root_pc - str6_open_pc) % 12
 
-    # Box N anchors at root_fret_str6 + interval[N]
-    positions: list[CagedPosition] = []
-    for box_num, interval in enumerate(unique_intervals, 1):
-        anchor = root_fret_str6 + interval
+    # Build all anchors: for each of the 5 intervals, tile every octave that
+    # lands on [0, 24].  Sort by anchor fret so positions ascend the neck.
+    anchors: list[tuple[int, int]] = []  # (anchor_fret, box_num 1-5)
+    for octave_offset in range(0, 25, 12):
+        for box_num, interval in enumerate(unique_intervals, 1):
+            anchor = root_fret_str6 + interval + octave_offset
+            if 0 <= anchor <= 24:
+                anchors.append((anchor, box_num))
+    anchors.sort(key=lambda x: x[0])
 
+    positions: list[CagedPosition] = []
+    for anchor, box_num in anchors:
         notes: list[ScaleNote] = []
         for str_num in range(6, 0, -1):  # low E → high e
             open_pc = _OPEN_PC[str_num]
             for fret in range(anchor, anchor + 5):
                 if fret > 24:
                     break
-                pc = (open_pc + fret) % 12
-                # pc relative to root_pc
-                rel = (pc - root_pc) % 12
+                rel = ((open_pc + fret) - root_pc) % 12
                 if rel in penta_pcs:
-                    midi = _OPEN_MIDI[str_num] + fret
-                    notes.append(ScaleNote(string=str_num, fret=fret, midi=midi))
+                    notes.append(ScaleNote(
+                        string=str_num, fret=fret,
+                        midi=_OPEN_MIDI[str_num] + fret,
+                    ))
 
-        label = f"Box {box_num} — {anchor}th fret"
+        if not notes:
+            continue
+        # Skip severely clipped boxes at the edge of the neck
+        if len({n["midi"] % 12 for n in notes}) < 4:
+            continue
+
+        fret_suffix = "th" if 11 <= anchor <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(anchor % 10, "th")
+        label = f"Box {box_num} — {anchor}{fret_suffix} fret"
         phrase = (
-            f"Box {box_num} — start on the {anchor}th fret — "
+            f"Box {box_num} — start on the {anchor}{fret_suffix} fret — "
             f"{key} {spec['tts_label']}."
         )
         positions.append(CagedPosition(
