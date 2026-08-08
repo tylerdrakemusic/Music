@@ -413,14 +413,13 @@ class TestScalePositionsApiGrouped:
         data = json.loads(resp.data)
         groups = {p.get("group") for p in data}
         assert "box" in groups
-        assert "caged" in groups
 
     def test_minor_penta_positions_have_group_field(self, client):
         resp = client.get("/api/scale-positions?key=C&family=minor_pentatonic")
         data = json.loads(resp.data)
         groups = {p.get("group") for p in data}
         assert "box" in groups
-        assert "caged" in groups
+        # caged group is gated by PENTA_CAGED_ENABLED (currently False)
 
     def test_box_group_has_exactly_5(self, client):
         resp = client.get("/api/scale-positions?key=A&family=major_pentatonic")
