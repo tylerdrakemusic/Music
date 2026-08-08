@@ -1092,14 +1092,6 @@ async function createSession() {
     major_penta: {0:'root',2:'penta_second',4:'penta_third',7:'penta_fifth',9:'penta_sixth'},
     minor_penta: {0:'root',3:'penta_third',5:'penta_fourth',7:'penta_fifth',10:'penta_flat7'},
   };
-  const PENTA_DEGREE_COLORS = {{ penta_degree_colors | tojson }};
-  const PENTA_DEGREE_TEXT   = {{ penta_degree_text | tojson }};
-  const PENTA_DEGREE_STROKE = {{ penta_degree_stroke | tojson }};
-  // Pentatonic interval → degree type mapping
-  const PENTA_DEGREE_MAP = {
-    major_penta: {0:'root',2:'penta_second',4:'penta_third',7:'penta_fifth',9:'penta_sixth'},
-    minor_penta: {0:'root',3:'penta_third',5:'penta_fourth',7:'penta_fifth',10:'penta_flat7'},
-  };
   const MODE_ROOT_OFFSETS = Object.fromEntries(
     Object.entries(MODE_SPEC).map(([m, s]) => [m, s.root_offset])
   );
