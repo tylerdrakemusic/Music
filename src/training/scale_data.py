@@ -587,10 +587,12 @@ def _box_positions_for_key(key: str, family: str) -> list["CagedPosition"]:
 
     # Build all anchors: for each of the 5 intervals, tile every octave that
     # lands on [0, 24].  Sort by anchor fret so positions ascend the neck.
-    # Max anchor so the 5-fret window (anchor … anchor+4) stays on the neck
-    _MAX_ANCHOR = 20
+    # Cap so the full 5-fret window (anchor … anchor+4) stays within the
+    # displayed fretboard (NUM_FRETS=22, so max anchor = 22-4 = 18).
+    # Start from octave -12 to capture open-position boxes below the first root.
+    _MAX_ANCHOR = 18
     anchors: list[tuple[int, int]] = []  # (anchor_fret, box_num 1-5)
-    for octave_offset in range(0, 25, 12):
+    for octave_offset in range(-12, 25, 12):
         for box_num, interval in enumerate(unique_intervals, 1):
             anchor = root_fret_str6 + interval + octave_offset
             if 0 <= anchor <= _MAX_ANCHOR:
