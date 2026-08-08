@@ -287,11 +287,9 @@ class TestBuildPentaPhrase:
     def test_minor_penta_phrase_mentions_minor_root(self):
         phrase = build_penta_phrase({"label": "Position 1 — A shape (5th fret)", "root_fret": 5}, "C", "minor_pentatonic")
         assert "pentatonic" in phrase.lower()
-        # Should say "A" (relative minor of C), not "C"
         assert "A" in phrase
 
     def test_flat_key_spoken_not_as_letter(self):
-        # "Db" must not appear verbatim — TTS reads it as "D B"
         phrase = build_penta_phrase({"label": "Box 1 — 9th fret", "root_fret": 9, "root_string": "low E string"}, "Db", "major_pentatonic")
         assert "Db" not in phrase
         assert "flat" in phrase.lower()
@@ -300,6 +298,15 @@ class TestBuildPentaPhrase:
         phrase = build_penta_phrase({"label": "Box 1 — 2nd fret", "root_fret": 2, "root_string": "low E string"}, "F#", "major_pentatonic")
         assert "F#" not in phrase
         assert "sharp" in phrase.lower()
+
+    def test_single_letter_key_not_read_as_article(self):
+        # "A major" gets read as "uh major" by TTS — must say "the note A major"
+        phrase = build_penta_phrase({"label": "Box 1 — 5th fret", "root_fret": 5, "root_string": "low E string"}, "A", "major_pentatonic")
+        assert "the note A" in phrase or "A major" not in phrase.split()[0]
+
+    def test_e_major_spoken_as_note(self):
+        phrase = build_penta_phrase({"label": "Box 1 — 0th fret", "root_fret": 0, "root_string": "low E string"}, "E", "major_pentatonic")
+        assert "the note E" in phrase
 
 
 # ---------------------------------------------------------------------------
