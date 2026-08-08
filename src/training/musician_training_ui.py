@@ -1092,9 +1092,16 @@ async function createSession() {
     return (base + offset) % 12;
   }
 
+  // For pentatonic families the effective root PC differs from the mode root.
+  // major_penta → same as key root; minor_penta → relative minor (key_pc + 9).
+  function effectiveRootPc(key, mode) {
+    if (_currentFamily === 'minor_penta') return ((KEY_PC[key] ?? 0) + 9) % 12;
+    return findModeRootPitchClass(key, mode);
+  }
+
   function buildScalePlayback(notes, key, mode) {
     const allAsc = buildAscDeduped(notes);
-    const rootPc = findModeRootPitchClass(key, mode);
+    const rootPc = effectiveRootPc(key, mode);
     const rootNote = findRootNoteInAsc(allAsc, rootPc);
     const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
     const asc       = allAsc.slice(rootIdx);
@@ -1109,7 +1116,7 @@ async function createSession() {
   function getEffectiveNotes(pos) {
     if (!pos) return [];
     const notes = (pos.notes || []).slice();
-    const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
+    const rootPc = effectiveRootPc(_currentKey, _currentMode);
     if (pos.root_fret > 0) {
       const synthFret = pos.root_fret - 1;
       const synthMidi = 40 + synthFret;
