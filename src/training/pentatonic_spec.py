@@ -109,12 +109,21 @@ def penta_relative_minor_root(key: str) -> str:
 
 
 def _spoken_key(key: str) -> str:
-    """Convert a key symbol to a TTS-readable string (e.g. 'Db' → 'D flat')."""
-    return (
+    """Convert a key symbol to a TTS-readable string.
+
+    Single-letter note names (A, E) are hyphenated to the following word
+    so TTS engines read them as the letter rather than the English article.
+    Accidentals are spelled out: 'Db' → 'D flat', 'F#' → 'F sharp'.
+    """
+    spoken = (
         key.replace("#", " sharp")
            .replace("b", " flat")
            .strip()
     )
+    # Prefix single-letter names with "the note" to avoid article mispronunciation
+    if len(spoken) == 1:
+        spoken = f"the note {spoken}"
+    return spoken
 
 
 def build_penta_phrase(pos: dict, key: str, family: str) -> str:
