@@ -303,26 +303,38 @@ class TestBoxPentaPositions:
             assert "minor_pentatonic" in BOX_PENTA_POSITIONS[key]
 
     def test_exactly_5_boxes_per_key_and_family(self):
+        # Full-neck tiling: each key gets >= 5 boxes (repeats at octave intervals)
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
                 boxes = BOX_PENTA_POSITIONS[key][fam]
-                assert len(boxes) == 5, f"{key}/{fam} has {len(boxes)} boxes"
+                assert len(boxes) >= 5, f"{key}/{fam} has only {len(boxes)} boxes"
 
-    def test_box_labels_say_box_number(self):
+    def test_full_neck_coverage(self):
+        # At least one box should anchor at or above the 12th fret for each key
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
-                for i, box in enumerate(BOX_PENTA_POSITIONS[key][fam], 1):
-                    assert f"Box {i}" in box["label"], (
-                        f"{key}/{fam}: box {i} label missing 'Box {i}': {box['label']!r}"
+                high_boxes = [b for b in BOX_PENTA_POSITIONS[key][fam] if b["root_fret"] >= 12]
+                assert high_boxes, f"{key}/{fam} has no boxes at or above fret 12"
+
+    def test_box_labels_say_box_number(self):
+        # Labels say "Box N" where N is 1-5 (repeated across octaves)
+        import re
+        for key in _ALL_KEYS:
+            for fam in ("major_pentatonic", "minor_pentatonic"):
+                for box in BOX_PENTA_POSITIONS[key][fam]:
+                    assert re.match(r"Box [1-5]", box["label"]), (
+                        f"{key}/{fam}: label missing Box N: {box['label']!r}"
                     )
 
     def test_box_positions_have_5_unique_pitch_classes(self):
+        # Boxes at the very edge of the neck (fret 22+) may clip; allow >= 4
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
                 for box in BOX_PENTA_POSITIONS[key][fam]:
                     pcs = {n["midi"] % 12 for n in box["notes"]}
-                    assert len(pcs) == 5, (
-                        f"{key}/{fam} '{box['label']}' has {len(pcs)} unique PCs"
+                    min_pcs = 4 if box["root_fret"] >= 22 else 5
+                    assert len(pcs) >= min_pcs, (
+                        f"{key}/{fam} '{box['label']}' has only {len(pcs)} unique PCs"
                     )
 
     def test_boxes_have_notes_string_fret_midi(self):
@@ -373,7 +385,7 @@ class TestScalePositionsApiGrouped:
         resp = client.get("/api/scale-positions?key=A&family=major_pentatonic")
         data = json.loads(resp.data)
         box_entries = [p for p in data if p.get("group") == "box"]
-        assert len(box_entries) == 5
+        assert len(box_entries) >= 5
 
     def test_diatonic_positions_have_no_group_field(self, client):
         resp = client.get("/api/scale-positions?key=C")
