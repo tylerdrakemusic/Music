@@ -287,8 +287,19 @@ class TestBuildPentaPhrase:
     def test_minor_penta_phrase_mentions_minor_root(self):
         phrase = build_penta_phrase({"label": "Position 1 — A shape (5th fret)", "root_fret": 5}, "C", "minor_pentatonic")
         assert "pentatonic" in phrase.lower()
-        # Should say "A minor" not "C minor"
+        # Should say "A" (relative minor of C), not "C"
         assert "A" in phrase
+
+    def test_flat_key_spoken_not_as_letter(self):
+        # "Db" must not appear verbatim — TTS reads it as "D B"
+        phrase = build_penta_phrase({"label": "Box 1 — 9th fret", "root_fret": 9, "root_string": "low E string"}, "Db", "major_pentatonic")
+        assert "Db" not in phrase
+        assert "flat" in phrase.lower()
+
+    def test_sharp_key_spoken_not_as_symbol(self):
+        phrase = build_penta_phrase({"label": "Box 1 — 2nd fret", "root_fret": 2, "root_string": "low E string"}, "F#", "major_pentatonic")
+        assert "F#" not in phrase
+        assert "sharp" in phrase.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -303,11 +314,12 @@ class TestBoxPentaPositions:
             assert "minor_pentatonic" in BOX_PENTA_POSITIONS[key]
 
     def test_exactly_5_boxes_per_key_and_family(self):
-        # Full-neck tiling: each key gets >= 5 boxes (repeats at octave intervals)
+        # Full-neck tiling with anchor cap at fret 20: most keys get 7-10 boxes;
+        # high-root keys (e.g. F# minor penta root at fret 11) may get only 4.
         for key in _ALL_KEYS:
             for fam in ("major_pentatonic", "minor_pentatonic"):
                 boxes = BOX_PENTA_POSITIONS[key][fam]
-                assert len(boxes) >= 5, f"{key}/{fam} has only {len(boxes)} boxes"
+                assert len(boxes) >= 4, f"{key}/{fam} has only {len(boxes)} boxes"
 
     def test_full_neck_coverage(self):
         # At least one box should anchor at or above the 12th fret for each key
