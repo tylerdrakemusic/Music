@@ -599,6 +599,19 @@ def _box_positions_for_key(key: str, family: str) -> list["CagedPosition"]:
                 anchors.append((anchor, box_num))
     anchors.sort(key=lambda x: x[0])
 
+    from training.pentatonic_spec import penta_relative_minor_root, _spoken_key
+
+    _STRING_NAMES: dict[int, str] = {
+        6: "low E string", 5: "A string", 4: "D string",
+        3: "G string",     2: "B string", 1: "high e string",
+    }
+
+    # Root name spoken aloud
+    if family == "minor_pentatonic":
+        spoken_root = _spoken_key(penta_relative_minor_root(key)) + " minor"
+    else:
+        spoken_root = _spoken_key(key) + " major"
+
     positions: list[CagedPosition] = []
     for anchor, box_num in anchors:
         notes: list[ScaleNote] = []
@@ -620,16 +633,27 @@ def _box_positions_for_key(key: str, family: str) -> list["CagedPosition"]:
         if len({n["midi"] % 12 for n in notes}) < 4:
             continue
 
-        fret_suffix = "th" if 11 <= anchor <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(anchor % 10, "th")
-        label = f"Box {box_num} — {anchor}{fret_suffix} fret"
+        # Find the lowest root note in the box to anchor the TTS phrase
+        root_notes = [n for n in notes if (n["midi"] - root_pc) % 12 == 0]
+        if root_notes:
+            rn = min(root_notes, key=lambda n: n["midi"])
+            phrase_fret = rn["fret"]
+            phrase_string = _STRING_NAMES[rn["string"]]
+        else:
+            phrase_fret = anchor
+            phrase_string = "low E string"
+
+        fs = "th" if 11 <= phrase_fret <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(phrase_fret % 10, "th")
+        af = "th" if 11 <= anchor <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(anchor % 10, "th")
+        label = f"Box {box_num} — {anchor}{af} fret"
         phrase = (
-            f"Box {box_num} — start on the {anchor}{fret_suffix} fret — "
-            f"{key} {spec['tts_label']}."
+            f"Start on the {phrase_fret}{fs} fret of the {phrase_string} — "
+            f"{spoken_root} pentatonic, Box {box_num}."
         )
         positions.append(CagedPosition(
             label=label,
-            root_string="low E string",
-            root_fret=anchor,
+            root_string=phrase_string,
+            root_fret=phrase_fret,
             instructor_phrase=phrase,
             notes=notes,
         ))
