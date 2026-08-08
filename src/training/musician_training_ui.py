@@ -20,7 +20,14 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 from utils.init_db import get_connection  # noqa: E402
 from training.practice_stats import get_practice_stats  # noqa: E402
-from training.scale_data import SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence  # noqa: E402
+from training.scale_data import (  # noqa: E402
+    SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence,
+    PENTATONIC_POSITIONS, _MINOR_PENTA_POSITIONS, BOX_PENTA_POSITIONS,
+)
+
+# FR-20260806: CAGED-derived pentatonic shapes are deferred until design is settled.
+# Flip to True to re-enable the CAGED optgroup in the position dropdown.
+PENTA_CAGED_ENABLED: bool = False
 from training.scale_tts import get_instructor_audio  # noqa: E402
 from training.mode_spec import (  # noqa: E402
     MODE_SPEC,
@@ -28,6 +35,12 @@ from training.mode_spec import (  # noqa: E402
     DEGREE_TEXT,
     DEGREE_STROKE,
     build_mode_phrase as buildModePhrase,
+)
+from training.pentatonic_spec import (  # noqa: E402
+    PENTATONIC_SPEC,
+    PENTATONIC_DEGREE_COLORS,
+    PENTATONIC_DEGREE_TEXT,
+    PENTATONIC_DEGREE_STROKE,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -232,7 +245,11 @@ HTML = r"""
   .scale-status{font-size:.8rem;color:#6fdc6f;min-height:18px;margin-bottom:10px}
   .scale-log-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
   .scale-log-table th{color:var(--muted);text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)}
-  .scale-log-table td{padding:4px 8px;border-bottom:1px solid #222;color:#aaa}</style>
+  .scale-log-table td{padding:4px 8px;border-bottom:1px solid #222;color:#aaa}
+  /* Pentatonic family pill toggle (FR-20260806) */
+  .family-btn{padding:6px 13px;background:#111;color:#ccc;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:background .12s,color .12s}
+  .family-btn:first-child{border-right:1px solid var(--border)}
+  .family-btn-active{background:var(--accent);color:#fff}</style>
 </style>
 </head>
 <body>
@@ -387,7 +404,13 @@ HTML = r"""
         <option value="B">B major / G# minor</option>
       </select>
     </label>
-    <label>Mode
+    <label style="gap:4px">Family</label>
+    <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:5px;overflow:hidden">
+      <button id="family-btn-diatonic"       onclick="onFamilyChange('diatonic')"       class="family-btn family-btn-active">Diatonic</button>
+      <button id="family-btn-major_penta"    onclick="onFamilyChange('major_penta')"    class="family-btn">Maj Penta</button>
+      <button id="family-btn-minor_penta"    onclick="onFamilyChange('minor_penta')"    class="family-btn" style="border-left:1px solid var(--border)">Min Penta</button>
+    </div>
+    <label id="scale-mode-label">Mode
       <select id="scale-mode" class="scale-select" onchange="onModeChange()">
         <option value="Ionian">Ionian</option>
         <option value="Dorian">Dorian</option>
@@ -836,6 +859,7 @@ async function createSession() {
   let _scaleStopFlag = false;
   let _currentKey = 'C';
   let _currentMode = 'Ionian';
+  let _currentFamily = 'diatonic';  // FR-20260806: diatonic | major_penta | minor_penta
   let _calloutPending = false;  // when true, next phrase appends the mode's characteristic-note callout (set on mode switch only)
   const _scaleTapTimes = [];
   const MAX_TAP_GAP_MS = 3000;
@@ -852,14 +876,38 @@ async function createSession() {
   // ── Load positions from server ───────────────────────────────────────────
   async function loadScalePositions(key) {
     key = key || 'C';
+    const family = _currentFamily === 'diatonic' ? 'diatonic'
+                 : _currentFamily === 'major_penta' ? 'major_pentatonic'
+                 : 'minor_pentatonic';
     try {
-      const r = await fetch('/api/scale-positions?key=' + encodeURIComponent(key));
+      const r = await fetch(
+        '/api/scale-positions?key=' + encodeURIComponent(key) +
+        '&family=' + encodeURIComponent(family)
+      );
       _positions = await r.json();
     } catch (e) { console.error('scale positions load failed', e); return; }
+
     const sel = document.getElementById('scale-position');
-    sel.innerHTML = _positions.map((p, i) =>
-      `<option value="${i}">${formatPositionLabel(p)}</option>`
-    ).join('');
+    const hasGroups = _positions.length && _positions[0].group;
+    if (hasGroups) {
+      // Option B: grouped <optgroup> — Box Positions then CAGED Shapes
+      const boxItems  = _positions.filter(p => p.group === 'box');
+      const cagedItems = _positions.filter(p => p.group === 'caged');
+      let html = `<optgroup label="── Box Positions (${boxItems.length})">`;
+      boxItems.forEach((p, i) => {
+        html += `<option value="${i}">${p.label}</option>`;
+      });
+      html += `</optgroup><optgroup label="── CAGED Shapes">`;
+      cagedItems.forEach((p, i) => {
+        html += `<option value="${boxItems.length + i}">${p.label}</option>`;
+      });
+      html += '</optgroup>';
+      sel.innerHTML = html;
+    } else {
+      sel.innerHTML = _positions.map((p, i) =>
+        `<option value="${i}">${formatPositionLabel(p)}</option>`
+      ).join('');
+    }
     onPositionChange();
     drawStaves(key, _currentMode, -1);
   }
@@ -897,6 +945,29 @@ async function createSession() {
     _positions = [];
     loadScalePositions(_currentKey);
     drawStaves(_currentKey, _currentMode, -1);
+  };
+
+  // FR-20260806: pill toggle between Diatonic / Maj Penta / Min Penta
+  window.onFamilyChange = function(family) {
+    _currentFamily = family;
+    const isDiatonic = family === 'diatonic';
+    // Update pill button active states
+    ['diatonic', 'major_penta', 'minor_penta'].forEach(f => {
+      const btn = document.getElementById('family-btn-' + f);
+      if (btn) {
+        btn.classList.toggle('family-btn-active', f === family);
+        btn.style.background = f === family ? 'var(--accent)' : '#111';
+        btn.style.color      = f === family ? '#fff' : '#ccc';
+      }
+    });
+    // Show/hide Mode selector (only relevant for diatonic)
+    const modeLbl = document.getElementById('scale-mode-label');
+    if (modeLbl) {
+      modeLbl.style.opacity       = isDiatonic ? '1' : '0.3';
+      modeLbl.style.pointerEvents = isDiatonic ? '' : 'none';
+    }
+    _positions = [];
+    loadScalePositions(_currentKey);
   };
 
   window.onModeChange = function() {
@@ -1017,6 +1088,14 @@ async function createSession() {
   const DEGREE_COLORS = {{ degree_colors | tojson }};
   const DEGREE_TEXT   = {{ degree_text | tojson }};
   const DEGREE_STROKE = {{ degree_stroke | tojson }};
+  const PENTA_DEGREE_COLORS = {{ penta_degree_colors | tojson }};
+  const PENTA_DEGREE_TEXT   = {{ penta_degree_text | tojson }};
+  const PENTA_DEGREE_STROKE = {{ penta_degree_stroke | tojson }};
+  // Pentatonic interval → degree type (intervals relative to penta root)
+  const PENTA_DEGREE_MAP = {
+    major_penta: {0:'root',2:'penta_second',4:'penta_third',7:'penta_fifth',9:'penta_sixth'},
+    minor_penta: {0:'root',3:'penta_third',5:'penta_fourth',7:'penta_fifth',10:'penta_flat7'},
+  };
   const MODE_ROOT_OFFSETS = Object.fromEntries(
     Object.entries(MODE_SPEC).map(([m, s]) => [m, s.root_offset])
   );
@@ -1031,9 +1110,16 @@ async function createSession() {
     return (base + offset) % 12;
   }
 
+  // For pentatonic families the effective root PC differs from the mode root.
+  // major_penta → same as key root; minor_penta → relative minor (key_pc + 9).
+  function effectiveRootPc(key, mode) {
+    if (_currentFamily === 'minor_penta') return ((KEY_PC[key] ?? 0) + 9) % 12;
+    return findModeRootPitchClass(key, mode);
+  }
+
   function buildScalePlayback(notes, key, mode) {
     const allAsc = buildAscDeduped(notes);
-    const rootPc = findModeRootPitchClass(key, mode);
+    const rootPc = effectiveRootPc(key, mode);
     const rootNote = findRootNoteInAsc(allAsc, rootPc);
     const rootIdx  = rootNote ? allAsc.indexOf(rootNote) : 0;
     const asc       = allAsc.slice(rootIdx);
@@ -1048,7 +1134,7 @@ async function createSession() {
   function getEffectiveNotes(pos) {
     if (!pos) return [];
     const notes = (pos.notes || []).slice();
-    const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
+    const rootPc = effectiveRootPc(_currentKey, _currentMode);
     if (pos.root_fret > 0) {
       const synthFret = pos.root_fret - 1;
       const synthMidi = 40 + synthFret;
@@ -1070,6 +1156,19 @@ async function createSession() {
   function updateLegend() {
     const el = document.getElementById('scale-legend');
     if (!el) return;
+    if (_currentFamily !== 'diatonic') {
+      const degMap = PENTA_DEGREE_MAP[_currentFamily] || {};
+      // Show only root and fifth for minor penta (Option B dominant palette)
+      const pentaLabels = _currentFamily === 'minor_penta'
+        ? [[0,'Root'],[3,'\u266d3'],[5,'4th'],[7,'5th'],[10,'\u266d7']]
+        : [[0,'Root'],[2,'2nd'],[4,'3rd'],[7,'5th'],[9,'6th']];
+      el.innerHTML = pentaLabels.map(([iv, label]) => {
+        const dt = degMap[iv] || 'root';
+        const color = PENTA_DEGREE_COLORS[dt] || '#555';
+        return `<span class="legend-item"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}"/></svg>${label}</span>`;
+      }).join('');
+      return;
+    }
     const spec = MODE_SPEC[_currentMode] || MODE_SPEC['Ionian'];
     const intervals = Object.keys(spec.degrees).map(Number).sort((a, b) => a - b);
     const items = intervals.map(i => [DEGREE_COLORS[spec.degrees[i].type], spec.degrees[i].label]);
@@ -1121,9 +1220,10 @@ async function createSession() {
     html += `<text x="${LEFT - 20}" y="${H - 8}" fill="#bbb" text-anchor="middle" font-size="8" font-family="Segoe UI,sans-serif">open</text>`;
     // Scale dots — string 1 (high e) → row 0 (top), string 6 (low E) → row 5 (bottom)
     // Open-string notes appear to the LEFT of the nut
-    const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
+    const rootPc = effectiveRootPc(_currentKey, _currentMode);
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
     const sorted = getEffectiveNotes(_positions[_currentPos]).slice().sort((a,b) => a.midi - b.midi);
+    const isPenta = _currentFamily !== 'diatonic';
     const _synPos = null;  // synthetic note now handled by getEffectiveNotes
     sorted.forEach((n, i) => {
       const row = n.string - 1;  // string 1→row 0 (top), string 6→row 5 (bottom)
@@ -1133,10 +1233,19 @@ async function createSession() {
       const isActive = i === activeIdx;
       const pc = n.midi % 12;
       const interval = (pc - rootPc + 12) % 12;
-      const dotType = getDotTypeForMode(interval, _currentKey, _currentMode);
-      const fill   = isActive ? PLAYING_COLOR : DOT_FILL[dotType];
-      const textFill = isActive ? '#000000' : DOT_TEXT[dotType];
-      const stroke = isActive ? '#000000' : DOT_STROKE[dotType];
+      let fill, textFill, stroke;
+      if (isPenta) {
+        const degMap = PENTA_DEGREE_MAP[_currentFamily] || {};
+        const degType = degMap[interval] || 'other';
+        fill      = isActive ? PLAYING_COLOR : (PENTA_DEGREE_COLORS[degType] || '#555555');
+        textFill  = isActive ? '#000000'     : (PENTA_DEGREE_TEXT[degType]   || '#ffffff');
+        stroke    = isActive ? '#000000'     : (PENTA_DEGREE_STROKE[degType] || '#000000');
+      } else {
+        const dotType = getDotTypeForMode(interval, _currentKey, _currentMode);
+        fill      = isActive ? PLAYING_COLOR : DOT_FILL[dotType];
+        textFill  = isActive ? '#000000'     : DOT_TEXT[dotType];
+        stroke    = isActive ? '#000000'     : DOT_STROKE[dotType];
+      }
       const r = isActive ? 10 : 9;
       const noteName = noteNames[pc];
       html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1" class="fret-dot${isActive?' playing':''}" data-note-idx="${i}"/>`;
@@ -1228,20 +1337,34 @@ async function createSession() {
       html += `<text x="${sx}" y="${sy}" fill="#aaa" font-size="14" font-family="serif" dominant-baseline="central" data-keysig="${clef}">${sigSymbol}</text>`;
     }
     const intervals = MODE_SCALE_INTERVALS[mode] ?? MAJOR_INTERVALS;
-    // Draw 8 diatonic note circles
-    for (let idx = 0; idx < intervals.length; idx++) {
-      const interval = intervals[idx];
-      const pc       = (modeRootPc + interval) % 12;
+    const isPentaStaff = _currentFamily !== 'diatonic';
+    const pentaRootPc  = effectiveRootPc(key, mode);
+    const pentaDegMap  = PENTA_DEGREE_MAP[_currentFamily] || {};
+    const pentaIntervals = _currentFamily === 'minor_penta'
+      ? [0, 3, 5, 7, 10, 12] : [0, 2, 4, 7, 9, 12];
+    const staffIntervals = isPentaStaff ? pentaIntervals : intervals;
+    const staffRootPc    = isPentaStaff ? pentaRootPc    : modeRootPc;
+    // Draw note circles
+    for (let idx = 0; idx < staffIntervals.length; idx++) {
+      const interval = staffIntervals[idx];
+      const pc       = (staffRootPc + interval) % 12;
       const noteName = noteNames[pc];
       const noteY    = baseY - idx * 5;
       const noteX    = noteXStart + idx * noteXSpacing;
-      const degInterval = (pc - modeRootPc + 12) % 12;
-      const _spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
-      const colorKey = (_spec.degrees[degInterval] && _spec.degrees[degInterval].type) || 'other';
       const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
-      const noteFill  = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
-      const textFill  = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
-      // Ledger line if note is above/below staff
+      let noteFill, textFill;
+      if (isPentaStaff) {
+        const relInterval = (pc - staffRootPc + 12) % 12;
+        const dt = pentaDegMap[relInterval] || 'other';
+        noteFill = isHighlit ? '#ffe066' : (PENTA_DEGREE_COLORS[dt] || '#555');
+        textFill = isHighlit ? '#000'    : (PENTA_DEGREE_TEXT[dt]   || '#fff');
+      } else {
+        const degInterval = (pc - modeRootPc + 12) % 12;
+        const _spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
+        const colorKey = (_spec.degrees[degInterval] && _spec.degrees[degInterval].type) || 'other';
+        noteFill = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
+        textFill = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
+      }
       if (noteY < lineYs[0] - 3 || noteY > lineYs[4] + 3) {
         html += `<line x1="${noteX - 10}" y1="${noteY}" x2="${noteX + 10}" y2="${noteY}" stroke="#888" stroke-width="1"/>`;
       }
@@ -1482,6 +1605,9 @@ def index():
         degree_colors=DEGREE_COLORS,
         degree_text=DEGREE_TEXT,
         degree_stroke=DEGREE_STROKE,
+        penta_degree_colors=PENTATONIC_DEGREE_COLORS,
+        penta_degree_text=PENTATONIC_DEGREE_TEXT,
+        penta_degree_stroke=PENTATONIC_DEGREE_STROKE,
     )
 
 
@@ -1634,21 +1760,58 @@ def delete_session():
 
 @app.route("/api/scale-positions")
 def api_scale_positions():
-    """Return positions for the given key as JSON. Query param: ?key=C (default) or ?key=G."""
+    """Return positions for the given key as JSON.
+
+    Query params:
+        key=C               (default) — key root
+        family=diatonic     (default) — also accepts major_pentatonic | minor_pentatonic
+    """
     key = request.args.get("key", "C").strip()
-    positions = SCALE_POSITIONS.get(key)
-    if positions is None:
+    family = request.args.get("family", "diatonic").strip()
+
+    _VALID_FAMILIES = {"diatonic", "major_pentatonic", "minor_pentatonic"}
+    if family not in _VALID_FAMILIES:
         abort(400)
-    return jsonify([
-        {
-            "label": p["label"],
-            "root_string": p["root_string"],
-            "root_fret": p["root_fret"],
-            "instructor_phrase": p["instructor_phrase"],
-            "notes": p["notes"],
-        }
-        for p in positions
-    ])
+
+    if family == "diatonic":
+        positions = SCALE_POSITIONS.get(key)
+        if positions is None:
+            abort(400)
+        return jsonify([
+            {
+                "label": p["label"],
+                "root_string": p["root_string"],
+                "root_fret": p["root_fret"],
+                "instructor_phrase": p["instructor_phrase"],
+                "notes": p["notes"],
+            }
+            for p in positions
+        ])
+    else:
+        # Pentatonic: box positions (group="box"); CAGED group gated by feature flag
+        box_list = BOX_PENTA_POSITIONS.get(key, {}).get(family, [])
+        caged_list = [] if not PENTA_CAGED_ENABLED else (
+            PENTATONIC_POSITIONS.get(key, [])
+            if family == "major_pentatonic"
+            else _MINOR_PENTA_POSITIONS.get(key, [])
+        )
+        if not box_list and not caged_list:
+            abort(400)
+
+        def _fmt(p, group):
+            return {
+                "label": p["label"],
+                "root_string": p["root_string"],
+                "root_fret": p["root_fret"],
+                "instructor_phrase": p["instructor_phrase"],
+                "notes": p["notes"],
+                "group": group,
+            }
+
+        return jsonify(
+            [_fmt(p, "box") for p in box_list] +
+            [_fmt(p, "caged") for p in caged_list]
+        )
 
 
 @app.route("/api/scale-log", methods=["GET", "POST"])
