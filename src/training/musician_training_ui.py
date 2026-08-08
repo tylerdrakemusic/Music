@@ -32,6 +32,12 @@ from training.mode_spec import (  # noqa: E402
     DEGREE_STROKE,
     build_mode_phrase as buildModePhrase,
 )
+from training.pentatonic_spec import (  # noqa: E402
+    PENTATONIC_SPEC,
+    PENTATONIC_DEGREE_COLORS,
+    PENTATONIC_DEGREE_TEXT,
+    PENTATONIC_DEGREE_STROKE,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Keep TRAINING_DIR for the ephemeral _run_*.json temp files used by focused_musician_training.py
@@ -1078,6 +1084,22 @@ async function createSession() {
   const DEGREE_COLORS = {{ degree_colors | tojson }};
   const DEGREE_TEXT   = {{ degree_text | tojson }};
   const DEGREE_STROKE = {{ degree_stroke | tojson }};
+  const PENTA_DEGREE_COLORS = {{ penta_degree_colors | tojson }};
+  const PENTA_DEGREE_TEXT   = {{ penta_degree_text | tojson }};
+  const PENTA_DEGREE_STROKE = {{ penta_degree_stroke | tojson }};
+  // Pentatonic interval → degree type (intervals relative to penta root)
+  const PENTA_DEGREE_MAP = {
+    major_penta: {0:'root',2:'penta_second',4:'penta_third',7:'penta_fifth',9:'penta_sixth'},
+    minor_penta: {0:'root',3:'penta_third',5:'penta_fourth',7:'penta_fifth',10:'penta_flat7'},
+  };
+  const PENTA_DEGREE_COLORS = {{ penta_degree_colors | tojson }};
+  const PENTA_DEGREE_TEXT   = {{ penta_degree_text | tojson }};
+  const PENTA_DEGREE_STROKE = {{ penta_degree_stroke | tojson }};
+  // Pentatonic interval → degree type mapping
+  const PENTA_DEGREE_MAP = {
+    major_penta: {0:'root',2:'penta_second',4:'penta_third',7:'penta_fifth',9:'penta_sixth'},
+    minor_penta: {0:'root',3:'penta_third',5:'penta_fourth',7:'penta_fifth',10:'penta_flat7'},
+  };
   const MODE_ROOT_OFFSETS = Object.fromEntries(
     Object.entries(MODE_SPEC).map(([m, s]) => [m, s.root_offset])
   );
@@ -1189,9 +1211,10 @@ async function createSession() {
     html += `<text x="${LEFT - 20}" y="${H - 8}" fill="#bbb" text-anchor="middle" font-size="8" font-family="Segoe UI,sans-serif">open</text>`;
     // Scale dots — string 1 (high e) → row 0 (top), string 6 (low E) → row 5 (bottom)
     // Open-string notes appear to the LEFT of the nut
-    const rootPc = findModeRootPitchClass(_currentKey, _currentMode);
+    const rootPc = effectiveRootPc(_currentKey, _currentMode);
     const noteNames = FLAT_KEYS.has(_currentKey) ? PC_NAMES_FLAT : PC_NAMES;
     const sorted = getEffectiveNotes(_positions[_currentPos]).slice().sort((a,b) => a.midi - b.midi);
+    const isPenta = _currentFamily !== 'diatonic';
     const _synPos = null;  // synthetic note now handled by getEffectiveNotes
     sorted.forEach((n, i) => {
       const row = n.string - 1;  // string 1→row 0 (top), string 6→row 5 (bottom)
@@ -1201,10 +1224,19 @@ async function createSession() {
       const isActive = i === activeIdx;
       const pc = n.midi % 12;
       const interval = (pc - rootPc + 12) % 12;
-      const dotType = getDotTypeForMode(interval, _currentKey, _currentMode);
-      const fill   = isActive ? PLAYING_COLOR : DOT_FILL[dotType];
-      const textFill = isActive ? '#000000' : DOT_TEXT[dotType];
-      const stroke = isActive ? '#000000' : DOT_STROKE[dotType];
+      let fill, textFill, stroke;
+      if (isPenta) {
+        const degMap = PENTA_DEGREE_MAP[_currentFamily] || {};
+        const degType = degMap[interval] || 'other';
+        fill      = isActive ? PLAYING_COLOR : (PENTA_DEGREE_COLORS[degType] || '#555555');
+        textFill  = isActive ? '#000000'     : (PENTA_DEGREE_TEXT[degType]   || '#ffffff');
+        stroke    = isActive ? '#000000'     : (PENTA_DEGREE_STROKE[degType] || '#000000');
+      } else {
+        const dotType = getDotTypeForMode(interval, _currentKey, _currentMode);
+        fill      = isActive ? PLAYING_COLOR : DOT_FILL[dotType];
+        textFill  = isActive ? '#000000'     : DOT_TEXT[dotType];
+        stroke    = isActive ? '#000000'     : DOT_STROKE[dotType];
+      }
       const r = isActive ? 10 : 9;
       const noteName = noteNames[pc];
       html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1" class="fret-dot${isActive?' playing':''}" data-note-idx="${i}"/>`;
@@ -1550,6 +1582,9 @@ def index():
         degree_colors=DEGREE_COLORS,
         degree_text=DEGREE_TEXT,
         degree_stroke=DEGREE_STROKE,
+        penta_degree_colors=PENTATONIC_DEGREE_COLORS,
+        penta_degree_text=PENTATONIC_DEGREE_TEXT,
+        penta_degree_stroke=PENTATONIC_DEGREE_STROKE,
     )
 
 

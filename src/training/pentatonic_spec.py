@@ -24,27 +24,33 @@ from typing import TypedDict
 # ---------------------------------------------------------------------------
 # 2B warm palette — distinct from diatonic DEGREE_COLORS
 # ---------------------------------------------------------------------------
+# Option B — Root + 5th dominant: root hot-pink, 5th teal, other degrees muted.
 PENTA_DEGREE_COLORS: dict[str, str] = {
-    "root":        "#ff0080",  # stays hot-pink for muscle memory
-    "penta_second": "#c5f0a4",  # sage green — major 2nd
-    "penta_third":  "#ffb347",  # warm amber — major or minor 3rd
-    "penta_fourth": "#ffe66d",  # gold — 4th (minor penta)
-    "penta_fifth":  "#a8d8ea",  # sky blue — 5th
-    "penta_sixth":  "#a8d8ea",  # same sky for major 6th
-    "penta_flat7":  "#c77dff",  # violet — ♭7 (minor penta)
+    "root":         "#ff0080",
+    "penta_second": "#555555",
+    "penta_third":  "#555555",
+    "penta_fourth": "#666666",
+    "penta_fifth":  "#00e5cc",
+    "penta_sixth":  "#00e5cc",
+    "penta_flat7":  "#444444",
 }
 
 PENTA_DEGREE_TEXT: dict[str, str] = {
     "root":         "#ffffff",
-    "penta_second": "#000000",
-    "penta_third":  "#000000",
-    "penta_fourth": "#000000",
+    "penta_second": "#ffffff",
+    "penta_third":  "#ffffff",
+    "penta_fourth": "#ffffff",
     "penta_fifth":  "#000000",
     "penta_sixth":  "#000000",
     "penta_flat7":  "#ffffff",
 }
 
 PENTA_DEGREE_STROKE: dict[str, str] = {k: "#000000" for k in PENTA_DEGREE_COLORS}
+
+# Canonical names imported by musician_training_ui
+PENTATONIC_DEGREE_COLORS = PENTA_DEGREE_COLORS
+PENTATONIC_DEGREE_TEXT   = PENTA_DEGREE_TEXT
+PENTATONIC_DEGREE_STROKE = PENTA_DEGREE_STROKE
 
 
 def _deg(type_: str, label: str) -> dict[str, str]:
