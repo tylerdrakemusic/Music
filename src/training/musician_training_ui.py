@@ -1351,12 +1351,13 @@ async function createSession() {
       const noteName = noteNames[pc];
       const noteY    = baseY - idx * 5;
       const noteX    = noteXStart + idx * noteXSpacing;
+      const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
       let noteFill, textFill;
       if (isPentaStaff) {
         const relInterval = (pc - staffRootPc + 12) % 12;
         const dt = pentaDegMap[relInterval] || 'other';
-        noteFill = PENTA_DEGREE_COLORS[dt] || '#555';
-        textFill = PENTA_DEGREE_TEXT[dt]   || '#fff';
+        noteFill = isHighlit ? '#ffe066' : (PENTA_DEGREE_COLORS[dt] || '#555');
+        textFill = isHighlit ? '#000'    : (PENTA_DEGREE_TEXT[dt]   || '#fff');
       } else {
         const degInterval = (pc - modeRootPc + 12) % 12;
         const _spec = MODE_SPEC[mode] || MODE_SPEC['Ionian'];
@@ -1364,8 +1365,6 @@ async function createSession() {
         noteFill = isHighlit ? '#ffe066' : STAFF_COLORS[colorKey];
         textFill = isHighlit ? '#000'    : STAFF_TEXT[colorKey];
       }
-      const isHighlit = highlightMidi >= 0 && (pc === highlightMidi % 12);
-      if (isHighlit) { noteFill = '#ffe066'; textFill = '#000'; }
       if (noteY < lineYs[0] - 3 || noteY > lineYs[4] + 3) {
         html += `<line x1="${noteX - 10}" y1="${noteY}" x2="${noteX + 10}" y2="${noteY}" stroke="#888" stroke-width="1"/>`;
       }
