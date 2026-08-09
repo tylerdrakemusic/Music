@@ -21,8 +21,10 @@ RUN pip install --no-cache-dir \
     "pronouncing>=0.2" \
     "requests>=2.31,<3.0"
 
-# Includes src/training/assets/scale_count_in.mp3 for keyless Fly.io deploys.
+# Includes the bundled scale count-in WAVs and instructor audio for keyless
+# Fly.io deploys.
 COPY src/ src/
+COPY click/ click/
 
 # Cloud-only defaults: exercise cards / catalog / session logging need local
 # song files and heartmusic.db access that this image does not ship with.
