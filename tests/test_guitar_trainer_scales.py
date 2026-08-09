@@ -651,10 +651,89 @@ def test_scale_defaults_are_160_bpm_and_2_reps(client) -> None:
 
 
 def test_scale_js_has_four_beat_count_in() -> None:
-    """Scale playback must call the metronome count-in helper before MIDI notes."""
+    """Scale playback must use the spoken, stop-aware four-beat count-in."""
     trainer_src = (PROJECT_ROOT / "src" / "training" / "musician_training_ui.py").read_text(encoding="utf-8")
-    assert "metroCountIn(4, _scaleBpm" in trainer_src
+    assert "scaleCountIn(4, _scaleBpm" in trainer_src
+    assert "metroCountIn(4, _scaleBpm" not in trainer_src
     assert "Count-in 1/4" in trainer_src
+    assert "_scaleStopFlag" in trainer_src
+    assert "audio.pause()" in trainer_src
+    assert "audio.currentTime = 0" in trainer_src
+
+
+def test_scale_count_in_falls_back_without_elevenlabs_key(tmp_path, monkeypatch) -> None:
+    """The deployed Scales count-in must resolve a bundled MP3 without an API key."""
+    from training.scale_tts import get_scale_count_in_audio
+
+    monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
+    fallback = tmp_path / "scale_count_in.mp3"
+    fallback.write_bytes(b"not-empty-audio")
+
+    resolved = get_scale_count_in_audio(tmp_path, fallback_path=fallback)
+
+    assert resolved == fallback
+
+
+def test_scale_count_in_prefers_runtime_audio(tmp_path, monkeypatch) -> None:
+    """When ElevenLabs/cache returns audio, the bundled fallback is not selected."""
+    import training.scale_tts as scale_tts
+
+    generated = tmp_path / "runtime.mp3"
+    generated.write_bytes(b"runtime-audio")
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "test-key")
+    monkeypatch.setattr(scale_tts, "get_instructor_audio", lambda phrase, cache_dir: generated)
+
+    fallback = tmp_path / "fallback.mp3"
+    fallback.write_bytes(b"fallback-audio")
+
+    assert scale_tts.get_scale_count_in_audio(tmp_path, fallback_path=fallback) == generated
+
+
+def test_scale_count_in_endpoint_serves_selected_audio(client, tmp_path, monkeypatch) -> None:
+    """The deployment route must return playable MPEG bytes from the selector."""
+    import training.musician_training_ui as ui
+
+    audio_path = tmp_path / "scale_count_in.mp3"
+    audio_path.write_bytes(b"audio/mpeg")
+    monkeypatch.setattr(ui, "get_scale_count_in_audio", lambda cache_dir: audio_path)
+
+    response = client.get("/api/scale-count-in")
+
+    assert response.status_code == 200
+    assert response.mimetype == "audio/mpeg"
+    assert response.data == b"audio/mpeg"
+
+
+def test_scale_html_removes_only_scales_duration_control(client) -> None:
+    """The Scales UI omits duration while exercise-card duration remains available."""
+    html = client.get("/").get_data(as_text=True)
+
+    assert 'id="scale-duration"' not in html
+    trainer_src = (PROJECT_ROOT / "src" / "training" / "musician_training_ui.py").read_text(encoding="utf-8")
+    assert "duration_minutes: int = 0" in trainer_src
+
+
+def test_scale_log_ignores_removed_duration_payload(client, mem_conn) -> None:
+    """Scale logging must preserve the schema but no longer consume duration input."""
+    resp = client.post(
+        "/api/scale-log",
+        data=json.dumps({
+            "scale": "C_major", "position": 1, "bpm": 120, "reps": 2,
+            "key": "C", "mode": "Ionian", "duration_minutes": 99,
+        }),
+        content_type="application/json",
+    )
+
+    assert resp.status_code == 200
+    row = mem_conn.execute("SELECT duration_minutes FROM scale_practice_log").fetchone()
+    assert row["duration_minutes"] == 0
+
+
+def test_scale_count_in_fallback_is_copied_into_deployment_image() -> None:
+    """The Fly image must include the committed fallback asset."""
+    dockerfile = (PROJECT_ROOT / "Dockerfile").read_text(encoding="utf-8")
+
+    assert "scale_count_in.mp3" in dockerfile
 
 
 # ---------------------------------------------------------------------------

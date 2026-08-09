@@ -10,6 +10,7 @@
 *.aiff
 *.m4a
 *.ogg
+!src/training/assets/scale_count_in.mp3
 *.mid
 *.midi
 
