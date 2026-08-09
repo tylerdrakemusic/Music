@@ -28,7 +28,7 @@ from training.scale_data import (  # noqa: E402
 # FR-20260806: CAGED-derived pentatonic shapes are deferred until design is settled.
 # Flip to True to re-enable the CAGED optgroup in the position dropdown.
 PENTA_CAGED_ENABLED: bool = False
-from training.scale_tts import get_instructor_audio  # noqa: E402
+from training.scale_tts import get_instructor_audio, get_scale_count_in_audio  # noqa: E402
 from training.mode_spec import (  # noqa: E402
     MODE_SPEC,
     DEGREE_COLORS,
@@ -468,9 +468,6 @@ HTML = r"""
     <label class="scale-ctrl-label">Reps
       <input id="scale-reps" class="scale-ctrl-input" type="number" value="2" min="1" max="20">
     </label>
-    <label class="scale-ctrl-label">Duration (min)
-      <input id="scale-duration" class="scale-ctrl-input" type="number" value="0" min="0" max="300">
-    </label>
     <button class="btn-scale-play" id="scale-play-btn" onclick="scaleToggle()">▶ Play</button>
   </div>
 
@@ -757,6 +754,34 @@ async function createSession() {
     await sleep((beats * beatIntervalMs) + 50);
     return !(shouldStop && shouldStop());
   }
+
+  window.scaleCountIn = async function(beats, countInBpm, shouldStop) {
+    const response = await fetch('/api/scale-count-in');
+    if (!response.ok) return false;
+    const audio = new Audio(URL.createObjectURL(await response.blob()));
+    const beatIntervalMs = Math.round(60000 / Math.max(20, Math.min(300, parseInt(countInBpm) || 120)));
+    const startedAt = performance.now();
+    try {
+      await audio.play();
+      while (performance.now() - startedAt < beats * beatIntervalMs) {
+        if (shouldStop && shouldStop()) {
+          audio.pause();
+          audio.currentTime = 0;
+          return false;
+        }
+        const beat = Math.min(beats - 1, Math.floor((performance.now() - startedAt) / beatIntervalMs));
+        const status = document.getElementById('scale-status');
+        if (status) status.textContent = `Count-in ${beat + 1}/${beats}`;
+        updateDots(beat);
+        await sleep(25);
+      }
+      return !(shouldStop && shouldStop());
+    } finally {
+      audio.pause();
+      audio.currentTime = 0;
+      URL.revokeObjectURL(audio.src);
+    }
+  };
 
   function playBuf(buf, time) {
     if (!buf) return;
@@ -1462,8 +1487,8 @@ async function createSession() {
     btn.textContent = '⏹ Stop';
     const status = document.getElementById('scale-status');
     status.textContent = 'Count-in 1/4';
-    if (window.metroCountIn) {
-      const countInOk = await window.metroCountIn(4, _scaleBpm, () => _scaleStopFlag);
+    if (window.scaleCountIn) {
+      const countInOk = await window.scaleCountIn(4, _scaleBpm, () => _scaleStopFlag);
       if (!countInOk || _scaleStopFlag) {
         _scalePlaying = false;
         _scaleStopFlag = false;
@@ -1484,13 +1509,14 @@ async function createSession() {
         await sleep(noteDurationMs);
       }
     }
+    const stopped = _scaleStopFlag;
     _scalePlaying = false;
     _scaleStopFlag = false;
     btn.textContent = '▶ Play';
     drawFretboard(pos.notes, -1);
     drawStaves(_currentKey, _currentMode, -1);
-    status.textContent = _scaleStopFlag ? '' : '✓ Complete';
-    if (!_scaleStopFlag) {
+    status.textContent = stopped ? '' : '✓ Complete';
+    if (!stopped) {
       logScaleSession(_currentKey, _currentMode, _currentPos + 1, _scaleBpm, reps);
     }
   };
@@ -1518,14 +1544,12 @@ async function createSession() {
 
   async function logScaleSession(key, mode, position, bpm, reps) {
     try {
-      const durEl = document.getElementById('scale-duration');
-      const duration_minutes = durEl ? (parseInt(durEl.value) || 0) : 0;
       const modeKey = mode === 'Ionian' ? 'major' : mode.toLowerCase();
       const scale = `${key}_${modeKey}`;
       const r = await fetch('/api/scale-log', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({scale, position, bpm, reps, key: key || 'C', mode, duration_minutes}),
+        body: JSON.stringify({scale, position, bpm, reps, key: key || 'C', mode}),
       });
       if ((await r.json()).ok) loadScaleLog();
     } catch (e) { console.warn('scale log failed', e); }
@@ -1873,11 +1897,6 @@ def api_scale_log():
     bpm = data.get("bpm")
     reps = data.get("reps")
     key = str(data.get("key") or "C").strip()
-    try:
-        duration_minutes = max(0, int(data.get("duration_minutes") or 0))
-    except (TypeError, ValueError):
-        duration_minutes = 0
-
     # Validate
     if not scale:
         return jsonify({"ok": False, "error": "scale required"})
@@ -1908,8 +1927,8 @@ def api_scale_log():
             return jsonify({"ok": False, "error": f"mode must be one of Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian"})
         with get_connection() as conn:
             conn.execute(
-                "INSERT INTO scale_practice_log (key, mode, scale, position, bpm, reps, duration_minutes) VALUES (?,?,?,?,?,?,?)",
-                (key, mode, scale, position, bpm, reps, duration_minutes),
+              "INSERT INTO scale_practice_log (key, mode, scale, position, bpm, reps) VALUES (?,?,?,?,?,?)",
+              (key, mode, scale, position, bpm, reps),
             )
             conn.commit()
         return jsonify({"ok": True})
@@ -1954,6 +1973,15 @@ def api_instructor_audio():
         mimetype="audio/mpeg",
         headers={"Cache-Control": "no-cache"},
     )
+
+
+@app.route("/api/scale-count-in")
+def api_scale_count_in():
+    """Return the spoken four-beat Scales count-in with a bundled fallback."""
+    audio_path = get_scale_count_in_audio(TTS_CACHE_DIR)
+    if audio_path is None:
+        return Response(status=503)
+    return Response(audio_path.read_bytes(), status=200, mimetype="audio/mpeg")
 
 
 # ---------------------------------------------------------------------------
