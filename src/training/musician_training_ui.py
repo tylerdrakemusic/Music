@@ -28,7 +28,7 @@ from training.scale_data import (  # noqa: E402
 # FR-20260806: CAGED-derived pentatonic shapes are deferred until design is settled.
 # Flip to True to re-enable the CAGED optgroup in the position dropdown.
 PENTA_CAGED_ENABLED: bool = False
-from training.scale_tts import get_instructor_audio, get_scale_count_in_audio  # noqa: E402
+from training.scale_tts import get_instructor_audio  # noqa: E402
 from training.mode_spec import (  # noqa: E402
     MODE_SPEC,
     DEGREE_COLORS,
@@ -741,50 +741,55 @@ async function createSession() {
     const beatIntervalSec = beatIntervalMs / 1000;
     const startTime = ctx.currentTime + 0.05;
     const status = document.getElementById('scale-status');
+    const countInSources = [];
+    const countInDotHandles = [];
+    const cancelCountIn = () => {
+      countInSources.forEach((src) => {
+        try {
+          src.stop();
+        } catch (_e) {
+          // ignore sources that are already stopped
+        }
+        const idx = scheduledSources.indexOf(src);
+        if (idx !== -1) scheduledSources.splice(idx, 1);
+      });
+      countInSources.length = 0;
+      countInDotHandles.forEach(clearTimeout);
+      countInDotHandles.length = 0;
+    };
     for (let beat = 0; beat < beats; beat++) {
-      if (shouldStop && shouldStop()) return false;
+      if (shouldStop && shouldStop()) {
+        cancelCountIn();
+        return false;
+      }
       const beatTime = startTime + (beat * beatIntervalSec);
-      playBuf(beat === 0 ? accentBuf : clickBuf, beatTime);
-      setTimeout(() => {
+      const src = playBuf(beat === 0 ? accentBuf : clickBuf, beatTime);
+      if (src) countInSources.push(src);
+      const dotHandle = setTimeout(() => {
         if (shouldStop && shouldStop()) return;
         if (status) status.textContent = `Count-in ${beat + 1}/${beats}`;
         updateDots(beat);
       }, Math.max(0, (beatTime - ctx.currentTime) * 1000));
+      countInDotHandles.push(dotHandle);
     }
-    await sleep((beats * beatIntervalMs) + 50);
+    const endTime = performance.now() + (beats * beatIntervalMs) + 50;
+    while (performance.now() < endTime) {
+      if (shouldStop && shouldStop()) {
+        cancelCountIn();
+        return false;
+      }
+      await sleep(25);
+    }
+    countInDotHandles.length = 0;
     return !(shouldStop && shouldStop());
   }
 
   window.scaleCountIn = async function(beats, countInBpm, shouldStop) {
-    const response = await fetch('/api/scale-count-in');
-    if (!response.ok) return false;
-    const audio = new Audio(URL.createObjectURL(await response.blob()));
-    const beatIntervalMs = Math.round(60000 / Math.max(20, Math.min(300, parseInt(countInBpm) || 120)));
-    const startedAt = performance.now();
-    try {
-      await audio.play();
-      while (performance.now() - startedAt < beats * beatIntervalMs) {
-        if (shouldStop && shouldStop()) {
-          audio.pause();
-          audio.currentTime = 0;
-          return false;
-        }
-        const beat = Math.min(beats - 1, Math.floor((performance.now() - startedAt) / beatIntervalMs));
-        const status = document.getElementById('scale-status');
-        if (status) status.textContent = `Count-in ${beat + 1}/${beats}`;
-        updateDots(beat);
-        await sleep(25);
-      }
-      return !(shouldStop && shouldStop());
-    } finally {
-      audio.pause();
-      audio.currentTime = 0;
-      URL.revokeObjectURL(audio.src);
-    }
+    return playCountIn(beats, countInBpm, shouldStop);
   };
 
   function playBuf(buf, time) {
-    if (!buf) return;
+    if (!buf) return null;
     const ctx = getCtx();
     const src = ctx.createBufferSource();
     src.buffer = buf;
@@ -795,6 +800,7 @@ async function createSession() {
       const idx = scheduledSources.indexOf(src);
       if (idx !== -1) scheduledSources.splice(idx, 1);
     };
+    return src;
   }
 
   function updateDots(beat) {
@@ -1973,15 +1979,6 @@ def api_instructor_audio():
         mimetype="audio/mpeg",
         headers={"Cache-Control": "no-cache"},
     )
-
-
-@app.route("/api/scale-count-in")
-def api_scale_count_in():
-    """Return the spoken four-beat Scales count-in with a bundled fallback."""
-    audio_path = get_scale_count_in_audio(TTS_CACHE_DIR)
-    if audio_path is None:
-        return Response(status=503)
-    return Response(audio_path.read_bytes(), status=200, mimetype="audio/mpeg")
 
 
 # ---------------------------------------------------------------------------

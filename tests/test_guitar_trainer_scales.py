@@ -651,57 +651,22 @@ def test_scale_defaults_are_160_bpm_and_2_reps(client) -> None:
 
 
 def test_scale_js_has_four_beat_count_in() -> None:
-    """Scale playback must use the spoken, stop-aware four-beat count-in."""
+    """Scale playback must use the bundled, stop-aware four-beat count-in."""
     trainer_src = (PROJECT_ROOT / "src" / "training" / "musician_training_ui.py").read_text(encoding="utf-8")
     assert "scaleCountIn(4, _scaleBpm" in trainer_src
     assert "metroCountIn(4, _scaleBpm" not in trainer_src
     assert "Count-in 1/4" in trainer_src
     assert "_scaleStopFlag" in trainer_src
-    assert "audio.pause()" in trainer_src
-    assert "audio.currentTime = 0" in trainer_src
+    assert "first.wav" in trainer_src
+    assert "click.wav" in trainer_src
+    assert "return playCountIn(beats, countInBpm, shouldStop);" in trainer_src
 
 
-def test_scale_count_in_falls_back_without_elevenlabs_key(tmp_path, monkeypatch) -> None:
-    """The deployed Scales count-in must resolve a bundled MP3 without an API key."""
-    from training.scale_tts import get_scale_count_in_audio
-
-    monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
-    fallback = tmp_path / "scale_count_in.mp3"
-    fallback.write_bytes(b"not-empty-audio")
-
-    resolved = get_scale_count_in_audio(tmp_path, fallback_path=fallback)
-
-    assert resolved == fallback
-
-
-def test_scale_count_in_prefers_runtime_audio(tmp_path, monkeypatch) -> None:
-    """When ElevenLabs/cache returns audio, the bundled fallback is not selected."""
-    import training.scale_tts as scale_tts
-
-    generated = tmp_path / "runtime.mp3"
-    generated.write_bytes(b"runtime-audio")
-    monkeypatch.setenv("ELEVENLABS_API_KEY", "test-key")
-    monkeypatch.setattr(scale_tts, "get_instructor_audio", lambda phrase, cache_dir: generated)
-
-    fallback = tmp_path / "fallback.mp3"
-    fallback.write_bytes(b"fallback-audio")
-
-    assert scale_tts.get_scale_count_in_audio(tmp_path, fallback_path=fallback) == generated
-
-
-def test_scale_count_in_endpoint_serves_selected_audio(client, tmp_path, monkeypatch) -> None:
-    """The deployment route must return playable MPEG bytes from the selector."""
-    import training.musician_training_ui as ui
-
-    audio_path = tmp_path / "scale_count_in.mp3"
-    audio_path.write_bytes(b"audio/mpeg")
-    monkeypatch.setattr(ui, "get_scale_count_in_audio", lambda cache_dir: audio_path)
-
-    response = client.get("/api/scale-count-in")
-
-    assert response.status_code == 200
-    assert response.mimetype == "audio/mpeg"
-    assert response.data == b"audio/mpeg"
+def test_scale_count_in_has_no_elevenlabs_endpoint() -> None:
+    """Scales count-in must not depend on a TTS helper or Flask endpoint."""
+    trainer_src = (PROJECT_ROOT / "src" / "training" / "musician_training_ui.py").read_text(encoding="utf-8")
+    assert "get_scale_count_in_audio" not in trainer_src
+    assert "@app.route(\"/api/scale-count-in\")" not in trainer_src
 
 
 def test_scale_html_removes_only_scales_duration_control(client) -> None:
@@ -730,10 +695,10 @@ def test_scale_log_ignores_removed_duration_payload(client, mem_conn) -> None:
 
 
 def test_scale_count_in_fallback_is_copied_into_deployment_image() -> None:
-    """The Fly image must include the committed fallback asset."""
+    """The Fly image must include the bundled click WAV assets."""
     dockerfile = (PROJECT_ROOT / "Dockerfile").read_text(encoding="utf-8")
 
-    assert "scale_count_in.mp3" in dockerfile
+    assert "COPY click/ click/" in dockerfile
 
 
 # ---------------------------------------------------------------------------
