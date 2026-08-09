@@ -750,6 +750,8 @@ async function createSession() {
         } catch (_e) {
           // ignore sources that are already stopped
         }
+        const idx = scheduledSources.indexOf(src);
+        if (idx !== -1) scheduledSources.splice(idx, 1);
       });
       countInSources.length = 0;
       countInDotHandles.forEach(clearTimeout);
