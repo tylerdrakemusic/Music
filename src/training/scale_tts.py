@@ -18,6 +18,8 @@ log = logging.getLogger(__name__)
 
 _VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # ElevenLabs Rachel (stable, multilingual)
 _API_BASE = "https://api.elevenlabs.io/v1"
+SCALE_COUNT_IN_PHRASE = "One, two, three, four"
+SCALE_COUNT_IN_FALLBACK = Path(__file__).parent / "assets" / "scale_count_in.mp3"
 
 
 def _resolve_cache_dir(cache_dir: Path) -> Path:
@@ -53,6 +55,16 @@ def _normalize_phrase(phrase: str) -> str:
     phrase = phrase.replace("A major", "Ay major")
     phrase = phrase.replace("A shape", "Ay shape")
     return phrase
+
+
+def get_scale_count_in_audio(cache_dir: Path, fallback_path: Path | None = None) -> Path | None:
+    """Return runtime-generated Scales count-in audio or the bundled fallback."""
+    generated = get_instructor_audio(SCALE_COUNT_IN_PHRASE, cache_dir)
+    if generated is not None and generated.exists():
+        return generated
+
+    fallback = fallback_path or SCALE_COUNT_IN_FALLBACK
+    return fallback if fallback.is_file() else None
 
 
 def get_instructor_audio(phrase: str, cache_dir: Path) -> Path | None:
