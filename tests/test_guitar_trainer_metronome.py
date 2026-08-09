@@ -252,3 +252,32 @@ def test_metronome_js_stop_clears_dot_timeouts(trainer_src: str) -> None:
     assert "scheduledDotHandles" in trainer_src
     assert "clearTimeout" in trainer_src
     assert "scheduledDotHandles.length = 0" in trainer_src
+
+
+def test_scales_count_in_uses_bundled_web_audio_scheduler(trainer_src: str) -> None:
+    """Scales count-in must reuse the bundled WAV Web Audio scheduler."""
+    start = trainer_src.index("window.scaleCountIn = async function")
+    end = trainer_src.index("\n  };", start) + len("\n  };")
+    count_in = trainer_src[start:end]
+
+    assert "/api/scale-count-in" not in count_in
+    assert "return playCountIn(beats, countInBpm, shouldStop);" in count_in
+    assert "new Audio(" not in count_in
+
+
+def test_scales_count_in_cancels_scheduled_audio_and_mp3_route(trainer_src: str) -> None:
+    """Stopping Scales must cancel scheduled count-in audio without TTS."""
+    start = trainer_src.index("async function playCountIn")
+    end = trainer_src.index("\n  window.scaleCountIn", start)
+    play_count_in = trainer_src[start:end]
+
+    assert "src.stop()" in play_count_in
+    assert "clearTimeout" in play_count_in
+    assert "get_scale_count_in_audio" not in trainer_src
+    assert "@app.route(\"/api/scale-count-in\")" not in trainer_src
+
+
+def test_dockerfile_packages_bundled_click_wavs() -> None:
+    """The deployable image must include the ignored click WAV directory."""
+    dockerfile = (PROJECT_ROOT / "Dockerfile").read_text(encoding="utf-8")
+    assert "COPY click/ click/" in dockerfile
