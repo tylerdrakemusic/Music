@@ -17,11 +17,15 @@ VENUE = "Wide Open"
 BAND = "Copper Creek"
 AUDIO_ROOT = Path(r"G:\Muzic")
 EXPECTED_SONG_COUNT = 33
+PASSENGER_TITLE = "Passenger"
+PASSENGER_ARTIST = "Siouxsie & the Banshees"
+PASSENGER_KEY = "Dm"
+PASSENGER_AUDIO_FILE = "The Passenger - Souxie & the Banshees .mp3"
+PASSENGER_SHEET_NAME = "Souxie & the Banshees - The Passenger.docx"
 SETLIST_NOTES = (
     "Source: CC Wide Open 08232026 2-Set.xlsx and PDF; "
     "Passenger Dm (T Call); Celebrate Ab (throw in). "
-    "Passenger chart received, but no legally obtained audio was found in G:\\Muzic, "
-    "so it is not an active row."
+    "Passenger is catalog-only because the setlist schema has no optional/transition row type."
 )
 
 # (set number, position, source title, confirmed key)
@@ -107,6 +111,70 @@ def _sheet_music_files(title: str) -> list[Path]:
     return matches
 
 
+def reconcile_passenger_catalog(conn, band_id: int) -> int:
+    """Ensure Passenger has one canonical catalog, arrangement, and sheet row."""
+    rows = conn.execute(
+        "SELECT id FROM catalog_songs WHERE title=? AND artist=?",
+        (PASSENGER_TITLE, PASSENGER_ARTIST),
+    ).fetchall()
+    if len(rows) > 1:
+        raise RuntimeError("Duplicate canonical Passenger catalog rows found")
+
+    if rows:
+        catalog_id = rows[0][0]
+        conn.execute(
+            """UPDATE catalog_songs
+               SET key_sig=?, source_file=?, updated_at=datetime('now')
+               WHERE id=?""",
+            (PASSENGER_KEY, PASSENGER_AUDIO_FILE, catalog_id),
+        )
+    else:
+        cursor = conn.execute(
+            """INSERT INTO catalog_songs
+                   (title, artist, key_sig, source_file)
+               VALUES (?, ?, ?, ?)""",
+            (PASSENGER_TITLE, PASSENGER_ARTIST, PASSENGER_KEY, PASSENGER_AUDIO_FILE),
+        )
+        catalog_id = cursor.lastrowid
+
+    conn.execute(
+        """INSERT INTO band_song_arrangements
+               (band_id, catalog_song_id, default_key)
+           VALUES (?, ?, ?)
+           ON CONFLICT(band_id, catalog_song_id) DO UPDATE
+           SET default_key=excluded.default_key""",
+        (band_id, catalog_id, PASSENGER_KEY),
+    )
+    sheet_row = conn.execute(
+        "SELECT id FROM sheet_music WHERE source='local' AND name=? LIMIT 1",
+        (PASSENGER_SHEET_NAME,),
+    ).fetchone()
+    if sheet_row is None:
+        conn.execute(
+            """INSERT INTO sheet_music
+                   (source, name, file_ext, category, artist, title, local_path, deleted_at)
+               VALUES ('local', ?, '.docx', 'covers', ?, ?, ?, NULL)""",
+            (
+                PASSENGER_SHEET_NAME,
+                PASSENGER_ARTIST,
+                PASSENGER_TITLE,
+                f"catalog/sheet_music/covers/{PASSENGER_SHEET_NAME}",
+            ),
+        )
+    conn.execute(
+        """UPDATE sheet_music
+           SET deleted_at=NULL, artist=?, title=?, local_path=?
+           WHERE name=? AND source='local'""",
+        (
+            PASSENGER_ARTIST,
+            PASSENGER_TITLE,
+            f"catalog/sheet_music/covers/{PASSENGER_SHEET_NAME}",
+            PASSENGER_SHEET_NAME,
+        ),
+    )
+    return catalog_id
+
+
 def _validate_media(conn) -> list[tuple[int, int, int, str]]:
     resolved = []
     missing = []
@@ -132,6 +200,7 @@ def update() -> tuple[int, int]:
         if band is None:
             raise RuntimeError(f"Band not found: {BAND}")
         band_id = band[0]
+        reconcile_passenger_catalog(conn, band_id)
         resolved = _validate_media(conn)
 
         for _, _, catalog_id, key in resolved:
