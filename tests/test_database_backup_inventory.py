@@ -1,11 +1,20 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
 from utils.database_backup_inventory import build_backup_manifest, load_database_inventory
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "⊕Workspace" / ".worktrees" / "feature-FR-20260816-workspace-local-database-backup"))
+from src.utils.database_backup import (  # noqa: E402
+    DatabaseBackup,
+    LocalVolumeDestination,
+    discover_and_validate_manifest,
+    validate_recent_backups,
+)
 
 
 INVENTORY_PATH = (
@@ -165,3 +174,29 @@ def test_projection_preserves_denied_source_reason(tmp_path: Path) -> None:
 
     assert manifest["databases"][0]["backup_allowed"] is False
     assert manifest["databases"][0]["reason"] == denied["reason"]
+
+
+def test_committed_inventory_runs_shared_backup_lifecycle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("WORKSPACE_BACKUP_MANIFEST_KEY", "test-music-key")
+    manifest = build_backup_manifest(load_database_inventory(INVENTORY_PATH))
+    source_root = tmp_path / "music"
+    source = source_root / "src" / "data" / "heartmusic.db"
+    source.parent.mkdir(parents=True)
+    source.write_bytes(b"isolated-fixture")
+    destination = LocalVolumeDestination(tmp_path / "external", "music-volume", provision=True)
+    for second in (0, 1):
+        DatabaseBackup(manifest, {"music": source_root}, destination, "music-volume", now=lambda second=second: f"2026-08-16T12:00:0{second}Z", retention=1).run()
+    assert len(list((destination.path() / "generations").iterdir())) == 1
+    drift = source_root / "src" / "data" / "unexpected.db"
+    drift.write_bytes(b"drift")
+    with pytest.raises(ValueError, match="unregistered"):
+        discover_and_validate_manifest(manifest, {"music": source_root})
+    drift.unlink()
+    manifest_path = next((destination.path() / "generations").glob("*/manifest.json"))
+    restore_root = tmp_path / "restore"
+    DatabaseBackup.restore(manifest_path, destination, restore_root, True, "music-volume", allow_canonical_restore=True)
+    assert (restore_root / "music/heartmusic-store").read_bytes() == b"isolated-fixture"
+    validate_recent_backups(destination, "music-volume", restore_validator=lambda *_: None)
+    assert str(restore_root) not in (destination.path() / "backup-audit.jsonl").read_text(encoding="utf-8")
