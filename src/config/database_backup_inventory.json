@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "project": "music",
+  "fr": "FR-20260816-workspace-local-database-backup",
+  "content_boundary": "Redacted database policy metadata only; database contents and credentials are never included.",
+  "databases": [
+    {
+      "id": "music-heartmusic",
+      "locator": "music/heartmusic-store",
+      "basename": "heartmusic.db",
+      "classification": "canonical",
+      "backup_allowed": true,
+      "encryption": "sqlcipher",
+      "key_env_var": "HEARTMUSIC_DB_KEY",
+      "reason": "Approved canonical music store."
+    }
+  ],
+  "exclusions": [
+    {
+      "pattern": "src/data/backups/**",
+      "reason": "Legacy plaintext backup artifacts are excluded from future backup discovery."
+    },
+    {
+      "pattern": "data/legacy_heartmusic.db",
+      "reason": "Legacy database store is excluded from future backup discovery."
+    }
+  ]
+}
