@@ -5,6 +5,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir "flask>=3.0,<4.0"
 
 COPY src/studio/hyperthreat_app.py src/studio/hyperthreat_app.py
+COPY Brand/hyperthreat/hyperthreat-logo.png Brand/hyperthreat/hyperthreat-logo.png
 COPY studio/mic_config_template.html studio/mic_config_template.html
 COPY studio/patch_bay.html studio/patch_bay.html
 

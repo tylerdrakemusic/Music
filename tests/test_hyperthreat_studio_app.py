@@ -23,10 +23,21 @@ def test_launcher_links_templates_and_health(client):
 
     assert response.status_code == 200
     html = response.data.decode("utf-8")
+    assert '<img src="/assets/hyperthreat-logo.png" alt="Hyperthreat Studios logo">' in html
     assert 'href="/mic-config"' in html
     assert 'href="/patch-bay"' in html
-    assert 'href="/"' in html
+    assert 'href="/"' not in html
     assert client.get("/health").get_json() == {"status": "ok", "ready": True}
+
+
+def test_launcher_logo_route_serves_the_scoped_asset(client):
+    logo_path = ROOT / "Brand" / "hyperthreat" / "hyperthreat-logo.png"
+
+    response = client.get("/assets/hyperthreat-logo.png")
+
+    assert response.status_code == 200
+    assert response.mimetype == "image/png"
+    assert response.data == logo_path.read_bytes()
 
 
 def test_template_routes_preserve_existing_documents(client):
@@ -69,6 +80,7 @@ def test_isolated_deployment_files_use_minimal_context():
     assert "COPY src/studio/hyperthreat_app.py" in dockerfile
     assert "COPY studio/mic_config_template.html" in dockerfile
     assert "COPY studio/patch_bay.html" in dockerfile
+    assert "COPY Brand/hyperthreat/hyperthreat-logo.png" in dockerfile
     assert "heartmusic.db" not in dockerfile
     assert "app = 'ht'" in fly_config
     assert "guitartrainer" not in fly_config
