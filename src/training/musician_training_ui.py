@@ -13,6 +13,7 @@ import re
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
+from urllib.parse import quote
 from flask import Flask, jsonify, render_template_string, request, Response, abort, send_from_directory
 
 # Ensure src/ on path so utils.init_db is importable when run directly
@@ -75,6 +76,14 @@ def _scan_muzic() -> list[dict]:
 
 
 app = Flask(__name__)
+
+
+def _urlencode_path(value: str) -> str:
+  """Encode a path for use as a query parameter, including separators."""
+  return quote(value, safe="")
+
+
+app.jinja_env.filters["urlencode_path"] = _urlencode_path
 
 
 def _flag_enabled(env_var: str) -> bool:
@@ -324,9 +333,9 @@ HTML = r"""
   {% for s in sessions %}
   <div class="card" id="card-{{ s.id }}">
     {% if s.song_path %}
-    <img class="album-art" src="/art?path={{ s.song_path | urlencode }}" onerror="this.style.display='none'" alt="">
+    <img class="album-art" src="/art?path={{ s.song_path | urlencode_path }}" onerror="this.style.display='none'" alt="">
     <div class="exercise-player" id="exercise-player-{{ s.id }}" data-exercise-id="{{ s.id }}">
-      <audio class="exercise-audio" data-exercise-id="{{ s.id }}" preload="metadata" src="/audio?path={{ s.song_path | urlencode }}"></audio>
+      <audio class="exercise-audio" data-exercise-id="{{ s.id }}" preload="metadata" src="/audio?path={{ s.song_path | urlencode_path }}"></audio>
       <div class="exercise-player-top">
         <button type="button" id="exercise-play-{{ s.id }}" onclick="toggleExerciseAudio({{ s.id }})">Play</button>
         <button type="button" onclick="restartExerciseAudio({{ s.id }})">Restart</button>
