@@ -682,7 +682,7 @@
     const dropCells = container.querySelectorAll('.preamp-cell');
     const instrDropCells = container.querySelectorAll('.editable-cell[data-col="instrument"]');
     const numCells = container.querySelectorAll('.mic-num');
-    const wallCells = container.querySelectorAll('.editable-cell[data-col="wall"]');
+    const cableDropCells = container.querySelectorAll('.mic-num, .editable-cell[data-col="wall"]');
 
     legendItems.forEach((item) => {
       item.addEventListener('dragstart', (event) => {
@@ -801,8 +801,8 @@
       cell.addEventListener('dblclick', () => { cell.textContent = ''; });
     });
 
-    // Wall mount cells: accept cable drops and allow clearing
-    wallCells.forEach((cell) => {
+    // Cable and wall mount cells share the same cable-drop behavior.
+    cableDropCells.forEach((cell) => {
       cell.addEventListener('dragover', (event) => {
         event.preventDefault();
         try { event.dataTransfer.dropEffect = 'copy'; } catch (e) {}
@@ -837,7 +837,12 @@
           }
         }
         cell.classList.remove('drop-target');
+        saveGridState();
       });
+    });
+
+    const wallCells = container.querySelectorAll('.editable-cell[data-col="wall"]');
+    wallCells.forEach((cell) => {
       cell.addEventListener('dblclick', () => { cell.textContent = ''; });
       cell.addEventListener('focus', () => selectCellContents(cell));
       // when user types a number and blurs, convert to badge(s)
