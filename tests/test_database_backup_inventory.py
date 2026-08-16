@@ -5,7 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from utils.database_backup_inventory import build_backup_manifest, load_database_inventory
+from utils.database_backup_inventory import (
+    build_backup_manifest,
+    load_database_inventory,
+    resolve_database_path,
+)
 
 
 INVENTORY_PATH = (
@@ -126,6 +130,24 @@ def test_committed_inventory_excludes_legacy_and_plaintext_backup_artifacts() ->
             "reason": "Legacy database store is excluded from future backup discovery.",
         },
     ]
+
+
+def test_canonical_music_database_resolves_under_active_project_root(tmp_path: Path) -> None:
+    inventory = load_database_inventory(INVENTORY_PATH)
+    project_root = tmp_path / "music-project"
+    canonical = project_root / "src" / "data" / "heartmusic.db"
+    canonical.parent.mkdir(parents=True)
+    canonical.touch()
+
+    resolved = resolve_database_path(project_root, inventory["databases"][0])
+
+    assert resolved == canonical.resolve()
+
+
+def test_committed_inventory_keeps_locator_redacted() -> None:
+    inventory = load_database_inventory(INVENTORY_PATH)
+
+    assert inventory["databases"][0]["locator"] == "music/heartmusic-store"
 
 
 @pytest.mark.parametrize(

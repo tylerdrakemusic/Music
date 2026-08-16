@@ -140,6 +140,16 @@ def load_database_inventory(path: Path) -> dict[str, Any]:
     return inventory
 
 
+def resolve_database_path(project_root: Path, entry: dict[str, Any]) -> Path:
+    """Resolve a registered Music database under its canonical project root."""
+    _validate_database_entry(entry)
+    root = Path(project_root).resolve()
+    resolved = (root / "src" / "data" / entry["basename"]).resolve()
+    if root not in resolved.parents:
+        raise ValueError("database inventory path escaped the project root")
+    return resolved
+
+
 def build_backup_manifest(inventory: dict[str, Any]) -> dict[str, Any]:
     """Project every inventory entry into the generic backup lifecycle contract."""
     databases = []
