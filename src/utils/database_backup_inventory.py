@@ -24,6 +24,7 @@ _REQUIRED_DATABASE_FIELDS = {
     "backup_allowed",
     "encryption",
     "key_env_var",
+    "reason",
 }
 _EXCLUSION_FIELDS = {"pattern", "reason"}
 _CLASSIFICATIONS = {
@@ -85,6 +86,8 @@ def _validate_database_entry(entry: Any) -> None:
         raise ValueError("❤Music database inventory requires SQLCipher")
     if not isinstance(entry["key_env_var"], str) or not _ENV_VAR_PATTERN.fullmatch(entry["key_env_var"]):
         raise ValueError("database inventory key_env_var must be an environment variable name")
+    if not isinstance(entry["reason"], str) or not entry["reason"].strip():
+        raise ValueError("database inventory reason must be non-empty")
 
 
 def _validate_exclusion(entry: Any) -> None:
@@ -147,7 +150,7 @@ def build_backup_manifest(inventory: dict[str, Any]) -> dict[str, Any]:
                 "path": entry["locator"],
                 "classification": entry["classification"],
                 "backup_allowed": entry["backup_allowed"],
-                "reason": "Approved by the project inventory.",
+                "reason": entry["reason"],
                 "discovery": {"project": inventory["project"], "basename": entry["basename"]},
                 "encryption": entry["encryption"],
                 "key_env": entry["key_env_var"],

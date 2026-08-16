@@ -11,7 +11,8 @@
       "classification": "canonical",
       "backup_allowed": true,
       "encryption": "sqlcipher",
-      "key_env_var": "HEARTMUSIC_DB_KEY"
+      "key_env_var": "HEARTMUSIC_DB_KEY",
+      "reason": "Approved canonical music store."
     }
   ],
   "exclusions": [
