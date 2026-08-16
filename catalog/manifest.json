@@ -1,6 +1,6 @@
 {
   "manifest_version": 1,
-  "generated_at": "2026-08-16T03:04:52.657569Z",
+  "generated_at": "2026-08-16T03:31:05.886285Z",
   "catalog": [
     {
       "filename": "Abbey Master 3.mp3",
@@ -28011,6 +28011,18 @@
       "bitrate": null
     },
     {
+      "filename": "Siouxsie & the Banshees - The Passenger.docx",
+      "path": "sheet_music\\covers\\Siouxsie & the Banshees - The Passenger.docx",
+      "size": 8631,
+      "date_added": "2026-08-16T03:20:57.390000Z",
+      "source": null,
+      "artist": null,
+      "album": null,
+      "genre": null,
+      "duration": null,
+      "bitrate": null
+    },
+    {
       "filename": "Tequila.docx",
       "path": "sheet_music\\covers\\Tequila.docx",
       "size": 18346,
@@ -28505,7 +28517,7 @@
     {
       "filename": "export_catalog.py",
       "path": "setlists\\export_catalog.py",
-      "size": 12809,
+      "size": 12891,
       "date_added": "2026-04-23T00:32:46.680000Z",
       "source": null,
       "artist": null,
@@ -28517,7 +28529,7 @@
     {
       "filename": "catalog_export.json",
       "path": "setlists\\catalog_export.json",
-      "size": 27319,
+      "size": 24481,
       "date_added": "2026-04-23T00:33:01.640000Z",
       "source": null,
       "artist": null,
@@ -28541,8 +28553,8 @@
     {
       "filename": "export_catalog.cpython-311.pyc",
       "path": "setlists\\__pycache__\\export_catalog.cpython-311.pyc",
-      "size": 20485,
-      "date_added": "2026-06-28T04:08:58.220000Z",
+      "size": 20607,
+      "date_added": "2026-08-16T03:17:00.530000Z",
       "source": null,
       "artist": null,
       "album": null,

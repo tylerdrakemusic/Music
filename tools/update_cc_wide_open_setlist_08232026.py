@@ -22,7 +22,7 @@ PASSENGER_ARTIST = "Siouxsie & the Banshees"
 PASSENGER_KEY = "Dm"
 PASSENGER_BPM = 140
 PASSENGER_AUDIO_FILE = "The Passenger - Souxie & the Banshees .mp3"
-PASSENGER_SHEET_NAME = "Souxie & the Banshees - The Passenger.docx"
+PASSENGER_SHEET_NAME = "Siouxsie & the Banshees - The Passenger.docx"
 SETLIST_NOTES = (
     "Source: CC Wide Open 08232026 2-Set.xlsx and PDF; "
     "Passenger Dm (T Call); Celebrate Ab (throw in). "

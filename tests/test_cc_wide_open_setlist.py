@@ -39,7 +39,7 @@ def test_passenger_reconciliation_source_is_catalog_only() -> None:
     )
     assert PASSENGER_KEY == "Dm"
     assert PASSENGER_AUDIO_FILE == "The Passenger - Souxie & the Banshees .mp3"
-    assert PASSENGER_SHEET_NAME == "Souxie & the Banshees - The Passenger.docx"
+    assert PASSENGER_SHEET_NAME == "Siouxsie & the Banshees - The Passenger.docx"
     assert not any(row[2] == PASSENGER_TITLE for row in SETLIST)
 
 
@@ -54,6 +54,6 @@ def test_passenger_catalog_export_has_bpm_and_repo_sheet_link() -> None:
 
     assert passenger["bpm"] == 140
     assert passenger["sheet_music"] == [
-        "catalog/sheet_music/covers/Souxie & the Banshees - The Passenger.docx"
+        "catalog/sheet_music/covers/Siouxsie & the Banshees - The Passenger.docx"
     ]
     assert (project_root / passenger["sheet_music"][0]).is_file()
