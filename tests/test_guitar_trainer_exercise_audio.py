@@ -57,9 +57,10 @@ def client(tmp_path: Path):
     connection.executescript(_SCHEMA)
     audio_file = tmp_path / "practice.mp3"
     audio_file.write_bytes(b"fake-mp3")
+    song_path = str(audio_file).replace("\\", "/")
     connection.execute(
         "INSERT INTO guitar_exercises (title, artist, song_path, segments) VALUES (?, ?, ?, ?)",
-        ("Practice", "Artist", str(audio_file), json.dumps([])),
+        ("Practice", "Artist", song_path, json.dumps([])),
     )
     connection.commit()
     ui.app.config["TESTING"] = True
@@ -79,7 +80,7 @@ def test_exercise_card_renders_isolated_full_file_player(client) -> None:
     html = response.data.decode("utf-8")
     assert 'class="exercise-audio"' in html
     assert 'data-exercise-id="1"' in html
-    assert f"/audio?path={quote(str(audio_file), safe='')}" in html
+    assert f"/audio?path={quote(str(audio_file).replace(chr(92), '/'), safe='')}" in html
     assert 'id="exercise-play-1"' in html
     assert 'id="exercise-timeline-1"' in html
     assert 'id="exercise-current-1"' in html
@@ -108,6 +109,8 @@ def test_audio_route_rejects_missing_and_outside_files(client, tmp_path: Path) -
 def test_exercise_player_wires_metadata_timeupdate_seek_restart_and_error() -> None:
     source = ui.HTML
 
+    assert 'src="/audio?path=${encodeURIComponent(s.song_path)}"' in source
+    assert "urlencode_path" in source
     assert "loadedmetadata" in source
     assert "timeupdate" in source
     assert "audio.currentTime = Number" in source
