@@ -294,6 +294,7 @@
     .legend-group-vintech .legend-item { background: #c2c2c2; }
     .editable-cell:empty:before {
       content: none !important;
+      display: none !important;
     }
     .instructions,
     .print-button {
@@ -476,6 +477,7 @@
 <script>
   const CHANNEL_COUNT = 16;
   const SHEET_COUNT = 2; // front + back, identical for duplex
+  const CONFIG_STATE_VERSION = 1;
 
   // Compute the next numbered label for a base instrument name (e.g., "guitar" -> "guitar 3")
   function nextLabelFor(base) {
@@ -539,16 +541,41 @@
     return span;
   }
 
+  function cableNumbersFromText(value) {
+    const text = (value || '').trim();
+    if (!text || !/^\d+(?:(?:\s*[,;]\s*)|\s+)\d+(?:\s*[,;]\s*|\s+\d+)*$/.test(text)) {
+      return text && /^\d+$/.test(text) ? [parseInt(text, 10)] : null;
+    }
+    return text.split(/\s*[,;]\s*|\s+/).filter(Boolean).map((n) => parseInt(n, 10));
+  }
+
+  function renderCableCell(cell, value) {
+    const text = (value || '').toString().trim();
+    const numbers = cableNumbersFromText(text);
+    cell.innerHTML = '';
+    if (numbers) {
+      numbers.forEach((n) => cell.appendChild(createCableBadge(n)));
+    } else if (text) {
+      cell.textContent = text;
+    }
+  }
+
+  function selectCellContents(cell) {
+    const selection = window.getSelection();
+    if (!selection) return;
+    const range = document.createRange();
+    range.selectNodeContents(cell);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
   function normalizeWallCell(cell) {
     if (!cell) return;
     const text = (cell.textContent || '').trim();
-    const nums = text.match(/\d+/g);
+    const nums = cableNumbersFromText(text);
     const hasBadges = cell.querySelector && cell.querySelector('.cable-badge');
     if (hasBadges) return; // already badges
-    if (nums && nums.length) {
-      cell.innerHTML = '';
-      nums.forEach(n => cell.appendChild(createCableBadge(parseInt(n, 10))));
-    }
+    if (nums) renderCableCell(cell, text);
   }
 
   function normalizeAllWallCells() {
@@ -637,10 +664,13 @@
       tdWall.dataset.col = 'wall';
       tdWall.contentEditable = 'true';
       tdWall.dataset.placeholder = 'Wall Mount #';
+      tdWall.appendChild(createCableBadge(i));
       const tdPreamp = document.createElement('td');
-      tdPreamp.className = 'preamp-cell';
+      tdPreamp.className = 'editable-cell preamp-cell';
       tdPreamp.dataset.col = 'preamp';
       tdPreamp.dataset.dropTarget = 'true';
+      tdPreamp.contentEditable = 'true';
+      tdPreamp.dataset.placeholder = 'Preamp';
       tr.appendChild(tdNum);
       tr.appendChild(tdInstrument);
       tr.appendChild(tdWall);
@@ -655,7 +685,7 @@
     const dropCells = container.querySelectorAll('.preamp-cell');
     const instrDropCells = container.querySelectorAll('.editable-cell[data-col="instrument"]');
     const numCells = container.querySelectorAll('.mic-num');
-    const wallCells = container.querySelectorAll('.editable-cell[data-col="wall"]');
+    const cableDropCells = container.querySelectorAll('.mic-num, .editable-cell[data-col="wall"]');
 
     legendItems.forEach((item) => {
       item.addEventListener('dragstart', (event) => {
@@ -682,8 +712,24 @@
     });
 
     // cable badges inside .mic-num cells are already draggable via createCableBadge()
+    numCells.forEach((cell) => {
+      cell.contentEditable = 'true';
+      cell.addEventListener('focus', () => selectCellContents(cell));
+      cell.addEventListener('dblclick', () => { cell.textContent = ''; saveGridState(); });
+      cell.addEventListener('blur', () => {
+        renderCableCell(cell, cell.textContent);
+        saveGridState();
+      });
+      cell.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') { event.preventDefault(); cell.blur(); }
+      });
+    });
 
     dropCells.forEach((cell) => {
+      cell.addEventListener('focus', () => selectCellContents(cell));
+      cell.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') { event.preventDefault(); cell.blur(); }
+      });
       cell.addEventListener('dragover', (event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'copy';
@@ -762,8 +808,8 @@
       cell.addEventListener('dblclick', () => { cell.textContent = ''; });
     });
 
-    // Wall mount cells: accept cable drops and allow clearing
-    wallCells.forEach((cell) => {
+    // Cable and wall mount cells share the same cable-drop behavior.
+    cableDropCells.forEach((cell) => {
       cell.addEventListener('dragover', (event) => {
         event.preventDefault();
         try { event.dataTransfer.dropEffect = 'copy'; } catch (e) {}
@@ -798,17 +844,18 @@
           }
         }
         cell.classList.remove('drop-target');
+        saveGridState();
       });
+    });
+
+    const wallCells = container.querySelectorAll('.editable-cell[data-col="wall"]');
+    wallCells.forEach((cell) => {
       cell.addEventListener('dblclick', () => { cell.textContent = ''; });
+      cell.addEventListener('focus', () => selectCellContents(cell));
       // when user types a number and blurs, convert to badge(s)
       cell.addEventListener('blur', () => {
-        const v = (cell.textContent || '').trim();
-        const nums = v.match(/\d+/g);
-        if (nums && nums.length) {
-          cell.innerHTML = '';
-          nums.forEach(n => cell.appendChild(createCableBadge(parseInt(n, 10))));
-          saveGridState();
-        }
+        renderCableCell(cell, cell.textContent);
+        saveGridState();
       });
       cell.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); cell.blur(); }
@@ -1144,24 +1191,51 @@
   setupDragAndDrop(document);
 
   // Persistence: save/load grid state to localStorage
+  function normalizeStoredState(data) {
+    if (Array.isArray(data)) {
+      return {
+        version: CONFIG_STATE_VERSION,
+        sheets: data.map((sheetData) => (Array.isArray(sheetData) ? sheetData.map((rowData, rIdx) => ({
+          ...rowData,
+          wall: rowData && rowData.wall ? rowData.wall : String(rIdx + 1)
+        })) : sheetData))
+      };
+    }
+    if (data && data.version === CONFIG_STATE_VERSION && Array.isArray(data.sheets)) {
+      return data;
+    }
+    return null;
+  }
+
   function saveGridState() {
     try {
       const sheets = Array.from(document.querySelectorAll('.sheet'));
-      const out = sheets.map(sheet => Array.from(sheet.querySelectorAll('.grid-body tr')).map(tr => {
+      const sheetsData = sheets.map(sheet => Array.from(sheet.querySelectorAll('.grid-body tr')).map(tr => {
         const tds = tr.querySelectorAll('td');
-        // serialize wall as comma-separated cable numbers if badges present
-        let wallVal = tds[2].textContent.trim();
-        const badges = tds[2].querySelectorAll && tds[2].querySelectorAll('.cable-badge');
-        if (badges && badges.length) {
-          wallVal = Array.from(badges).map(b => b.dataset.cable || b.textContent.trim()).join(',');
-        }
+        const serializeCableCell = (cell) => {
+          const badges = cell.querySelectorAll ? cell.querySelectorAll('.cable-badge') : [];
+          return badges.length
+            ? Array.from(badges).map(b => b.dataset.cable || b.textContent.trim()).join(',')
+            : cell.textContent.trim();
+        };
+        const preampBadge = tds[3].querySelector('.legend-badge.preamp');
+        const preamp = preampBadge
+          ? {
+              value: preampBadge.textContent.trim(),
+              badge: true,
+              bg: preampBadge.dataset.bg || '',
+              border: preampBadge.dataset.border || '',
+              color: preampBadge.dataset.color || ''
+            }
+          : tds[3].textContent.trim();
         return {
+          cable: serializeCableCell(tds[0]),
           instrument: tds[1].textContent.trim(),
-          wall: wallVal,
-          preamp: tds[3].textContent.trim()
+          wall: serializeCableCell(tds[2]),
+          preamp
         };
       }));
-      localStorage.setItem('micConfigSheets', JSON.stringify(out));
+      localStorage.setItem('micConfigSheets', JSON.stringify({ version: CONFIG_STATE_VERSION, sheets: sheetsData }));
     } catch (e) {
       console.error('saveGridState error', e);
     }
@@ -1172,9 +1246,14 @@
     try {
       const raw = localStorage.getItem('micConfigSheets');
       if (!raw) return;
-      const data = JSON.parse(raw);
+      const storedData = JSON.parse(raw);
+      const data = normalizeStoredState(storedData);
+      if (!data) return;
+      if (Array.isArray(storedData)) {
+        localStorage.setItem('micConfigSheets', JSON.stringify(data));
+      }
       const sheets = Array.from(document.querySelectorAll('.sheet'));
-      data.forEach((sheetData, sIdx) => {
+      data.sheets.forEach((sheetData, sIdx) => {
         const sheet = sheets[sIdx];
         if (!sheet) return;
         const rows = sheet.querySelectorAll('.grid-body tr');
@@ -1190,26 +1269,28 @@
           } else {
             tds[1].textContent = '';
           }
-          // restore wall: support comma-separated numbers -> multiple cable badges
+          // Restore cable and wall values, keeping custom labels as plain text.
+          const cableVal = rowData.cable === undefined ? String(rIdx + 1) : rowData.cable;
+          renderCableCell(tds[0], cableVal);
           const wallVal = (rowData.wall || '').toString().trim();
-          if (wallVal) {
-            const nums = wallVal.match(/\d+/g);
-            if (nums && nums.length) {
-              tds[2].innerHTML = '';
-              nums.forEach(n => tds[2].appendChild(createCableBadge(parseInt(n, 10))));
-            } else {
-              tds[2].textContent = wallVal;
-            }
-          } else {
-            tds[2].textContent = '';
-          }
-          // restore preamp cell as badge if present
-          const preVal = rowData.preamp || '';
-          if (preVal && preVal.trim()) {
+          renderCableCell(tds[2], wallVal);
+          // Restore dropped legend values as badges; custom text stays editable.
+          const storedPreamp = rowData.preamp;
+          const preVal = storedPreamp && typeof storedPreamp === 'object'
+            ? (storedPreamp.value || '')
+            : (storedPreamp || '');
+          const isLegacyBadge = typeof storedPreamp === 'string' &&
+            Array.from(document.querySelectorAll('.legend-item[data-type="preamp"]'))
+              .some(item => item.textContent.trim().toLowerCase() === preVal.trim().toLowerCase());
+          const shouldRestoreBadge = storedPreamp && typeof storedPreamp === 'object'
+            ? storedPreamp.badge === true
+            : isLegacyBadge;
+          if (preVal && preVal.trim() && shouldRestoreBadge) {
             tds[3].innerHTML = '';
-            tds[3].appendChild(createLegendBadge(preVal.trim(), 'preamp'));
+            const styleOverride = typeof storedPreamp === 'object' ? storedPreamp : null;
+            tds[3].appendChild(createLegendBadge(preVal.trim(), 'preamp', styleOverride));
           } else {
-            tds[3].textContent = '';
+            tds[3].textContent = preVal.trim();
           }
         });
       });
@@ -1222,6 +1303,8 @@
     localStorage.removeItem('micConfigSheets');
     document.querySelectorAll('.grid-body tr').forEach(tr => {
       const tds = tr.querySelectorAll('td');
+      const rowNumber = Array.from(tr.parentElement.querySelectorAll('tr')).indexOf(tr) + 1;
+      renderCableCell(tds[0], rowNumber);
       tds[1].textContent = '';
       tds[2].textContent = '';
       tds[3].textContent = '';
