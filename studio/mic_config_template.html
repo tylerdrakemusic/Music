@@ -539,16 +539,41 @@
     return span;
   }
 
+  function cableNumbersFromText(value) {
+    const text = (value || '').trim();
+    if (!text || !/^\d+(?:(?:\s*[,;]\s*)|\s+)\d+(?:\s*[,;]\s*|\s+\d+)*$/.test(text)) {
+      return text && /^\d+$/.test(text) ? [parseInt(text, 10)] : null;
+    }
+    return text.split(/\s*[,;]\s*|\s+/).filter(Boolean).map((n) => parseInt(n, 10));
+  }
+
+  function renderCableCell(cell, value) {
+    const text = (value || '').toString().trim();
+    const numbers = cableNumbersFromText(text);
+    cell.innerHTML = '';
+    if (numbers) {
+      numbers.forEach((n) => cell.appendChild(createCableBadge(n)));
+    } else if (text) {
+      cell.textContent = text;
+    }
+  }
+
+  function selectCellContents(cell) {
+    const selection = window.getSelection();
+    if (!selection) return;
+    const range = document.createRange();
+    range.selectNodeContents(cell);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
   function normalizeWallCell(cell) {
     if (!cell) return;
     const text = (cell.textContent || '').trim();
-    const nums = text.match(/\d+/g);
+    const nums = cableNumbersFromText(text);
     const hasBadges = cell.querySelector && cell.querySelector('.cable-badge');
     if (hasBadges) return; // already badges
-    if (nums && nums.length) {
-      cell.innerHTML = '';
-      nums.forEach(n => cell.appendChild(createCableBadge(parseInt(n, 10))));
-    }
+    if (nums) renderCableCell(cell, text);
   }
 
   function normalizeAllWallCells() {
@@ -637,6 +662,7 @@
       tdWall.dataset.col = 'wall';
       tdWall.contentEditable = 'true';
       tdWall.dataset.placeholder = 'Wall Mount #';
+      tdWall.appendChild(createCableBadge(i));
       const tdPreamp = document.createElement('td');
       tdPreamp.className = 'preamp-cell';
       tdPreamp.dataset.col = 'preamp';
@@ -682,6 +708,18 @@
     });
 
     // cable badges inside .mic-num cells are already draggable via createCableBadge()
+    numCells.forEach((cell) => {
+      cell.contentEditable = 'true';
+      cell.addEventListener('focus', () => selectCellContents(cell));
+      cell.addEventListener('dblclick', () => { cell.textContent = ''; saveGridState(); });
+      cell.addEventListener('blur', () => {
+        renderCableCell(cell, cell.textContent);
+        saveGridState();
+      });
+      cell.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') { event.preventDefault(); cell.blur(); }
+      });
+    });
 
     dropCells.forEach((cell) => {
       cell.addEventListener('dragover', (event) => {
@@ -800,15 +838,11 @@
         cell.classList.remove('drop-target');
       });
       cell.addEventListener('dblclick', () => { cell.textContent = ''; });
+      cell.addEventListener('focus', () => selectCellContents(cell));
       // when user types a number and blurs, convert to badge(s)
       cell.addEventListener('blur', () => {
-        const v = (cell.textContent || '').trim();
-        const nums = v.match(/\d+/g);
-        if (nums && nums.length) {
-          cell.innerHTML = '';
-          nums.forEach(n => cell.appendChild(createCableBadge(parseInt(n, 10))));
-          saveGridState();
-        }
+        renderCableCell(cell, cell.textContent);
+        saveGridState();
       });
       cell.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); cell.blur(); }
@@ -1149,15 +1183,16 @@
       const sheets = Array.from(document.querySelectorAll('.sheet'));
       const out = sheets.map(sheet => Array.from(sheet.querySelectorAll('.grid-body tr')).map(tr => {
         const tds = tr.querySelectorAll('td');
-        // serialize wall as comma-separated cable numbers if badges present
-        let wallVal = tds[2].textContent.trim();
-        const badges = tds[2].querySelectorAll && tds[2].querySelectorAll('.cable-badge');
-        if (badges && badges.length) {
-          wallVal = Array.from(badges).map(b => b.dataset.cable || b.textContent.trim()).join(',');
-        }
+        const serializeCableCell = (cell) => {
+          const badges = cell.querySelectorAll ? cell.querySelectorAll('.cable-badge') : [];
+          return badges.length
+            ? Array.from(badges).map(b => b.dataset.cable || b.textContent.trim()).join(',')
+            : cell.textContent.trim();
+        };
         return {
+          cable: serializeCableCell(tds[0]),
           instrument: tds[1].textContent.trim(),
-          wall: wallVal,
+          wall: serializeCableCell(tds[2]),
           preamp: tds[3].textContent.trim()
         };
       }));
@@ -1190,19 +1225,11 @@
           } else {
             tds[1].textContent = '';
           }
-          // restore wall: support comma-separated numbers -> multiple cable badges
+          // Restore cable and wall values, keeping custom labels as plain text.
+          const cableVal = rowData.cable === undefined ? String(rIdx + 1) : rowData.cable;
+          renderCableCell(tds[0], cableVal);
           const wallVal = (rowData.wall || '').toString().trim();
-          if (wallVal) {
-            const nums = wallVal.match(/\d+/g);
-            if (nums && nums.length) {
-              tds[2].innerHTML = '';
-              nums.forEach(n => tds[2].appendChild(createCableBadge(parseInt(n, 10))));
-            } else {
-              tds[2].textContent = wallVal;
-            }
-          } else {
-            tds[2].textContent = '';
-          }
+          renderCableCell(tds[2], wallVal);
           // restore preamp cell as badge if present
           const preVal = rowData.preamp || '';
           if (preVal && preVal.trim()) {
@@ -1222,6 +1249,8 @@
     localStorage.removeItem('micConfigSheets');
     document.querySelectorAll('.grid-body tr').forEach(tr => {
       const tds = tr.querySelectorAll('td');
+      const rowNumber = Array.from(tr.parentElement.querySelectorAll('tr')).indexOf(tr) + 1;
+      renderCableCell(tds[0], rowNumber);
       tds[1].textContent = '';
       tds[2].textContent = '';
       tds[3].textContent = '';
