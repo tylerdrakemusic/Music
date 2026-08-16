@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir "flask>=3.0,<4.0"
+
+COPY src/studio/hyperthreat_app.py src/studio/hyperthreat_app.py
+COPY studio/mic_config_template.html studio/mic_config_template.html
+COPY studio/patch_bay.html studio/patch_bay.html
+
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["python", "src/studio/hyperthreat_app.py"]
