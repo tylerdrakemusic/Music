@@ -135,3 +135,33 @@ def load_database_inventory(path: Path) -> dict[str, Any]:
     for entry in exclusions:
         _validate_exclusion(entry)
     return inventory
+
+
+def build_backup_manifest(inventory: dict[str, Any]) -> dict[str, Any]:
+    """Project every inventory entry into the generic backup lifecycle contract."""
+    databases = []
+    for entry in inventory["databases"]:
+        databases.append(
+            {
+                "id": entry["id"],
+                "path": entry["locator"],
+                "classification": entry["classification"],
+                "backup_allowed": entry["backup_allowed"],
+                "reason": "Approved by the project inventory.",
+                "discovery": {"project": inventory["project"], "basename": entry["basename"]},
+                "encryption": entry["encryption"],
+                "key_env": entry["key_env_var"],
+            }
+        )
+    return {
+        "schema_version": 1,
+        "fr": inventory["fr"],
+        "policy_status": "reviewed",
+        "purpose": "Project database backup inventory.",
+        "content_boundary": inventory["content_boundary"],
+        "classifications": sorted(_CLASSIFICATIONS),
+        "databases": databases,
+        "exclusions": inventory["exclusions"],
+        "not_implemented": [],
+        "separate_todos": [],
+    }
