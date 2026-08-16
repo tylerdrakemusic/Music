@@ -476,6 +476,7 @@
 <script>
   const CHANNEL_COUNT = 16;
   const SHEET_COUNT = 2; // front + back, identical for duplex
+  const CONFIG_STATE_VERSION = 1;
 
   // Compute the next numbered label for a base instrument name (e.g., "guitar" -> "guitar 3")
   function nextLabelFor(base) {
@@ -1178,10 +1179,26 @@
   setupDragAndDrop(document);
 
   // Persistence: save/load grid state to localStorage
+  function normalizeStoredState(data) {
+    if (Array.isArray(data)) {
+      return {
+        version: CONFIG_STATE_VERSION,
+        sheets: data.map((sheetData) => (Array.isArray(sheetData) ? sheetData.map((rowData, rIdx) => ({
+          ...rowData,
+          wall: rowData && rowData.wall ? rowData.wall : String(rIdx + 1)
+        })) : sheetData))
+      };
+    }
+    if (data && data.version === CONFIG_STATE_VERSION && Array.isArray(data.sheets)) {
+      return data;
+    }
+    return null;
+  }
+
   function saveGridState() {
     try {
       const sheets = Array.from(document.querySelectorAll('.sheet'));
-      const out = sheets.map(sheet => Array.from(sheet.querySelectorAll('.grid-body tr')).map(tr => {
+      const sheetsData = sheets.map(sheet => Array.from(sheet.querySelectorAll('.grid-body tr')).map(tr => {
         const tds = tr.querySelectorAll('td');
         const serializeCableCell = (cell) => {
           const badges = cell.querySelectorAll ? cell.querySelectorAll('.cable-badge') : [];
@@ -1196,7 +1213,7 @@
           preamp: tds[3].textContent.trim()
         };
       }));
-      localStorage.setItem('micConfigSheets', JSON.stringify(out));
+      localStorage.setItem('micConfigSheets', JSON.stringify({ version: CONFIG_STATE_VERSION, sheets: sheetsData }));
     } catch (e) {
       console.error('saveGridState error', e);
     }
@@ -1207,9 +1224,14 @@
     try {
       const raw = localStorage.getItem('micConfigSheets');
       if (!raw) return;
-      const data = JSON.parse(raw);
+      const storedData = JSON.parse(raw);
+      const data = normalizeStoredState(storedData);
+      if (!data) return;
+      if (Array.isArray(storedData)) {
+        localStorage.setItem('micConfigSheets', JSON.stringify(data));
+      }
       const sheets = Array.from(document.querySelectorAll('.sheet'));
-      data.forEach((sheetData, sIdx) => {
+      data.sheets.forEach((sheetData, sIdx) => {
         const sheet = sheets[sIdx];
         if (!sheet) return;
         const rows = sheet.querySelectorAll('.grid-body tr');
