@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from utils.database_backup_inventory import load_database_inventory
+from utils.database_backup_inventory import build_backup_manifest, load_database_inventory
 
 
 INVENTORY_PATH = (
@@ -78,6 +78,31 @@ def test_inventory_entries_are_configuration_driven(tmp_path: Path) -> None:
     assert [entry["id"] for entry in inventory["databases"]] == [
         "music-heartmusic",
         "music-approved-future-store",
+    ]
+
+
+def test_inventory_projects_all_entries_into_generic_backup_manifest(tmp_path: Path) -> None:
+    future_database = _database(
+        id="music-approved-future-store",
+        locator="music/future-store",
+        basename="future_store.sqlite3",
+    )
+    inventory_path = tmp_path / "database_backup_inventory.json"
+    inventory_path.write_text(json.dumps(_inventory([future_database])), encoding="utf-8")
+
+    manifest = build_backup_manifest(load_database_inventory(inventory_path))
+
+    assert manifest["databases"] == [
+        {
+            "id": "music-approved-future-store",
+            "path": "music/future-store",
+            "classification": "canonical",
+            "backup_allowed": True,
+            "reason": "Approved by the project inventory.",
+            "discovery": {"project": "music", "basename": "future_store.sqlite3"},
+            "encryption": "sqlcipher",
+            "key_env": "HEARTMUSIC_DB_KEY",
+        }
     ]
 
 
