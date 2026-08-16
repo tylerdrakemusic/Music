@@ -665,9 +665,11 @@
       tdWall.dataset.placeholder = 'Wall Mount #';
       tdWall.appendChild(createCableBadge(i));
       const tdPreamp = document.createElement('td');
-      tdPreamp.className = 'preamp-cell';
+      tdPreamp.className = 'editable-cell preamp-cell';
       tdPreamp.dataset.col = 'preamp';
       tdPreamp.dataset.dropTarget = 'true';
+      tdPreamp.contentEditable = 'true';
+      tdPreamp.dataset.placeholder = 'Preamp';
       tr.appendChild(tdNum);
       tr.appendChild(tdInstrument);
       tr.appendChild(tdWall);
@@ -723,6 +725,10 @@
     });
 
     dropCells.forEach((cell) => {
+      cell.addEventListener('focus', () => selectCellContents(cell));
+      cell.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') { event.preventDefault(); cell.blur(); }
+      });
       cell.addEventListener('dragover', (event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'copy';
@@ -1211,11 +1217,21 @@
             ? Array.from(badges).map(b => b.dataset.cable || b.textContent.trim()).join(',')
             : cell.textContent.trim();
         };
+        const preampBadge = tds[3].querySelector('.legend-badge.preamp');
+        const preamp = preampBadge
+          ? {
+              value: preampBadge.textContent.trim(),
+              badge: true,
+              bg: preampBadge.dataset.bg || '',
+              border: preampBadge.dataset.border || '',
+              color: preampBadge.dataset.color || ''
+            }
+          : tds[3].textContent.trim();
         return {
           cable: serializeCableCell(tds[0]),
           instrument: tds[1].textContent.trim(),
           wall: serializeCableCell(tds[2]),
-          preamp: tds[3].textContent.trim()
+          preamp
         };
       }));
       localStorage.setItem('micConfigSheets', JSON.stringify({ version: CONFIG_STATE_VERSION, sheets: sheetsData }));
@@ -1257,13 +1273,23 @@
           renderCableCell(tds[0], cableVal);
           const wallVal = (rowData.wall || '').toString().trim();
           renderCableCell(tds[2], wallVal);
-          // restore preamp cell as badge if present
-          const preVal = rowData.preamp || '';
-          if (preVal && preVal.trim()) {
+          // Restore dropped legend values as badges; custom text stays editable.
+          const storedPreamp = rowData.preamp;
+          const preVal = storedPreamp && typeof storedPreamp === 'object'
+            ? (storedPreamp.value || '')
+            : (storedPreamp || '');
+          const isLegacyBadge = typeof storedPreamp === 'string' &&
+            Array.from(document.querySelectorAll('.legend-item[data-type="preamp"]'))
+              .some(item => item.textContent.trim().toLowerCase() === preVal.trim().toLowerCase());
+          const shouldRestoreBadge = storedPreamp && typeof storedPreamp === 'object'
+            ? storedPreamp.badge === true
+            : isLegacyBadge;
+          if (preVal && preVal.trim() && shouldRestoreBadge) {
             tds[3].innerHTML = '';
-            tds[3].appendChild(createLegendBadge(preVal.trim(), 'preamp'));
+            const styleOverride = typeof storedPreamp === 'object' ? storedPreamp : null;
+            tds[3].appendChild(createLegendBadge(preVal.trim(), 'preamp', styleOverride));
           } else {
-            tds[3].textContent = '';
+            tds[3].textContent = preVal.trim();
           }
         });
       });
