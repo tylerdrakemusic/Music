@@ -36,6 +36,7 @@ def _database(**overrides: object) -> dict[str, object]:
         "backup_allowed": True,
         "encryption": "sqlcipher",
         "key_env_var": "HEARTMUSIC_DB_KEY",
+        "reason": "Approved canonical music store.",
     }
     database.update(overrides)
     return database
@@ -98,7 +99,7 @@ def test_inventory_projects_all_entries_into_generic_backup_manifest(tmp_path: P
             "path": "music/future-store",
             "classification": "canonical",
             "backup_allowed": True,
-            "reason": "Approved by the project inventory.",
+            "reason": "Approved canonical music store.",
             "discovery": {"project": "music", "basename": "future_store.sqlite3"},
             "encryption": "sqlcipher",
             "key_env": "HEARTMUSIC_DB_KEY",
@@ -146,3 +147,21 @@ def test_load_database_inventory_rejects_unsafe_entries(
 
     with pytest.raises(ValueError):
         load_database_inventory(inventory_path)
+
+
+def test_projection_preserves_denied_source_reason(tmp_path: Path) -> None:
+    denied = _database(
+        id="music-legacy-store",
+        locator="music/legacy-store",
+        basename="legacy.db",
+        classification="legacy",
+        backup_allowed=False,
+        reason="Legacy plaintext artifact; excluded from backup.",
+    )
+    inventory_path = tmp_path / "database_backup_inventory.json"
+    inventory_path.write_text(json.dumps(_inventory([denied])), encoding="utf-8")
+
+    manifest = build_backup_manifest(load_database_inventory(inventory_path))
+
+    assert manifest["databases"][0]["backup_allowed"] is False
+    assert manifest["databases"][0]["reason"] == denied["reason"]
