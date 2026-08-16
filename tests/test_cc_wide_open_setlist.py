@@ -1,5 +1,8 @@
 """Focused contract tests for the Copper Creek Wide Open setlist."""
 
+import json
+from pathlib import Path
+
 from tools.update_cc_wide_open_setlist_08232026 import (
     EXPECTED_SONG_COUNT,
     PASSENGER_ARTIST,
@@ -38,3 +41,19 @@ def test_passenger_reconciliation_source_is_catalog_only() -> None:
     assert PASSENGER_AUDIO_FILE == "The Passenger - Souxie & the Banshees .mp3"
     assert PASSENGER_SHEET_NAME == "Souxie & the Banshees - The Passenger.docx"
     assert not any(row[2] == PASSENGER_TITLE for row in SETLIST)
+
+
+def test_passenger_catalog_export_has_bpm_and_repo_sheet_link() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    export = json.loads(
+        (project_root / "catalog" / "setlists" / "catalog_export.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    passenger = next(song for song in export["songs"] if song["title"] == PASSENGER_TITLE)
+
+    assert passenger["bpm"] == 140
+    assert passenger["sheet_music"] == [
+        "catalog/sheet_music/covers/Souxie & the Banshees - The Passenger.docx"
+    ]
+    assert (project_root / passenger["sheet_music"][0]).is_file()

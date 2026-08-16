@@ -20,6 +20,7 @@ EXPECTED_SONG_COUNT = 33
 PASSENGER_TITLE = "Passenger"
 PASSENGER_ARTIST = "Siouxsie & the Banshees"
 PASSENGER_KEY = "Dm"
+PASSENGER_BPM = 140
 PASSENGER_AUDIO_FILE = "The Passenger - Souxie & the Banshees .mp3"
 PASSENGER_SHEET_NAME = "Souxie & the Banshees - The Passenger.docx"
 SETLIST_NOTES = (
@@ -124,26 +125,26 @@ def reconcile_passenger_catalog(conn, band_id: int) -> int:
         catalog_id = rows[0][0]
         conn.execute(
             """UPDATE catalog_songs
-               SET key_sig=?, source_file=?, updated_at=datetime('now')
+                    SET key_sig=?, bpm=?, source_file=?, updated_at=datetime('now')
                WHERE id=?""",
-            (PASSENGER_KEY, PASSENGER_AUDIO_FILE, catalog_id),
+                (PASSENGER_KEY, PASSENGER_BPM, PASSENGER_AUDIO_FILE, catalog_id),
         )
     else:
         cursor = conn.execute(
             """INSERT INTO catalog_songs
-                   (title, artist, key_sig, source_file)
-               VALUES (?, ?, ?, ?)""",
-            (PASSENGER_TITLE, PASSENGER_ARTIST, PASSENGER_KEY, PASSENGER_AUDIO_FILE),
+                   (title, artist, key_sig, bpm, source_file)
+               VALUES (?, ?, ?, ?, ?)""",
+            (PASSENGER_TITLE, PASSENGER_ARTIST, PASSENGER_KEY, PASSENGER_BPM, PASSENGER_AUDIO_FILE),
         )
         catalog_id = cursor.lastrowid
 
     conn.execute(
         """INSERT INTO band_song_arrangements
-               (band_id, catalog_song_id, default_key)
-           VALUES (?, ?, ?)
+               (band_id, catalog_song_id, default_key, default_bpm)
+           VALUES (?, ?, ?, ?)
            ON CONFLICT(band_id, catalog_song_id) DO UPDATE
-           SET default_key=excluded.default_key""",
-        (band_id, catalog_id, PASSENGER_KEY),
+           SET default_key=excluded.default_key, default_bpm=excluded.default_bpm""",
+        (band_id, catalog_id, PASSENGER_KEY, PASSENGER_BPM),
     )
     sheet_row = conn.execute(
         "SELECT id FROM sheet_music WHERE source='local' AND name=? LIMIT 1",
