@@ -63,7 +63,7 @@ def build_sheet_music_index() -> dict:
     """
     Walk SHEET_MUSIC dir. Indexes both halves of 'A - B' filenames so that
     either 'Title - Artist' or 'Artist - Title' naming conventions match.
-    Returns dict keyed by normalized title -> list of file:/// URIs.
+    Returns dict keyed by normalized title -> repo-relative sheet paths.
     """
     index = {}
     if not SHEET_MUSIC.exists():
@@ -76,7 +76,8 @@ def build_sheet_music_index() -> dict:
         for part in parts:
             key = _normalize(_strip_variant(part))
             if key:
-                index.setdefault(key, []).append(f.as_uri())
+                relative = f.relative_to(SHEET_MUSIC.parent.parent).as_posix()
+                index.setdefault(key, []).append(relative)
     return index
 
 

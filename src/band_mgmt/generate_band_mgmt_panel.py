@@ -929,6 +929,10 @@ BM_JS = r"""
           //                       → /sheets/<relpath>
           if (s.sheet_music && s.sheet_music.length) {
             s.sheet_music = s.sheet_music.map(function(url) {
+              // Repo-relative export path → the validated HTTP sheet endpoint.
+              if (url.indexOf('catalog/sheet_music/') === 0) {
+                return '/sheets/' + url.substring('catalog/sheet_music/'.length);
+              }
               if (url.indexOf('file:///') !== 0) return url;
               var sheetMatch = url.match(/^file:\/\/\/(?:f:\/)?%E2%9D%A4Music\/catalog\/sheet_music\/(.+)$/i);
               if (sheetMatch) {
