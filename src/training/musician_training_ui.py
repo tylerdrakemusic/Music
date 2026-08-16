@@ -7,11 +7,13 @@ Scales & Arpeggios tab added in FR-20260517-guitar-trainer-scale-exercises.
 
 import argparse
 import json
+import mimetypes
 import os
 import re
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
+from urllib.parse import quote
 from flask import Flask, jsonify, render_template_string, request, Response, abort, send_from_directory
 
 # Ensure src/ on path so utils.init_db is importable when run directly
@@ -74,6 +76,14 @@ def _scan_muzic() -> list[dict]:
 
 
 app = Flask(__name__)
+
+
+def _urlencode_path(value: str) -> str:
+  """Encode a path for use as a query parameter, including separators."""
+  return quote(value, safe="")
+
+
+app.jinja_env.filters["urlencode_path"] = _urlencode_path
 
 
 def _flag_enabled(env_var: str) -> bool:
@@ -183,6 +193,16 @@ HTML = r"""
   .card-header .meta h2{font-size:1rem;color:#fff;margin-bottom:2px}
   .card-header .meta .artist{font-size:.8rem;color:var(--muted)}
   .album-art{width:200px;height:200px;object-fit:cover;border-radius:4px;display:block;margin-bottom:10px}
+  .exercise-player{background:#111;border:1px solid var(--border);border-radius:5px;padding:10px;margin-bottom:12px}
+  .exercise-player-top{display:flex;align-items:center;gap:8px}
+  .exercise-player button{background:transparent;border:1px solid var(--border);color:#ccc;border-radius:4px;padding:5px 9px;cursor:pointer;font-size:.78rem}
+  .exercise-player button:first-child{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;min-width:58px}
+  .exercise-player button:hover{border-color:var(--accent);color:#fff}
+  .exercise-player input[type=range]{width:100%;margin:10px 0 4px;accent-color:var(--accent)}
+  .exercise-player input[type=range]:disabled{opacity:.35}
+  .exercise-player-time{display:flex;justify-content:space-between;color:var(--muted);font-size:.72rem}
+  .exercise-player-status{color:#6fdc6f;font-size:.72rem;min-height:16px;margin-top:5px}
+  .exercise-player-status.error{color:#f55}
   .card-controls{display:flex;align-items:center;gap:6px;flex-shrink:0}
   .lock-label{font-size:.7rem;color:var(--muted);cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px}
   .lock-label input{cursor:pointer}
@@ -313,7 +333,17 @@ HTML = r"""
   {% for s in sessions %}
   <div class="card" id="card-{{ s.id }}">
     {% if s.song_path %}
-    <img class="album-art" src="/art?path={{ s.song_path | urlencode }}" onerror="this.style.display='none'" alt="">
+    <img class="album-art" src="/art?path={{ s.song_path | urlencode_path }}" onerror="this.style.display='none'" alt="">
+    <div class="exercise-player" id="exercise-player-{{ s.id }}" data-exercise-id="{{ s.id }}">
+      <audio class="exercise-audio" data-exercise-id="{{ s.id }}" preload="metadata" src="/audio?path={{ s.song_path | urlencode_path }}"></audio>
+      <div class="exercise-player-top">
+        <button type="button" id="exercise-play-{{ s.id }}" onclick="toggleExerciseAudio({{ s.id }})">Play</button>
+        <button type="button" onclick="restartExerciseAudio({{ s.id }})">Restart</button>
+      </div>
+      <input type="range" id="exercise-timeline-{{ s.id }}" min="0" max="0" value="0" step="0.01" disabled aria-label="Audio position">
+      <div class="exercise-player-time"><span id="exercise-current-{{ s.id }}">0:00</span><span id="exercise-duration-{{ s.id }}">--:--</span></div>
+      <div class="exercise-player-status" id="exercise-status-{{ s.id }}" aria-live="polite">Loading audio metadata...</div>
+    </div>
     {% endif %}
     <div class="card-header">
       <div class="meta"><h2>{{ s.title }}</h2><div class="artist">{{ s.artist }}</div></div>
@@ -623,6 +653,15 @@ function buildCardHTML(s) {
   const artTag = s.song_path
     ? `<img class="album-art" src="/art?path=${encodeURIComponent(s.song_path)}" onerror="this.style.display='none'" alt="">`
     : '';
+  const audioTag = s.song_path
+    ? `<div class="exercise-player" id="exercise-player-${id}" data-exercise-id="${id}">
+      <audio class="exercise-audio" data-exercise-id="${id}" preload="metadata" src="/audio?path=${encodeURIComponent(s.song_path)}"></audio>
+      <div class="exercise-player-top"><button type="button" id="exercise-play-${id}" onclick="toggleExerciseAudio(${id})">Play</button><button type="button" onclick="restartExerciseAudio(${id})">Restart</button></div>
+      <input type="range" id="exercise-timeline-${id}" min="0" max="0" value="0" step="0.01" disabled aria-label="Audio position">
+      <div class="exercise-player-time"><span id="exercise-current-${id}">0:00</span><span id="exercise-duration-${id}">--:--</span></div>
+      <div class="exercise-player-status" id="exercise-status-${id}" aria-live="polite">Loading audio metadata...</div>
+    </div>`
+    : '';
   const rows = (s.segments || []).map((seg) => `
     <tr>
       <td><input value="${seg.start}" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td>
@@ -633,6 +672,7 @@ function buildCardHTML(s) {
     </tr>`).join('');
   return `<div class="card" id="card-${id}">
     ${artTag}
+    ${audioTag}
     <div class="card-header">
       <div class="meta"><h2>${s.title}</h2><div class="artist">${s.artist}</div></div>
       <div class="card-controls">
@@ -658,6 +698,85 @@ function buildCardHTML(s) {
   </div>`;
 }
 
+function formatExerciseTime(value) {
+  const seconds = Math.max(0, Math.floor(Number(value) || 0));
+  return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+}
+
+function setExerciseAudioStatus(id, message, error=false) {
+  const status = document.getElementById('exercise-status-' + id);
+  if (status) {
+    status.textContent = message;
+    status.classList.toggle('error', error);
+  }
+}
+
+function updateExerciseAudioTime(id) {
+  const audio = document.querySelector('.exercise-audio[data-exercise-id="' + id + '"]');
+  const timeline = document.getElementById('exercise-timeline-' + id);
+  const current = document.getElementById('exercise-current-' + id);
+  if (!audio || !timeline || !current) return;
+  timeline.value = String(audio.currentTime || 0);
+  current.textContent = formatExerciseTime(audio.currentTime);
+}
+
+function bindExerciseAudioCard(card) {
+  const audio = card.querySelector('.exercise-audio');
+  if (!audio || audio.dataset.bound === 'true') return;
+  const id = audio.dataset.exerciseId;
+  const timeline = card.querySelector('#exercise-timeline-' + id);
+  const duration = card.querySelector('#exercise-duration-' + id);
+  const play = card.querySelector('#exercise-play-' + id);
+  audio.dataset.bound = 'true';
+  audio.addEventListener('loadedmetadata', () => {
+    timeline.disabled = false;
+    timeline.max = String(audio.duration);
+    duration.textContent = formatExerciseTime(audio.duration);
+    setExerciseAudioStatus(id, 'Ready to play full recording.');
+  });
+  audio.addEventListener('timeupdate', () => updateExerciseAudioTime(id));
+  audio.addEventListener('ended', () => { play.textContent = 'Play'; updateExerciseAudioTime(id); setExerciseAudioStatus(id, 'Playback complete.'); });
+  audio.onerror = () => { timeline.disabled = true; setExerciseAudioStatus(id, 'Audio unavailable.', true); };
+  timeline.addEventListener('input', () => {
+    audio.currentTime = Number(timeline.value);
+    updateExerciseAudioTime(id);
+    setExerciseAudioStatus(id, 'Seeking full recording.');
+  });
+}
+
+function bindExerciseAudioCards(root=document) {
+  root.querySelectorAll('.exercise-player').forEach(bindExerciseAudioCard);
+}
+
+async function toggleExerciseAudio(id) {
+  const audio = document.querySelector('.exercise-audio[data-exercise-id="' + id + '"]');
+  const play = document.getElementById('exercise-play-' + id);
+  if (!audio || !play) return;
+  if (audio.ended) audio.currentTime = 0;
+  if (audio.paused) {
+    try { await audio.play(); } catch (error) { setExerciseAudioStatus(id, 'Audio unavailable.', true); return; }
+    play.textContent = 'Pause';
+    setExerciseAudioStatus(id, 'Playing full recording.');
+  } else {
+    audio.pause();
+    play.textContent = 'Resume';
+    setExerciseAudioStatus(id, 'Paused.');
+  }
+}
+
+function restartExerciseAudio(id) {
+  const audio = document.querySelector('.exercise-audio[data-exercise-id="' + id + '"]');
+  const play = document.getElementById('exercise-play-' + id);
+  if (!audio || !play) return;
+  audio.pause();
+  audio.currentTime = 0;
+  play.textContent = 'Play';
+  updateExerciseAudioTime(id);
+  setExerciseAudioStatus(id, 'Ready to play full recording.');
+}
+
+bindExerciseAudioCards();
+
 async function createSession() {
   if (!_selectedPath) { setStatus('new', '\u2717 Pick a song first', false); return; }
   const name = _selectedPath.split('\\').pop().split('/').pop();
@@ -678,6 +797,7 @@ async function createSession() {
       const div = document.createElement('div');
       div.innerHTML = buildCardHTML(newSession);
       grid.insertBefore(div.firstElementChild, newCard);
+      bindExerciseAudioCards(div);
     }
     setStatus('new', '\u2713 Created');
     _selectedPath = '';
@@ -1643,6 +1763,27 @@ def catalog():
     return jsonify(_scan_muzic())
 
 
+def exercise_audio():
+  """Serve an exercise source file without exposing paths outside allowed roots."""
+  path_str = request.args.get("path", "")
+  if not path_str:
+    abort(404)
+  resolved = Path(path_str).resolve()
+  if not any(resolved.is_relative_to(root) for root in _ART_ALLOWED_ROOTS):
+    abort(403)
+  if resolved.suffix.lower() not in AUDIO_EXTS:
+    abort(403)
+  if not resolved.is_file():
+    abort(404)
+  mimetype = mimetypes.guess_type(resolved.name)[0] or "application/octet-stream"
+  return send_from_directory(
+    str(resolved.parent),
+    resolved.name,
+    mimetype=mimetype,
+    conditional=True,
+  )
+
+
 @app.route("/click/<path:filename>")
 def click_audio(filename: str) -> Response:
     """Serve metronome WAV files from the project click/ directory.
@@ -1997,6 +2138,7 @@ if ENABLE_EXERCISE_CARDS:
     app.add_url_rule("/delete", view_func=delete_session, methods=["POST"])
     app.add_url_rule("/catalog", view_func=catalog)
     app.add_url_rule("/art", view_func=album_art)
+    app.add_url_rule("/audio", view_func=exercise_audio)
     app.add_url_rule("/api/sessions", view_func=api_sessions)
     app.add_url_rule("/api/log", view_func=api_log, methods=["GET", "POST"])
 
