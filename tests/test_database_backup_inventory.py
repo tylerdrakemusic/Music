@@ -1,0 +1,123 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from utils.database_backup_inventory import load_database_inventory
+
+
+INVENTORY_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "src"
+    / "config"
+    / "database_backup_inventory.json"
+)
+
+
+def _inventory(databases: list[dict[str, object]], exclusions: list[dict[str, str]] | None = None) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "project": "music",
+        "fr": "FR-20260816-workspace-local-database-backup",
+        "content_boundary": "Redacted database policy metadata only; database contents and credentials are never included.",
+        "databases": databases,
+        "exclusions": exclusions or [],
+    }
+
+
+def _database(**overrides: object) -> dict[str, object]:
+    database: dict[str, object] = {
+        "id": "music-heartmusic",
+        "locator": "music/heartmusic-store",
+        "basename": "heartmusic.db",
+        "classification": "canonical",
+        "backup_allowed": True,
+        "encryption": "sqlcipher",
+        "key_env_var": "HEARTMUSIC_DB_KEY",
+    }
+    database.update(overrides)
+    return database
+
+
+def test_load_database_inventory_exposes_only_redacted_encrypted_metadata(
+    tmp_path: Path,
+) -> None:
+    inventory_path = tmp_path / "database_backup_inventory.json"
+    inventory_path.write_text(
+        json.dumps(_inventory([_database()])), encoding="utf-8"
+    )
+
+    inventory = load_database_inventory(inventory_path)
+
+    assert inventory["project"] == "music"
+    assert inventory["databases"] == [_database()]
+    serialized = json.dumps(inventory).lower()
+    assert "src/data" not in serialized
+    assert "key_value" not in serialized
+    assert "secret" not in serialized
+
+
+def test_inventory_entries_are_configuration_driven(tmp_path: Path) -> None:
+    future_database = _database(
+        id="music-approved-future-store",
+        locator="music/future-store",
+        basename="future_store.sqlite3",
+        classification="canonical",
+        backup_allowed=True,
+        key_env_var="FUTURE_STORE_DB_KEY",
+    )
+    inventory_path = tmp_path / "database_backup_inventory.json"
+    inventory_path.write_text(
+        json.dumps(_inventory([_database(), future_database])), encoding="utf-8"
+    )
+
+    inventory = load_database_inventory(inventory_path)
+
+    assert [entry["id"] for entry in inventory["databases"]] == [
+        "music-heartmusic",
+        "music-approved-future-store",
+    ]
+
+
+def test_committed_inventory_registers_canonical_encrypted_store() -> None:
+    inventory = load_database_inventory(INVENTORY_PATH)
+
+    assert inventory["databases"] == [_database()]
+
+
+def test_committed_inventory_excludes_legacy_and_plaintext_backup_artifacts() -> None:
+    inventory = load_database_inventory(INVENTORY_PATH)
+
+    assert inventory["exclusions"] == [
+        {
+            "pattern": "src/data/backups/**",
+            "reason": "Legacy plaintext backup artifacts are excluded from future backup discovery.",
+        },
+        {
+            "pattern": "data/legacy_heartmusic.db",
+            "reason": "Legacy database store is excluded from future backup discovery.",
+        },
+    ]
+
+
+@pytest.mark.parametrize(
+    "entry",
+    [
+        _database(locator="../outside-store"),
+        _database(encryption="sqlite"),
+        _database(key_env_var="not-an-environment-variable"),
+        _database(basename="backup.txt"),
+    ],
+)
+def test_load_database_inventory_rejects_unsafe_entries(
+    tmp_path: Path, entry: dict[str, object]
+) -> None:
+    inventory_path = tmp_path / "database_backup_inventory.json"
+    inventory_path.write_text(
+        json.dumps(_inventory([entry])), encoding="utf-8"
+    )
+
+    with pytest.raises(ValueError):
+        load_database_inventory(inventory_path)
