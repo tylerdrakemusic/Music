@@ -74,4 +74,5 @@ def test_isolated_deployment_files_use_minimal_context():
     assert "guitartrainer" not in fly_config
     assert "pytest" in workflow
     assert "flyctl deploy" in workflow
+    assert "github.ref == 'refs/heads/main'" in workflow
     assert "fly.toml" not in workflow
