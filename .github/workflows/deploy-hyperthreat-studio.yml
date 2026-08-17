@@ -1,6 +1,18 @@
 name: Deploy Hyperthreat Studios templates
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-hyperthreat-studio.yml"
+      - ".dockerignore"
+      - "Dockerfile.hyperthreat-studio"
+      - "fly.hyperthreat-studio.toml"
+      - "Brand/hyperthreat/hyperthreat-logo.png"
+      - "src/studio/hyperthreat_app.py"
+      - "studio/mic_config_template.html"
+      - "studio/patch_bay.html"
   workflow_dispatch:
     inputs:
       app_name:
@@ -25,19 +37,21 @@ jobs:
 
   deploy:
     needs: test
-    if: ${{ github.ref == 'refs/heads/main' && inputs.approval == 'approved' }}
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.approval == 'approved') }}
+    env:
+      APP_NAME: ${{ inputs.app_name || 'ht' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Validate approved app name
         shell: bash
         run: |
-          case "${{ inputs.app_name }}" in
+          case "$APP_NAME" in
             ht|hthreat|hyperthreat) ;;
             *) echo "App name must be ht, hthreat, or hyperthreat"; exit 1 ;;
           esac
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy only after explicit approval
-        run: flyctl deploy --app "${{ inputs.app_name }}" --config fly.hyperthreat-studio.toml --remote-only
+        run: flyctl deploy --app "$APP_NAME" --config fly.hyperthreat-studio.toml --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.HT_FLY_TOKEN }}

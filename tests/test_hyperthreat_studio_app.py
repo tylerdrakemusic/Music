@@ -90,4 +90,14 @@ def test_isolated_deployment_files_use_minimal_context():
     assert "pytest" in workflow
     assert "flyctl deploy" in workflow
     assert "github.ref == 'refs/heads/main'" in workflow
+    assert "push:" in workflow
+    assert "paths:" in workflow
+    assert "src/studio/hyperthreat_app.py" in workflow
+    assert "studio/mic_config_template.html" in workflow
+    assert "studio/patch_bay.html" in workflow
+    assert "Brand/hyperthreat/hyperthreat-logo.png" in workflow
+    assert "Dockerfile.hyperthreat-studio" in workflow
+    assert "fly.hyperthreat-studio.toml" in workflow
+    assert "github.event_name == 'push'" in workflow
+    assert "inputs.app_name || 'ht'" in workflow
     assert "fly.toml" not in workflow
