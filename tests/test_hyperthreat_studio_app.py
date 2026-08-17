@@ -71,6 +71,7 @@ def test_templates_keep_local_print_reset_and_export_behaviors(template, markers
 
 
 def test_isolated_deployment_files_use_minimal_context():
+    dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")
     dockerfile = (ROOT / "Dockerfile.hyperthreat-studio").read_text(encoding="utf-8")
     fly_config = (ROOT / "fly.hyperthreat-studio.toml").read_text(encoding="utf-8")
     workflow = (ROOT / ".github" / "workflows" / "deploy-hyperthreat-studio.yml").read_text(
@@ -81,6 +82,8 @@ def test_isolated_deployment_files_use_minimal_context():
     assert "COPY studio/mic_config_template.html" in dockerfile
     assert "COPY studio/patch_bay.html" in dockerfile
     assert "COPY Brand/hyperthreat/hyperthreat-logo.png" in dockerfile
+    assert "Brand/" in dockerignore
+    assert "!Brand/hyperthreat/hyperthreat-logo.png" in dockerignore
     assert "heartmusic.db" not in dockerfile
     assert "app = 'ht'" in fly_config
     assert "guitartrainer" not in fly_config
