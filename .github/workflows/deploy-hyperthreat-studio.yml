@@ -1,0 +1,43 @@
+name: Deploy Hyperthreat Studios templates
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: "Tyler-approved Fly app name: ht, hthreat, or hyperthreat"
+        required: true
+        default: ht
+      approval:
+        description: "Type approved only after Tyler approves the app name and URL"
+        required: true
+        default: pending
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install "flask>=3.0,<4.0" pytest
+      - run: pytest -q tests/test_hyperthreat_studio_app.py
+
+  deploy:
+    needs: test
+    if: ${{ github.ref == 'refs/heads/main' && inputs.approval == 'approved' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate approved app name
+        shell: bash
+        run: |
+          case "${{ inputs.app_name }}" in
+            ht|hthreat|hyperthreat) ;;
+            *) echo "App name must be ht, hthreat, or hyperthreat"; exit 1 ;;
+          esac
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy only after explicit approval
+        run: flyctl deploy --app "${{ inputs.app_name }}" --config fly.hyperthreat-studio.toml --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
