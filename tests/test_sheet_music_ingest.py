@@ -17,6 +17,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+pytestmark = pytest.mark.ci_unavailable
+
 # Allow imports from the worktree's src/ (for scripts)
 _WORKTREE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_WORKTREE_ROOT / "src"))

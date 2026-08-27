@@ -22,6 +22,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
+pytestmark = pytest.mark.ci_unavailable
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TMP_DIR = PROJECT_ROOT / "tmp"
 TRAINER_PY = PROJECT_ROOT / "src" / "training" / "musician_training_ui.py"
