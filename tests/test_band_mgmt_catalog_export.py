@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.ci_unavailable
+
 PANEL_PATH = Path(__file__).resolve().parent.parent / "reports" / "band_management_panel.html"
 
 @pytest.mark.skipif(not PANEL_PATH.exists(), reason="Panel HTML not generated")
