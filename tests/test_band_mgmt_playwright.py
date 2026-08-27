@@ -13,10 +13,10 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = [pytest.mark.playwright, pytest.mark.ci_unavailable]
+
 PANEL_PATH = Path(__file__).resolve().parent.parent / "reports" / "band_management_panel.html"
 PANEL_URL = PANEL_PATH.as_uri() if PANEL_PATH.exists() else ""
-
-pytestmark = pytest.mark.playwright
 
 
 @pytest.fixture(scope="module")

@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.ci_unavailable
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SYNC_PY = PROJECT_ROOT / "tools" / "sync_cc_charts_catalog.py"
 
