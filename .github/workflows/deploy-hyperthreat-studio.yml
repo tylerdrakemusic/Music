@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install "flask>=3.0,<4.0" pytest
-      - run: pytest -q tests/test_hyperthreat_studio_app.py
+      - run: pytest -q
 
   deploy:
     needs: test

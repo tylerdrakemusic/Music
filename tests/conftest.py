@@ -10,6 +10,9 @@ import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _SRC = _REPO_ROOT / "src"
+_CI_ITEMS = {}
+_CI_SKIPS = []
+_CI_DESELECTED = []
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 if str(_SRC) not in sys.path:
@@ -42,8 +45,55 @@ for _module_name in (
 
 def pytest_collection_modifyitems(config, items):
     """Skip playwright-marked tests unless PLAYWRIGHT_ENABLED=1 is set."""
+    _CI_ITEMS.clear()
+    _CI_ITEMS.update({item.nodeid: item for item in items})
+    _CI_SKIPS.clear()
+    _CI_DESELECTED.clear()
     if os.getenv("PLAYWRIGHT_ENABLED") != "1":
         skip = pytest.mark.skip(reason="Set PLAYWRIGHT_ENABLED=1 to run Playwright tests")
         for item in items:
             if item.get_closest_marker("playwright"):
                 item.add_marker(skip)
+
+
+def pytest_runtest_logreport(report):
+    """Collect skip reasons so CI cannot silently lose runnable coverage."""
+    if not report.skipped:
+        return
+
+    item = _CI_ITEMS.get(report.nodeid)
+    if item is None:
+        return
+    reason = str(report.longrepr[2]) if isinstance(report.longrepr, tuple) else str(report.longrepr)
+    _CI_SKIPS.append((report.nodeid, reason, item.get_closest_marker("ci_unavailable") is not None))
+
+
+def pytest_deselected(items):
+    """Collect deselected node IDs so CI cannot silently lose coverage."""
+    _CI_DESELECTED.extend(item.nodeid for item in items)
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    """Report classified skips and fail CI for any unclassified skip."""
+    skips = _CI_SKIPS
+    deselected = _CI_DESELECTED
+    if not skips and not deselected:
+        return
+
+    terminalreporter.write_sep("=", "CI skip policy")
+    terminalreporter.write_line(f"Total skips: {len(skips)}")
+    for nodeid, reason, classified in skips:
+        label = "classified unavailable infrastructure" if classified else "UNCLASSIFIED"
+        terminalreporter.write_line(f"{label}: {nodeid} ({reason})")
+    terminalreporter.write_line(f"Total deselected: {len(deselected)}")
+    for nodeid in deselected:
+        terminalreporter.write_line(f"deselected: {nodeid}")
+    if any(not classified for _, _, classified in skips):
+        terminalreporter.write_line("Unclassified skips are not allowed in CI.")
+        config._ci_skip_policy_failed = True
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Turn unclassified skips into a blocking CI result."""
+    if getattr(session.config, "_ci_skip_policy_failed", False):
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED

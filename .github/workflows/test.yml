@@ -35,10 +35,10 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest
 
-      - name: Run pytest
+      - name: Run pytest and report skips
         env:
           PLAYWRIGHT_ENABLED: "0"  # Set to "1" locally to run Playwright tests (FR-20260513-playwright-ui-gate)
-        run: pytest -v --tb=short
+        run: pytest -v --tb=short -rs
 
   deploy:
     needs: test

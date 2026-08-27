@@ -39,6 +39,8 @@ from unittest.mock import patch
 
 import pytest
 
+pytestmark = pytest.mark.ci_unavailable
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CLICK_DIR = PROJECT_ROOT / "click"
 sys.path.insert(0, str(PROJECT_ROOT / "src"))

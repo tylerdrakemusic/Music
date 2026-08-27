@@ -34,12 +34,12 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = [pytest.mark.playwright, pytest.mark.ci_unavailable]
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 import training.musician_training_ui as ui  # noqa: E402
-
-pytestmark = pytest.mark.playwright
 
 _FLAG_VARS = ("ENABLE_EXERCISE_CARDS", "ENABLE_SCALE_LOG")
 
