@@ -1,0 +1,6 @@
+{
+  "parallel_ci": false,
+  "parallel_supported": true,
+  "excluded_markers": ["playwright", "ci_unavailable"],
+  "serial_reason": "Audio fixtures, generated artifacts, and browser tests require isolation evidence before CI parallelism."
+}

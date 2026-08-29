@@ -13,3 +13,4 @@ demucs
 # FR-20260703-music-bpm-autolookup: GetSongBPM API client
 requests>=2.31,<3.0
 pytest-mock>=3.14,<4.0
+pytest-xdist>=3.6,<4.0
