@@ -1,7 +1,0 @@
-# Parallel test execution
-
-The canonical command is `python tools/run_tests.py`. It loads `tools/parallel_test_policy.json`, composes its excluded markers with any `pytest.ini` `addopts` marker expression, emits concise output, and returns pytest's nonzero status on any worker failure. Serial and `--parallel` modes use the same exclusions; `--parallel` is only a reviewed local evidence run and requires `pytest-xdist`.
-
-The serial baseline was regenerated from branch head `13eeccc946b56e509c72d2afdce55031e77c015e` on 2026-08-29 UTC with `python tools/run_tests.py --junitxml tmp/serial-baseline.xml`. Capture window: 17:55:14Z to 17:55:43Z. Pytest collected 862 tests; JUnit reports 862 tests, 830 passed, 0 failed, 0 errors, and 32 skipped; exit code was 0. This is comparable to the branch's default marker policy, but it is not evidence that parallel execution is safe. CI remains serial pending isolation evidence for audio/generated artifacts and browser tests. `FR-20260826-workspace-ci-exclusion-audit` is a rebase/conflict dependency for changing the exclusion policy. Playwright and `ci_unavailable` tests retain their existing policy.
-
-Serial fallback: `python tools/run_tests.py --junitxml tmp/serial.xml`.
