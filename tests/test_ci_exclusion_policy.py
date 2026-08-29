@@ -43,5 +43,5 @@ def test_ci_workflow_reports_skip_reasons():
     )
     conftest = (ROOT / "tests" / "conftest.py").read_text(encoding="utf-8")
 
-    assert "run: pytest -v --tb=short -rs" in workflow
+    assert "run: pytest -v --tb=short -rs --junitxml=tmp/pytest-junit.xml" in workflow
     assert "Total skips:" in conftest
