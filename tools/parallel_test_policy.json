@@ -1,6 +1,8 @@
 {
-  "parallel_ci": false,
+  "parallel_ci": true,
   "parallel_supported": true,
-  "excluded_markers": ["playwright", "ci_unavailable"],
-  "serial_reason": "Audio fixtures, generated artifacts, and browser tests require isolation evidence before CI parallelism."
+  "max_workers": 2,
+  "excluded_markers": ["playwright", "ci_unavailable", "serial_only"],
+  "serial_test_paths": ["tests/test_guitar_trainer_exercise_audio.py"],
+  "serial_reason": "Audio fixtures, generated artifacts, browser tests, and tests without isolation evidence require the serial lane."
 }
