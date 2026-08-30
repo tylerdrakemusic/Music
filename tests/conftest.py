@@ -86,8 +86,6 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         label = "classified unavailable infrastructure" if classified else "UNCLASSIFIED"
         terminalreporter.write_line(f"{label}: {nodeid} ({reason})")
     terminalreporter.write_line(f"Total deselected: {len(deselected)}")
-    for nodeid in deselected:
-        terminalreporter.write_line(f"deselected: {nodeid}")
     if any(not classified for _, _, classified in skips):
         terminalreporter.write_line("Unclassified skips are not allowed in CI.")
         config._ci_skip_policy_failed = True
