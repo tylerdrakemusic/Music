@@ -42,9 +42,11 @@ for this FR.
 
 ## Behavioral Risk Notes
 
-- Focused validation passed: 13 tests passed. The runner also passed three
-  paired pilots with 735 parallel tests, five serial audio tests, two workers,
-  and both JUnit outputs present.
+- Focused validation passed: 13 tests passed. The final worktree's canonical
+  evidence is three fresh paired pilots, each with 740 parallel tests, five
+  serial audio tests, two workers, and both JUnit outputs present. Earlier
+  735-test measurements are retained in the JSON proof as superseded
+  pre-repair observations only, not as acceptance evidence.
 - `pytest-xdist>=3.6,<4.0` is already present in `requirements.txt`, so the
   CI install path supplies the parallel plugin.
 - The legacy `tools/run_tests.py --junitxml PATH` interface is accepted but
