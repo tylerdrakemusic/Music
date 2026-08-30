@@ -1,0 +1,330 @@
+{
+  "data": {
+    "device": 2162694,
+    "device_version": 58720256,
+    "meta": {
+      "application": "HX Edit",
+      "appversion": 58851328,
+      "build_sha": "v3.71-32-g1039661",
+      "modifieddate": 1788112126,
+      "name": "Gimme Gimme Gimme - ABBA"
+    },
+    "tone": {
+      "controller": {
+        "dsp0": {
+          "outputA": {
+            "gain": {
+              "@controller": 2,
+              "@max": 0.0,
+              "@min": -120.0,
+              "@snapshot_disable": false
+            }
+          }
+        }
+      },
+      "dsp0": {
+        "block0": {
+          "@enabled": true,
+          "@model": "HD2_CompressorDeluxeComp",
+          "@no_snapshot_bypass": false,
+          "@path": 0,
+          "@position": 0,
+          "@stereo": false,
+          "@type": 0,
+          "Attack": 0.030,
+          "Knee": 5.0,
+          "Level": 3.0,
+          "Mix": 0.65,
+          "Ratio": 2,
+          "Release": 0.180,
+          "Threshold": -28.0
+        },
+        "block1": {
+          "@bypassvolume": 1.0,
+          "@cab": "cab0",
+          "@enabled": true,
+          "@model": "HD2_AmpTweedBluesBrt",
+          "@no_snapshot_bypass": false,
+          "@path": 0,
+          "@position": 1,
+          "@type": 3,
+          "Bass": 0.50,
+          "Bias": 0.73,
+          "BiasX": 0.50,
+          "ChVol": 0.62,
+          "Drive": 0.28,
+          "Hum": 0.50,
+          "Master": 0.75,
+          "Mid": 0.60,
+          "Presence": 0.34,
+          "Ripple": 0.50,
+          "Sag": 0.50,
+          "Treble": 0.57
+        },
+        "block2": {
+          "@enabled": true,
+          "@model": "HD2_Chorus70sChorus",
+          "@no_snapshot_bypass": false,
+          "@path": 0,
+          "@position": 2,
+          "@stereo": false,
+          "@type": 0,
+          "ChorusIntensity": 0.040,
+          "Headroom": 0.0,
+          "Level": 0.0,
+          "Mix": 0.12,
+          "Mode": false,
+          "Spread": 0.0,
+          "Stereo": false,
+          "SyncSelect1": 6,
+          "SyncSelect2": 6,
+          "TempoSync1": false,
+          "TempoSync2": false,
+          "VibratoDepth": 0.30,
+          "VibratoRate": 0.10
+        },
+        "block3": {
+          "@enabled": true,
+          "@model": "HD2_DelaySimpleDelay",
+          "@no_snapshot_bypass": false,
+          "@path": 0,
+          "@position": 3,
+          "@stereo": false,
+          "@trails": false,
+          "@type": 7,
+          "Feedback": 0.18,
+          "Level": 0.0,
+          "Mix": 0.12,
+          "Scale": 0.75,
+          "SyncSelect1": 6,
+          "TempoSync1": false,
+          "Time": 0.180
+        },
+        "block4": {
+          "@enabled": true,
+          "@model": "HD2_ReverbPlate",
+          "@no_snapshot_bypass": false,
+          "@path": 0,
+          "@position": 4,
+          "@trails": false,
+          "@type": 7,
+          "Decay": 0.35,
+          "HighCut": 6000.0,
+          "Level": 0.0,
+          "LowCut": 120.0,
+          "Mix": 0.20,
+          "Predelay": 0.015
+        },
+        "cab0": {
+          "@enabled": true,
+          "@model": "HD2_CabMicIr_4x10TweedP10R",
+          "Angle": 0.0,
+          "Distance": 1.0,
+          "HighCut": 8500.0,
+          "Level": 0.0,
+          "LowCut": 80.0,
+          "Mic": 2,
+          "Position": 0.20
+        },
+        "inputA": {
+          "@input": 1,
+          "@model": "HelixStomp_AppDSPFlowInput",
+          "decay": 0.50,
+          "noiseGate": false,
+          "threshold": -48.0
+        },
+        "inputB": {
+          "@input": 0,
+          "@model": "HelixStomp_AppDSPFlowInput",
+          "decay": 0.50,
+          "noiseGate": false,
+          "threshold": -48.0
+        },
+        "join": {
+          "@enabled": true,
+          "@model": "HD2_AppDSPFlowJoin",
+          "@no_snapshot_bypass": false,
+          "@position": 8,
+          "A Level": 0.0,
+          "A Pan": 0.50,
+          "B Level": 0.0,
+          "B Pan": 0.50,
+          "B Polarity": false,
+          "Level": 0.0
+        },
+        "outputA": {
+          "@model": "HelixStomp_AppDSPFlowOutputMain",
+          "@output": 1,
+          "gain": 0.0,
+          "pan": 0.50
+        },
+        "outputB": {
+          "@model": "HelixStomp_AppDSPFlowOutputSend",
+          "@output": 0,
+          "Type": true,
+          "gain": 0.0,
+          "pan": 0.50
+        },
+        "split": {
+          "@enabled": true,
+          "@model": "HD2_AppDSPFlowSplitY",
+          "@no_snapshot_bypass": false,
+          "@path": 0,
+          "@position": 0,
+          "BalanceA": 0.50,
+          "BalanceB": 0.50,
+          "bypass": false
+        }
+      },
+      "dsp1": {},
+      "footswitch": {
+        "dsp0": {
+          "block2": {
+            "@fs_enabled": true,
+            "@fs_index": 1,
+            "@fs_label": "Chorus Width",
+            "@fs_ledcolor": 458496,
+            "@fs_momentary": false,
+            "@fs_primary": true
+          },
+          "block3": {
+            "@fs_enabled": true,
+            "@fs_index": 2,
+            "@fs_label": "Short Echo",
+            "@fs_ledcolor": 13676288,
+            "@fs_momentary": false,
+            "@fs_primary": true
+          },
+          "block4": {
+            "@fs_enabled": true,
+            "@fs_index": 3,
+            "@fs_label": "Plate Verb",
+            "@fs_ledcolor": 65280,
+            "@fs_momentary": false,
+            "@fs_primary": true
+          }
+        }
+      },
+      "global": {
+        "@DtSelect": 2,
+        "@PowercabMode": 0,
+        "@PowercabSelect": 2,
+        "@PowercabVoicing": 0,
+        "@current_snapshot": 0,
+        "@cursor_dsp": 0,
+        "@cursor_group": "block1",
+        "@cursor_path": 0,
+        "@cursor_position": 1,
+        "@guitarinputZ": 0,
+        "@guitarpad": 0,
+        "@model": "@global_params",
+        "@pedalstate": 2,
+        "@tempo": 120.0,
+        "@topology0": "A",
+        "@topology1": 0
+      },
+      "snapshot0": {
+        "@custom_name": true,
+        "@ledcolor": 0,
+        "@name": "Intro Clean",
+        "@pedalstate": 0,
+        "@tempo": 120.0,
+        "@valid": true,
+        "blocks": {
+          "dsp0": {
+            "block0": true,
+            "block1": true,
+            "block2": false,
+            "block3": false,
+            "block4": true
+          }
+        },
+        "controllers": {
+          "dsp0": {
+            "outputA": {
+              "gain": {
+                "@fs_enabled": false,
+                "@value": 0.0
+              }
+            }
+          }
+        }
+      },
+      "snapshot1": {
+        "@custom_name": true,
+        "@ledcolor": 0,
+        "@name": "Chorus Lift",
+        "@pedalstate": 0,
+        "@tempo": 120.0,
+        "@valid": true,
+        "blocks": {
+          "dsp0": {
+            "block0": true,
+            "block1": true,
+            "block2": true,
+            "block3": false,
+            "block4": true
+          }
+        },
+        "controllers": {
+          "dsp0": {
+            "outputA": {
+              "gain": {
+                "@fs_enabled": false,
+                "@value": 0.0
+              }
+            }
+          }
+        }
+      },
+      "snapshot2": {
+        "@custom_name": true,
+        "@ledcolor": 0,
+        "@name": "Arpeggio Wide",
+        "@pedalstate": 0,
+        "@tempo": 120.0,
+        "@valid": true,
+        "blocks": {
+          "dsp0": {
+            "block0": true,
+            "block1": true,
+            "block2": true,
+            "block3": true,
+            "block4": true
+          }
+        },
+        "controllers": {
+          "dsp0": {
+            "outputA": {
+              "gain": {
+                "@fs_enabled": false,
+                "@value": 0.0
+              }
+            }
+          }
+        }
+      },
+      "variax": {
+        "@variax_customtuning": true,
+        "@variax_lockctrls": 0,
+        "@variax_magmode": false,
+        "@variax_model": 0,
+        "@variax_str1tuning": 0,
+        "@variax_str2tuning": 0,
+        "@variax_str3tuning": 0,
+        "@variax_str4tuning": 0,
+        "@variax_str5tuning": 0,
+        "@variax_str6tuning": 0,
+        "@variax_toneknob": -0.10,
+        "@variax_volumeknob": -0.10
+      }
+    }
+  },
+  "meta": {
+    "original": 0,
+    "pbn": 0,
+    "premium": 0
+  },
+  "schema": "L6Preset",
+  "version": 6
+}
