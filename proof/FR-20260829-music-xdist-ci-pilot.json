@@ -31,38 +31,42 @@
       "rollback_switch_preserved": true
     }
   },
-  "runs": [
-    {
-      "run": 1,
-      "parallel_tests": 735,
-      "parallel_seconds": 14.71,
-      "serial_tests": 5,
-      "serial_seconds": 1.0,
-      "exit_code": 0,
-      "parallel_junit": true,
-      "serial_junit": true
-    },
-    {
-      "run": 2,
-      "parallel_tests": 735,
-      "parallel_seconds": 13.73,
-      "serial_tests": 5,
-      "serial_seconds": 0.34,
-      "exit_code": 0,
-      "parallel_junit": true,
-      "serial_junit": true
-    },
-    {
-      "run": 3,
-      "parallel_tests": 735,
-      "parallel_seconds": 11.74,
-      "serial_tests": 5,
-      "serial_seconds": 0.34,
-      "exit_code": 0,
-      "parallel_junit": true,
-      "serial_junit": true
-    }
-  ],
+  "superseded_pre_repair_observations": {
+    "status": "superseded",
+    "note": "Retained for audit history only; these measurements predate the final pytest plugin-environment repair and are not acceptance evidence.",
+    "runs": [
+      {
+        "run": 1,
+        "parallel_tests": 735,
+        "parallel_seconds": 14.71,
+        "serial_tests": 5,
+        "serial_seconds": 1.0,
+        "exit_code": 0,
+        "parallel_junit": true,
+        "serial_junit": true
+      },
+      {
+        "run": 2,
+        "parallel_tests": 735,
+        "parallel_seconds": 13.73,
+        "serial_tests": 5,
+        "serial_seconds": 0.34,
+        "exit_code": 0,
+        "parallel_junit": true,
+        "serial_junit": true
+      },
+      {
+        "run": 3,
+        "parallel_tests": 735,
+        "parallel_seconds": 11.74,
+        "serial_tests": 5,
+        "serial_seconds": 0.34,
+        "exit_code": 0,
+        "parallel_junit": true,
+        "serial_junit": true
+      }
+    ]
+  },
   "policy": {
     "workers": 2,
     "parallel_excluded_markers": ["playwright", "ci_unavailable", "serial_only"],
