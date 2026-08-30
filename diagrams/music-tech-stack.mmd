@@ -10,11 +10,11 @@ graph LR
     TestRunner -.-> TestPolicy[tools/parallel_test_policy.json<br/>parallel_ci=true · max_workers=2]
     Pytest -.-> Xdist[pytest-xdist<br/>parallel lane · 2 workers]
     TestRunner --> ParallelLane["Parallel lane<br/>not playwright/ci_unavailable/serial_only<br/>JUnit: pytest-parallel-junit.xml"]
-    TestRunner --> SerialLane["Serial lane<br/>serial_only + audio path<br/>JUnit: pytest-serial-junit.xml"]
+    TestRunner --> SerialLane["Serial lane<br/>all serial_only markers · audio included<br/>JUnit: pytest-serial-junit.xml"]
     ParallelLane --> Pytest
     SerialLane --> Pytest
     SerialLane -.-> SerialControl["Serial rollback control<br/>runs after parallel lane; first non-zero exit returned"]
-    Python -.-> ParallelEvidence[CI pilot<br/>735 parallel tests · 5 serial audio tests]
+    Python -.-> ParallelEvidence["CI pilot<br/>740 parallel tests · 5 serial tests<br/>735 observation superseded"]
     Python --> PythonDocx["python-docx<br/>lyrics .docx import"]
     Python --> Pypdf["pypdf<br/>lyrics .pdf import"]
     Python --> Pronouncing["pronouncing<br/>CMU phoneme lookup"]

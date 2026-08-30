@@ -39,7 +39,7 @@ def test_build_command_composes_policy_exclusions_with_repository_marker_default
     parallel_marker_option = parallel_command.index("-m", parallel_command.index("-m") + 1)
     parallel_expression = parallel_command[parallel_marker_option + 1]
     assert parallel_expression == marker_expression
-    assert "--ignore" in parallel_command
+    assert "--ignore" not in parallel_command
 
 
 def test_main_propagates_worker_failure(monkeypatch):
