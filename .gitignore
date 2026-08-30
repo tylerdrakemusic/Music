@@ -108,6 +108,9 @@ reports/band_management_panel.html
 
 # Proof / QA screenshots (ephemeral QA artifacts — not committed to git)
 proof/*
+# FR-20260829-music-xdist-ci-pilot reviewable proof is an explicit exception.
+!proof/FR-20260829-music-xdist-ci-pilot.json
+!proof/FR-20260829-music-xdist-ci-pilot-architecture-review.md
 proof/FR-20260809-guitar-trainer-wav-count-in/
 proof/**/*.png
 proof/**/*.jpg
