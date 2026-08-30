@@ -21,6 +21,43 @@ def test_parallel_runner_contract_is_declared():
     assert runner.is_file()
 
 
+def test_collection_accounting_rejects_lost_or_duplicate_nodes():
+    runner = load_runner()
+
+    assert runner.validate_collection_accounting(
+        total_nodeids=["tests/test_one.py::test_one", "tests/test_two.py::test_two"],
+        parallel_nodeids=["tests/test_one.py::test_one"],
+        serial_nodeids=["tests/test_two.py::test_two"],
+    ) == {"valid": True, "total": 2, "parallel": 1, "serial": 1}
+    assert runner.validate_collection_accounting(
+        total_nodeids=["tests/test_one.py::test_one", "tests/test_two.py::test_two"],
+        parallel_nodeids=["tests/test_one.py::test_one"],
+        serial_nodeids=["tests/test_one.py::test_one"],
+    )["valid"] is False
+
+
+def test_report_contains_compact_lane_summary_and_machine_manifest():
+    runner = load_runner()
+
+    report = runner.build_run_report(
+        total_collected=3,
+        parallel={"selected": 2, "passed": 2, "failed": 0, "errors": 0, "skipped": 0, "status": "passed"},
+        serial={"selected": 1, "passed": 1, "failed": 0, "errors": 0, "skipped": 0, "status": "passed"},
+        workers=2,
+        marker_selection="not playwright",
+        policy_selection=["playwright"],
+        accounting={"valid": True, "total": 3, "parallel": 2, "serial": 1},
+    )
+
+    assert "CI TEST PLAN" in report["summary"]
+    assert "PARALLEL LANE" in report["summary"]
+    assert "SERIAL LANE" in report["summary"]
+    assert "deselected means intentionally assigned to the other lane" in report["summary"]
+    assert report["manifest"]["total_collected"] == 3
+    assert report["manifest"]["accounting"]["valid"] is True
+    assert report["manifest"]["parallel"]["workers"] == 2
+
+
 def test_build_command_composes_policy_exclusions_with_repository_marker_defaults():
     root = Path(__file__).parents[1]
     command = load_runner().build_command(parallel=True, junitxml=None)
@@ -42,6 +79,16 @@ def test_build_command_composes_policy_exclusions_with_repository_marker_default
     assert "--ignore" not in parallel_command
 
 
+def test_runner_resolves_repository_root_independently_of_cwd(monkeypatch, tmp_path):
+    runner = load_runner()
+    monkeypatch.chdir(tmp_path)
+
+    command = runner.build_command(parallel=True, junitxml=None)
+
+    assert "-n" in command
+    assert command[command.index("-n") + 1] == "2"
+
+
 def test_main_propagates_worker_failure(monkeypatch):
     runner = load_runner()
     completed = type("Completed", (), {"returncode": 17})()
@@ -54,14 +101,22 @@ def test_main_propagates_worker_failure(monkeypatch):
 def test_main_runs_serial_lane_after_parallel_failure(monkeypatch):
     runner = load_runner()
     calls = []
-    responses = iter([type("Completed", (), {"returncode": 1})(), type("Completed", (), {"returncode": 0})()])
+    responses = iter(
+        [
+            type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
+            type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
+            type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
+            type("Completed", (), {"returncode": 1})(),
+            type("Completed", (), {"returncode": 0})(),
+        ]
+    )
     monkeypatch.setattr(runner.subprocess, "run", lambda command, **kwargs: calls.append(command) or next(responses))
     monkeypatch.setattr(runner.sys, "argv", ["run_tests.py", "--parallel-junitxml", "tmp/p.xml", "--serial-junitxml", "tmp/s.xml"])
 
     assert runner.main() == 1
-    assert len(calls) == 2
-    assert "-n" in calls[0]
-    assert "-n" not in calls[1]
+    assert len(calls) == 5
+    assert "-n" in calls[3]
+    assert "-n" not in calls[4]
 
 
 def test_main_uses_serial_rollback_when_parallel_ci_is_disabled(monkeypatch):

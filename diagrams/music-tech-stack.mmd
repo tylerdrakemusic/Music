@@ -11,6 +11,7 @@ graph LR
     Pytest -.-> Xdist[pytest-xdist<br/>parallel lane · 2 workers]
     TestRunner --> ParallelLane["Parallel lane<br/>not playwright/ci_unavailable/serial_only<br/>JUnit: pytest-parallel-junit.xml"]
     TestRunner --> SerialLane["Serial lane<br/>all serial_only markers · audio included<br/>JUnit: pytest-serial-junit.xml"]
+    TestRunner --> Manifest["CI manifest<br/>tmp/pytest-ci-manifest.json<br/>lane accounting + outcomes"]
     ParallelLane --> Pytest
     SerialLane --> Pytest
     SerialLane -.-> SerialControl["Serial rollback control<br/>runs after parallel lane; first non-zero exit returned"]
