@@ -35,17 +35,31 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest
 
-      - name: Run pytest and report skips
+      - name: Run bounded parallel and serial pytest lanes
         env:
           PLAYWRIGHT_ENABLED: "0"  # Set to "1" locally to run Playwright tests (FR-20260513-playwright-ui-gate)
-        run: pytest -v --tb=short -rs --junitxml=tmp/pytest-junit.xml
+        run: python tools/run_tests.py --parallel-junitxml tmp/pytest-parallel-junit.xml --serial-junitxml tmp/pytest-serial-junit.xml --manifest tmp/pytest-ci-manifest.json
 
-      - name: Upload JUnit report
+      - name: Upload parallel JUnit report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-junit
-          path: tmp/pytest-junit.xml
+          name: pytest-junit-parallel
+          path: tmp/pytest-parallel-junit.xml
+
+      - name: Upload serial JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-junit-serial
+          path: tmp/pytest-serial-junit.xml
+
+      - name: Upload CI test manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-ci-manifest
+          path: tmp/pytest-ci-manifest.json
 
   deploy:
     needs: test
