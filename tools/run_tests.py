@@ -70,10 +70,6 @@ def build_command(*, parallel: bool, junitxml: Path | None, repo_root: Path | No
     if parallel:
         workers = int(_policy(repo_root).get("max_workers", 2))
         command.extend(["-p", "xdist.plugin", "-n", str(workers)])
-        for test_path in _policy(repo_root).get("serial_test_paths", []):
-            command.extend(["--ignore", str(test_path)])
-    else:
-        command.extend(str(test_path) for test_path in _policy(repo_root).get("serial_test_paths", []))
     if junitxml is not None:
         command.append(f"--junitxml={junitxml}")
     return command
