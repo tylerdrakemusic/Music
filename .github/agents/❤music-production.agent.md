@@ -4,8 +4,8 @@ description: Album production tracking agent for Tyler James Drake's ❤Music pr
 user-invocable: false
 ---
 
-<!-- inherits: ../../.github/instructions\❤music-base.instructions.md -->
-<!-- inherits: ../../.github/instructions\agent-self-regen.instructions.md -->
+<!-- inherits: ../instructions/❤music-base.instructions.md -->
+<!-- inherits: ../instructions/agent-self-regen.instructions.md -->
 
 # ❤music-production Agent
 

@@ -3,8 +3,8 @@ name: ❤music-signatures
 description: Binary signature analysis agent for Tyler James Drake's ❤Music releases. Use for scanning audio files (WAV, MP3, FLAC), extracting binary forensics (hashes, entropy, codec info, byte frequency), detecting Suno/Pro Tools provenance metadata, and saving signatures to the release_signatures table in heartmusic.db. Handles release verification, distribution-quality auditing, and provenance chain documentation. Pipeline focus: Pro Tools (Hyperthreat Studios) → Suno → distribution.
 user-invocable: false
 ---
-<!-- inherits: ../../.github/instructions\❤music-base.instructions.md -->
-<!-- inherits: ../../.github/instructions\agent-self-regen.instructions.md -->
+<!-- inherits: ../instructions/❤music-base.instructions.md -->
+<!-- inherits: ../instructions/agent-self-regen.instructions.md -->
 
 # ❤music-signatures Agent
 

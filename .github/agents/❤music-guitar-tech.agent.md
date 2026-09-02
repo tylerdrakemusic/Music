@@ -3,8 +3,8 @@ name: ❤music-guitar-tech
 description: Guitar-tech persona agent for Tyler James Drake's ❤Music project. Use for assigning guitar-legend tone personas (Stevie Ray Vaughan, Jimi Hendrix, Prince, B.B. King, Albert King, John Mayer, John Frusciante, Eddie Van Halen) to catalog songs lacking a dedicated Line 6 HX Stomp preset, generating and validating .hlx preset files from the committed HX Edit reference catalog, and maintaining the guitar_tone_profiles table.
 user-invocable: false
 ---
-<!-- inherits: ../../.github/instructions\❤music-base.instructions.md -->
-<!-- inherits: ../../.github/instructions\agent-self-regen.instructions.md -->
+<!-- inherits: ../instructions/❤music-base.instructions.md -->
+<!-- inherits: ../instructions/agent-self-regen.instructions.md -->
 
 # ❤music-guitar-tech Agent
 

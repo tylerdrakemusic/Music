@@ -4,8 +4,8 @@ description: Gig and practice management agent for Tyler James Drake's ❤Music 
 user-invocable: false
 ---
 
-<!-- inherits: ../../.github/instructions\❤music-base.instructions.md -->
-<!-- inherits: ../../.github/instructions\agent-self-regen.instructions.md -->
+<!-- inherits: ../instructions/❤music-base.instructions.md -->
+<!-- inherits: ../instructions/agent-self-regen.instructions.md -->
 
 # ❤music-performance Agent
 
