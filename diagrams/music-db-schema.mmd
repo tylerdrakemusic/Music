@@ -1,0 +1,236 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1a2e3a', 'primaryTextColor': '#d0ecf8', 'edgeLabelBackground': '#0f1318', 'lineColor': '#4a7a9a'}}}%%
+erDiagram
+    TRACKS ||--o{ RECORDINGS : has
+    ALBUMS ||--o{ TRACKS : contains
+    CATALOG_SONGS ||--o{ SETLIST_SONGS : appears_in
+    SETLISTS ||--o{ SETLIST_SONGS : contains
+    BANDS ||--o{ SETLISTS : owns
+    EXERCISES ||--o{ EXERCISE_CARDS : composes
+    GUITAR_SCALE_TEMPLATES ||--o{ GUITAR_SCALE_POSITIONS : instantiates
+    RELEASE_SIGNATURES ||--o{ DUPLICATE_GROUPS : "canonical"
+    RELEASE_SIGNATURES ||--o{ DUPLICATE_GROUPS : "duplicate"
+    BANDS ||--o{ BAND_SONG_ARRANGEMENTS : arranges
+    CATALOG_SONGS ||--o{ BAND_SONG_ARRANGEMENTS : arranged_for
+    CATALOG_SONGS ||--o{ CATALOG_SONG_ALIASES : aliased_by
+    CATALOG_SONGS ||--o{ GUITAR_TONE_PROFILES : tone_profiled
+    ALBUMS ||--o{ RELEASES : released_as
+    VAULT_LINES ||--o{ PHONETIC_GROUPS : "grouped_via vault_line_groups"
+
+    TRACKS {
+        integer id PK
+        text title
+        integer album_id FK
+        integer tempo_bpm
+        text key_signature
+        text status
+    }
+    RECORDINGS {
+        integer id PK
+        integer track_id FK
+        text file_path
+        integer quality_rating
+        text recorded_at
+    }
+    ALBUMS {
+        integer id PK
+        text title
+        text status
+    }
+    CATALOG_SONGS {
+        integer id PK
+        text title
+        text artist
+        integer bpm
+        text key_sig
+        text bpm_source
+        text source_file
+        text genre
+        text tags
+    }
+    SETLISTS {
+        integer setlist_id PK
+        text band
+        text name
+        text gig_date
+    }
+    SETLIST_SONGS {
+        integer id PK
+        integer setlist_id FK
+        integer catalog_song_id FK
+        integer set_number
+        integer position
+        text key_override
+        integer bpm_override
+    }
+    EXERCISES {
+        integer exercise_id PK
+        text title
+        text difficulty
+        text category
+    }
+    GIG_INVENTORY {
+        integer id PK
+        text item
+        text category
+        integer sort_order
+    }
+    GUITAR_SCALE_TEMPLATES {
+        text shape_name PK
+        integer root_string
+        text note_offsets
+    }
+    GUITAR_SCALE_POSITIONS {
+        integer id PK
+        text key_name
+        integer position_order
+        text shape_name FK
+        text label
+        text root_string_name
+        integer root_fret
+        text instructor_phrase
+    }
+    RELEASE_SIGNATURES {
+        integer id PK
+        text sha256
+        text provenance_id
+        text quantum_signed_at
+        text pipeline
+        text chacha20_poly1305_seal
+        text aesgcm_seal
+        text provenance_url
+        text analyzed_at
+    }
+    DUPLICATE_GROUPS {
+        integer id PK
+        text sha256
+        integer canonical_sig_id FK
+        integer duplicate_sig_id FK
+        real provenance_score_canonical
+        real provenance_score_duplicate
+        text detected_at
+    }
+    SHEET_MUSIC {
+        integer id PK
+        text source
+        text gdrive_file_id UK
+        text local_path
+        text name
+        text file_ext
+        text category
+        text artist
+        text title
+        text key_descriptor
+        text ingested_at
+    }
+    BANDS {
+        integer id PK
+        text name UK
+        text genre
+        integer active
+        text notes
+        text created_at
+    }
+    BAND_SONG_ARRANGEMENTS {
+        integer id PK
+        integer band_id FK
+        integer catalog_song_id FK
+        text default_key
+        integer default_bpm
+        text notes
+        text created_at
+    }
+    CATALOG_SONG_ALIASES {
+        integer id PK
+        text alias UK
+        integer catalog_song_id FK
+        text created_at
+    }
+    ARTIST_LINKS {
+        integer id PK
+        text category
+        text platform
+        text label
+        text url
+        text embed_html
+        text song_title
+        text status
+        integer sort_order
+        text created_at
+        text updated_at
+    }
+    RELEASES {
+        integer id PK
+        integer album_id FK
+        text distributor
+        text release_date
+        text upc
+        integer spotify_confirmed
+        integer apple_confirmed
+        integer amazon_confirmed
+        integer youtube_confirmed
+        text platform_urls
+        text soundexchange_id
+        text notes
+        text created_at
+    }
+    GUITAR_TRAINING_LOG {
+        integer id PK
+        integer exercise_id FK
+        text song_path
+        text seg_start
+        text seg_end
+        integer repetition
+        integer duration_minutes
+        text key
+        integer position
+        text exercise_name
+        text logged_at
+    }
+    SCALE_PRACTICE_LOG {
+        integer id PK
+        text key
+        text mode
+        text scale
+        integer position
+        integer bpm
+        integer reps
+        integer duration_minutes
+        text logged_at
+    }
+    STUDIO_EQUIPMENT {
+        integer id PK
+        text studio_name
+        text category
+        text label
+        text spec_json
+        text status
+        text created_at
+        text updated_at
+    }
+    VAULT_LINES {
+        integer id PK
+        text line UK
+        integer is_hook
+        text created_at
+    }
+    PHONETIC_GROUPS {
+        integer id PK
+        text suffixes
+    }
+    CATALOG_AUDIO_FILES {
+        integer id PK
+        text file_path
+        text sha256
+        text status
+        text created_at
+    }
+    GUITAR_TONE_PROFILES {
+        integer id PK
+        integer catalog_song_id FK
+        text persona
+        text rationale
+        text hlx_filename
+        text status
+        text created_at
+        text updated_at
+    }
