@@ -24,7 +24,7 @@
 | **Python Executable** | `C:\G\python.exe` |
 | **Music Dashboard** | `src/analysis/music_dashboard.py` |
 | **TJD Radio Service** | `src/radio/tjd_radio.py` |
-| **Agent Definitions** | `f:\.github\agents\❤music-*.agent.md` |
+| **Agent Definitions** | `.github/agents/❤music-*.agent.md` |
 | **Artist Profile** | `f:\❤Music\ARTIST_PROFILE.json` |
 
 ### ❤Music Agents
