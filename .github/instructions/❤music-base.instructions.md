@@ -11,8 +11,8 @@ Shared context, conventions, and rules for all `❤music-*` agents. Every ❤Mus
 ## Context Bootstrap (All Agents)
 
 Before doing any work, load context in this order:
-1. `f:\❤Music\AGENT_STARTUP.md` — current project state, recent migrations, active tasks
-2. `f:\❤Music\ARTIST_PROFILE.json` — Tyler's artist profile, all source locations, album definitions, track lists
+1. `AGENT_STARTUP.md` — current project state, recent migrations, active tasks
+2. `ARTIST_PROFILE.json` — Tyler's artist profile, all source locations, album definitions, track lists
 
 ---
 
@@ -32,11 +32,11 @@ from utils.init_db import get_connection
 conn = get_connection()
 # OR direct:
 import sqlite3
-conn = sqlite3.connect("f:/❤Music/src/data/heartmusic.db")
+conn = sqlite3.connect("src/data/heartmusic.db")
 ```
 
 **Python executable:** `C:\G\python.exe`  
-**Run from project root:** `f:\❤Music\`
+**Run from project root:** repository root
 
 ### Database Rules
 - **ALWAYS use parameterized queries** — no f-string SQL

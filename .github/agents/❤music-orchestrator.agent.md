@@ -1,11 +1,12 @@
 ---
 name: ❤music-orchestrator
 description: Top-level coordinator for the ❤Music project. Decomposes multi-domain music requests and delegates to specialist agents. Use as default entry point for Tyler's music project tasks — album production, catalog management, gig tracking, practice analysis, budgeting, distribution planning. Routes to ❤music-catalog, ❤music-production, ❤music-performance agents.
+user-invocable: true
 ---
 
-<!-- inherits: ../../.github/instructions\❤music-base.instructions.md -->
-<!-- inherits: ../../.github/instructions\orchestrator-cleanup.instructions.md -->
-<!-- inherits: ../../.github/instructions\agent-self-regen.instructions.md -->
+<!-- inherits: ../instructions/❤music-base.instructions.md -->
+<!-- inherits: ../instructions/orchestrator-cleanup.instructions.md -->
+<!-- inherits: ../instructions/agent-self-regen.instructions.md -->
 
 # ❤Music Orchestrator Agent
 
