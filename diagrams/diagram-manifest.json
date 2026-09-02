@@ -1,0 +1,55 @@
+{
+  "$schema": "https://workspace.local/diagram-manifest.schema.json",
+  "schema_version": 1,
+  "repository": "music",
+  "diagrams": [
+    {
+      "path": "diagrams/music-architecture.mmd",
+      "kind": "architecture",
+      "renderer_risk": "high",
+      "fallback_risk": "high",
+      "split_required": true,
+      "lineage": {
+        "parent": null,
+        "derived_views": [
+          "diagrams/music-db-schema.mmd",
+          "diagrams/music-icecast-primary-architecture.mmd",
+          "diagrams/music-tech-stack.mmd"
+        ]
+      }
+    },
+    {
+      "path": "diagrams/music-db-schema.mmd",
+      "kind": "database-schema",
+      "renderer_risk": "medium",
+      "fallback_risk": "medium",
+      "split_required": false,
+      "lineage": {
+        "parent": "diagrams/music-architecture.mmd",
+        "derived_views": []
+      }
+    },
+    {
+      "path": "diagrams/music-icecast-primary-architecture.mmd",
+      "kind": "architecture",
+      "renderer_risk": "high",
+      "fallback_risk": "high",
+      "split_required": false,
+      "lineage": {
+        "parent": "diagrams/music-architecture.mmd",
+        "derived_views": []
+      }
+    },
+    {
+      "path": "diagrams/music-tech-stack.mmd",
+      "kind": "technology-stack",
+      "renderer_risk": "medium",
+      "fallback_risk": "medium",
+      "split_required": false,
+      "lineage": {
+        "parent": "diagrams/music-architecture.mmd",
+        "derived_views": []
+      }
+    }
+  ]
+}
