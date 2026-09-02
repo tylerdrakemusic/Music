@@ -1,0 +1,47 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1a2e3a', 'primaryTextColor': '#d0ecf8', 'edgeLabelBackground': '#0f1318', 'lineColor': '#4a7a9a'}}}%%
+graph LR
+    Python[Python 3.11] --> SQLCipher["sqlcipher3<br/>⚑ not in requirements.txt"]
+    Python --> Flask[Flask<br/>:5050 · :5055 · :8100]
+    Python --> Librosa["librosa<br/>BPM detection<br/>⚑ not in requirements.txt"]
+    Python --> Mutagen[mutagen<br/>audio tags]
+    Python --> Pytest["pytest<br/>⚑ not in requirements.txt"]
+    Python --> TestRunner[/tools/run_tests.py<br/>paired parallel + serial lanes · local fallback/]
+    TestRunner --> Pytest
+    TestRunner -.-> TestPolicy[tools/parallel_test_policy.json<br/>parallel_ci=true · max_workers=2<br/>exclude playwright + ci_unavailable + serial_only]
+    Pytest -.-> Xdist[pytest-xdist<br/>bounded two workers]
+    TestRunner -.-> ParallelEvidence[Paired CI lanes<br/>parallel lane + serial lane · bounded to two workers]
+    Python --> PythonDocx[python-docx<br/>lyrics .docx import]
+    Python --> Pypdf[pypdf<br/>lyrics .pdf import]
+    Python --> Pronouncing[pronouncing<br/>CMU phoneme lookup]
+    Python --> Demucs[demucs<br/>stem separation]
+    Python --> Requests[requests<br/>GetSongBPM HTTP client]
+    Web[HTML · CSS · JS] --> Tone[Tone.js<br/>Strudel]
+    Python -.->|lazy cross-project import| WSOllama[(⊕Workspace<br/>src/integrations/ollama)]
+    WSOllama -.-> Ollama[(Ollama LLM<br/>local server)]
+    Python -->|Dockerfile| Docker[Docker<br/>python:3.11-slim image] -->|"flyctl deploy (CI, main-only)"| FlyIO[(Fly.io<br/>guitartrainer.fly.dev)]
+    HyperthreatLauncher["hyperthreat_app.py<br/>minimal Flask launcher<br/>/ · /mic-config · /patch-bay<br/>/patch_bay.html · /health"]
+    HyperthreatTemplates["Static templates only<br/>mic_config_template.html<br/>patch_bay.html"]
+    HyperthreatDocker["Dockerfile.hyperthreat-studio<br/>python:3.11-slim<br/>launcher + two templates only"]
+    HyperthreatGate{"refs/heads/main<br/>approval == approved"}
+    HyperthreatFly[(Fly.io<br/>ht / hthreat / hyperthreat)]
+    HyperthreatLauncher --> HyperthreatTemplates
+    HyperthreatLauncher -->|"Dockerfile.hyperthreat-studio"| HyperthreatDocker
+    HyperthreatDocker --> HyperthreatGate
+    HyperthreatGate -->|"manual deploy after exact approval"| HyperthreatFly
+    class Python,Web lang
+    class SQLCipher,Flask,Librosa,Mutagen,Pytest,TestRunner,TestPolicy,Xdist,Tone,PythonDocx,Pypdf,Pronouncing,Demucs,Requests lib
+    class ParallelEvidence state
+    class WSOllama ws
+    class Ollama,FlyIO,HyperthreatFly ext
+    class HyperthreatLauncher,HyperthreatTemplates,HyperthreatDocker svc
+    class HyperthreatGate state
+
+classDef life     fill:#1a2e3a,stroke:#6ab4d4,color:#d0ecf8
+classDef music    fill:#3a1a24,stroke:#d47a8f,color:#f8d0dc
+classDef quantum  fill:#251a3a,stroke:#a07adf,color:#e8d0f8
+classDef manifest fill:#3a2e1a,stroke:#d4a96a,color:#f8ead0
+classDef ws       fill:#1a3a30,stroke:#6ad4b4,color:#d0f8ee
+classDef tyler    fill:#2a1a3a,stroke:#9e4aff,color:#fff
+classDef ext      fill:#3a2020,stroke:#ff7a7a,color:#ffd0d0
+classDef db       fill:#3a3010,stroke:#d4c050,color:#f8f0c0
+classDef state    fill:#1a1a1a,stroke:#888888,color:#cccccc
