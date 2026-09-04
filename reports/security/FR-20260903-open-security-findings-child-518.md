@@ -46,12 +46,12 @@ tests/test_security_reconciliation_identifiers.py -q` failed with
 `No module named pytest`. The same environment reported
 `No module named pip_audit`. No passing result is claimed for this rerun.
 
-The tracked `.env` file was empty after the remediation change and is now
-scheduled for deletion from the child branch; its prior credential-bearing
-contents were not restored, printed, or committed. Credential rotation or
-revocation has not been performed by this workflow and remains an operator
-action required outside the repository. The existing `.gitignore` already
-ignores `.env` and `.env.local`.
+The tracked `.env` file was empty after the remediation change and has now
+been removed from the child branch; its prior credential-bearing contents
+were not restored, printed, or committed. Credential rotation or revocation
+has not been performed by this workflow and remains an operator action
+required outside the repository. The existing `.gitignore` already ignores
+`.env` and `.env.local`.
 
 ## Reconciliation guard
 
