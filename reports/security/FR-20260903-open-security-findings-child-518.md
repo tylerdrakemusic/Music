@@ -38,14 +38,20 @@ DB-API parameters.
 
 ## Validation command notes
 
-The prescribed project virtualenv does not include pytest. The global pytest
-installation initially loaded an environment-level `logfire`/OpenTelemetry
-plugin and was interrupted during unrelated collection. With third-party
-plugin autoload disabled and collection constrained to the repository tests,
-the focused security and adjacent database suites completed successfully:
-`14 passed in 0.16s`. The project virtualenv direct probes also confirmed the
-red and green behavior. A full repository pytest run was not required for this
-narrow child gate and remains residual validation risk.
+The prescribed project virtualenv does not include pytest or pip-audit. A
+rerun from the remediation worktree confirmed that the focused security test
+cannot start in the repository-scoped environment:
+`F:\❤Music\.venv\Scripts\python.exe -m pytest
+tests/test_security_reconciliation_identifiers.py -q` failed with
+`No module named pytest`. The same environment reported
+`No module named pip_audit`. No passing result is claimed for this rerun.
+
+The tracked `.env` file was empty after the remediation change and is now
+scheduled for deletion from the child branch; its prior credential-bearing
+contents were not restored, printed, or committed. Credential rotation or
+revocation has not been performed by this workflow and remains an operator
+action required outside the repository. The existing `.gitignore` already
+ignores `.env` and `.env.local`.
 
 ## Reconciliation guard
 
