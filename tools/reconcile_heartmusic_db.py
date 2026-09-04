@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -46,6 +47,13 @@ UNIQUE_KEYS: dict[str, tuple[str, ...]] = {
 }
 
 SKIP_TABLES = {"sqlite_sequence"}
+_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _quote_identifier(identifier: str) -> str:
+    if not _IDENTIFIER_RE.fullmatch(identifier):
+        raise ValueError(f"Invalid SQL identifier: {identifier!r}")
+    return f'"{identifier}"'
 
 
 def _get_table_sql(conn: Any, table_name: str) -> str | None:
@@ -66,25 +74,30 @@ def _copy_indexes(src_conn: Any, dst_conn: Any, table_name: str) -> None:
 
 
 def _row_exists(conn: Any, table: str, columns: tuple[str, ...], values: tuple[Any, ...]) -> bool:
-    where = " AND ".join(f"{col} = ?" for col in columns)
-    sql = f"SELECT 1 FROM {table} WHERE {where} LIMIT 1"
+    quoted_table = _quote_identifier(table)
+    where = " AND ".join(f"{_quote_identifier(col)} = ?" for col in columns)
+    sql = f"SELECT 1 FROM {quoted_table} WHERE {where} LIMIT 1"
     return conn.execute(sql, values).fetchone() is not None
 
 
 def _row_to_dict(conn: Any, table: str, row: Any) -> dict[str, Any]:
     if hasattr(row, "keys"):
         return dict(row)
-    columns = [r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+    quoted_table = _quote_identifier(table)
+    columns = [r[1] for r in conn.execute(f"PRAGMA table_info({quoted_table})").fetchall()]
     return dict(zip(columns, row))
 
 
 def _load_row(conn: Any, table: str, row_id: int) -> dict[str, Any] | None:
-    row = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (row_id,)).fetchone()
+    quoted_table = _quote_identifier(table)
+    row = conn.execute(f'SELECT * FROM {quoted_table} WHERE "id" = ?', (row_id,)).fetchone()
     return _row_to_dict(conn, table, row) if row else None
 
 
 def _build_id_map(conn: Any, table: str, key_cols: tuple[str, ...]) -> dict[tuple[Any, ...], int]:
-    rows = conn.execute(f"SELECT id, {', '.join(key_cols)} FROM {table}").fetchall()
+    quoted_table = _quote_identifier(table)
+    quoted_columns = ", ".join(_quote_identifier(col) for col in key_cols)
+    rows = conn.execute(f'SELECT "id", {quoted_columns} FROM {quoted_table}').fetchall()
     return {
         tuple(row[col] for col in key_cols): row[0]
         for row in rows
@@ -93,7 +106,8 @@ def _build_id_map(conn: Any, table: str, key_cols: tuple[str, ...]) -> dict[tupl
 
 
 def _reconcile_table(src_conn: Any, dst_conn: Any, table: str, dry_run: bool) -> int:
-    src_rows = src_conn.execute(f"SELECT * FROM {table}").fetchall()
+    quoted_table = _quote_identifier(table)
+    src_rows = src_conn.execute(f"SELECT * FROM {quoted_table}").fetchall()
     if not src_rows:
         return 0
 
@@ -121,11 +135,11 @@ def _reconcile_table(src_conn: Any, dst_conn: Any, table: str, dry_run: bool) ->
 
         columns = [col for col in row_dict if col != "id"]
         placeholders = ", ".join("?" for _ in columns)
-        column_list = ", ".join(columns)
+        column_list = ", ".join(_quote_identifier(col) for col in columns)
         values = tuple(row_dict[col] for col in columns)
         if not dry_run:
             dst_conn.execute(
-                f"INSERT INTO {table} ({column_list}) VALUES ({placeholders})",
+                f"INSERT INTO {quoted_table} ({column_list}) VALUES ({placeholders})",
                 values,
             )
         inserted += 1
