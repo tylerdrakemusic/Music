@@ -63,6 +63,44 @@ def parse_timecode(time_str):
         print(f"Invalid time format: '{time_str}'. Expected MM:SS or HH:MM:SS.")
         sys.exit(1)
 
+
+def build_playback_plan(segments: list[dict], default_gradient: float = 0.0) -> list[dict]:
+    """Expand rows into playback items while resetting each row's gradient ramp."""
+    plan = []
+    for segment_index, segment in enumerate(segments, start=1):
+        start_str = segment.get("start")
+        end_str = segment.get("end")
+        base_speed = float(segment.get("speed", 100))
+        repetition = max(0, int(segment.get("repetition", 1)))
+        row_gradient = segment.get("gradient", default_gradient)
+        row_gradient = default_gradient if row_gradient is None else float(row_gradient)
+
+        if not start_str or not end_str:
+            print(f"Segment {segment_index} missing 'start' or 'end' time. Skipping.")
+            continue
+        start_time = parse_timecode(start_str)
+        end_time = parse_timecode(end_str)
+        if start_time >= end_time:
+            print(f"Segment {segment_index} has start time >= end time. Skipping.")
+            continue
+        if repetition == 0:
+            print(f"Segment {segment_index} has 0 reps. Skipping.")
+            continue
+
+        for repetition_index in range(repetition):
+            ramped_speed = min(200.0, base_speed + row_gradient * repetition_index)
+            plan.append({
+                "segment_index": segment_index,
+                "start": start_time,
+                "end": end_time,
+                "speed": base_speed,
+                "ramped_speed": ramped_speed,
+                "repetition": 1,
+                "repetition_index": repetition_index,
+                "repetition_count": repetition,
+            })
+    return plan
+
 def log_practice_session(log_path, song_path, segment):
     """Log the practice session to guitar_training_log in heartmusic.db."""
     seg_start = str(segment.get("start", ""))
@@ -238,45 +276,27 @@ def main():
         print(f"Audio file '{song_path}' does not exist.")
         sys.exit(1)
 
-    # Count total plays for gradient reporting
-    total_plays = sum(max(0, seg.get("repetition", 1)) for seg in segments)
-    play_index = 0
-
     # Init pygame once for the whole session
     pygame.mixer.init()
     pygame.init()
     pygame.display.set_mode((1, 1))
 
-    # Loop through each segment
-    for idx, segment in enumerate(segments, start=1):
-        start_str = segment.get("start")
-        end_str = segment.get("end")
-        base_speed = float(segment.get("speed", 100))
-        repetition = max(0, int(segment.get("repetition", 1)))
-
-        if not start_str or not end_str:
-            print(f"Segment {idx} missing 'start' or 'end' time. Skipping.")
-            continue
-
-        # Parse timecodes
-        start_time = parse_timecode(start_str)
-        end_time = parse_timecode(end_str)
-
-        if start_time >= end_time:
-            print(f"Segment {idx} has start time >= end time. Skipping.")
-            continue
-
-        if repetition == 0:
-            print(f"Segment {idx} has 0 reps. Skipping.")
-            play_index += 1
-            continue
-
-        for rep in range(repetition):
-            ramped_speed = min(200.0, base_speed + gradient * play_index)
-            speed_factor = ramped_speed / 100
-            print(f"[Segment {idx}] rep {rep+1}/{repetition}  speed={ramped_speed:.1f}%")
-            loop_segment(song_path, start_time, end_time, 1, speed_factor, log_path, manage_pygame=False)
-            play_index += 1
+    for item in build_playback_plan(segments, default_gradient=gradient):
+        speed_factor = item["ramped_speed"] / 100
+        print(
+            f"[Segment {item['segment_index']}] rep "
+            f"{item['repetition_index'] + 1}/{item['repetition_count']}  "
+            f"speed={item['ramped_speed']:.1f}%"
+        )
+        loop_segment(
+            song_path,
+            item["start"],
+            item["end"],
+            item["repetition"],
+            speed_factor,
+            log_path,
+            manage_pygame=False,
+        )
 
     pygame.quit()
     print("All segments have been played and logged.")

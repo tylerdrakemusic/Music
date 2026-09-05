@@ -355,7 +355,7 @@ HTML = r"""
       </div>
     </div>
     <table>
-      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th></th></tr></thead>
+      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th>Gradient</th><th></th></tr></thead>
       <tbody id="tbody-{{ s.id }}">
       {% for seg in s.segments %}
         <tr>
@@ -363,6 +363,7 @@ HTML = r"""
           <td><input value="{{ seg.end }}" data-field="end" style="width:70px" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><input type="number" value="{{ seg.get('speed',100) }}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><input type="number" value="{{ seg.get('repetition',1) }}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave({{ s.id }})"></td>
+          <td><input type="number" value="{{ seg.get('gradient', s.gradient) }}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><button class="btn-del" onclick="deleteRow(this,{{ s.id }})" title="Delete row">&times;</button></td>
         </tr>
       {% endfor %}
@@ -526,7 +527,7 @@ function getRows(tbodyId) {
     const r = {};
     tr.querySelectorAll('input[data-field]').forEach(inp => r[inp.dataset.field] = inp.value);
     if (r.start) {
-      const obj = { start: r.start, end: r.end, speed: parseInt(r.speed)||100, repetition: Math.max(0, parseInt(r.repetition)||0) };
+      const obj = { start: r.start, end: r.end, speed: parseInt(r.speed)||100, repetition: Math.max(0, parseInt(r.repetition)||0), gradient: Math.max(0, parseInt(r.gradient)||0) };
       rows.push(obj);
     }
   });
@@ -564,7 +565,7 @@ function scheduleAutosave(id) {
 function addRow(id) {
   const tbody = document.getElementById('tbody-' + id);
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td><input value="0:00" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input value="0:10" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="80" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="3" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td><td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>`;
+  tr.innerHTML = `<td><input value="0:00" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input value="0:10" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="80" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="3" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="0" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave(${id})"></td><td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>`;
   tbody.appendChild(tr);
   scheduleAutosave(id);
 }
@@ -668,6 +669,7 @@ function buildCardHTML(s) {
       <td><input value="${seg.end}" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td>
       <td><input type="number" value="${seg.speed||100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td>
       <td><input type="number" value="${seg.repetition||1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td>
+      <td><input type="number" value="${seg.gradient ?? s.gradient ?? 0}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave(${id})"></td>
       <td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>
     </tr>`).join('');
   return `<div class="card" id="card-${id}">
@@ -683,7 +685,7 @@ function buildCardHTML(s) {
       </div>
     </div>
     <table>
-      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th></th></tr></thead>
+      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th>Gradient</th><th></th></tr></thead>
       <tbody id="tbody-${id}">${rows}</tbody>
     </table>
     <div class="actions" style="align-items:center">
