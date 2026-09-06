@@ -533,7 +533,8 @@ function getRows(tbodyId) {
     const r = {};
     tr.querySelectorAll('input[data-field]').forEach(inp => r[inp.dataset.field] = inp.value);
     if (r.start) {
-      const obj = { start: r.start, end: r.end, speed: parseInt(r.speed)||100, repetition: Math.max(0, parseInt(r.repetition)||0), gradient: Math.max(0, parseInt(r.gradient)||0) };
+      const obj = { start: r.start, end: r.end, speed: parseInt(r.speed)||100, repetition: Math.max(0, parseInt(r.repetition)||0) };
+      if (r.gradient.trim()) obj.gradient = Math.max(0, parseInt(r.gradient)||0);
       rows.push(obj);
     }
   });
