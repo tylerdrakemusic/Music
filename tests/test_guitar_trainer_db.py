@@ -33,6 +33,16 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 import training.musician_training_ui as ui
 
 
+def test_training_ui_rejects_non_loopback_host() -> None:
+    with pytest.raises(ValueError, match="loopback"):
+        ui._require_loopback_host("0.0.0.0")
+
+
+@pytest.mark.parametrize("host", ["127.0.0.1", "localhost", "::1"])
+def test_training_ui_accepts_loopback_hosts(host: str) -> None:
+    assert ui._require_loopback_host(host) == host
+
+
 # ---------------------------------------------------------------------------
 # In-memory DB fixture
 # ---------------------------------------------------------------------------

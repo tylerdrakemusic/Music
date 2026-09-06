@@ -6,6 +6,7 @@ Scales & Arpeggios tab added in FR-20260517-guitar-trainer-scale-exercises.
 """
 
 import argparse
+import ipaddress
 import json
 import mimetypes
 import os
@@ -44,6 +45,19 @@ from training.pentatonic_spec import (  # noqa: E402
     PENTATONIC_DEGREE_TEXT,
     PENTATONIC_DEGREE_STROKE,
 )
+
+
+def _require_loopback_host(host: str) -> str:
+    """Reject network-exposed binds for the local training UI."""
+    if host.lower() == "localhost":
+        return host
+    try:
+        if ipaddress.ip_address(host).is_loopback:
+            return host
+    except ValueError:
+        pass
+    raise ValueError("Lead Guitar Trainer must bind to a loopback host")
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Keep TRAINING_DIR for the ephemeral _run_*.json temp files used by focused_musician_training.py
@@ -2166,5 +2180,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     TRAINING_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"Lead Guitar Trainer -> http://{args.host}:{args.port}")
-    app.run(host=args.host, port=args.port, debug=False)
+    host = _require_loopback_host(args.host)
+    print(f"Lead Guitar Trainer -> http://{host}:{args.port}")
+    app.run(host=host, port=args.port, debug=False)
