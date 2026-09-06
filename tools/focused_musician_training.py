@@ -169,8 +169,8 @@ def loop_segment(file_path, start_time, end_time, repetition, speed_factor, log_
     section = audio[start_ms:end_ms]
 
     if speed_factor != 1.0:
-            section = change_speed(section, speed=speed_factor)
-            print(f"Speed adjusted to {speed_factor * 100:.1f}%")
+        section = change_speed(section, speed=speed_factor)
+        print(f"Speed adjusted to {speed_factor * 100:.1f}%")
 
 
     # Export the extracted section to a temporary wav file for playback with pygame.mixer

@@ -369,7 +369,7 @@ HTML = r"""
           <td><input value="{{ seg.end }}" data-field="end" style="width:70px" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><input type="number" value="{{ seg.get('speed',100) }}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><input type="number" value="{{ seg.get('repetition',1) }}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave({{ s.id }})"></td>
-          <td><input type="number" value="{{ seg.get('gradient', s.gradient) }}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave({{ s.id }})"></td>
+          <td><input type="number" value="{{ seg.get('gradient') if seg.get('gradient') is not none else s.gradient }}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><button class="btn-del" onclick="deleteRow(this,{{ s.id }})" title="Delete row">&times;</button></td>
         </tr>
       {% endfor %}
