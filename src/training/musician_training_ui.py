@@ -369,7 +369,7 @@ HTML = r"""
           <td><input value="{{ seg.end }}" data-field="end" style="width:70px" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><input type="number" value="{{ seg.get('speed',100) }}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><input type="number" value="{{ seg.get('repetition',1) }}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave({{ s.id }})"></td>
-          <td><input type="number" value="{{ seg.get('gradient') if seg.get('gradient') is not none else s.gradient }}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave({{ s.id }})"></td>
+          <td><input type="number" value="{{ seg.get('gradient') if seg.get('gradient') is not none else '' }}" placeholder="{{ s.gradient }}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><button class="btn-del" onclick="deleteRow(this,{{ s.id }})" title="Delete row">&times;</button></td>
         </tr>
       {% endfor %}
@@ -572,7 +572,7 @@ function scheduleAutosave(id) {
 function addRow(id) {
   const tbody = document.getElementById('tbody-' + id);
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td><input value="0:00" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input value="0:10" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="80" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="3" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="0" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave(${id})"></td><td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>`;
+  tr.innerHTML = `<td><input value="0:00" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input value="0:10" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="80" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="3" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="" placeholder="${getGradient(id)}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave(${id})"></td><td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>`;
   tbody.appendChild(tr);
   scheduleAutosave(id);
 }
@@ -676,7 +676,7 @@ function buildCardHTML(s) {
       <td><input value="${seg.end}" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td>
       <td><input type="number" value="${seg.speed ?? 100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td>
       <td><input type="number" value="${seg.repetition ?? 1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td>
-      <td><input type="number" value="${seg.gradient ?? s.gradient ?? 0}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave(${id})"></td>
+      <td><input type="number" value="${seg.gradient ?? ''}" placeholder="${s.gradient ?? 0}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave(${id})"></td>
       <td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>
     </tr>`).join('');
   return `<div class="card" id="card-${id}">
