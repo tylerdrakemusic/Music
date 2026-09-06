@@ -673,8 +673,8 @@ function buildCardHTML(s) {
     <tr>
       <td><input value="${seg.start}" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td>
       <td><input value="${seg.end}" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td>
-      <td><input type="number" value="${seg.speed||100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td>
-      <td><input type="number" value="${seg.repetition||1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td>
+      <td><input type="number" value="${seg.speed ?? 100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td>
+      <td><input type="number" value="${seg.repetition ?? 1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td>
       <td><input type="number" value="${seg.gradient ?? s.gradient ?? 0}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave(${id})"></td>
       <td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>
     </tr>`).join('');

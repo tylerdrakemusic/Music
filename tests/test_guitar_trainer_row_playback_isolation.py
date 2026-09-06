@@ -103,6 +103,8 @@ def test_exercise_segment_table_contains_new_gradient_column() -> None:
     assert ".exercise-segments{width:100%;table-layout:fixed" in source
     assert ".exercise-segments input{min-width:0" in source
     assert "#sessions-grid table{width:100%;table-layout:fixed}" in source
+    assert "<th>Gradient</th>" in source
+    assert 'data-field="gradient"' in source
 
 def test_save_preserves_row_playback_settings(client):
     test_client, connection = client
