@@ -10,6 +10,7 @@ from unittest.mock import patch
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+TRAINER_PY = PROJECT_ROOT / "src" / "training" / "musician_training_ui.py"
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 sys.path.insert(0, str(PROJECT_ROOT / "tools"))
 
@@ -95,6 +96,13 @@ def test_playback_plan_uses_default_gradient_for_legacy_rows():
 
     assert [item["ramped_speed"] for item in plan] == [100.0, 104.0]
 
+
+def test_exercise_segment_table_contains_new_gradient_column() -> None:
+    source = TRAINER_PY.read_text(encoding="utf-8")
+    assert ".exercise-segments" in source
+    assert ".exercise-segments{width:100%;table-layout:fixed" in source
+    assert ".exercise-segments input{min-width:0" in source
+    assert "#sessions-grid table{width:100%;table-layout:fixed}" in source
 
 def test_save_preserves_row_playback_settings(client):
     test_client, connection = client

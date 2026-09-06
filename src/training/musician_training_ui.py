@@ -210,6 +210,12 @@ HTML = r"""
   .btn-del-card.unlocked{color:#e8003d}
   .btn-del-card:not(.unlocked){pointer-events:none;opacity:.25}
   table{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:12px}
+  .exercise-segments{width:100%;table-layout:fixed}
+  .exercise-segments th,.exercise-segments td{padding-left:3px;padding-right:3px}
+  .exercise-segments input{min-width:0;max-width:100%;width:100%!important}
+  #sessions-grid table{width:100%;table-layout:fixed}
+  #sessions-grid table th,#sessions-grid table td{padding-left:3px;padding-right:3px}
+  #sessions-grid table input{min-width:0;max-width:100%;width:100%!important}
   th{color:var(--muted);text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)}
   td{padding:4px 6px;border-bottom:1px solid #222}
   td input{background:#111;border:1px solid var(--border);color:#fff;padding:2px 4px;width:100%;border-radius:3px}
@@ -354,7 +360,7 @@ HTML = r"""
         <button class="btn-del-card" id="del-card-{{ s.id }}" onclick="deleteCard({{ s.id }})" title="Delete exercise">🗑</button>
       </div>
     </div>
-    <table>
+    <table class="exercise-segments">
       <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th>Gradient</th><th></th></tr></thead>
       <tbody id="tbody-{{ s.id }}">
       {% for seg in s.segments %}
@@ -684,7 +690,7 @@ function buildCardHTML(s) {
         <button class="btn-del-card" id="del-card-${id}" onclick="deleteCard(${id})" title="Delete exercise">\uD83D\uDDD1</button>
       </div>
     </div>
-    <table>
+    <table class="exercise-segments">
       <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th>Gradient</th><th></th></tr></thead>
       <tbody id="tbody-${id}">${rows}</tbody>
     </table>
