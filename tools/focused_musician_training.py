@@ -1,14 +1,15 @@
 import argparse
-import pygame
-from pydub import AudioSegment
 import os
 import json
 import sys
 import tempfile
 from datetime import datetime
-import numpy as np
-import librosa
 from pathlib import Path
+
+# pygame/pydub/numpy/librosa are only needed for actual audio playback (loop_segment,
+# change_speed, main) — importing them lazily keeps pure helpers like
+# build_playback_plan()/parse_timecode() usable (e.g. in tests) without requiring
+# these heavier, audio-stack dependencies to be installed.
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from utils.init_db import get_connection  # noqa: E402
@@ -23,6 +24,9 @@ _exercise_id: int | None = None
 
 def change_speed(sound, speed=1.0):
     """Change playback speed of the audio segment without affecting pitch."""
+    import numpy as np
+    import librosa
+
     # Get raw audio data as numpy array
     samples = np.array(sound.get_array_of_samples()).astype(np.float32)
     
@@ -129,6 +133,9 @@ def log_practice_session(log_path, song_path, segment):
 
 def loop_segment(file_path, start_time, end_time, repetition, speed_factor, log_path, *, manage_pygame=True):
     """Loop a section of the audio file a specified number of times and log the session."""
+    import pygame
+    from pydub import AudioSegment
+
     if manage_pygame:
         pygame.mixer.init()
         pygame.init()
@@ -220,6 +227,8 @@ def loop_segment(file_path, start_time, end_time, repetition, speed_factor, log_
         pass
 
 def main():
+    import pygame
+
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Play sections of a song based on JSON configuration and log the sessions.")
     parser.add_argument("json_file", help="Name of the JSON file containing song path and segments.")

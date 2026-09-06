@@ -1894,7 +1894,7 @@ def launch():
         subprocess.Popen(  # nosec B603,B607
             ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
              "-Command", ps_cmd],
-            creationflags=subprocess.CREATE_NEW_CONSOLE,
+            creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
         )
         return jsonify({"ok": True})
     except Exception as e:
