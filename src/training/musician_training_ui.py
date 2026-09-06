@@ -6,6 +6,7 @@ Scales & Arpeggios tab added in FR-20260517-guitar-trainer-scale-exercises.
 """
 
 import argparse
+import ipaddress
 import json
 import mimetypes
 import os
@@ -44,6 +45,19 @@ from training.pentatonic_spec import (  # noqa: E402
     PENTATONIC_DEGREE_TEXT,
     PENTATONIC_DEGREE_STROKE,
 )
+
+
+def _require_loopback_host(host: str) -> str:
+    """Reject network-exposed binds for the local training UI."""
+    if host.lower() == "localhost":
+        return host
+    try:
+        if ipaddress.ip_address(host).is_loopback:
+            return host
+    except ValueError:
+        pass
+    raise ValueError("Lead Guitar Trainer must bind to a loopback host")
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Keep TRAINING_DIR for the ephemeral _run_*.json temp files used by focused_musician_training.py
@@ -210,6 +224,12 @@ HTML = r"""
   .btn-del-card.unlocked{color:#e8003d}
   .btn-del-card:not(.unlocked){pointer-events:none;opacity:.25}
   table{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:12px}
+  .exercise-segments{width:100%;table-layout:fixed}
+  .exercise-segments th,.exercise-segments td{padding-left:3px;padding-right:3px}
+  .exercise-segments input{min-width:0;max-width:100%;width:100%!important}
+  #sessions-grid table{width:100%;table-layout:fixed}
+  #sessions-grid table th,#sessions-grid table td{padding-left:3px;padding-right:3px}
+  #sessions-grid table input{min-width:0;max-width:100%;width:100%!important}
   th{color:var(--muted);text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)}
   td{padding:4px 6px;border-bottom:1px solid #222}
   td input{background:#111;border:1px solid var(--border);color:#fff;padding:2px 4px;width:100%;border-radius:3px}
@@ -354,8 +374,8 @@ HTML = r"""
         <button class="btn-del-card" id="del-card-{{ s.id }}" onclick="deleteCard({{ s.id }})" title="Delete exercise">🗑</button>
       </div>
     </div>
-    <table>
-      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th></th></tr></thead>
+    <table class="exercise-segments">
+      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th>Gradient</th><th></th></tr></thead>
       <tbody id="tbody-{{ s.id }}">
       {% for seg in s.segments %}
         <tr>
@@ -363,6 +383,7 @@ HTML = r"""
           <td><input value="{{ seg.end }}" data-field="end" style="width:70px" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><input type="number" value="{{ seg.get('speed',100) }}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><input type="number" value="{{ seg.get('repetition',1) }}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave({{ s.id }})"></td>
+          <td><input type="number" value="{{ seg.get('gradient') if seg.get('gradient') is not none else '' }}" placeholder="{{ s.gradient }}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave({{ s.id }})"></td>
           <td><button class="btn-del" onclick="deleteRow(this,{{ s.id }})" title="Delete row">&times;</button></td>
         </tr>
       {% endfor %}
@@ -527,6 +548,7 @@ function getRows(tbodyId) {
     tr.querySelectorAll('input[data-field]').forEach(inp => r[inp.dataset.field] = inp.value);
     if (r.start) {
       const obj = { start: r.start, end: r.end, speed: parseInt(r.speed)||100, repetition: Math.max(0, parseInt(r.repetition)||0) };
+      if (r.gradient.trim()) obj.gradient = Math.max(0, parseInt(r.gradient)||0);
       rows.push(obj);
     }
   });
@@ -564,7 +586,7 @@ function scheduleAutosave(id) {
 function addRow(id) {
   const tbody = document.getElementById('tbody-' + id);
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td><input value="0:00" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input value="0:10" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="80" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="3" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td><td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>`;
+  tr.innerHTML = `<td><input value="0:00" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input value="0:10" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="80" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="3" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td><td><input type="number" value="" placeholder="${getGradient(id)}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave(${id})"></td><td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>`;
   tbody.appendChild(tr);
   scheduleAutosave(id);
 }
@@ -666,8 +688,9 @@ function buildCardHTML(s) {
     <tr>
       <td><input value="${seg.start}" data-field="start" style="width:70px" oninput="scheduleAutosave(${id})"></td>
       <td><input value="${seg.end}" data-field="end" style="width:70px" oninput="scheduleAutosave(${id})"></td>
-      <td><input type="number" value="${seg.speed||100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td>
-      <td><input type="number" value="${seg.repetition||1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td>
+      <td><input type="number" value="${seg.speed ?? 100}" data-field="speed" style="width:60px" min="10" max="200" oninput="scheduleAutosave(${id})"></td>
+      <td><input type="number" value="${seg.repetition ?? 1}" data-field="repetition" style="width:50px" min="0" oninput="scheduleAutosave(${id})"></td>
+      <td><input type="number" value="${seg.gradient ?? ''}" placeholder="${s.gradient ?? 0}" data-field="gradient" style="width:52px" min="0" max="50" oninput="scheduleAutosave(${id})"></td>
       <td><button class="btn-del" onclick="deleteRow(this,${id})" title="Delete row">&times;</button></td>
     </tr>`).join('');
   return `<div class="card" id="card-${id}">
@@ -682,8 +705,8 @@ function buildCardHTML(s) {
         <button class="btn-del-card" id="del-card-${id}" onclick="deleteCard(${id})" title="Delete exercise">\uD83D\uDDD1</button>
       </div>
     </div>
-    <table>
-      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th></th></tr></thead>
+    <table class="exercise-segments">
+      <thead><tr><th>Start</th><th>End</th><th>Speed%</th><th>Reps</th><th>Gradient</th><th></th></tr></thead>
       <tbody id="tbody-${id}">${rows}</tbody>
     </table>
     <div class="actions" style="align-items:center">
@@ -1886,7 +1909,7 @@ def launch():
         subprocess.Popen(  # nosec B603,B607
             ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
              "-Command", ps_cmd],
-            creationflags=subprocess.CREATE_NEW_CONSOLE,
+            creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
         )
         return jsonify({"ok": True})
     except Exception as e:
@@ -2157,5 +2180,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     TRAINING_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"Lead Guitar Trainer -> http://{args.host}:{args.port}")
-    app.run(host=args.host, port=args.port, debug=False)
+    host = _require_loopback_host(args.host)
+    print(f"Lead Guitar Trainer -> http://{host}:{args.port}")
+    app.run(host=host, port=args.port, debug=False)

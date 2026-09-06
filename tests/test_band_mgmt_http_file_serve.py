@@ -49,6 +49,16 @@ def _load_module():
 
 mod = _load_module()
 
+
+def test_serve_mode_rejects_non_loopback_host() -> None:
+    with pytest.raises(ValueError, match="loopback"):
+        mod._require_loopback_host("0.0.0.0")
+
+
+@pytest.mark.parametrize("host", ["127.0.0.1", "localhost", "::1"])
+def test_serve_mode_accepts_loopback_hosts(host: str) -> None:
+    assert mod._require_loopback_host(host) == host
+
 # ---------------------------------------------------------------------------
 # Helper: minimal BM_INLINE data for generate()
 # ---------------------------------------------------------------------------

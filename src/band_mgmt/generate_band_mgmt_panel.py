@@ -9,6 +9,7 @@ Usage:
 """
 from __future__ import annotations
 
+import ipaddress
 import json
 import re
 import sys
@@ -33,6 +34,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CATALOG_JSON = PROJECT_ROOT / "catalog" / "setlists" / "catalog_export.json"
 SETLIST_JSON = PROJECT_ROOT / "catalog" / "setlists" / "setlist_active_export.json"
 OUTPUT_HTML = PROJECT_ROOT / "reports" / "band_management_panel.html"
+
+
+def _require_loopback_host(host: str) -> str:
+    """Reject network-exposed binds for the local HTTP panel."""
+    if host.lower() == "localhost":
+        return host
+    try:
+        if ipaddress.ip_address(host).is_loopback:
+            return host
+    except ValueError:
+        pass
+    raise ValueError("Band Management server must bind to a loopback host")
+
+
 OUTPUT_HTML.parent.mkdir(parents=True, exist_ok=True)
 
 # Roots for --serve mode local-file endpoints (see _resolve_audio_path / _resolve_sheet_path)
@@ -1320,6 +1335,7 @@ def _serve_mode(host: str = "127.0.0.1", port: int = 8765) -> None:
             else:
                 self.send_error(404)
 
+    host = _require_loopback_host(host)
     server = ThreadedHTTPServer((host, port), BandMgmtHandler)
     url = f"http://{host}:{port}"
     print(f"  \u2764 Band Management server running at {url}")
