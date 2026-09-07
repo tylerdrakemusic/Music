@@ -346,7 +346,6 @@ def _build_from_conn(conn) -> dict[str, list[CagedPosition]]:
 
     if not templates:
         return _generate_from_templates()
-
     rows = conn.execute(
         "SELECT key_name, shape_name, root_fret, label, root_string_name, "
         "instructor_phrase "
@@ -415,10 +414,42 @@ SCALE_POSITIONS["D#"] = SCALE_POSITIONS["Eb"]
 # C# is enharmonically identical to Db — expose as a transparent alias
 SCALE_POSITIONS["C#"] = SCALE_POSITIONS["Db"]
 
-# C/Aeolian uses the relative A natural-minor root while retaining the C-major
-# pitch geometry. Only the five standard CAGED families are supported there.
+# C/Aeolian uses the relative A natural-minor root and exposes the five minor
+# CAGED families in the order used by the trainer reference diagrams.
 _C_AEOLIAN_POSITION_INDICES = (0, 2, 3, 5, 6)
-_C_AEOLIAN_SHAPE_NAMES = ("C", "A", "G", "E", "D")
+_C_AEOLIAN_SHAPE_NAMES = ("A", "G", "E", "D", "C")
+_C_AEOLIAN_G_SHAPE_OFFSETS = [
+    [6, 0],
+    [5, -3], [5, -2], [5, 0],
+    [4, -3], [4, -2], [4, 0],
+    [3, -3], [3, -1],
+    [2, -4], [2, -2], [2, 0],
+    [1, -4], [1, -2], [1, 0],
+]
+_C_AEOLIAN_E_SHAPE_OFFSETS = [
+    [6, 0], [6, 2], [6, 3],
+    [5, 0], [5, 2], [5, 3],
+    [4, 0], [4, 2], [4, 4],
+    [3, 0], [3, 2],
+    [2, 0], [2, 1], [2, 3],
+    [1, 0], [1, 2], [1, 3],
+]
+_C_AEOLIAN_D_SHAPE_OFFSETS = [
+    [6, 0], [6, 1], [6, 3],
+    [5, 0], [5, 1], [5, 3],
+    [4, 0], [4, 2], [4, 3],
+    [3, 0], [3, 2], [3, 3],
+    [2, 1], [2, 3],
+    [1, 0], [1, 1], [1, 3],
+]
+_C_AEOLIAN_C_SHAPE_OFFSETS = [
+    [6, -4], [6, -2], [6, 0],
+    [5, -4], [5, -2], [5, 0],
+    [4, -3], [4, -2], [4, 0],
+    [3, -3], [3, -2],
+    [2, -4], [2, -2], [2, 0],
+    [1, -4], [1, -2], [1, 0],
+]
 
 
 def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosition]:
@@ -429,14 +460,106 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
     if key != "C" or mode != "Aeolian":
         return positions
 
-    selected = [positions[index] for index in _C_AEOLIAN_POSITION_INDICES]
+    selected = [dict(positions[index]) for index in _C_AEOLIAN_POSITION_INDICES]
+    for position_number, (position, shape_name) in enumerate(
+        zip(selected, _C_AEOLIAN_SHAPE_NAMES), start=1
+    ):
+        fret_text = "open)" if position_number == 1 else position["label"].split("(", 1)[1]
+        position["label"] = f"Position {position_number} — {shape_name} shape ({fret_text}"
+        position["instructor_phrase"] = f"{shape_name} Shape"
+
+    selected[0]["root_string"] = "A string"
+    selected[0]["root_fret"] = 0
+    selected[0]["instructor_phrase"] = "Start on the open A string. A Shape."
+    g_root_fret = 5
+    selected[1]["notes"] = [
+        ScaleNote(
+            string=string,
+            fret=g_root_fret + delta,
+            midi=_OPEN_MIDI[string] + g_root_fret + delta,
+        )
+        for string, delta in _C_AEOLIAN_G_SHAPE_OFFSETS
+    ]
+    selected[1]["root_string"] = "Low E string"
+    selected[1]["root_fret"] = g_root_fret
+    selected[1]["label"] = "Position 2 — G shape (5th fret)"
+    selected[1]["instructor_phrase"] = (
+        "Start on the 5th fret of the low E string. G Shape."
+    )
+    e_root_fret = 5
+    selected[2]["notes"] = [
+        ScaleNote(
+            string=string,
+            fret=e_root_fret + delta,
+            midi=_OPEN_MIDI[string] + e_root_fret + delta,
+        )
+        for string, delta in _C_AEOLIAN_E_SHAPE_OFFSETS
+    ]
+    selected[2]["root_string"] = "Low E string"
+    selected[2]["root_fret"] = e_root_fret
+    selected[2]["label"] = "Position 3 — E shape (5th fret)"
+    selected[2]["instructor_phrase"] = (
+        "Start on the 5th fret of the low E string. E Shape."
+    )
+    d_root_fret = 7
+    selected[3]["notes"] = [
+        ScaleNote(
+            string=string,
+            fret=d_root_fret + delta,
+            midi=_OPEN_MIDI[string] + d_root_fret + delta,
+        )
+        for string, delta in _C_AEOLIAN_D_SHAPE_OFFSETS
+    ]
+    selected[3]["root_string"] = "D string"
+    selected[3]["root_fret"] = d_root_fret
+    selected[3]["label"] = "Position 4 — D shape (7th fret)"
+    selected[3]["instructor_phrase"] = "Start on the 7th fret of the D string. D Shape."
+    c_root_fret = 12
+    selected[4]["notes"] = [
+        ScaleNote(
+            string=string,
+            fret=c_root_fret + delta,
+            midi=_OPEN_MIDI[string] + c_root_fret + delta,
+        )
+        for string, delta in _C_AEOLIAN_C_SHAPE_OFFSETS
+    ]
+    selected[4]["root_string"] = "A string"
+    selected[4]["root_fret"] = c_root_fret
+    selected[4]["label"] = "Position 5 — C shape (12th fret)"
+    selected[4]["instructor_phrase"] = "Start on the 12th fret of the A string. C Shape."
+    repeated_positions: list[CagedPosition] = []
+    for position_number, position in enumerate(selected[:4], start=6):
+        repeated_position = dict(position)
+        repeated_position["notes"] = [
+            ScaleNote(
+                string=note["string"],
+                fret=note["fret"] + 12,
+                midi=note["midi"] + 12,
+            )
+            for note in position["notes"]
+        ]
+        repeated_position["root_fret"] = position["root_fret"] + 12
+        shape_name = _C_AEOLIAN_SHAPE_NAMES[position_number - 6]
+        spoken_string = repeated_position["root_string"].replace("Low E", "low E")
+        repeated_position["label"] = (
+            f"Position {position_number} — {shape_name} shape "
+            f"({repeated_position['root_fret']}th fret)"
+        )
+        spoken_shape_name = f"{shape_name} Shape"
+        repeated_position["instructor_phrase"] = (
+            f"Start on the {repeated_position['root_fret']}th fret of the "
+            f"{spoken_string}. {spoken_shape_name}."
+        )
+        repeated_positions.append(repeated_position)
+    selected.extend(repeated_positions)
     shape_names = tuple(
         position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
         for position in selected
     )
-    if shape_names != _C_AEOLIAN_SHAPE_NAMES:
+    expected_shape_names = _C_AEOLIAN_SHAPE_NAMES + _C_AEOLIAN_SHAPE_NAMES[:4]
+    if shape_names != expected_shape_names:
         raise RuntimeError(
-            f"C/Aeolian CAGED layout drifted: expected {_C_AEOLIAN_SHAPE_NAMES}, "
+            f"C/Aeolian CAGED layout drifted: expected {expected_shape_names}, "
             f"got {shape_names}"
         )
     return selected
