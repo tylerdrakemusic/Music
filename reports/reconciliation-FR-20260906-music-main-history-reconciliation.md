@@ -5,11 +5,15 @@ FR: FR-20260906-music-main-history-reconciliation
 
 ## Topology
 
-The feature worktree is based on `origin/main` at `a6f9131`. The local `main`
-ref contains 467 local-main commits beyond that base. This pass preserves all
-467 commits and does not rewrite history, merge them, or delete paths from
-them. The eventual delivery is one pull request targeting `main`; no direct
-push or force-push is part of this change.
+The feature worktree was initially based on `origin/main` at `a6f9131` and
+contained the policy commit `e835835`. It now contains a non-fast-forward
+merge of local `main` at `abe8bae`, with reconciliation head
+`bcd5204f9547db62b7d2dfb835a3cce222bd61ed`. The merge preserves all 467
+local-main commits beyond `origin/main`; the reconciled branch is 469 commits
+ahead of `origin/main` (467 local-main commits, the policy commit, and the
+reconciliation merge commit). No history was rewritten and no historical path
+was deleted. The eventual delivery is one pull request targeting `main`; no
+force-push is part of this change.
 
 The untracked
 `bands/copperCreek/branding/2026-08-23-wide-open-saloon/videos/` directory is intentionally
@@ -18,11 +22,18 @@ is path-scoped. The approved named file `HelixFiles/Rocky Mountain W.hlx` is
 explicitly eligible for tracking; no exception is claimed for invented nested
 paths under the ignored CopperCreek directory.
 
+The original local `main` checkout also has three untracked asset paths:
+`HelixFiles/Rocky Mountain W.hlx`,
+`catalog/artwork/originals/Invisible-Cropped.jpg`, and
+`catalog/artwork/originals/Invisible.jpg`. They were not part of the approved
+467-commit history and were not copied, staged, or committed into the feature
+worktree.
+
 ## File dispositions
 
 | Area | Disposition | Evidence or follow-up |
 | --- | --- | --- |
-| `catalog/artwork/originals/Invisible*.jpg` | Reviewed individually; no matching files are present in this worktree. | No deletion or silent ignore was performed. Recheck any path-level candidates before a future import. |
+| `catalog/artwork/originals/Invisible*.jpg` | Present only as untracked files in the original local `main` checkout. | Not copied, staged, or deleted. Any future import or removal requires explicit path-level approval. |
 | CopperCreek branding video directory, `bands/copperCreek/branding/2026-08-23-wide-open-saloon/videos/` | Ignore as untracked source material. | Not staged or committed. |
 | `.hlx` files | Eligible for tracking. | No blanket `*.hlx` ignore rule was added. Preserve and classify `HelixFiles/Rocky Mountain W.hlx` if it is present in a later local-main path review. |
 | `catalog/visualizers/you_already_know_visualized.webm` | Existing tracked oversized file, 61,169,583 bytes (about 58.3 MiB). | Below the 100 MiB blocking threshold, so retained without history rewrite. Requires explicit path-level approval before any future removal or migration. |
@@ -52,6 +63,7 @@ git rev-list --count a6f9131..main
 git diff --stat a6f9131..main
 C:\G\python.exe -m pytest -q tests/test_history_reconciliation_policy.py
 git diff --check
+C:\G\python.exe -m pytest -q
 ```
 
 The executable policy tests invoke `git check-ignore --no-index` to verify that
@@ -64,12 +76,15 @@ at or above 50 MiB,
 `catalog/visualizers/you_already_know_visualized.webm`, at 61,169,583 bytes.
 It found no file at or above 100 MiB and no
 `catalog/artwork/originals/Invisible*.jpg` files. The focused contract test is
-the executable guard for this report and workflow policy.
+the executable guard for this report and workflow policy. The full Music suite
+was also run after the history merge; its result is recorded in the FR ledger
+and in the delivery summary.
 
 ## Residual risks
 
-- The 467 local-main commits remain separate and require Tyler's explicit
-  path-level history approval before any future selective migration.
+- The 467 local-main commits are preserved as reachable history in the feature
+  branch. Any future selective migration, removal, or rewrite still requires
+  Tyler's explicit path-level history approval.
 - A worktree scan cannot establish provenance for files that are absent here.
 - The CI size check covers tracked files at checkout time; it is not a complete
   historical Git object audit or a secret scanner.
