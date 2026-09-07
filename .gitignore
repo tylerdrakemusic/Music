@@ -19,6 +19,7 @@
 *.mov
 *.avi
 *.mkv
+bands/copperCreek/branding/2026-08-23-wide-open-saloon/videos/*
 
 # Binaries / executables
 *.exe
