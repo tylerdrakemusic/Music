@@ -24,7 +24,8 @@ if str(_SRC) not in sys.path:
 from utils.init_db import get_connection  # noqa: E402
 from training.practice_stats import get_practice_stats  # noqa: E402
 from training.scale_data import (  # noqa: E402
-    SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_sequence,
+    SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_positions,
+    get_scale_sequence,
     PENTATONIC_POSITIONS, _MINOR_PENTA_POSITIONS, BOX_PENTA_POSITIONS,
 )
 
@@ -1089,7 +1090,8 @@ async function createSession() {
     try {
       const r = await fetch(
         '/api/scale-positions?key=' + encodeURIComponent(key) +
-        '&family=' + encodeURIComponent(family)
+        '&family=' + encodeURIComponent(family) +
+        '&mode=' + encodeURIComponent(_currentMode)
       );
       _positions = await r.json();
     } catch (e) { console.error('scale positions load failed', e); return; }
@@ -1180,14 +1182,8 @@ async function createSession() {
   window.onModeChange = function() {
     _currentMode = document.getElementById('scale-mode').value || 'Ionian';
     _calloutPending = true;  // surface the characteristic-note callout once, on this switch
-    if (_positions.length) {
-      const sel = document.getElementById('scale-position');
-      sel.innerHTML = _positions.map((p, i) =>
-        `<option value="${i}">${formatPositionLabel(p)}</option>`
-      ).join('');
-    }
-    onPositionChange();
-    drawStaves(_currentKey, _currentMode, -1);
+    _positions = [];
+    loadScalePositions(_currentKey);
   };
 
   function formatPositionLabel(pos) {
@@ -1273,7 +1269,8 @@ async function createSession() {
     let phrase = pos.instructor_phrase;
     const spec = MODE_SPEC[_currentMode];
     // Modes with a dedicated colored degree set get a mode-aware spoken phrase.
-    if (spec && (Object.keys(spec.degrees).length > 3 || spec.characteristic)) {
+    if (spec && (Object.keys(spec.degrees).length > 3 || spec.characteristic)
+        && !(_currentMode === 'Aeolian' && _currentKey === 'C')) {
       phrase = buildModePhrase(pos, _currentMode, _calloutPending);
     }
     _calloutPending = false;
@@ -2008,8 +2005,10 @@ def api_scale_positions():
         abort(400)
 
     if family == "diatonic":
-        positions = SCALE_POSITIONS.get(key)
-        if positions is None:
+        mode = request.args.get("mode", "Ionian").strip()
+        try:
+            positions = get_scale_positions(key, mode)
+        except (ValueError, RuntimeError):
             abort(400)
         return jsonify([
             {
