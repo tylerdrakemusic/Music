@@ -415,6 +415,32 @@ SCALE_POSITIONS["D#"] = SCALE_POSITIONS["Eb"]
 # C# is enharmonically identical to Db — expose as a transparent alias
 SCALE_POSITIONS["C#"] = SCALE_POSITIONS["Db"]
 
+# C/Aeolian uses the relative A natural-minor root while retaining the C-major
+# pitch geometry. Only the five standard CAGED families are supported there.
+_C_AEOLIAN_POSITION_INDICES = (0, 2, 3, 5, 6)
+_C_AEOLIAN_SHAPE_NAMES = ("C", "A", "G", "E", "D")
+
+
+def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosition]:
+    """Return the trainer positions for a key and mode."""
+    positions = SCALE_POSITIONS.get(key)
+    if positions is None:
+        raise ValueError(f"Unknown key {key!r}; available: {list(SCALE_POSITIONS)}")
+    if key != "C" or mode != "Aeolian":
+        return positions
+
+    selected = [positions[index] for index in _C_AEOLIAN_POSITION_INDICES]
+    shape_names = tuple(
+        position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
+        for position in selected
+    )
+    if shape_names != _C_AEOLIAN_SHAPE_NAMES:
+        raise RuntimeError(
+            f"C/Aeolian CAGED layout drifted: expected {_C_AEOLIAN_SHAPE_NAMES}, "
+            f"got {shape_names}"
+        )
+    return selected
+
 # Backward-compat alias — C major positions
 CAGED_POSITIONS: list[CagedPosition] = SCALE_POSITIONS["C"]
 
