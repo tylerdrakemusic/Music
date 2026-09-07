@@ -59,8 +59,19 @@ def test_reconciliation_report_records_required_dispositions_and_policy():
 
     assert str(SIZE_POLICY.relative_to(ROOT)).replace("\\", "/") in workflow
     assert f"{BRANDING_VIDEO_PATH}*" in gitignore
-    assert f"!{APPROVED_HELIX_PATH}" in gitignore
+    assert f"!{APPROVED_HELIX_PATH}" not in gitignore
     assert "\n*.hlx\n" not in gitignore
+
+    approved_path = ROOT / APPROVED_HELIX_PATH
+    assert approved_path.is_file()
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "--", APPROVED_HELIX_PATH],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert tracked.returncode == 0, tracked.stdout + tracked.stderr
 
 
 def test_gitignore_allows_the_approved_root_helix_file_only():

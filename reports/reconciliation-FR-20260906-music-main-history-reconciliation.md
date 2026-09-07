@@ -19,15 +19,15 @@ The untracked
 `bands/copperCreek/branding/2026-08-23-wide-open-saloon/videos/` directory is intentionally
 ignored for this reconciliation and is not added to the repository. The rule
 is path-scoped. The approved named file `HelixFiles/Rocky Mountain W.hlx` is
-explicitly eligible for tracking; no exception is claimed for invented nested
-paths under the ignored CopperCreek directory.
+included as a tracked Helix preset; no exception is claimed for invented
+nested paths under the ignored CopperCreek directory.
 
 The original local `main` checkout also has three untracked asset paths:
 `HelixFiles/Rocky Mountain W.hlx`,
 `catalog/artwork/originals/Invisible-Cropped.jpg`, and
-`catalog/artwork/originals/Invisible.jpg`. They were not part of the approved
-467-commit history and were not copied, staged, or committed into the feature
-worktree.
+`catalog/artwork/originals/Invisible.jpg`. The approved Helix asset was copied
+byte-for-byte into this feature worktree and is now tracked; the unrelated JPEGs
+were not copied, staged, or committed.
 
 ## File dispositions
 
@@ -35,7 +35,7 @@ worktree.
 | --- | --- | --- |
 | `catalog/artwork/originals/Invisible*.jpg` | Present only as untracked files in the original local `main` checkout. | Not copied, staged, or deleted. Any future import or removal requires explicit path-level approval. |
 | CopperCreek branding video directory, `bands/copperCreek/branding/2026-08-23-wide-open-saloon/videos/` | Ignore as untracked source material. | Not staged or committed. |
-| `.hlx` files | Eligible for tracking. | No blanket `*.hlx` ignore rule was added. Preserve and classify `HelixFiles/Rocky Mountain W.hlx` if it is present in a later local-main path review. |
+| `.hlx` files | Eligible for tracking. | No blanket `*.hlx` ignore rule was added. `HelixFiles/Rocky Mountain W.hlx` is included and tracked at 5,090 bytes with SHA-256 `DCE849F923DB6659C3608E3E9AE27944372C8D35A46BA566B6B6A1E71F3217BA`. |
 | `catalog/visualizers/you_already_know_visualized.webm` | Existing tracked oversized file, 61,169,583 bytes (about 58.3 MiB). | Below the 100 MiB blocking threshold, so retained without history rewrite. Requires explicit path-level approval before any future removal or migration. |
 | Databases, generated output, temporary files, and media | Do not commit unless an existing repository rule explicitly permits the file. | Current `.gitignore` rules remain authoritative. |
 
@@ -51,8 +51,7 @@ The check uses Git's tracked-file list, so untracked local assets cannot enter a
 pull request accidentally through this policy step. It does not rewrite history
 or remove an existing blob. The `.gitignore` file does not contain a blanket
 `*.hlx` rule; its CopperCreek rule ignores only the requested branding-video
-directory, while the approved root-level Helix path has an explicit named
-exception.
+directory, while root-level Helix paths remain eligible by default.
 
 ## Validation
 
