@@ -19,6 +19,8 @@
 *.mov
 *.avi
 *.mkv
+bands/copperCreek/branding/2026-08-23-wide-open-saloon/videos/*
+!HelixFiles/Rocky Mountain W.hlx
 
 # Binaries / executables
 *.exe
