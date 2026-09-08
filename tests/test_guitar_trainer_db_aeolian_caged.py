@@ -90,7 +90,7 @@ def test_db_aeolian_does_not_broaden_to_other_aeolian_keys() -> None:
         g_aeolian = client.get("/api/scale-positions?key=G&mode=Aeolian").get_json()
         g_default = client.get("/api/scale-positions?key=G").get_json()
 
-    assert g_aeolian == g_default
+    assert g_aeolian != g_default
 
 
 def test_eb_aeolian_transposes_the_proven_d_aeolian_layout_up_one_fret() -> None:
@@ -134,3 +134,58 @@ def test_eb_aeolian_position_four_tts_uses_the_aeolian_phrase(monkeypatch) -> No
 
     assert response.status_code == 204
     assert captured["phrase"] == "Start on the 10th fret of the D string. D Shape."
+
+
+def test_d_sharp_aeolian_starts_with_c_shape_and_matches_eb_pitch_classes(monkeypatch) -> None:
+    captured: dict[str, str] = {}
+
+    def capture_phrase(phrase: str, _cache_dir: Path) -> None:
+        captured["phrase"] = phrase
+        return None
+
+    monkeypatch.setattr(ui, "get_instructor_audio", capture_phrase)
+
+    with ui.app.test_client() as client:
+        d_sharp_response = client.get(
+            "/api/scale-positions?key=D%23&mode=Aeolian"
+        )
+        eb_response = client.get("/api/scale-positions?key=Eb&mode=Aeolian")
+        tts_response = client.get(
+            "/api/instructor-audio?key=D%23&mode=Aeolian&position=1"
+        )
+
+    assert d_sharp_response.status_code == 200
+    assert eb_response.status_code == 200
+    d_sharp_positions = d_sharp_response.get_json()
+    eb_positions = eb_response.get_json()
+    first_position = d_sharp_positions[0]
+
+    assert first_position["label"] == "Position 1 — C shape (6th fret)"
+    assert first_position["root_string"] == "A string"
+    assert first_position["root_fret"] == 6
+    assert first_position["instructor_phrase"] == (
+        "Start on the 6th fret of the A string. C Shape."
+    )
+    assert any(
+        note["string"] == 5 and note["fret"] == 6 and note["midi"] % 12 == 3
+        for note in first_position["notes"]
+    )
+
+    expected_pitch_classes = {3, 5, 6, 8, 10, 11, 1}
+    assert {
+        note["midi"] % 12
+        for position in d_sharp_positions
+        for note in position["notes"]
+    } == expected_pitch_classes
+    assert all(
+        {note["string"] for note in position["notes"]} == {1, 2, 3, 4, 5, 6}
+        and all(0 <= note["fret"] <= 22 for note in position["notes"])
+        for position in d_sharp_positions
+    )
+    assert len(d_sharp_positions) == len(eb_positions)
+    assert all(
+        {note["string"] for note in position["notes"]} == {1, 2, 3, 4, 5, 6}
+        for position in eb_positions
+    )
+    assert tts_response.status_code == 204
+    assert captured["phrase"] == "Start on the 6th fret of the A string. C Shape."

@@ -113,7 +113,7 @@ def test_c_aeolian_repeats_minor_caged_shapes_with_valid_geometry() -> None:
             assert note["midi"] % 12 in expected_pcs
 
 
-def test_c_aeolian_does_not_change_major_c_or_non_c_aeolian_layouts() -> None:
+def test_c_aeolian_does_not_change_major_c_and_g_aeolian_is_distinct() -> None:
     with ui.app.test_client() as client:
         major_c = client.get("/api/scale-positions?key=C").get_json()
         explicit_ionian_c = client.get(
@@ -125,4 +125,52 @@ def test_c_aeolian_does_not_change_major_c_or_non_c_aeolian_layouts() -> None:
         g_default = client.get("/api/scale-positions?key=G").get_json()
 
     assert major_c == explicit_ionian_c
-    assert g_aeolian == g_default
+    assert g_default == ui.SCALE_POSITIONS["G"]
+    assert g_aeolian != g_default
+
+
+def test_e_aeolian_uses_c_shaped_caged_position_on_c_sharp_fret_four() -> None:
+    with ui.app.test_client() as client:
+        response = client.get("/api/scale-positions?key=E&mode=Aeolian")
+
+    assert response.status_code == 200
+    positions = response.get_json()
+    assert _shape_names(positions[:5]) == ["C", "A", "G", "E", "D"]
+    assert [position["root_fret"] for position in positions[:5]] == [4, 4, 9, 9, 11]
+    assert [position["root_string"] for position in positions[:5]] == [
+        "A string",
+        "A string",
+        "Low E string",
+        "Low E string",
+        "D string",
+    ]
+    assert positions[0]["root_string"] == "A string"
+    assert positions[0]["root_fret"] == 4
+    assert positions[0]["label"] == "Position 1 — C shape (4th fret)"
+    assert any(
+        note["string"] == 5 and note["fret"] == 4 and note["midi"] % 12 == 1
+        for note in positions[0]["notes"]
+    )
+    assert [position["label"] for position in positions[:5]] == [
+        "Position 1 — C shape (4th fret)",
+        "Position 2 — A shape (4th fret)",
+        "Position 3 — G shape (9th fret)",
+        "Position 4 — E shape (9th fret)",
+        "Position 5 — D shape (11th fret)",
+    ]
+    assert [position["instructor_phrase"] for position in positions[:5]] == [
+        "Start on the 4th fret of the A string. C Shape.",
+        "Start on the 4th fret of the A string. A Shape.",
+        "Start on the 9th fret of the low E string. G Shape.",
+        "Start on the 9th fret of the low E string. E Shape.",
+        "Start on the 11th fret of the D string. D Shape.",
+    ]
+    expected_pcs = {1, 3, 4, 6, 8, 9, 11}
+    assert all(
+        {note["string"] for note in position["notes"]} == {1, 2, 3, 4, 5, 6}
+        and all(0 <= note["fret"] <= 22 for note in position["notes"])
+        and all(0 <= note["midi"] <= 127 for note in position["notes"])
+        and all(note["midi"] % 12 in expected_pcs for note in position["notes"])
+        for position in positions
+    )
+    assert [position["root_fret"] for position in positions[5:]] == [16, 16, 21]

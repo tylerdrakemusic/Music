@@ -2116,7 +2116,7 @@ def api_instructor_audio():
     key = request.args.get("key", "C").strip()
     mode = request.args.get("mode", "Ionian").strip()
     try:
-      key_positions = get_scale_positions(key, mode)
+        key_positions = get_scale_positions(key, mode)
     except (ValueError, RuntimeError):
         abort(400)
     try:
