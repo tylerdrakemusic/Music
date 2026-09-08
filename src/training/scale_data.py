@@ -450,47 +450,126 @@ _C_AEOLIAN_C_SHAPE_OFFSETS = [
     [2, -4], [2, -2], [2, 0],
     [1, -4], [1, -2], [1, 0],
 ]
+_AEOLIAN_CANONICAL_KEYS = ("Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B")
+_AEOLIAN_ALIASES = {"C#": "Db", "D#": "Eb", "A#": "Bb"}
+_KEY_PITCH_CLASSES = {
+    "C": 0,
+    "Db": 1,
+    "D": 2,
+    "Eb": 3,
+    "E": 4,
+    "F": 5,
+    "F#": 6,
+    "G": 7,
+    "Ab": 8,
+    "A": 9,
+    "Bb": 10,
+    "B": 11,
+}
+
+
+def _fret_label(fret: int) -> str:
+    """Format a fret number with its English ordinal suffix."""
+    if 10 <= fret % 100 <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(fret % 10, "th")
+    return f"{fret}{suffix}"
+
 def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosition]:
     """Return the trainer positions for a key and mode."""
     positions = SCALE_POSITIONS.get(key)
     if positions is None:
         raise ValueError(f"Unknown key {key!r}; available: {list(SCALE_POSITIONS)}")
-    if key in ("D", "Eb") and mode == "Aeolian":
-        transpose_offset = 1 if key == "D" else 2
-        transposed: list[CagedPosition] = []
-        for position in get_scale_positions("Db", "Aeolian"):
-            shifted = dict(position)
-            shifted["root_fret"] = position["root_fret"] + transpose_offset
-            shifted["notes"] = [
-                ScaleNote(
-                    string=note["string"],
-                    fret=note["fret"] + transpose_offset,
-                    midi=note["midi"] + transpose_offset,
+    if mode == "Aeolian" and key in set(_AEOLIAN_ALIASES) | set(_AEOLIAN_CANONICAL_KEYS):
+        canonical_key = _AEOLIAN_ALIASES.get(key, key)
+        if canonical_key != "C":
+            reference = get_scale_positions("C", "Aeolian")
+            semitone_shift = (_KEY_PITCH_CLASSES[canonical_key] - 9) % 12
+            register_shift = _KEY_PITCH_CLASSES[canonical_key]
+            base_indices = (4, 0, 1, 2, 3) if canonical_key == "E" else (0, 1, 2, 3, 4)
+            base_positions = [reference[index] for index in base_indices]
+            translated: list[CagedPosition] = []
+            for position in base_positions:
+                fret_shift = -8 if canonical_key == "E" and position is reference[4] else register_shift
+                if any(
+                    note["fret"] + fret_shift >= 23
+                    for note in position["notes"]
+                ):
+                    fret_shift -= 12
+                translated_position = dict(position)
+                translated_position["root_fret"] = position["root_fret"] + fret_shift
+                translated_position["notes"] = [
+                    ScaleNote(
+                        string=note["string"],
+                        fret=note["fret"] + fret_shift,
+                        midi=_OPEN_MIDI[note["string"]] + note["fret"] + fret_shift,
+                    )
+                    for note in position["notes"]
+                ]
+                shape_name = position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
+                root_fret = translated_position["root_fret"]
+                translated_position["label"] = (
+                    f"Position {len(translated) + 1} — {shape_name} shape "
+                    f"({_fret_label(root_fret)} fret)"
                 )
-                for note in position["notes"]
+                spoken_string = translated_position["root_string"].replace("Low E", "low E")
+                translated_position["instructor_phrase"] = (
+                    f"Start on the {_fret_label(root_fret)} fret of the {spoken_string}. "
+                    f"{shape_name} Shape."
+                )
+                translated.append(translated_position)
+
+            for position in base_positions:
+                fret_shift = (-8 if canonical_key == "E" and position is reference[4] else register_shift) + 12
+                if any(note["fret"] + fret_shift >= 23 for note in position["notes"]):
+                    continue
+                repeated_position = dict(position)
+                repeated_position["root_fret"] = position["root_fret"] + fret_shift
+                repeated_position["notes"] = [
+                    ScaleNote(
+                        string=note["string"],
+                        fret=note["fret"] + fret_shift,
+                        midi=_OPEN_MIDI[note["string"]] + note["fret"] + fret_shift,
+                    )
+                    for note in position["notes"]
+                ]
+                shape_name = position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
+                root_fret = repeated_position["root_fret"]
+                repeated_position["label"] = (
+                    f"Position {len(translated) + 1} — {shape_name} shape "
+                    f"({_fret_label(root_fret)} fret)"
+                )
+                spoken_string = repeated_position["root_string"].replace("Low E", "low E")
+                repeated_position["instructor_phrase"] = (
+                    f"Start on the {_fret_label(root_fret)} fret of the {spoken_string}. "
+                    f"{shape_name} Shape."
+                )
+                translated.append(repeated_position)
+            ordered_positions = [
+                position
+                for _, position in sorted(
+                    enumerate(translated),
+                    key=lambda item: (
+                        min(note["fret"] for note in item[1]["notes"]),
+                        item[0],
+                    ),
+                )
             ]
-            shape_name = position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
-            position_number = int(position["label"].split(" ", 2)[1])
-            shifted["label"] = (
-                f"Position {position_number} — {shape_name} shape "
-                f"({shifted['root_fret']}th fret)"
-            )
-            shifted["instructor_phrase"] = (
-                f"Start on the {shifted['root_fret']}th fret of the "
-                f"{shifted['root_string']}. {shape_name} Shape."
-            )
-            transposed.append(shifted)
-        # Position 8 extends through fret 23, beyond the virtual fretboard.
-        transposed = transposed[:7]
-        first_fret_label = "2nd" if key == "D" else "3rd"
-        transposed[0]["label"] = (
-            f"Position 1 — A shape ({first_fret_label} fret)"
-        )
-        transposed[0]["instructor_phrase"] = (
-            f"Start on the {first_fret_label} fret of the A string. A Shape."
-        )
-        return transposed
-    if key not in ("C", "Db") or mode != "Aeolian":
+            for position_number, position in enumerate(ordered_positions, start=1):
+                shape_name = position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
+                root_fret = position["root_fret"]
+                position["label"] = (
+                    f"Position {position_number} — {shape_name} shape "
+                    f"({_fret_label(root_fret)} fret)"
+                )
+                spoken_string = position["root_string"].replace("Low E", "low E")
+                position["instructor_phrase"] = (
+                    f"Start on the {_fret_label(root_fret)} fret of the {spoken_string}. "
+                    f"{shape_name} Shape."
+                )
+            return ordered_positions
+    if key != "C" or mode != "Aeolian":
         return positions
 
     selected = []

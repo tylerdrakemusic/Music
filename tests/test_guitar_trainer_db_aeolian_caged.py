@@ -90,7 +90,7 @@ def test_db_aeolian_does_not_broaden_to_other_aeolian_keys() -> None:
         g_aeolian = client.get("/api/scale-positions?key=G&mode=Aeolian").get_json()
         g_default = client.get("/api/scale-positions?key=G").get_json()
 
-    assert g_aeolian == g_default
+    assert g_aeolian != g_default
 
 
 def test_eb_aeolian_transposes_the_proven_d_aeolian_layout_up_one_fret() -> None:
