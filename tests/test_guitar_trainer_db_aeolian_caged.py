@@ -116,3 +116,21 @@ def test_eb_aeolian_transposes_the_proven_d_aeolian_layout_up_one_fret() -> None
         for position in positions
         for note in position["notes"]
     )
+
+
+def test_eb_aeolian_position_four_tts_uses_the_aeolian_phrase(monkeypatch) -> None:
+    captured: dict[str, str] = {}
+
+    def capture_phrase(phrase: str, _cache_dir: Path) -> None:
+        captured["phrase"] = phrase
+        return None
+
+    monkeypatch.setattr(ui, "get_instructor_audio", capture_phrase)
+
+    with ui.app.test_client() as client:
+        response = client.get(
+            "/api/instructor-audio?key=Eb&mode=Aeolian&position=4"
+        )
+
+    assert response.status_code == 204
+    assert captured["phrase"] == "Start on the 10th fret of the D string. D Shape."

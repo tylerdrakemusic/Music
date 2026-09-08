@@ -2114,8 +2114,10 @@ def api_instructor_audio():
     Returns 204 No Content when TTS is unavailable (no key, network error, etc.)
     """
     key = request.args.get("key", "C").strip()
-    key_positions = SCALE_POSITIONS.get(key)
-    if key_positions is None:
+    mode = request.args.get("mode", "Ionian").strip()
+    try:
+      key_positions = get_scale_positions(key, mode)
+    except (ValueError, RuntimeError):
         abort(400)
     try:
         position = int(request.args.get("position", 0))
