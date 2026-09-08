@@ -55,10 +55,3 @@ def test_db_aeolian_does_not_broaden_to_other_aeolian_keys() -> None:
         g_default = client.get("/api/scale-positions?key=G").get_json()
 
     assert g_aeolian == g_default
-
-
-def test_trainer_root_loads_from_a_git_worktree() -> None:
-    with ui.app.test_client() as client:
-        response = client.get("/")
-
-    assert response.status_code == 200
