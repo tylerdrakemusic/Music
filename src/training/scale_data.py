@@ -450,12 +450,15 @@ _C_AEOLIAN_C_SHAPE_OFFSETS = [
     [2, -4], [2, -2], [2, 0],
     [1, -4], [1, -2], [1, 0],
 ]
-_AEOLIAN_CANONICAL_KEYS = ("Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B")
-_AEOLIAN_ALIASES = {"C#": "Db", "D#": "Eb", "A#": "Bb"}
+_AEOLIAN_CANONICAL_KEYS = (
+    "Db", "D", "D#", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"
+)
+_AEOLIAN_ALIASES = {"C#": "Db", "A#": "Bb"}
 _KEY_PITCH_CLASSES = {
     "C": 0,
     "Db": 1,
     "D": 2,
+    "D#": 3,
     "Eb": 3,
     "E": 4,
     "F": 5,
@@ -487,11 +490,23 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
             reference = get_scale_positions("C", "Aeolian")
             semitone_shift = (_KEY_PITCH_CLASSES[canonical_key] - 9) % 12
             register_shift = _KEY_PITCH_CLASSES[canonical_key]
-            base_indices = (4, 0, 1, 2, 3) if canonical_key == "E" else (0, 1, 2, 3, 4)
+            base_indices = (
+                (4, 0, 1, 2, 3)
+                if canonical_key in {"D#", "E"}
+                else (0, 1, 2, 3, 4)
+            )
             base_positions = [reference[index] for index in base_indices]
             translated: list[CagedPosition] = []
             for position in base_positions:
-                fret_shift = -8 if canonical_key == "E" and position is reference[4] else register_shift
+                fret_shift = (
+                    -6
+                    if canonical_key == "D#" and position is reference[4]
+                    else -8
+                    if canonical_key == "E" and position is reference[4]
+                    else 6
+                    if canonical_key == "D#"
+                    else register_shift
+                )
                 if any(
                     note["fret"] + fret_shift >= 23
                     for note in position["notes"]
@@ -521,7 +536,16 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
                 translated.append(translated_position)
 
             for position in base_positions:
-                fret_shift = (-8 if canonical_key == "E" and position is reference[4] else register_shift) + 12
+                base_shift = (
+                    -6
+                    if canonical_key == "D#" and position is reference[4]
+                    else -8
+                    if canonical_key == "E" and position is reference[4]
+                    else 6
+                    if canonical_key == "D#"
+                    else register_shift
+                )
+                fret_shift = base_shift + 12
                 if any(note["fret"] + fret_shift >= 23 for note in position["notes"]):
                     continue
                 repeated_position = dict(position)

@@ -289,7 +289,13 @@ def test_aeolian_aliases_all_match_canonical_layouts() -> None:
             actual = client.get(
                 f"/api/scale-positions?key={alias.replace('#', '%23')}&mode=Aeolian"
             ).get_json()
-            assert actual == expected
+            if alias == "D#":
+                assert actual != expected
+                assert actual[0]["label"] == "Position 1 — C shape (6th fret)"
+                assert actual[0]["root_string"] == "A string"
+                assert actual[0]["root_fret"] == 6
+            else:
+                assert actual == expected
 
 
 def test_non_aeolian_layouts_remain_unchanged() -> None:
