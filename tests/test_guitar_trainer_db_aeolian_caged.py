@@ -1,4 +1,4 @@
-"""Regression tests for the Db/Aeolian minor CAGED layout."""
+"""Regression tests for the Db/Aeolian and D/Aeolian minor CAGED layouts."""
 from __future__ import annotations
 
 import sys
@@ -15,6 +15,42 @@ def _shape_names(positions: list[dict]) -> list[str]:
         position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
         for position in positions
     ]
+
+
+def test_d_aeolian_uses_low_fret_caged_sequence_and_valid_geometry() -> None:
+    with ui.app.test_client() as client:
+        response = client.get("/api/scale-positions?key=D&mode=Aeolian")
+
+    assert response.status_code == 200
+    positions = response.get_json()
+    assert _shape_names(positions) == ["A", "G", "E", "D", "C", "A", "G"]
+    assert [position["root_string"] for position in positions] == [
+        "A string",
+        "Low E string",
+        "Low E string",
+        "D string",
+        "A string",
+        "A string",
+        "Low E string",
+    ]
+    assert [position["root_fret"] for position in positions] == [2, 7, 7, 9, 14, 14, 19]
+    assert positions[0]["label"] == "Position 1 — A shape (2nd fret)"
+    assert min(note["fret"] for note in positions[0]["notes"]) >= 2
+    assert max(note["fret"] for note in positions[0]["notes"]) <= 7
+    assert positions[-1]["label"] == "Position 7 — G shape (19th fret)"
+    assert all(
+        1 <= note["string"] <= 6
+        and 0 <= note["fret"] <= 22
+        and 0 <= note["midi"] <= 127
+        and note["midi"] % 12 in {11, 1, 2, 4, 6, 7, 9}
+        for position in positions
+        for note in position["notes"]
+    )
+    assert all(
+        {note["string"] for note in position["notes"]} == {1, 2, 3, 4, 5, 6}
+        and any(note["midi"] % 12 == 2 for note in position["notes"])
+        for position in positions
+    )
 
 
 def test_db_aeolian_uses_bb_minor_caged_shapes_and_repeats() -> None:
