@@ -1270,9 +1270,9 @@ async function createSession() {
     if (!pos) return;
     let phrase = pos.instructor_phrase;
     const spec = MODE_SPEC[_currentMode];
-    // Modes with a dedicated colored degree set get a mode-aware spoken phrase.
-    if (spec && (Object.keys(spec.degrees).length > 3 || spec.characteristic)
-        && !(_currentMode === 'Aeolian' && _currentKey === 'C')) {
+    // Aeolian CAGED layouts already provide position-specific instructor phrases.
+    if (spec && _currentMode !== 'Aeolian'
+        && (Object.keys(spec.degrees).length > 3 || spec.characteristic)) {
       phrase = buildModePhrase(pos, _currentMode, _calloutPending);
     }
     _calloutPending = false;
