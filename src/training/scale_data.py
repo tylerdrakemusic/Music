@@ -457,10 +457,14 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
     positions = SCALE_POSITIONS.get(key)
     if positions is None:
         raise ValueError(f"Unknown key {key!r}; available: {list(SCALE_POSITIONS)}")
-    if key != "C" or mode != "Aeolian":
+    if key not in ("C", "Db") or mode != "Aeolian":
         return positions
 
-    selected = [dict(positions[index]) for index in _C_AEOLIAN_POSITION_INDICES]
+    selected = []
+    for index in _C_AEOLIAN_POSITION_INDICES:
+        position = dict(positions[index])
+        position["notes"] = [dict(note) for note in position["notes"]]
+        selected.append(position)
     for position_number, (position, shape_name) in enumerate(
         zip(selected, _C_AEOLIAN_SHAPE_NAMES), start=1
     ):
@@ -552,11 +556,58 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
         )
         repeated_positions.append(repeated_position)
     selected.extend(repeated_positions)
+    if key == "Db":
+        db_root_fret = 1
+        db_a_shape_offsets = [
+            [6, 0], [6, 1], [6, 3],
+            [5, 0], [5, 2], [5, 3],
+            [4, 0], [4, 2], [4, 3],
+            [3, 0], [3, 2],
+            [2, 0], [2, 1], [2, 3],
+            [1, 0], [1, 1], [1, 3],
+        ]
+        for position in selected:
+            position["root_fret"] += 1
+            for note in position["notes"]:
+                note["fret"] += 1
+                note["midi"] += 1
+            shape_name = position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
+            position_number = int(position["label"].split(" ", 2)[1])
+            position["label"] = (
+                f"Position {position_number} — {shape_name} shape "
+                f"({position['root_fret']}th fret)"
+            )
+            position["instructor_phrase"] = (
+                f"Start on the {position['root_fret']}th fret of the "
+                f"{position['root_string']}. {shape_name} Shape."
+            )
+        selected[0]["notes"] = [
+            ScaleNote(
+                string=string,
+                fret=db_root_fret + delta,
+                midi=_OPEN_MIDI[string] + db_root_fret + delta,
+            )
+            for string, delta in db_a_shape_offsets
+        ]
+        selected[5]["notes"] = [
+            ScaleNote(
+                string=string,
+                fret=db_root_fret + 12 + delta,
+                midi=_OPEN_MIDI[string] + db_root_fret + 12 + delta,
+            )
+            for string, delta in db_a_shape_offsets
+        ]
+        selected[0]["label"] = "Position 1 — A shape (1st fret)"
+        selected[0]["instructor_phrase"] = "Start on the 1st fret of the A string. A Shape."
+        # The final D-shape repeat extends beyond the trainer's 23rd fret.
+        selected = selected[:8]
     shape_names = tuple(
         position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
         for position in selected
     )
-    expected_shape_names = _C_AEOLIAN_SHAPE_NAMES + _C_AEOLIAN_SHAPE_NAMES[:4]
+    expected_shape_names = _C_AEOLIAN_SHAPE_NAMES + (
+        _C_AEOLIAN_SHAPE_NAMES[:3] if key == "Db" else _C_AEOLIAN_SHAPE_NAMES[:4]
+    )
     if shape_names != expected_shape_names:
         raise RuntimeError(
             f"C/Aeolian CAGED layout drifted: expected {expected_shape_names}, "

@@ -21,6 +21,8 @@ from flask import Flask, jsonify, render_template_string, request, Response, abo
 _SRC = Path(__file__).resolve().parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
+from utils import init_db as _init_db  # noqa: E402
+_init_db.use_worktree_aware_db_path(_SRC)
 from utils.init_db import get_connection  # noqa: E402
 from training.practice_stats import get_practice_stats  # noqa: E402
 from training.scale_data import (  # noqa: E402
