@@ -1270,9 +1270,9 @@ async function createSession() {
     if (!pos) return;
     let phrase = pos.instructor_phrase;
     const spec = MODE_SPEC[_currentMode];
-    // Modes with a dedicated colored degree set get a mode-aware spoken phrase.
-    if (spec && (Object.keys(spec.degrees).length > 3 || spec.characteristic)
-        && !(_currentMode === 'Aeolian' && _currentKey === 'C')) {
+    // Aeolian CAGED layouts already provide position-specific instructor phrases.
+    if (spec && _currentMode !== 'Aeolian'
+        && (Object.keys(spec.degrees).length > 3 || spec.characteristic)) {
       phrase = buildModePhrase(pos, _currentMode, _calloutPending);
     }
     _calloutPending = false;
@@ -2114,8 +2114,10 @@ def api_instructor_audio():
     Returns 204 No Content when TTS is unavailable (no key, network error, etc.)
     """
     key = request.args.get("key", "C").strip()
-    key_positions = SCALE_POSITIONS.get(key)
-    if key_positions is None:
+    mode = request.args.get("mode", "Ionian").strip()
+    try:
+      key_positions = get_scale_positions(key, mode)
+    except (ValueError, RuntimeError):
         abort(400)
     try:
         position = int(request.args.get("position", 0))

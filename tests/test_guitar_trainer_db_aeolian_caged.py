@@ -91,3 +91,46 @@ def test_db_aeolian_does_not_broaden_to_other_aeolian_keys() -> None:
         g_default = client.get("/api/scale-positions?key=G").get_json()
 
     assert g_aeolian == g_default
+
+
+def test_eb_aeolian_transposes_the_proven_d_aeolian_layout_up_one_fret() -> None:
+    with ui.app.test_client() as client:
+        response = client.get("/api/scale-positions?key=Eb&mode=Aeolian")
+
+    assert response.status_code == 200
+    positions = response.get_json()
+    assert _shape_names(positions) == ["A", "G", "E", "D", "C", "A", "G"]
+    assert [position["root_fret"] for position in positions] == [3, 8, 8, 10, 15, 15, 20]
+    assert [position["root_string"] for position in positions] == [
+        "A string",
+        "Low E string",
+        "Low E string",
+        "D string",
+        "A string",
+        "A string",
+        "Low E string",
+    ]
+    assert all(
+        0 <= note["fret"] <= 22
+        and note["midi"] % 12 in {0, 2, 3, 5, 7, 8, 10}
+        for position in positions
+        for note in position["notes"]
+    )
+
+
+def test_eb_aeolian_position_four_tts_uses_the_aeolian_phrase(monkeypatch) -> None:
+    captured: dict[str, str] = {}
+
+    def capture_phrase(phrase: str, _cache_dir: Path) -> None:
+        captured["phrase"] = phrase
+        return None
+
+    monkeypatch.setattr(ui, "get_instructor_audio", capture_phrase)
+
+    with ui.app.test_client() as client:
+        response = client.get(
+            "/api/instructor-audio?key=Eb&mode=Aeolian&position=4"
+        )
+
+    assert response.status_code == 204
+    assert captured["phrase"] == "Start on the 10th fret of the D string. D Shape."

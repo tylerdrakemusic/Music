@@ -455,16 +455,17 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
     positions = SCALE_POSITIONS.get(key)
     if positions is None:
         raise ValueError(f"Unknown key {key!r}; available: {list(SCALE_POSITIONS)}")
-    if key == "D" and mode == "Aeolian":
+    if key in ("D", "Eb") and mode == "Aeolian":
+        transpose_offset = 1 if key == "D" else 2
         transposed: list[CagedPosition] = []
         for position in get_scale_positions("Db", "Aeolian"):
             shifted = dict(position)
-            shifted["root_fret"] = position["root_fret"] + 1
+            shifted["root_fret"] = position["root_fret"] + transpose_offset
             shifted["notes"] = [
                 ScaleNote(
                     string=note["string"],
-                    fret=note["fret"] + 1,
-                    midi=note["midi"] + 1,
+                    fret=note["fret"] + transpose_offset,
+                    midi=note["midi"] + transpose_offset,
                 )
                 for note in position["notes"]
             ]
@@ -481,8 +482,13 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
             transposed.append(shifted)
         # Position 8 extends through fret 23, beyond the virtual fretboard.
         transposed = transposed[:7]
-        transposed[0]["label"] = "Position 1 — A shape (2nd fret)"
-        transposed[0]["instructor_phrase"] = "Start on the 2nd fret of the A string. A Shape."
+        first_fret_label = "2nd" if key == "D" else "3rd"
+        transposed[0]["label"] = (
+            f"Position 1 — A shape ({first_fret_label} fret)"
+        )
+        transposed[0]["instructor_phrase"] = (
+            f"Start on the {first_fret_label} fret of the A string. A Shape."
+        )
         return transposed
     if key not in ("C", "Db") or mode != "Aeolian":
         return positions
