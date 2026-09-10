@@ -16,7 +16,6 @@ def test_music_manifest_declares_only_canonical_diagram_sources() -> None:
     assert [record["path"] for record in manifest["diagrams"]] == [
         "diagrams/music-architecture.mmd",
         "diagrams/music-db-schema.mmd",
-        "diagrams/music-icecast-primary-architecture.mmd",
         "diagrams/music-tech-stack.mmd",
     ]
     assert all(

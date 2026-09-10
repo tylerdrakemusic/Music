@@ -6,7 +6,6 @@ EXPECTED_DIAGRAMS = (
     "music-architecture.mmd",
     "music-db-schema.mmd",
     "music-tech-stack.mmd",
-    "music-icecast-primary-architecture.mmd",
 )
 MAX_RENDERING_BYTES = 10_000
 

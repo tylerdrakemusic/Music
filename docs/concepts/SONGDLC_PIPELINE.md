@@ -33,7 +33,7 @@ release operations, verification, amplification, and lifecycle management.
 │  (1 day)        (1-7 days)      (1-3 days)       (1-2 weeks)     (ongoing) (ongoing)│
 └─────────────────────────────────────────────────────────────────────────────────────┘
          │               │               │               │              │         │
-     release row     store live      ISRC/links      radio/social    analytics   next move
+   release row     store live      ISRC/links      social/press    analytics   next move
      signatures      confirmed       completed       push live       reviewed    decided
 ```
 
@@ -108,7 +108,7 @@ release operations, verification, amplification, and lifecycle management.
 |------|--------|----------|-------|
 | 3.1 | Update official links / link hub | updated links | Tyler/Agent |
 | 3.2 | Claim or refresh artist surfaces (Pandora AMP, iHeart, Spotify for Artists) | claimed profiles | Tyler ✅ Pandora AMP submitted 2026-04-28 (PENDING — 1-2 weeks) |
-| 3.3 | Publish Bloom into self-hosted radio rotation | radio playlist update | Agent |
+| 3.3 | Prepare Bloom for owned social and press channels | campaign assets | Tyler/Agent |
 | 3.4 | Prepare Bandcamp and Audius direct-release versions if desired | uploads or backlog | Tyler/Agent |
 | 3.5 | Push social / press / mailing list assets | campaign assets | Tyler |
 | 3.6 | Tag standout tracks for playlist pitching or video follow-up | opportunity list | Tyler/Agent |
@@ -124,7 +124,7 @@ release operations, verification, amplification, and lifecycle management.
 | Signal | Source | Why It Matters |
 |--------|--------|----------------|
 | Platform availability | Stores / artist dashboards | Detect broken or missing release presence |
-| Listener counts | TJD Radio / platform dashboards | Identify traction and listener behavior |
+| Listener counts | Platform dashboards | Identify traction and listener behavior |
 | Track preference | Repeat plays, favorites, saves | Find strongest Bloom songs |
 | Provenance integrity | Signature checks / file watch | Detect drift or tampering |
 | Rights progress | ASCAP / copyright / metadata | Close legal and royalty gaps |
@@ -132,7 +132,7 @@ release operations, verification, amplification, and lifecycle management.
 | Step | Action | Artifact | Owner |
 |------|--------|----------|-------|
 | 4.1 | Re-check key platforms at fixed intervals | verification log | Agent |
-| 4.2 | Monitor self-hosted radio usage and now-playing history | radio ops summary | Agent |
+| 4.2 | Review audience signals from platform dashboards | performance notes | Agent |
 | 4.3 | Review platform analytics as they arrive | performance notes | Tyler/Agent |
 | 4.4 | Re-run signature/integrity checks if masters change | updated signatures | Agent |
 | 4.5 | Identify which Bloom tracks merit videos, lyric clips, or live focus | follow-up list | Tyler |
@@ -165,7 +165,7 @@ release operations, verification, amplification, and lifecycle management.
 | Platform presence drift | manual/API verification | Open issue and recheck stores |
 | Missing rights metadata | release checklist | Fill gaps before secondary distribution push |
 | Broken owned links | link audit | Update immediately |
-| Radio asset mismatch | playlist vs signed masters | Replace with canonical master |
+| Campaign asset mismatch | published asset vs signed masters | Replace with canonical master |
 
 **Rule:** Post-release operations never override the canonical master or release metadata silently. Any fix must be traceable.
 
@@ -175,7 +175,6 @@ release operations, verification, amplification, and lifecycle management.
 
 - Bloom is the first release this pipeline is written around.
 - **Platform priority:** Broad completeness across all major stores is the primary Stage 1 goal — verify all platforms before shifting to focused promotion.
-- **TJD Radio:** Full Bloom catalog enters permanent rotation immediately after release (not just selected tracks).
 - **Bandcamp:** Primary post-release expansion target, not a secondary option. Treated the same as mainstream DSP confirmation.
 - **Second-wave track selection:** TBD — deferred until platform analytics and listener data are available. Agent should surface candidate tracks once signal data arrives (Stage 4).
 - Quantum signatures remain relevant post-release for integrity, provenance, and auditability.
@@ -205,14 +204,14 @@ release operations, verification, amplification, and lifecycle management.
 
 ### Phase B: Automation
 - [ ] Platform verification automation for Bloom store presence
-- [ ] Radio rotation integration for Bloom release blocks
+- [ ] Owned-channel campaign integration for Bloom release blocks
 - [ ] Metadata completeness validator for released tracks
 - [ ] Integrity drift checks for canonical masters
 
 ### Phase C: Dashboard Integration
 - [ ] Add a Bloom release-ops dashboard view
 - [ ] Show platform confirmation status and direct links
-- [ ] Show radio exposure / now-playing history for Bloom tracks
+- [ ] Show audience signals and campaign status for Bloom tracks
 
 ---
 
@@ -221,11 +220,8 @@ release operations, verification, amplification, and lifecycle management.
 1. After Bloom release, is the priority broad platform completeness or focused promotion on a few channels first?  
    **→ Broad platform completeness first. Confirm presence across all major stores before concentrating promotional push.**
 
-2. Should Bloom go immediately into permanent TJD Radio rotation, or only selected tracks?  
-   **→ Yes — full Bloom catalog into permanent TJD Radio rotation immediately after release.**
-
-3. Is Bandcamp part of the post-Bloom operating plan, or should it stay secondary?  
+2. Is Bandcamp part of the post-Bloom operating plan, or should it stay secondary?  
    **→ Yes — Bandcamp is a primary target in the post-Bloom expansion plan.**
 
-4. Which Bloom tracks deserve the strongest second-wave push after release?  
+3. Which Bloom tracks deserve the strongest second-wave push after release?  
    **→ TBD — to be decided once platform analytics and listener data are in.**

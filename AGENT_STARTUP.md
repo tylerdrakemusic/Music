@@ -23,7 +23,6 @@
 | **SQLite Database** | `src/data/heartmusic.db` |
 | **Python Executable** | `C:\G\python.exe` |
 | **Music Dashboard** | `src/analysis/music_dashboard.py` |
-| **TJD Radio Service** | `src/radio/tjd_radio.py` |
 | **Agent Definitions** | `.github/agents/❤music-*.agent.md` |
 | **Artist Profile** | `f:\❤Music\ARTIST_PROFILE.json` |
 
@@ -111,23 +110,16 @@ conn = get_connection()
 
 Check `TODO_AI.md` for the highest priority incomplete task and begin work.
 
-## 8. Dashboard + Radio Startup
+## 8. Dashboard Startup
 
-Use this when you need the full operational surface (tracks, release ops, and live radio) available in one session.
+Use this when you need the dashboard available in one session.
 
 ```powershell
 Set-Location "f:\❤Music"
 
-# Terminal 1: start the live station
-C:\G\python.exe src/radio/tjd_radio.py --port 8100 --bitrate 192 --crossfade 2 --bumper-dir catalog/bumpers --bumper-every 3
-
-# Terminal 2: start the dashboard
+# Start the dashboard
 C:\G\python.exe src/analysis/music_dashboard.py --port 5050 --no-open
 ```
-
-Integration notes:
-- The dashboard Radio tab consumes `http://localhost:8100/api/now_playing` and `http://localhost:8100/api/playlist` via proxy routes.
-- If the radio process is down, the Radio tab shows offline status but the rest of the dashboard still works.
 
 ## 9. Google Drive Integration (FR-20260530-gdrive-integration)
 
