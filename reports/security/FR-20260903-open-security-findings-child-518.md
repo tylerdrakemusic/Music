@@ -3,7 +3,7 @@
 FR: `FR-20260903-open-security-findings-all-repositories`
 Project: `❤Music`
 Child: `518`
-Validation date: `2026-09-04`
+Validation date: `2026-09-10` (amended recycled-light review)
 
 ## Inventory
 
@@ -58,3 +58,36 @@ required outside the repository. The existing `.gitignore` already ignores
 This artifact is evidence only. It intentionally does not update central
 vulnerability statuses, override notes, or remediation timestamps. Those
 mutations must occur only after the child validation gate accepts this evidence.
+
+## Amendment: post-snapshot findings
+
+The three amended scanner IDs were inspected against the current branch source,
+not just the reported line text:
+
+| Finding | Current location | Disposition | Evidence |
+|---|---|---|---|
+| `0963a0e669d23f97` | `src/training/musician_training_ui.py:2187` | false positive/tooling limitation | The reported process launch is the `/launch` route. It accepts only an integer exercise ID, reads the exercise row by parameterized SQLite lookup, writes a fixed-name JSON file under `TRAINING_DIR`, and invokes a fixed `focused_musician_training.py` path with `shell=False` argument-list execution. The user-controlled values are serialized data, not PowerShell command text. |
+| `9ea958a768d07907` | `tests/test_band_mgmt_http_file_serve.py:249` | false positive/tooling limitation | The reported line is the `TestPauseButtonUsesResolvedUrl` test class declaration. The nearby HTTP strings are adversarial test inputs and assertions; they are not requests made by production code. The test module also exercises encoded-path and traversal rejection for both file-serving endpoints. |
+| `5bf9a4ee29cf49c4` | `src/band_mgmt/generate_band_mgmt_panel.py:1340` | false positive/tooling limitation | The reported line is the `argparse` declaration for an explicit CLI port value, with a `8765` default. The server default host is `127.0.0.1`; no external request is made by this declaration. File endpoints validate decoded paths against their configured roots before opening files. |
+
+## Amendment validation
+
+Focused executable checks from the isolated `fix/FR-20260903-open-security-findings`
+worktree:
+
+```text
+pytest tests/test_band_mgmt_http_file_serve.py -q -k "resolve or JsUrlRewriting or AudioUrlRegex or PauseButton"
+21 passed, 9 deselected
+
+pytest tests/test_guitar_trainer_new_card_timestamps.py tests/test_guitar_trainer_exercise_audio.py tests/test_guitar_trainer_metronome.py -q
+32 passed
+```
+
+The complete `test_band_mgmt_http_file_serve.py` module was also attempted. Its
+first three tests passed, then the existing live-server fixture hung during
+teardown and pytest ended with `KeyboardInterrupt`; this is recorded as a
+validation blocker rather than a passing result. The deterministic subset
+above completed successfully.
+
+No production files were changed, no vulnerability record was mutated, and no
+new finding status is claimed by this artifact.
