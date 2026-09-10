@@ -14,8 +14,6 @@ import json
 import re
 import subprocess
 import sys
-import urllib.error
-import urllib.request
 import webbrowser
 from pathlib import Path
 
@@ -659,54 +657,6 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
     background: var(--surface2); color: var(--text-dim); font-weight: 600;
   }
 
-  /* ── Radio Tab ── */
-  .radio-player-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 24px; width: 320px; text-align: center;
-  }
-  .radio-status { display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 16px; }
-  .radio-dot {
-    width: 10px; height: 10px; border-radius: 50%; display: inline-block;
-  }
-  .radio-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e88; animation: pulse-dot 1.5s infinite; }
-  .radio-dot.offline { background: #ef4444; }
-  @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-  .radio-now-playing { margin: 12px 0; }
-  .radio-track-title { font-size: 1.3em; font-weight: 700; color: var(--text); }
-  .radio-track-album { font-size: 0.85em; color: var(--text-dim); margin-top: 4px; }
-  .radio-controls { display: flex; align-items: center; gap: 16px; justify-content: center; margin: 16px 0; }
-  .radio-play-btn {
-    width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--accent);
-    background: transparent; color: var(--accent); font-size: 1.3em; cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-  }
-  .radio-play-btn:hover { background: var(--accent); color: #fff; }
-  .radio-vol-row { display: flex; align-items: center; gap: 8px; }
-  .radio-vol-row label { font-size: 0.7em; color: var(--text-dim); letter-spacing: 2px; }
-  .radio-vol-row input[type=range] { width: 100px; accent-color: var(--accent); }
-  .radio-stats {
-    display: flex; gap: 16px; justify-content: center; margin-top: 12px;
-    font-size: 0.8em; color: var(--text-dim);
-  }
-  .radio-stats .stat-val { color: var(--accent2); font-weight: 700; }
-  .radio-history, .radio-playlist {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 20px; flex: 1; min-width: 260px; max-height: 500px; overflow-y: auto;
-  }
-  .radio-history h3, .radio-playlist h3 {
-    font-size: 0.9em; color: var(--text-dim); margin-bottom: 12px; letter-spacing: 1px;
-  }
-  .rh-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 0; border-bottom: 1px solid var(--border);
-    font-size: 0.85em;
-  }
-  .rh-item:last-child { border-bottom: none; }
-  .rh-title { color: var(--text); font-weight: 600; }
-  .rh-album { color: var(--text-dim); font-size: 0.85em; }
-  .rh-time { color: var(--text-muted); font-size: 0.8em; font-family: monospace; }
-  .rpl-item { padding: 6px 0; border-bottom: 1px solid #1a1a2a; font-size: 0.82em; color: var(--text-dim); }
-  .rpl-item:last-child { border-bottom: none; }
 
   /* Release Ops */
   .ops-panel {
@@ -874,7 +824,6 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <button class="tab-btn active" onclick="switchTab('tracks', this)">🎵 Tracks</button>
   <button class="tab-btn" onclick="switchTab('signatures', this)">🔐 Release Signatures</button>
   <button class="tab-btn" onclick="switchTab('release-ops', this)">📡 Release Ops</button>
-  <button class="tab-btn" onclick="switchTab('radio', this)">📻 Radio</button>
   {% if enable_chord_sheets %}<button class="tab-btn" onclick="switchTab('chord-sheets', this); csLoadSongs()">📄 Chord Sheets</button>{% endif %}
   <a href="/rhymes" class="tab-btn" style="text-decoration:none;">🎼 Rhyme Grouper</a>
   <a href="/links" class="tab-btn" style="text-decoration:none;">🔗 Artist Links</a>
@@ -954,38 +903,6 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 </div>
 
 </div><!-- end main -->
-
-<div id="tab-radio" class="tab-content">
-  <div class="summary-grid" id="radioSummary"></div>
-  <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;">
-    <div class="radio-player-card" id="radioPlayerCard">
-      <div class="radio-status" id="radioStatus">
-        <span class="radio-dot offline" id="radioDot"></span>
-        <span id="radioStatusText">Checking...</span>
-      </div>
-      <div class="radio-now-playing">
-        <div class="radio-track-title" id="radioTrackTitle">—</div>
-        <div class="radio-track-album" id="radioTrackAlbum">&nbsp;</div>
-      </div>
-      <div class="radio-controls">
-        <button class="radio-play-btn" id="radioPlayBtn" onclick="toggleRadio()">▶</button>
-        <div class="radio-vol-row">
-          <label>VOL</label>
-          <input type="range" id="radioVol" min="0" max="100" value="70" oninput="setRadioVol(this.value)">
-        </div>
-      </div>
-      <div class="radio-stats" id="radioStats"></div>
-    </div>
-    <div class="radio-history" id="radioHistory">
-      <h3>Recently Played</h3>
-      <div id="radioHistoryList"><div style="color:var(--text-dim);padding:12px;">Waiting for data...</div></div>
-    </div>
-    <div class="radio-playlist" id="radioPlaylist">
-      <h3>Full Playlist</h3>
-      <div id="radioPlaylistList"><div style="color:var(--text-dim);padding:12px;">Loading...</div></div>
-    </div>
-  </div>
-</div>
 
 {% if enable_chord_sheets %}
 <div id="tab-chord-sheets" class="tab-content">
@@ -1426,7 +1343,6 @@ function switchTab(tab, btn) {
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'signatures' && !signaturesLoaded) loadSignatures();
   if (tab === 'release-ops' && !releaseOpsLoaded) loadReleaseOps();
-  if (tab === 'radio' && !radioLoaded) loadRadio();
   if (tab === 'links' && !linksLoaded) loadLinks();
 }
 
@@ -1634,94 +1550,6 @@ function countLinks(raw) {
   return 0;
 }
 
-// ── Radio ──
-const RADIO_URL = 'http://localhost:8100';
-let radioLoaded = false;
-let radioPlaying = false;
-let radioAudio = new Audio();
-radioAudio.volume = 0.7;
-let radioPoller = null;
-
-async function loadRadio() {
-  radioLoaded = true;
-  await pollRadio();
-  await loadRadioPlaylist();
-  if (!radioPoller) radioPoller = setInterval(pollRadio, 3000);
-}
-
-async function pollRadio() {
-  try {
-    const r = await fetch('/api/radio/now_playing');
-    const d = await r.json();
-    if (d.error) {
-      document.getElementById('radioDot').className = 'radio-dot offline';
-      document.getElementById('radioStatusText').textContent = 'Offline';
-      document.getElementById('radioTrackTitle').textContent = '—';
-      document.getElementById('radioTrackAlbum').innerHTML = '&nbsp;';
-      document.getElementById('radioSummary').innerHTML = mkSummaryCard('Status', 'Offline') + mkSummaryCard('Stream', RADIO_URL);
-      return;
-    }
-    document.getElementById('radioDot').className = 'radio-dot online';
-    document.getElementById('radioStatusText').textContent = 'LIVE';
-    document.getElementById('radioTrackTitle').textContent = d.title || 'Starting...';
-    document.getElementById('radioTrackAlbum').textContent = d.album || '';
-    const m = Math.floor((d.uptime_sec||0) / 60);
-    const s = Math.floor((d.uptime_sec||0) % 60);
-    document.getElementById('radioStats').innerHTML =
-      `<div>Listeners: <span class="stat-val">${d.listeners}</span></div>` +
-      `<div>Tracks: <span class="stat-val">${d.total_tracks}</span></div>` +
-      `<div>Uptime: <span class="stat-val">${m}:${String(s).padStart(2,'0')}</span></div>`;
-    document.getElementById('radioSummary').innerHTML =
-      mkSummaryCard('Status', '<span style=\"color:#22c55e\">● LIVE</span>') +
-      mkSummaryCard('Listeners', d.listeners) +
-      mkSummaryCard('Catalog', d.total_tracks + ' tracks') +
-      mkSummaryCard('Uptime', m + ':' + String(s).padStart(2,'0'));
-    // History
-    const hist = (d.history || []).slice().reverse();
-    const hEl = document.getElementById('radioHistoryList');
-    if (hist.length) {
-      hEl.innerHTML = hist.map(h =>
-        `<div class="rh-item"><div><span class="rh-title">${esc(h.title)}</span><br><span class="rh-album">${esc(h.album)}</span></div><span class="rh-time">${esc(h.started_at)}</span></div>`
-      ).join('');
-    } else {
-      hEl.innerHTML = '<div style="color:var(--text-dim);padding:12px;">Nothing played yet</div>';
-    }
-  } catch(e) {
-    document.getElementById('radioDot').className = 'radio-dot offline';
-    document.getElementById('radioStatusText').textContent = 'Offline';
-  }
-}
-
-function mkSummaryCard(label, val) {
-  return `<div class="summary-card"><div class="summary-value">${val}</div><div class="summary-label">${label}</div></div>`;
-}
-
-async function loadRadioPlaylist() {
-  try {
-    const r = await fetch('/api/radio/playlist');
-    const tracks = await r.json();
-    const el = document.getElementById('radioPlaylistList');
-    if (tracks.length) {
-      el.innerHTML = tracks.map((t, i) =>
-        `<div class="rpl-item">${i+1}. ${esc(t.title)} <span style="color:var(--text-muted)">· ${esc(t.album)}</span></div>`
-      ).join('');
-    }
-  } catch(e) {}
-}
-
-function toggleRadio() {
-  if (radioPlaying) {
-    radioAudio.pause();
-    radioAudio.src = '';
-    radioPlaying = false;
-    document.getElementById('radioPlayBtn').innerHTML = '&#9654;';
-  } else {
-    radioAudio.src = RADIO_URL + '/stream?t=' + Date.now();
-    radioAudio.play().catch(e => console.error('Radio play error:', e));
-    radioPlaying = true;
-    document.getElementById('radioPlayBtn').innerHTML = '&#9724;';
-  }
-}
 // ── Artist Links ──────────────────────────────────────────────────────────────
 let allLinks = [];
 
@@ -2344,31 +2172,6 @@ def serve_audio(filepath: str):
     if requested.suffix.lower() != ".mp3":
         return jsonify({"ok": False, "error": "Unsupported audio format"}), 400
     return send_file(requested, mimetype="audio/mpeg")
-
-
-# ── Radio proxy routes (forward to TJD Radio on port 8100) ────────────────────
-
-RADIO_BASE = "http://localhost:8100"
-
-
-@app.route("/api/radio/now_playing")
-def api_radio_now_playing():
-    try:
-        req = urllib.request.urlopen(f"{RADIO_BASE}/api/now_playing", timeout=2)  # nosec B310
-        data = json.loads(req.read())
-        return jsonify(data)
-    except (urllib.error.URLError, OSError):
-        return jsonify({"error": "Radio offline", "title": "Offline", "listeners": 0})
-
-
-@app.route("/api/radio/playlist")
-def api_radio_playlist():
-    try:
-        req = urllib.request.urlopen(f"{RADIO_BASE}/api/playlist", timeout=2)  # nosec B310
-        data = json.loads(req.read())
-        return jsonify(data)
-    except (urllib.error.URLError, OSError):
-        return jsonify([])
 
 
 @app.route("/api/tracks/<int:track_id>", methods=["PATCH"])

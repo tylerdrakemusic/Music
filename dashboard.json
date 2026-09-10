@@ -40,18 +40,6 @@
       "priority": 22
     },
     {
-      "id": "tjd-radio",
-      "title": "TJD Radio",
-      "description": "Icecast-backed live continuous stream for Tyler James Drake catalog",
-      "type": "flask_app",
-      "generator": "src/radio/tjd_radio.py",
-      "cli": "C:\\G\\python.exe src/radio/tjd_radio.py --backend icecast --port 8100 --icecast-stream-url http://127.0.0.1:18000/stream --icecast-status-url http://127.0.0.1:18000/status-json.xsl",
-      "url": "http://localhost:8100",
-      "category": "music",
-      "icon": "📻",
-      "priority": 23
-    },
-    {
       "id": "studio-panel",
       "title": "❤ Studio",
       "description": "Studio gear inventory (Personal + HyperThreat), mic config print, CRUD management via heartmusic.db",
