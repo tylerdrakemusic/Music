@@ -13,6 +13,17 @@ A structured project to organize, track, and drive Tyler's music career:
 - **Performance** — Gig management, setlists, practice logging
 - **Distribution** — Release planning across streaming platforms
 
+## Retired Local LLM Surface
+
+The Music dashboard no longer imports, probes, configures, or falls back to a
+local LLM runtime. The former chord-sheet parsing UI and endpoints, rhyme
+suggestion fallback, and automatic hook-candidate scoring were intentionally
+removed. Rhyme suggestions now use the existing phonetic grouping data only.
+
+There is no replacement LLM in this project. Chord-sheet generation and other
+LLM-backed workflows must be introduced by a separate, explicitly scoped
+feature request.
+
 ## Acknowledgements
 
 BPM data for the agentic chord-sheet workflow is looked up via [GetSongBPM.com](https://getsongbpm.com), which provides a free public API for song tempo data.

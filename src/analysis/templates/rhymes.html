@@ -172,7 +172,6 @@
     .btn-danger-sm,
     .btn-edit-sm,
     .lyric-edit-input,
-    .ollama-check,
     .suggest-results,
     .stats-row,
     .back-link {
@@ -350,8 +349,6 @@
     font-size: 13px; color: var(--text); outline: none;
   }
   .suggest-input:focus { border-color: #6366f1; }
-  .ollama-check { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
-  .ollama-check input { accent-color: #6366f1; cursor: pointer; }
   .suggest-results {
     margin-top: 12px; display: none;
   }
@@ -417,9 +414,6 @@
       <input type="text" class="suggest-input" id="suggestInput"
              placeholder="Type a lyric line to find rhymes…" />
       <button class="btn btn-secondary" onclick="runSuggest()">Suggest</button>
-      <label class="ollama-check">
-        <input type="checkbox" id="ollamaFallback"> Ollama fallback
-      </label>
     </div>
     <div class="suggest-results" id="suggestResults">
       <div class="suggest-source" id="suggestSource"></div>
@@ -440,7 +434,6 @@
     <input type="text" class="search-box" id="searchBox"
            placeholder="Filter lines…" oninput="filterLines(this.value)" />
     <button class="regroup-btn" onclick="regroup()">↻ Re-run Grouping</button>
-    <button class="btn btn-secondary tag-hooks-btn" onclick="tagHookCandidates()">🎣 Auto-tag hooks</button>
     <button class="print-btn" onclick="printGroupedLines()">🖨️ Print grouped lyrics</button>
   </div>
 
@@ -718,34 +711,6 @@ function printGroupedLines() {
   window.print();
 }
 
-async function tagHookCandidates() {
-  const btn = document.querySelector('.tag-hooks-btn');
-  if (!btn) return;
-  const original = btn.textContent;
-  btn.textContent = 'Working…';
-  btn.disabled = true;
-  try {
-    const res = await fetch('/rhymes/hook-candidates', { method: 'POST' });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Unknown error');
-    if (Array.isArray(data.marked_ids)) {
-      data.marked_ids.forEach(id => {
-        const row = document.querySelector(`.lyric-line[data-line-id="${id}"]`);
-        if (row) {
-          renderHookState(row, true);
-        }
-      });
-    }
-    showToast(data.message || `Marked ${data.marked_ids?.length || 0} hook lines`);
-    updateStats();
-  } catch (e) {
-    showToast(e.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = original;
-  }
-}
-
 window.addEventListener('beforeprint', () => {
   document.querySelectorAll('.group-body').forEach(body => body.classList.add('open'));
   document.body.classList.add('compact-print');
@@ -759,14 +724,13 @@ window.addEventListener('afterprint', () => {
 async function runSuggest() {
   const q = document.getElementById('suggestInput').value.trim();
   if (!q) return;
-  const fallback = document.getElementById('ollamaFallback').checked;
   const results = document.getElementById('suggestResults');
   const src = document.getElementById('suggestSource');
   const list = document.getElementById('suggestList');
   list.innerHTML = '<em style="color:var(--text-dim)">Loading…</em>';
   results.classList.add('visible');
   try {
-    const url = `/rhymes/suggest?q=${encodeURIComponent(q)}${fallback ? '&fallback=ollama' : ''}`;
+    const url = `/rhymes/suggest?q=${encodeURIComponent(q)}`;
     const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Unknown error');

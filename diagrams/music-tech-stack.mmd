@@ -16,8 +16,6 @@ graph LR
     Python --> Demucs[demucs<br/>stem separation]
     Python --> Requests[requests<br/>GetSongBPM HTTP client]
     Web[HTML · CSS · JS] --> Tone[Tone.js<br/>Strudel]
-    Python -.->|lazy cross-project import| WSOllama[(⊕Workspace<br/>src/integrations/ollama)]
-    WSOllama -.-> Ollama[(Ollama LLM<br/>local server)]
     Python -->|Dockerfile| Docker[Docker<br/>python:3.11-slim image] -->|"flyctl deploy (CI, main-only)"| FlyIO[(Fly.io<br/>guitartrainer.fly.dev)]
     HyperthreatLauncher["hyperthreat_app.py<br/>minimal Flask launcher<br/>/ · /mic-config · /patch-bay<br/>/patch_bay.html · /health"]
     HyperthreatTemplates["Static templates only<br/>mic_config_template.html<br/>patch_bay.html"]
@@ -31,8 +29,7 @@ graph LR
     class Python,Web lang
     class SQLCipher,Flask,Librosa,Mutagen,Pytest,TestRunner,TestPolicy,Xdist,Tone,PythonDocx,Pypdf,Pronouncing,Demucs,Requests lib
     class ParallelEvidence state
-    class WSOllama ws
-    class Ollama,FlyIO,HyperthreatFly ext
+    class FlyIO,HyperthreatFly ext
     class HyperthreatLauncher,HyperthreatTemplates,HyperthreatDocker svc
     class HyperthreatGate state
 

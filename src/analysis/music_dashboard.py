@@ -11,256 +11,17 @@ Usage:
 
 import argparse
 import json
-import re
-import subprocess
 import sys
 import webbrowser
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, render_template_string, request, send_file
+from flask import Flask, jsonify, render_template, render_template_string, request
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from utils.init_db import get_connection
 from analysis.rhyme_utils import build_suffix_map, get_phonetic_group, last_word
 
 CATALOG_ROOT = Path(__file__).resolve().parent.parent.parent / "catalog"
-
-# Chord Sheets tab is temporarily disabled — the Ollama-based parsing flow
-# (BFX-20260630-chord-sheet-ollama-timeout, CLOSED) proved unreliable and is
-# being replaced by a different approach in a future FR. Backend routes and
-# parsing code remain intact; only the UI tab is hidden. Flip to True (or
-# remove) to re-enable once the replacement approach lands.
-ENABLE_CHORD_SHEETS = False
-
-# ── Ollama (optional) ─────────────────────────────────────────────────────────
-_OLLAMA_AVAILABLE = False
-_OLLAMA_BASE_URL = None
-_OLLAMA_MODEL = "llama3.3:70b"
-_OLLAMA_FALLBACK_MODEL_ORDER = ["llama3:70b", "llama3.1:8b"]
-_OLLAMA_HOOK_LINE_LIMIT = 30
-try:
-    import os as _os
-    _workspace_root = None
-    _workspace_env = _os.environ.get("WORKSPACE_ROOT")
-    if _workspace_env:
-        _workspace_path = Path(_workspace_env)
-        if _workspace_path.is_dir():
-            _workspace_root = _workspace_path
-
-    if _workspace_root is None:
-        file_path = Path(__file__).resolve()
-        for parent in [file_path, *file_path.parents]:
-            candidate = parent / "⊕Workspace"
-            if candidate.is_dir():
-                _workspace_root = candidate
-                break
-            candidate = parent / "workspace"
-            if candidate.is_dir():
-                _workspace_root = candidate
-                break
-
-    if _workspace_root is None:
-        _drive_root = Path(__file__).resolve().anchor
-        for _entry in Path(_drive_root).iterdir():
-            if _entry.is_dir() and (
-                _entry.name == "⊕Workspace"
-                or _entry.name.endswith("Workspace")
-                or _entry.name.lower() == "workspace"
-            ):
-                _workspace_root = _entry
-                break
-
-    if _workspace_root is not None:
-        sys.path.insert(0, str(_workspace_root))
-
-    _OLLAMA_MODEL = _os.environ.get("OLLAMA_MODEL") or _OLLAMA_MODEL
-    from src.integrations.ollama.client import OllamaClient as _OllamaClient
-    try:
-        client = _OllamaClient(model=_OLLAMA_MODEL)
-        if client.health_check():
-            if client.ensure_model_available(_OLLAMA_MODEL):
-                _OLLAMA_AVAILABLE = True
-            else:
-                available_models: list[str] = []
-                try:
-                    available_models = [
-                        m.get("name") or m.get("model")
-                        for m in client.list_models()
-                    ]
-                except Exception:
-                    available_models = []
-
-                fallback_model: str | None = None
-                for candidate in available_models:
-                    if candidate and "70b" in candidate:
-                        fallback_model = candidate
-                        break
-                if fallback_model is None and available_models:
-                    fallback_model = available_models[0]
-
-                if fallback_model is not None:
-                    client = _OllamaClient(model=fallback_model)
-                    if client.ensure_model_available(fallback_model):
-                        _OLLAMA_MODEL = fallback_model
-                        _OLLAMA_AVAILABLE = True
-            if _OLLAMA_AVAILABLE:
-                _OLLAMA_BASE_URL = client.base_url
-    except Exception:
-        _OLLAMA_AVAILABLE = False
-        _OLLAMA_BASE_URL = None
-except Exception as exc:
-    _OLLAMA_AVAILABLE = False
-    _OLLAMA_IMPORT_ERROR = exc
-
-# ── make_chord_sheet (optional) ───────────────────────────────────────────────
-try:
-    _CHORD_SHEET_TOOLS_DIR = Path(__file__).resolve().parents[2] / "tools"
-    if str(_CHORD_SHEET_TOOLS_DIR) not in sys.path:
-        sys.path.insert(0, str(_CHORD_SHEET_TOOLS_DIR))
-    from make_chord_sheet import build_docx, compute_output_path  # type: ignore[import]
-    _CHORD_SHEET_AVAILABLE = True
-except Exception as exc:
-    _CHORD_SHEET_AVAILABLE = False
-    _CHORD_SHEET_IMPORT_ERROR = exc
-
-_CS_ROOT = Path(__file__).resolve().parents[2]
-_CATALOG_ROOT = Path(__file__).resolve().parents[2].parent / "catalog"
-_CHORD_SHEET_TEMPLATES_DIR = _CS_ROOT / "studio_master" / "song_templates"
-_CHORD_SHEET_DOCS_DIR = _CATALOG_ROOT / "sheet_music" / "covers"
-
-
-def _cs_sanitize(name: str) -> str:
-    """Sanitize a string to a safe filename component."""
-    keep = " _-.()[]{}+"
-    return "".join(c for c in name if c.isalnum() or c in keep).strip().replace(" ", "_")
-
-
-def _select_fallback_ollama_models(client, selected_model: str) -> list[str]:
-    try:
-        available = [
-            m.get("name") or m.get("model")
-            for m in client.list_models()
-            if m is not None
-        ]
-    except Exception:
-        available = []
-
-    candidates: list[str] = []
-    for candidate in _OLLAMA_FALLBACK_MODEL_ORDER:
-        if candidate and candidate != selected_model and candidate not in candidates:
-            candidates.append(candidate)
-    for candidate in available:
-        if candidate and candidate != selected_model and candidate not in candidates:
-            candidates.append(candidate)
-    return candidates
-
-
-_OLLAMA_FALLBACK_PROBE_TIMEOUT = 20.0  # seconds — fast-fail budget for non-final
-# fallback attempts, so a hung/broken model (e.g. a truncated blob) can't block
-# the whole request behind the full generation timeout when a working fallback
-# model is available.
-
-
-def _generate_with_ollama_fallback(prompt: str, timeout: float | None = None, **kwargs) -> str:
-    selected_model = _OLLAMA_MODEL
-    models_to_try = [selected_model]
-    client = _OllamaClient(model=selected_model)
-    models_to_try.extend(_select_fallback_ollama_models(client, selected_model))
-
-    def _should_fallback(exc: Exception) -> bool:
-        message = str(exc).lower()
-        return any(
-            phrase in message
-            for phrase in [
-                "not found",
-                "unavailable",
-                "no such model",
-                "timed out",
-                "timeout",
-                "cannot reach ollama",
-            ]
-        )
-
-    last_exc: Exception | None = None
-    last_index = len(models_to_try) - 1
-    for index, model in enumerate(models_to_try):
-        client = _OllamaClient(model=model)
-        # Only the final candidate gets the caller's full timeout budget.
-        # Earlier candidates use a short probe timeout when the caller didn't
-        # specify one, so a broken/stuck model fails fast instead of blocking
-        # a working fallback model for the full generation window.
-        attempt_timeout = timeout
-        if timeout is None and index != last_index:
-            attempt_timeout = _OLLAMA_FALLBACK_PROBE_TIMEOUT
-        try:
-            return client.generate(prompt, timeout=attempt_timeout, **kwargs)
-        except Exception as exc:
-            last_exc = exc
-            if _should_fallback(exc):
-                continue
-            raise
-
-    if last_exc is not None:
-        raise last_exc
-    raise RuntimeError("Ollama generation failed: no fallback model could produce output.")
-
-
-def _strip_markdown_json_fences(text: str) -> str:
-    """Strip a leading/trailing ```json or ``` fence from an LLM response.
-
-    Some models wrap JSON output in markdown code fences even when explicitly
-    instructed not to. This strips a single leading fence (optionally tagged
-    ``json``) and a single trailing fence, leaving unfenced responses untouched.
-    """
-    stripped = text.strip()
-    match = re.match(r"^```(?:json)?\s*\n?(.*?)\n?```\s*$", stripped, flags=re.DOTALL)
-    if match:
-        return match.group(1).strip()
-    return stripped
-
-
-def _chord_sheet_transcribed_char_count(parsed: dict) -> int:
-    """Return the total transcribed *lyric* character count across all sections.
-
-    Only counts the ``lyrics`` field of ``{chords, lyrics}`` line objects. Bare
-    chord-only line strings (no lyrics key) do not count, since a section full
-    of chord tokens with no lyric text is exactly the "negligible content"
-    failure mode this check exists to catch.
-    """
-    total = 0
-    sections = parsed.get("sections")
-    if not isinstance(sections, list):
-        return 0
-    for section in sections:
-        if not isinstance(section, dict):
-            continue
-        lines = section.get("lines")
-        if not isinstance(lines, list):
-            continue
-        for line in lines:
-            if isinstance(line, dict):
-                total += len(str(line.get("lyrics", "")))
-    return total
-
-
-def _chord_sheet_parse_is_incomplete(parsed: dict, raw_text: str) -> bool:
-    """Return True if *parsed* looks like a near-empty shell of the submitted song.
-
-    Regression guard for BFX-20260630-chord-sheet-ollama-timeout (fix iteration 3):
-    smaller models (e.g. llama3.1:8b) have been observed returning technically
-    valid JSON with title/artist/key/bpm but with ``sections`` missing entirely,
-    or present but containing only bare chord tokens and no lyric text. Both are
-    unusable as a chord sheet. Flag as incomplete when the total transcribed
-    lyric character count across all sections is negligible relative to the
-    submitted raw chord chart length.
-    """
-    sections = parsed.get("sections")
-    if not sections:
-        return True
-    transcribed = _chord_sheet_transcribed_char_count(parsed)
-    threshold = max(10, int(len(raw_text) * 0.05))
-    return transcribed < threshold
-
 
 app = Flask(__name__, template_folder="templates")
 
@@ -824,7 +585,6 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <button class="tab-btn active" onclick="switchTab('tracks', this)">🎵 Tracks</button>
   <button class="tab-btn" onclick="switchTab('signatures', this)">🔐 Release Signatures</button>
   <button class="tab-btn" onclick="switchTab('release-ops', this)">📡 Release Ops</button>
-  {% if enable_chord_sheets %}<button class="tab-btn" onclick="switchTab('chord-sheets', this); csLoadSongs()">📄 Chord Sheets</button>{% endif %}
   <a href="/rhymes" class="tab-btn" style="text-decoration:none;">🎼 Rhyme Grouper</a>
   <a href="/links" class="tab-btn" style="text-decoration:none;">🔗 Artist Links</a>
 </div>
@@ -903,57 +663,6 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 </div>
 
 </div><!-- end main -->
-
-{% if enable_chord_sheets %}
-<div id="tab-chord-sheets" class="tab-content">
-  <div style="max-width:900px;">
-    <h3 style="color:var(--accent2);margin-bottom:20px;">📄 Chord Sheets</h3>
-
-    <!-- Section A: parse raw text ─────────────────────────────────────────── -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px;">
-      <h4 style="color:var(--text);margin-bottom:12px;">A — New Song (Parse → Review → Generate)</h4>
-      <div style="margin-bottom:12px;">
-        <label style="color:var(--text-muted);font-size:12px;display:block;margin-bottom:6px;">Paste raw chord chart</label>
-        <textarea id="cs-raw-text" rows="8" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;color:var(--text);font-family:monospace;font-size:13px;resize:vertical;" placeholder="C G Am F&#10;Hello darkness my old friend..."></textarea>
-      </div>
-      <button class="btn" onclick="csParseText()" style="background:var(--accent);color:white;margin-bottom:16px;">Parse with AI</button>
-      <div style="margin-bottom:12px;">
-        <label style="color:var(--text-muted);font-size:12px;display:block;margin-bottom:6px;">Review / Edit JSON</label>
-        <textarea id="cs-json-review" rows="10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;color:var(--text);font-family:monospace;font-size:12px;resize:vertical;" placeholder="Parsed JSON will appear here..."></textarea>
-      </div>
-      <button class="btn" onclick="csGenerateFromJson('A')" style="background:var(--accent2);color:white;">Save &amp; Generate DOCX</button>
-    </div>
-
-    <!-- Section B: existing template ──────────────────────────────────────── -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px;">
-      <h4 style="color:var(--text);margin-bottom:12px;">B — Regenerate from Existing Template</h4>
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-        <select id="cs-song-select" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-size:13px;flex:1;min-width:200px;">
-          <option value="">Loading songs…</option>
-        </select>
-        <label style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:13px;cursor:pointer;">
-          <input type="checkbox" id="cs-lyrics-only" style="width:14px;height:14px;"> Lyrics Only
-        </label>
-      </div>
-      <button class="btn" onclick="csGenerateFromJson('B')" style="background:var(--accent2);color:white;">Generate DOCX</button>
-    </div>
-
-    <!-- Result panel ───────────────────────────────────────────────────────── -->
-    <div id="cs-result-panel" style="display:none;background:var(--surface);border:1px solid var(--ok);border-radius:var(--radius);padding:20px;">
-      <h4 style="color:var(--ok);margin-bottom:12px;">✓ Generated</h4>
-      <div style="margin-bottom:8px;color:var(--text-muted);">File: <span id="cs-result-filename" style="color:var(--text);font-family:monospace;"></span></div>
-      <div style="margin-bottom:8px;color:var(--text-muted);">Path: <span id="cs-result-path" style="color:var(--text);font-family:monospace;"></span></div>
-      <a id="cs-download-link" href="#" target="_blank" class="btn" style="display:inline-block;background:var(--ok);color:white;text-decoration:none;margin-right:10px;">📥 Open DOCX</a>
-      <div id="cs-pr-section" style="display:none;margin-top:14px;">
-        <div style="margin-bottom:8px;color:var(--text-muted);">PR: <a id="cs-pr-url" href="#" target="_blank" style="color:var(--accent);"></a></div>
-        <button class="btn" onclick="csMergePR()" style="background:var(--accent);">🔀 Merge PR</button>
-      </div>
-    </div>
-
-    <div id="cs-status" style="margin-top:12px;font-size:13px;color:var(--text-muted);"></div>
-  </div>
-</div>
-{% endif %}
 
 <!-- Delete confirmation modal -->
 <div class="modal-overlay" id="deleteModal">
@@ -1550,106 +1259,6 @@ function countLinks(raw) {
   return 0;
 }
 
-// ── Artist Links ──────────────────────────────────────────────────────────────
-let allLinks = [];
-
-async function loadLinks() {
-  const res = await fetch('/api/links');
-  allLinks = await res.json();
-  linksLoaded = true;
-  renderLinks();
-}
-
-function renderLinks() {
-  const container = document.getElementById('linksContainer');
-  if (!allLinks.length) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">🔗</div>No links yet — add one!</div>';
-    return;
-  }
-  const sections = [
-    { title: '📧 Emails',                cats: ['email'] },
-    { title: '💳 Social & Payment',      cats: ['social', 'payment'] },
-    { title: '🎵 Distribution Platforms', cats: ['distribution'] },
-  ];
-  let html = '';
-  for (const section of sections) {
-    const slinks = allLinks.filter(l => section.cats.includes(l.category));
-    if (!slinks.length) continue;
-    const byPlat = {};
-    for (const l of slinks) {
-      const p = l.platform || 'Other';
-      (byPlat[p] = byPlat[p] || []).push(l);
-    }
-    html += `<div class="links-section"><div class="links-section-header">${esc(section.title)}</div><div class="links-cards">`;
-    for (const [plat, platLinks] of Object.entries(byPlat)) {
-      const hasPending = platLinks.some(l => l.status === 'pending');
-      const embedLinks = platLinks.filter(l => l.embed_html);
-      html += `<div class="link-card">
-        <div class="link-card-header">
-          <div class="link-card-platform">${esc(plat)}</div>
-          <div class="link-card-badges">${hasPending ? '<span class="pending-badge">⚠️ pending</span>' : ''}</div>
-        </div>
-        <div class="link-rows">`;
-      for (const link of platLinks) {
-        const sClass = 'lsb-' + link.status;
-        const dispText = link.url
-          ? (link.url.length > 50 ? link.url.slice(0, 50) + '…' : link.url)
-          : '(embed)';
-        const copyVal = link.url || link.embed_html || '';
-        html += `<div class="link-row">
-          <div class="link-row-label" title="${esc(link.label || '')}">${esc(link.label || link.song_title || '—')}</div>
-          ${link.url ? `<a class="link-anchor" href="${esc(link.url)}" target="_blank" rel="noopener noreferrer" title="${esc(link.url)}">${esc(dispText)}</a>` : ''}
-          <span class="link-status-badge ${sClass}">${esc(link.status)}</span>
-          <button class="copy-btn" data-copy="${esc(copyVal)}" onclick="copyLink(this.dataset.copy)">Copy</button>
-          <div class="link-row-actions">
-            <button class="link-action-btn" onclick="openLinkModal(${link.id})" title="Edit">✏️</button>
-            <button class="link-action-btn del" onclick="requestLinkDelete(${link.id})" title="Delete">🗑️</button>
-          </div>
-        </div>`;
-      }
-      html += '</div>'; // .link-rows
-      if (embedLinks.length) {
-        const eid = 'emb_' + plat.replace(/[^a-z0-9]/gi, '_');
-        // embed_html is trusted-content-only (artist's own platform iframes).
-        // Do not render user-supplied HTML here without sanitization.
-        html += `<button class="embed-toggle" onclick="toggleEmbeds('${eid}')">▶ Show embeds (${embedLinks.length})</button>`
-             +  `<div class="embed-container" id="${eid}">${embedLinks.map(e => e.embed_html).join('\n')}</div>`;
-      }
-      html += '</div>'; // .link-card
-    }
-    html += '</div></div>'; // .links-cards, .links-section
-  }
-  container.innerHTML = html;
-}
-
-function toggleEmbeds(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const open = el.classList.toggle('open');
-  const btn = el.previousElementSibling;
-  const n = el.querySelectorAll('iframe').length || el.children.length;
-  btn.textContent = open ? `▼ Hide embeds (${n})` : `▶ Show embeds (${n})`;
-}
-
-function copyLink(text) {
-  if (!text) return;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text)
-      .then(() => showToast('Copied!', 'success'))
-      .catch(() => _fallbackCopy(text));
-  } else {
-    _fallbackCopy(text);
-  }
-}
-
-function _fallbackCopy(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.select();
-  document.execCommand('copy');
   document.body.removeChild(ta);
   showToast('Copied!', 'success');
 }
@@ -1769,106 +1378,6 @@ async function confirmLinkDelete() {
 
 function setRadioVol(v) { radioAudio.volume = v / 100; }
 
-// ── Chord Sheets Tab ─────────────────────────────────────────────────────────
-
-async function csLoadSongs() {
-  try {
-    const r = await fetch('/chord-sheet/songs');
-    const songs = await r.json();
-    const sel = document.getElementById('cs-song-select');
-    sel.innerHTML = songs.length
-      ? songs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')
-      : '<option value="">No templates found</option>';
-  } catch (_) {
-    const sel = document.getElementById('cs-song-select');
-    if (sel) sel.innerHTML = '<option value="">Error loading songs</option>';
-  }
-}
-
-async function csParseText() {
-  const raw = document.getElementById('cs-raw-text').value.trim();
-  if (!raw) { showToast('Paste a chord chart first', 'error'); return; }
-  csSetStatus('Parsing with AI\u2026');
-  try {
-    const r = await fetch('/chord-sheet/parse', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({raw_text: raw})
-    });
-    const data = await r.json();
-    if (!r.ok) { csSetStatus('Error: ' + (data.error || r.status)); return; }
-    document.getElementById('cs-json-review').value =
-      JSON.stringify(JSON.parse(data.json_string), null, 2);
-    csSetStatus('Parsed. Review and edit the JSON, then click Save & Generate DOCX.');
-  } catch (e) { csSetStatus('Network error: ' + e.message); }
-}
-
-async function csGenerateFromJson(workflow) {
-  csSetStatus('Generating\u2026');
-  const payload = {workflow};
-  if (workflow === 'A') {
-    const jsonStr = document.getElementById('cs-json-review').value.trim();
-    if (!jsonStr) { showToast('No JSON to generate from', 'error'); return; }
-    payload.json_content = jsonStr;
-  } else {
-    const sel = document.getElementById('cs-song-select');
-    if (!sel.value) { showToast('Select a song first', 'error'); return; }
-    payload.song_path = sel.value;
-    payload.lyrics_only = document.getElementById('cs-lyrics-only').checked;
-  }
-  try {
-    const r = await fetch('/chord-sheet/generate', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
-    });
-    const data = await r.json();
-    if (!r.ok) { csSetStatus('Error: ' + (data.error || r.status)); return; }
-    document.getElementById('cs-result-filename').textContent = data.filename || '';
-    const filePath = data.file_path || '';
-    const pathEl = document.getElementById('cs-result-path');
-    if (pathEl) pathEl.textContent = filePath;
-    const dl = document.getElementById('cs-download-link');
-    dl.href = data.download_url || '#';
-    document.getElementById('cs-result-panel').style.display = 'block';
-    const prSection = document.getElementById('cs-pr-section');
-    if (data.pr_url) {
-      _csPrUrl = data.pr_url.trim();
-      const prLink = document.getElementById('cs-pr-url');
-      prLink.href = _csPrUrl;
-      prLink.textContent = _csPrUrl;
-      prSection.style.display = 'block';
-    } else {
-      prSection.style.display = 'none';
-    }
-    csSetStatus('Done! DOCX generated.');
-    csLoadSongs();
-  } catch (e) { csSetStatus('Network error: ' + e.message); }
-}
-
-let _csPrUrl = '';
-
-async function csMergePR() {
-  if (!_csPrUrl) { csSetStatus('No PR to merge.'); return; }
-  csSetStatus('Merging PR...');
-  try {
-    const r = await fetch('/chord-sheet/merge', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({pr_url: _csPrUrl})
-    });
-    const data = await r.json();
-    if (!r.ok) { csSetStatus('Merge error: ' + (data.error || r.status)); return; }
-    csSetStatus('PR merged! ✓');
-    document.getElementById('cs-pr-section').style.display = 'none';
-    _csPrUrl = '';
-  } catch (e) { csSetStatus('Network error: ' + e.message); }
-}
-
-function csSetStatus(msg) {
-  const el = document.getElementById('cs-status');
-  if (el) el.textContent = msg;
-}
 </script>
 </body>
 </html>
@@ -1879,7 +1388,7 @@ function csSetStatus(msg) {
 
 @app.route("/")
 def index():
-    return render_template_string(DASHBOARD_HTML, enable_chord_sheets=ENABLE_CHORD_SHEETS)
+  return render_template_string(DASHBOARD_HTML)
 
 
 @app.route("/health")
@@ -2467,21 +1976,6 @@ def _get_vault_stats() -> dict:
     }
 
 
-def _parse_ollama_candidates(raw: str, valid_lines: set[str]) -> list[str]:
-    """Extract exact hook-worthy lines from Ollama output."""
-    candidates: list[str] = []
-    for line in raw.splitlines():
-        text = line.strip()
-        if not text:
-            continue
-        text = re.sub(r'^\s*[\d]+[\).:-]*\s*', '', text)
-        if text.startswith(('•', '-', '*')):
-            text = text[1:].strip()
-        if text in valid_lines and text not in candidates:
-            candidates.append(text)
-    return candidates
-
-
 # ── Rhyme Grouper routes ───────────────────────────────────────────────────────
 
 @app.route("/rhymes")
@@ -2672,23 +2166,20 @@ def rhymes_suggest():
     """Suggest rhyming lines for a given query line.
 
     Query params:
-        q: The lyric line to find rhymes for.
-        fallback: Set to 'ollama' to force Ollama fallback.
+      q: The lyric line to find rhymes for.
     """
     _ensure_vault_schema()
     q = (request.args.get("q") or "").strip()
     if not q:
         return jsonify({"error": "q parameter is required"}), 400
 
-    use_ollama = request.args.get("fallback") == "ollama"
-    word = last_word(q)
     _, db_suffix_map = _load_phonetics()
     group_ids = _match_line_to_db_groups(q, db_suffix_map)
 
     suggestions: list[str] = []
     source = "phonetics"
 
-    if group_ids and not use_ollama:
+    if group_ids:
         placeholders = ",".join("?" * len(group_ids))
         with get_connection() as conn:
             rows = conn.execute(
@@ -2700,97 +2191,10 @@ def rhymes_suggest():
             ).fetchall()
         suggestions = [r[0] for r in rows]
 
-    if (not suggestions or use_ollama) and _OLLAMA_AVAILABLE:
-        source = "ollama"
-        try:
-            prompt = (
-                f"List 5 lyric lines from a songwriter's vault that rhyme with: "
-                f"'{word}'. Return only the lines, one per line."
-            )
-            raw = _generate_with_ollama_fallback(prompt)
-            suggestions = [
-                ln.strip().lstrip("0123456789.-) ")
-                for ln in raw.strip().splitlines()
-                if ln.strip()
-            ][:5]
-        except Exception as exc:
-            source = "ollama_error"
-            suggestions = [f"Ollama unavailable: {exc}"]
-    elif not suggestions and not _OLLAMA_AVAILABLE:
+    if not suggestions:
         source = "none"
 
     return jsonify({"suggestions": suggestions, "source": source})
-
-
-@app.route("/rhymes/hook-candidates", methods=["POST"])
-def rhymes_hook_candidates():
-    """Use Ollama to mark unhooked vault lines as hook-worthy."""
-    _ensure_vault_schema()
-    if not _OLLAMA_AVAILABLE:
-        return jsonify({"error": "Ollama not available"}), 503
-
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT id, line FROM vault_lines WHERE is_hook = 0 ORDER BY line COLLATE NOCASE"
-        ).fetchall()
-
-    if not rows:
-        return jsonify({
-            "marked_ids": [],
-            "marked_lines": [],
-            "source": "none",
-            "message": "No unhooked lines available to score.",
-        })
-
-    lines = [row[1] for row in rows]
-    valid_lines = set(lines)
-    if len(lines) > _OLLAMA_HOOK_LINE_LIMIT:
-        lines = lines[:_OLLAMA_HOOK_LINE_LIMIT]
-        valid_lines = set(lines)
-        prompt_intro = (
-            f"You are a songwriting assistant. Here are the first {_OLLAMA_HOOK_LINE_LIMIT} unhooked lyric lines from a songwriter's vault:\n"
-        )
-    else:
-        prompt_intro = (
-            "You are a songwriting assistant. Here are lyric lines from a songwriter's vault:\n"
-        )
-
-    prompt = (
-        prompt_intro
-        + "\n".join(f"{index + 1}. {line}" for index, line in enumerate(lines))
-        + "\n\nIdentify only the lines that would make the strongest chorus hook. "
-        + "Return only the exact lines as they appear above, one per line, without explanation."
-    )
-
-    try:
-        raw = _generate_with_ollama_fallback(prompt, timeout=90.0)
-        candidates = _parse_ollama_candidates(str(raw), valid_lines)
-    except Exception as exc:
-        return jsonify({"error": f"Ollama error: {exc}"}), 503
-
-    marked_ids: list[int] = []
-    line_to_ids: dict[str, list[int]] = {}
-    for row_id, line in rows:
-        line_to_ids.setdefault(line, []).append(row_id)
-
-    for candidate in candidates:
-        marked_ids.extend(line_to_ids.get(candidate, []))
-
-    marked_ids = list(dict.fromkeys(marked_ids))
-    if marked_ids:
-        with get_connection() as conn:
-            conn.executemany(
-                "UPDATE vault_lines SET is_hook = 1 WHERE id = ?",
-                [(line_id,) for line_id in marked_ids],
-            )
-            conn.commit()
-
-    return jsonify({
-        "marked_ids": marked_ids,
-        "marked_lines": candidates,
-        "source": "ollama",
-        "message": f"Marked {len(marked_ids)} hook-worthy line(s).",
-    })
 
 
 @app.route("/rhymes/regroup", methods=["POST"])
@@ -2821,223 +2225,6 @@ def rhymes_stats():
     """Return vault statistics as JSON."""
     _ensure_vault_schema()
     return jsonify(_get_vault_stats())
-
-
-# ── Chord Sheet Routes ────────────────────────────────────────────────────────
-
-@app.route("/chord-sheet/songs")
-def chord_sheet_songs():
-    """Return sorted list of .json filenames from studio_master/song_templates/."""
-    templates = sorted(p.name for p in _CHORD_SHEET_TEMPLATES_DIR.glob("*.json"))
-    return jsonify(templates)
-
-
-@app.route("/chord-sheet/parse", methods=["POST"])
-def chord_sheet_parse():
-    """Parse raw chord chart text via Ollama → return JSON string."""
-    if not _OLLAMA_AVAILABLE:
-        return jsonify({"error": "Ollama not available"}), 503
-
-    data = request.get_json(silent=True) or {}
-    raw_text = str(data.get("raw_text", "")).strip()
-    if not raw_text:
-        return jsonify({"error": "raw_text is required"}), 400
-
-    # NOTE: do not embed a real, fully-populated template file here. An earlier
-    # version dumped an existing song's full JSON (including real title/artist/
-    # lyrics) into the prompt as a "schema example", and smaller models (e.g.
-    # llama3.1:8b) would echo that example song back instead of parsing the
-    # submitted raw_text. Describe the schema abstractly instead, but DO show a
-    # generic (non-song) structural example so the model can see what a fully
-    # transcribed sections array looks like.
-    prompt = (
-        "You are a music data parser. Convert the following chord chart to JSON.\n"
-        "The JSON must have these fields: title (string), artist (string), "
-        "key (string), bpm (string), sections (array of section objects each "
-        "with a name and a lines array). Each line is either a string or an "
-        "object with chords and lyrics keys.\n\n"
-        "CRITICAL: sections must include EVERY section present in the raw chord "
-        "chart below (e.g. Intro, Verse 1, Verse 2, Chorus, Bridge, Outro) in the "
-        "same order they appear. For EACH section, transcribe EVERY line of "
-        "chords and lyrics verbatim from the raw chord chart into that section's "
-        "lines array — do not summarize, truncate, deduplicate, or omit any "
-        "line. If a section has no lyrics (an instrumental line), still include "
-        "the chords with an empty lyrics string.\n\n"
-        "Generic structural example (illustrating the expected shape only — do "
-        "NOT copy this example's names or text into your answer):\n"
-        "{\n"
-        '  "title": "<song title>", "artist": "<artist>", "key": "<key>", '
-        '"bpm": "<bpm>",\n'
-        '  "sections": [\n'
-        '    {"name": "Intro", "lines": [{"chords": "<chord line 1>", "lyrics": ""}]},\n'
-        '    {"name": "Verse 1", "lines": [\n'
-        '      {"chords": "<chord line 1>", "lyrics": "<lyric line 1>"},\n'
-        '      {"chords": "<chord line 2>", "lyrics": "<lyric line 2>"}\n'
-        "    ]},\n"
-        '    {"name": "Chorus", "lines": [\n'
-        '      {"chords": "<chord line 1>", "lyrics": "<lyric line 1>"}\n'
-        "    ]},\n"
-        '    {"name": "Outro", "lines": [{"chords": "<chord line 1>", "lyrics": "<lyric line 1>"}]}\n'
-        "  ]\n"
-        "}\n\n"
-        "IMPORTANT: Use ONLY the title, artist, key, and lyrics found in the "
-        "raw chord chart below. Do not invent or substitute a different song.\n\n"
-        f"Raw chord chart:\n{raw_text}\n\n"
-        "Return ONLY the JSON object. Do not include any explanation or "
-        "markdown code block markers (no ```)."
-    )
-
-    try:
-        llm_response = _generate_with_ollama_fallback(
-            prompt,
-            options={"num_predict": -1, "num_ctx": 8192},
-        )
-    except Exception as exc:
-        return jsonify({"error": f"Ollama error: {exc}"}), 503
-
-    try:
-        parsed = json.loads(_strip_markdown_json_fences(llm_response))
-    except (json.JSONDecodeError, ValueError):
-        return jsonify({"error": "LLM parse failed", "raw": llm_response}), 422
-
-    if _chord_sheet_parse_is_incomplete(parsed, raw_text):
-        return jsonify({
-            "error": "LLM parse incomplete: missing or negligible song content",
-            "raw": llm_response,
-        }), 422
-
-    return jsonify({"json_string": json.dumps(parsed, ensure_ascii=False)})
-
-
-
-
-@app.route("/chord-sheet/save-json", methods=["POST"])
-def chord_sheet_save_json():
-    """Write reviewed JSON to disk in studio_master/song_templates/."""
-    data = request.get_json(silent=True) or {}
-    json_content = data.get("json_content", "")
-    try:
-        song = json.loads(json_content)
-    except (json.JSONDecodeError, ValueError):
-        return jsonify({"error": "Invalid JSON content"}), 400
-
-    title = _cs_sanitize(song.get("title", "Untitled"))
-    artist = _cs_sanitize(song.get("artist", "Unknown"))
-    key = _cs_sanitize(song.get("key", "?"))
-    filename = f"{title}_{artist}_Key_{key}.json"
-    _CHORD_SHEET_TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = _CHORD_SHEET_TEMPLATES_DIR / filename
-    out_path.write_text(json.dumps(song, indent=2, ensure_ascii=False), encoding="utf-8")
-    return jsonify({"path": str(out_path), "filename": filename})
-
-
-@app.route("/chord-sheet/generate", methods=["POST"])
-def chord_sheet_generate():
-    """Generate DOCX from template or new JSON. Returns download URL."""
-    if not _CHORD_SHEET_AVAILABLE:
-        details = str(_CHORD_SHEET_IMPORT_ERROR) if '_CHORD_SHEET_IMPORT_ERROR' in globals() else None
-        payload = {"error": "make_chord_sheet not available"}
-        if details:
-            payload["details"] = details
-        return jsonify(payload), 503
-
-    data = request.get_json(silent=True) or {}
-    workflow = data.get("workflow", "B")
-    lyrics_only = bool(data.get("lyrics_only", False))
-
-    if workflow == "A":
-        json_content = data.get("json_content", "")
-        try:
-            song = json.loads(json_content)
-        except (json.JSONDecodeError, ValueError):
-            return jsonify({"error": "Invalid JSON content"}), 400
-
-        title_s = _cs_sanitize(song.get("title", "Untitled"))
-        artist_s = _cs_sanitize(song.get("artist", "Unknown"))
-        key_s = _cs_sanitize(song.get("key", "?"))
-        json_filename = f"{title_s}_{artist_s}_Key_{key_s}.json"
-        _CHORD_SHEET_TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
-        json_path = _CHORD_SHEET_TEMPLATES_DIR / json_filename
-        json_path.write_text(json.dumps(song, indent=2, ensure_ascii=False), encoding="utf-8")
-    else:
-        song_filename = Path(str(data.get("song_path", "")).strip()).name
-        if not song_filename:
-            return jsonify({"error": "song_path is required for workflow B"}), 400
-        json_path = _CHORD_SHEET_TEMPLATES_DIR / song_filename
-        if not json_path.exists():
-            return jsonify({"error": f"JSON file not found: {song_filename}"}), 404
-        with json_path.open(encoding="utf-8") as fh:
-            song = json.load(fh)
-
-    # Generate DOCX
-    try:
-        _CHORD_SHEET_DOCS_DIR.mkdir(parents=True, exist_ok=True)
-        out_path = compute_output_path(song, _CHORD_SHEET_DOCS_DIR, lyrics_only=lyrics_only)
-        build_docx(song, out_path)
-    except Exception as exc:
-        return jsonify({"error": f"DOCX generation failed: {exc}"}), 500
-
-    # Git commit + push + open PR (best-effort; failures don't block DOCX download)
-    pr_url = ""
-    try:
-        repo_root = _CS_ROOT
-        subprocess.run(
-            ["git", "add", str(json_path), str(out_path)],
-            cwd=str(repo_root), check=True, capture_output=True,
-        )
-        subprocess.run(
-            ["git", "commit", "--allow-empty", "-m",
-             f"chord-sheet: add {out_path.name}"],
-            cwd=str(repo_root), check=True, capture_output=True,
-        )
-        subprocess.run(
-            ["git", "push"],
-            cwd=str(repo_root), check=True, capture_output=True,
-        )
-        gh = subprocess.run(
-            ["gh", "pr", "create", "--fill", "--base", "main"],
-            cwd=str(repo_root), capture_output=True, text=True,
-        )
-        pr_url = gh.stdout.strip()
-    except Exception:
-        pass  # PR creation is optional; DOCX is already generated
-
-    return jsonify({
-        "filename": out_path.name,
-        "file_path": str(out_path),
-        "json_path": str(json_path),
-        "download_url": f"/chord-sheet/download/{out_path.name}",
-        "pr_url": pr_url,
-    })
-
-
-@app.route("/chord-sheet/merge", methods=["POST"])
-def chord_sheet_merge():
-    """Merge a chord-sheet PR via `gh pr merge`."""
-    data = request.get_json(silent=True) or {}
-    pr_url = str(data.get("pr_url", "")).strip()
-    if not pr_url:
-        return jsonify({"error": "pr_url is required"}), 400
-    try:
-        result = subprocess.run(
-            ["gh", "pr", "merge", pr_url, "--merge", "--auto"],
-            cwd=str(_CS_ROOT), capture_output=True, text=True,
-        )
-        if result.returncode != 0:
-            return jsonify({"error": result.stderr.strip() or "gh pr merge failed"}), 500
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
-    return jsonify({"merged": True, "pr_url": pr_url})
-
-
-@app.route("/chord-sheet/download/<path:filename>")
-def chord_sheet_download(filename: str):
-    """Serve a generated chord sheet DOCX for download."""
-    safe_name = Path(filename).name
-    file_path = _CHORD_SHEET_DOCS_DIR / safe_name
-    if not file_path.exists():
-        return jsonify({"error": "File not found"}), 404
-    return send_file(file_path, as_attachment=True, download_name=safe_name)
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
