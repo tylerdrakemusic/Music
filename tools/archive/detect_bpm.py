@@ -1,3 +1,4 @@
+# DEPRECATED: superseded by tools/auto_tagger.py (FR-20260526-bpm-key-auto-tagger)
 """
 detect_bpm.py — Detect BPM for songs missing it in the DB.
 
@@ -171,3 +172,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
