@@ -1066,6 +1066,7 @@ async function createSession() {
   let _currentKey = 'C';
   let _currentMode = 'Ionian';
   let _currentFamily = 'diatonic';  // FR-20260806: diatonic | major_penta | minor_penta
+  let _initialModeRootKey = null;
   let _calloutPending = false;  // when true, next phrase appends the mode's characteristic-note callout (set on mode switch only)
   const _scaleTapTimes = [];
   const MAX_TAP_GAP_MS = 3000;
@@ -1086,12 +1087,13 @@ async function createSession() {
   // ── Load positions from server ───────────────────────────────────────────
   async function loadScalePositions(key) {
     key = key || 'C';
+    const apiKey = _initialModeRootKey || key;
     const family = _currentFamily === 'diatonic' ? 'diatonic'
                  : _currentFamily === 'major_penta' ? 'major_pentatonic'
                  : 'minor_pentatonic';
     try {
       const r = await fetch(
-        '/api/scale-positions?key=' + encodeURIComponent(key) +
+        '/api/scale-positions?key=' + encodeURIComponent(apiKey) +
         '&family=' + encodeURIComponent(family) +
         '&mode=' + encodeURIComponent(_currentMode)
       );
@@ -1130,6 +1132,25 @@ async function createSession() {
   const ENHARMONIC_PC = {Db:'C#',Eb:'D#',Gb:'F#',Ab:'G#',Bb:'A#'};
   const FLAT_KEY_SET = ['F','Bb','Eb','Ab','Db','Gb'];
   const TO_FLAT = {'C#':'D♭','D#':'E♭','F#':'G♭','G#':'A♭','A#':'B♭'};
+  const KEY_BY_PC = ['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const requestedMode = urlParams.get('mode');
+  const requestedFamily = urlParams.get('family');
+  const requestedKey = urlParams.get('key');
+  if (Object.prototype.hasOwnProperty.call(MODE_ROOT_OFFSET, requestedMode)) {
+    _currentMode = requestedMode;
+  }
+  if (['diatonic', 'major_penta', 'minor_penta'].includes(requestedFamily)) {
+    _currentFamily = requestedFamily;
+  }
+  const normalizedRequestedKey = ENHARMONIC_PC[requestedKey] || requestedKey;
+  if (requestedKey && CHROMATIC_PC.includes(normalizedRequestedKey)) {
+    const modeOffset = MODE_ROOT_OFFSET[_currentMode] || 0;
+    const modeRootPc = CHROMATIC_PC.indexOf(normalizedRequestedKey);
+    _currentKey = KEY_BY_PC[(modeRootPc - modeOffset + 12) % 12];
+    _initialModeRootKey = requestedKey;
+  }
 
   function modeRootNote(keyVal, mode) {
     const resolved = ENHARMONIC_PC[keyVal] || keyVal;
@@ -1143,7 +1164,7 @@ async function createSession() {
   function populateModeSelect(keyVal) {
     const modes = ['Ionian','Dorian','Phrygian','Lydian','Mixolydian','Aeolian','Locrian'];
     const sel = document.getElementById('scale-mode');
-    const current = sel.value || _currentMode;
+    const current = _currentMode || sel.value;
     sel.innerHTML = modes.map(m =>
       `<option value="${m}" ${m===current?'selected':''}>${modeRootNote(keyVal, m)} ${m}</option>`
     ).join('');
@@ -1151,6 +1172,7 @@ async function createSession() {
   }
 
   window.onKeyChange = function() {
+    _initialModeRootKey = null;
     _currentKey = document.getElementById('scale-key').value || 'C';
     populateModeSelect(_currentKey);
     _positions = [];
@@ -1715,6 +1737,7 @@ async function createSession() {
     } catch(e) { console.warn('scale log load failed', e); }
   }
 
+  document.getElementById('scale-key').value = _currentKey;
   populateModeSelect(_currentKey); // seed on page load (FR-20260806-guitar-trainer-mode-root-label)
   {% if not enable_exercise_cards %}
   // FR-20260808: exercise cards off -> Scales tab is pre-rendered active server-side,
