@@ -184,3 +184,25 @@ def test_scales_populate_on_initial_load_without_clicking_tab(live_server, page_
     assert option_count > 0, "Position <select> should be populated on initial load"
 
     assert errors == [], f"Console/page errors on load: {errors}"
+
+
+def test_scale_url_parameters_load_requested_diatonic_mode(live_server, page_with_console_errors):
+    """Load the requested key and mode when the trainer URL includes them."""
+    if not live_server["started"]:
+        pytest.skip("Local Flask server did not start in time")
+    page, errors = page_with_console_errors
+
+    page.goto(
+        f"http://127.0.0.1:{live_server['port']}/?key=D%23&family=diatonic&mode=Aeolian"
+    )
+    page.wait_for_function(
+        "() => document.getElementById('scale-position').options.length > 0"
+    )
+
+    assert page.input_value("#scale-key") == "F#"
+    assert page.input_value("#scale-mode") == "Aeolian"
+    first_position = page.eval_on_selector(
+        "#scale-position", "el => el.options[0].textContent"
+    )
+    assert first_position == "Position 1 — C shape (6th fret)"
+    assert errors == [], f"Console/page errors on load: {errors}"

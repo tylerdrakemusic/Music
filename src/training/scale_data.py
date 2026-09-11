@@ -488,11 +488,50 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
         canonical_key = _AEOLIAN_ALIASES.get(key, key)
         if canonical_key != "C":
             reference = get_scale_positions("C", "Aeolian")
+            if canonical_key == "F#":
+                fsharp_plan = (
+                    (3, -6),
+                    (4, -6),
+                    (0, 6),
+                    (1, 6),
+                    (2, 6),
+                    (3, 6),
+                    (4, 6),
+                    (0, 18),
+                )
+                translated: list[CagedPosition] = []
+                for reference_index, fret_shift in fsharp_plan:
+                    position = reference[reference_index]
+                    translated_position = dict(position)
+                    translated_position["root_fret"] = position["root_fret"] + fret_shift
+                    translated_position["notes"] = [
+                        ScaleNote(
+                            string=note["string"],
+                            fret=note["fret"] + fret_shift,
+                            midi=_OPEN_MIDI[note["string"]] + note["fret"] + fret_shift,
+                        )
+                        for note in position["notes"]
+                    ]
+                    shape_name = position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
+                    root_fret = translated_position["root_fret"]
+                    translated_position["label"] = (
+                        f"Position {len(translated) + 1} — {shape_name} shape "
+                        f"({_fret_label(root_fret)} fret)"
+                    )
+                    spoken_string = translated_position["root_string"].replace("Low E", "low E")
+                    translated_position["instructor_phrase"] = (
+                        f"Start on the {_fret_label(root_fret)} fret of the {spoken_string}. "
+                        f"{shape_name} Shape."
+                    )
+                    translated.append(translated_position)
+                return translated
             semitone_shift = (_KEY_PITCH_CLASSES[canonical_key] - 9) % 12
             register_shift = _KEY_PITCH_CLASSES[canonical_key]
             base_indices = (
                 (4, 0, 1, 2, 3)
                 if canonical_key in {"D#", "E"}
+                else (3, 4, 0, 1, 2)
+                if canonical_key == "F#"
                 else (0, 1, 2, 3, 4)
             )
             base_positions = [reference[index] for index in base_indices]
@@ -570,16 +609,20 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
                     f"{shape_name} Shape."
                 )
                 translated.append(repeated_position)
-            ordered_positions = [
-                position
-                for _, position in sorted(
-                    enumerate(translated),
-                    key=lambda item: (
-                        min(note["fret"] for note in item[1]["notes"]),
-                        item[0],
-                    ),
-                )
-            ]
+            ordered_positions = (
+                translated
+                if canonical_key == "F#"
+                else [
+                    position
+                    for _, position in sorted(
+                        enumerate(translated),
+                        key=lambda item: (
+                            min(note["fret"] for note in item[1]["notes"]),
+                            item[0],
+                        ),
+                    )
+                ]
+            )
             for position_number, position in enumerate(ordered_positions, start=1):
                 shape_name = position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
                 root_fret = position["root_fret"]
@@ -741,8 +784,14 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
         position["label"].split(" — ", 1)[1].split(" shape", 1)[0]
         for position in selected
     )
-    expected_shape_names = _C_AEOLIAN_SHAPE_NAMES + (
-        _C_AEOLIAN_SHAPE_NAMES[:3] if key == "Db" else _C_AEOLIAN_SHAPE_NAMES[:4]
+    expected_shape_names = (
+        ("D", "C", "A", "G", "E", "A")
+        if key == "F#"
+        else _C_AEOLIAN_SHAPE_NAMES + (
+            _C_AEOLIAN_SHAPE_NAMES[:3]
+            if key == "Db"
+            else _C_AEOLIAN_SHAPE_NAMES[:4]
+        )
     )
     if shape_names != expected_shape_names:
         raise RuntimeError(

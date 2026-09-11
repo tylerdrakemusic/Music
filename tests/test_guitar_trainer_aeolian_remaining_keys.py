@@ -120,6 +120,68 @@ def test_b_aeolian_uses_natural_minor_pitch_membership() -> None:
     )
 
 
+def test_f_sharp_aeolian_uses_minor_caged_order_and_valid_geometry() -> None:
+    positions = get_scale_positions("F#", "Aeolian")
+    natural_minor_pitch_classes = {1, 3, 5, 6, 8, 10, 11}
+
+    assert _shape_names(positions) == ["D", "C", "A", "G", "E", "D", "C", "A"]
+    assert [position["root_string"] for position in positions] == [
+        "D string",
+        "A string",
+        "A string",
+        "Low E string",
+        "Low E string",
+        "D string",
+        "A string",
+        "A string",
+    ]
+    assert [position["root_fret"] for position in positions] == [
+        1,
+        6,
+        6,
+        11,
+        11,
+        13,
+        18,
+        18,
+    ]
+    assert [position["label"] for position in positions] == [
+        "Position 1 — D shape (1st fret)",
+        "Position 2 — C shape (6th fret)",
+        "Position 3 — A shape (6th fret)",
+        "Position 4 — G shape (11th fret)",
+        "Position 5 — E shape (11th fret)",
+        "Position 6 — D shape (13th fret)",
+        "Position 7 — C shape (18th fret)",
+        "Position 8 — A shape (18th fret)",
+    ]
+    assert positions[0]["instructor_phrase"] == (
+        "Start on the 1st fret of the D string. D Shape."
+    )
+    assert positions[-1]["instructor_phrase"] == (
+        "Start on the 18th fret of the A string. A Shape."
+    )
+    assert all(
+        0 <= note["fret"] <= 22
+        and 0 <= note["midi"] <= 127
+        and note["midi"] % 12 in natural_minor_pitch_classes
+        for position in positions
+        for note in position["notes"]
+    )
+    assert all(
+        {note["string"] for note in position["notes"]} == {1, 2, 3, 4, 5, 6}
+        and any(note["midi"] % 12 == 6 for note in position["notes"])
+        and position["instructor_phrase"].endswith(
+            f"{_shape_names([position])[0]} Shape."
+        )
+        for position in positions
+    )
+    assert all(
+        max(note["fret"] for note in position["notes"]) <= 22
+        for position in positions
+    )
+
+
 def test_db_aeolian_uses_universal_minor_caged_sequence() -> None:
     with ui.app.test_client() as client:
         response = client.get("/api/scale-positions?key=Db&mode=Aeolian")
@@ -167,42 +229,64 @@ def test_every_canonical_aeolian_layout_translates_reference_geometry() -> None:
             ).get_json()
             shift = (KEY_PITCH_CLASSES[key] - 9) % 12
             expected_positions = []
-            indices = (4, 0, 1, 2, 3) if key == "E" else reference_indices
+            indices = (
+                (4, 0, 1, 2, 3)
+                if key == "E"
+                else (3, 4, 0, 1, 2)
+                if key == "F#"
+                else reference_indices
+            )
             base_positions = [reference[index] for index in indices]
-            for expected in base_positions:
-                fret_shift = -8 if key == "E" and expected is reference[4] else KEY_PITCH_CLASSES[key]
-                midi_shift = shift
-                if any(
-                    note["fret"] + fret_shift >= 23
-                    for note in expected["notes"]
-                ):
-                    fret_shift -= 12
-                expected_positions.append((expected, fret_shift, midi_shift))
-
-            for expected in base_positions:
-                repeated_fret_shift = (-8 if key == "E" and expected is reference[4] else KEY_PITCH_CLASSES[key]) + 12
-                repeated_midi_shift = shift + 12
-                if not any(
-                    note["fret"] + repeated_fret_shift >= 23
-                    for note in expected["notes"]
-                ):
-                    expected_positions.append(
-                        (expected, repeated_fret_shift, repeated_midi_shift)
+            if key == "F#":
+                expected_positions = [
+                    (reference[index], fret_shift, shift)
+                    for index, fret_shift in (
+                        (3, -6),
+                        (4, -6),
+                        (0, 6),
+                        (1, 6),
+                        (2, 6),
+                        (3, 6),
+                        (4, 6),
+                        (0, 18),
                     )
+                ]
+            else:
+                for expected in base_positions:
+                    fret_shift = -8 if key == "E" and expected is reference[4] else KEY_PITCH_CLASSES[key]
+                    midi_shift = shift
+                    if any(
+                        note["fret"] + fret_shift >= 23
+                        for note in expected["notes"]
+                    ):
+                        fret_shift -= 12
+                    expected_positions.append((expected, fret_shift, midi_shift))
 
-            expected_positions = [
-                item
-                for _, item in sorted(
-                    enumerate(expected_positions),
-                    key=lambda item: (
-                        min(
-                            note["fret"] + item[1][1]
-                            for note in item[1][0]["notes"]
+                for expected in base_positions:
+                    repeated_fret_shift = (-8 if key == "E" and expected is reference[4] else KEY_PITCH_CLASSES[key]) + 12
+                    repeated_midi_shift = shift + 12
+                    if not any(
+                        note["fret"] + repeated_fret_shift >= 23
+                        for note in expected["notes"]
+                    ):
+                        expected_positions.append(
+                            (expected, repeated_fret_shift, repeated_midi_shift)
+                        )
+
+            if key != "F#":
+                expected_positions = [
+                    item
+                    for _, item in sorted(
+                        enumerate(expected_positions),
+                        key=lambda item: (
+                            min(
+                                note["fret"] + item[1][1]
+                                for note in item[1][0]["notes"]
+                            ),
+                            item[0],
                         ),
-                        item[0],
-                    ),
-                )
-            ]
+                    )
+                ]
 
             assert len(positions) == len(expected_positions)
             for position, (expected, fret_shift, midi_shift) in zip(
@@ -242,7 +326,10 @@ def test_every_canonical_aeolian_layout_has_valid_notes_repeats_and_tts() -> Non
                 (relative_minor_root + interval) % 12
                 for interval in natural_minor_intervals
             }
-            assert positions == _physical_order(positions)
+            if key == "F#":
+                assert _shape_names(positions[:5]) == ["D", "C", "A", "G", "E"]
+            else:
+                assert positions == _physical_order(positions)
             assert all(
                 note["fret"] < 23
                 for position in positions
