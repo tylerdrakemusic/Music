@@ -1146,10 +1146,15 @@ async function createSession() {
   }
   const normalizedRequestedKey = ENHARMONIC_PC[requestedKey] || requestedKey;
   if (requestedKey && CHROMATIC_PC.includes(normalizedRequestedKey)) {
-    const modeOffset = MODE_ROOT_OFFSET[_currentMode] || 0;
-    const modeRootPc = CHROMATIC_PC.indexOf(normalizedRequestedKey);
-    _currentKey = KEY_BY_PC[(modeRootPc - modeOffset + 12) % 12];
-    _initialModeRootKey = requestedKey;
+    const isFAeolianUrl = normalizedRequestedKey === 'F' && _currentMode === 'Aeolian';
+    if (isFAeolianUrl) {
+      _currentKey = 'F';
+    } else {
+      const modeOffset = MODE_ROOT_OFFSET[_currentMode] || 0;
+      const modeRootPc = CHROMATIC_PC.indexOf(normalizedRequestedKey);
+      _currentKey = KEY_BY_PC[(modeRootPc - modeOffset + 12) % 12];
+      _initialModeRootKey = requestedKey;
+    }
   }
 
   function modeRootNote(keyVal, mode) {
