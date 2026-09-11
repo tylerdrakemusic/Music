@@ -29,11 +29,6 @@ graph TB
         HyperthreatRoutes["/ · /mic-config · /patch-bay<br/>/patch_bay.html · /health"]
         HyperthreatAssets["static templates only<br/>mic_config_template.html · patch_bay.html"]
     end
-    subgraph ChordSheet["Chord Sheet Generation"]
-        ChordSheetTool[tools/make_chord_sheet.py]
-        ChordSheetRoutes["/chord-sheet/<br/>parse · generate · merge"]
-        BpmLookup[src/utils/<br/>bpm_lookup.py]
-    end
     subgraph ArtistLinksMod["src/artist_links/"]
         ArtistLinksPanel[generate_artist_links_panel.py]
         ArtistLinksRoutes["/api/links CRUD"]
@@ -96,12 +91,6 @@ graph TB
     GDriveSheetMusic -->|pull PDFs· DOCX· Docs| IngestScript
     IngestScript -.->|gdrive client SA auth| WSIntegrations
     IngestScript -->|upsert rows| DB
-    Dashboard --> ChordSheetRoutes
-    ChordSheetRoutes --> ChordSheetTool
-    ChordSheetTool -.->|lazy cross-project import| WSIntegrations
-    WSIntegrations -.->|Ollama client| Ollama[(Ollama LLM<br/>local)]
-    ChordSheetTool --> BpmLookup
-    BpmLookup -.->|title+artist query| GetSongBPM[(GetSongBPM API)]
     Dashboard --> ArtistLinksRoutes
     ArtistLinksRoutes --> ArtistLinksPanel
     ArtistLinksPanel --> ArtistLinksDB
@@ -129,9 +118,9 @@ graph TB
     class ArchiveNote deprecated
     class GDriveSheetMusic ext
     class IngestScript svc
-    class ChordSheet,ArtistLinksMod,ReleaseOps,BandMgmt,RhymeGrouper,Studio,GuitarTech core
+    class ArtistLinksMod,ReleaseOps,BandMgmt,RhymeGrouper,Studio,GuitarTech core
     class Dashboard svc
-    class Ollama,GetSongBPM ext
+    class GetSongBPM ext
     class HelixFilesOut out
 
 classDef life     fill:#1a2e3a,stroke:#6ab4d4,color:#d0ecf8
