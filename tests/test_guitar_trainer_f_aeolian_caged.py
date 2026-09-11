@@ -78,7 +78,10 @@ def test_f_aeolian_preserves_valid_octave_repeats() -> None:
         ]
 
 
-def test_f_major_remains_non_aeolian_and_dropdown_contract_is_present() -> None:
+def test_f_major_remains_non_aeolian_and_dropdown_contract_is_present(monkeypatch) -> None:
+    monkeypatch.setattr(ui, "ENABLE_EXERCISE_CARDS", False)
+    monkeypatch.setattr(ui, "ENABLE_SCALE_LOG", False)
+
     with ui.app.test_client() as client:
         major = client.get("/api/scale-positions?key=F&mode=Ionian").get_json()
         html = client.get("/").get_data(as_text=True)
