@@ -191,6 +191,13 @@ def test_scale_url_parameters_load_requested_diatonic_mode(live_server, page_wit
     if not live_server["started"]:
         pytest.skip("Local Flask server did not start in time")
     page, errors = page_with_console_errors
+    scale_requests: list[str] = []
+    page.on(
+        "request",
+        lambda request: scale_requests.append(request.url)
+        if "/api/scale-positions" in request.url
+        else None,
+    )
 
     page.goto(
         f"http://127.0.0.1:{live_server['port']}/?key=D%23&family=diatonic&mode=Aeolian"
@@ -201,8 +208,40 @@ def test_scale_url_parameters_load_requested_diatonic_mode(live_server, page_wit
 
     assert page.input_value("#scale-key") == "F#"
     assert page.input_value("#scale-mode") == "Aeolian"
+    assert any("key=D%23" in request_url for request_url in scale_requests)
     first_position = page.eval_on_selector(
         "#scale-position", "el => el.options[0].textContent"
     )
     assert first_position == "Position 1 — C shape (6th fret)"
+    assert errors == [], f"Console/page errors on load: {errors}"
+
+
+def test_f_aeolian_url_preserves_f_key_and_d_mode_root(live_server, page_with_console_errors):
+    """Keep F major / D minor UI state while loading the F Aeolian layout."""
+    if not live_server["started"]:
+        pytest.skip("Local Flask server did not start in time")
+    page, errors = page_with_console_errors
+    scale_requests: list[str] = []
+    page.on(
+        "request",
+        lambda request: scale_requests.append(request.url)
+        if "/api/scale-positions" in request.url
+        else None,
+    )
+
+    page.goto(
+        f"http://127.0.0.1:{live_server['port']}/?key=F&family=diatonic&mode=Aeolian"
+    )
+    page.wait_for_function(
+        "() => document.getElementById('scale-position').options.length > 0"
+    )
+
+    assert page.input_value("#scale-key") == "F"
+    assert page.input_value("#scale-mode") == "Aeolian"
+    assert page.locator("#scale-mode option:checked").text_content() == "D Aeolian"
+    assert any("key=F" in request_url for request_url in scale_requests)
+    first_position = page.eval_on_selector(
+        "#scale-position", "el => el.options[0].textContent"
+    )
+    assert first_position == "Position 1 — D shape (open)"
     assert errors == [], f"Console/page errors on load: {errors}"

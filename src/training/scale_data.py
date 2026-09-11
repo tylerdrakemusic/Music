@@ -484,6 +484,85 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
     positions = SCALE_POSITIONS.get(key)
     if positions is None:
         raise ValueError(f"Unknown key {key!r}; available: {list(SCALE_POSITIONS)}")
+    if key == "F" and mode == "Aeolian":
+        d_open_offsets = [
+            [6, 0], [6, 1], [6, 3],
+            [5, 0], [5, 1], [5, 3],
+            [4, 0], [4, 2], [4, 3],
+            [3, 0], [3, 2], [3, 3],
+            [2, 1], [2, 3],
+            [1, 0], [1, 1], [1, 3],
+        ]
+        shape_plans = (
+            ("D", "D string", 0, d_open_offsets),
+            ("C", "A string", 5, _C_AEOLIAN_C_SHAPE_OFFSETS),
+            ("A", "A string", 5, [
+                [6, 0], [6, 1], [6, 3],
+                [5, 0], [5, 2], [5, 3],
+                [4, 0], [4, 2], [4, 3],
+                [3, 0], [3, 2],
+                [2, 0], [2, 1], [2, 3],
+                [1, 0], [1, 1], [1, 3],
+            ]),
+            ("G", "Low E string", 10, _C_AEOLIAN_G_SHAPE_OFFSETS),
+            ("E", "Low E string", 10, _C_AEOLIAN_E_SHAPE_OFFSETS),
+        )
+        selected: list[CagedPosition] = []
+        for shape_name, root_string, root_fret, offsets in shape_plans:
+            selected.append({
+                "label": "",
+                "root_string": root_string,
+                "root_fret": root_fret,
+                "instructor_phrase": "",
+                "notes": [
+                    ScaleNote(
+                        string=string,
+                        fret=root_fret + delta,
+                        midi=_OPEN_MIDI[string] + root_fret + delta,
+                    )
+                    for string, delta in offsets
+                ],
+            })
+            selected[-1]["label"] = (
+                f"Position {len(selected)} — {shape_name} shape "
+                f"({'open' if root_fret == 0 else _fret_label(root_fret) + ' fret'})"
+            )
+            if root_fret == 0:
+                selected[-1]["instructor_phrase"] = (
+                    f"Start on the open {root_string.replace('Low E', 'low E')}. "
+                    f"{shape_name} Shape."
+                )
+            else:
+                selected[-1]["instructor_phrase"] = (
+                    f"Start on the {_fret_label(root_fret)} fret of "
+                    f"the {root_string.replace('Low E', 'low E')}. {shape_name} Shape."
+                )
+        for shape_name, root_string, root_fret, offsets in shape_plans[:4]:
+            repeat_fret = root_fret + 12
+            if any(repeat_fret + delta > 22 for _, delta in offsets):
+                continue
+            selected.append({
+                "label": "",
+                "root_string": root_string,
+                "root_fret": repeat_fret,
+                "instructor_phrase": "",
+                "notes": [
+                    ScaleNote(
+                        string=string,
+                        fret=repeat_fret + delta,
+                        midi=_OPEN_MIDI[string] + repeat_fret + delta,
+                    )
+                    for string, delta in offsets
+                ],
+            })
+            selected[-1]["label"] = (
+                f"Position {len(selected)} — {shape_name} shape ({_fret_label(repeat_fret)} fret)"
+            )
+            selected[-1]["instructor_phrase"] = (
+                f"Start on the {_fret_label(repeat_fret)} fret of "
+                f"{root_string.replace('Low E', 'low E')}. {shape_name} Shape."
+            )
+        return selected
     if mode == "Aeolian" and key in set(_AEOLIAN_ALIASES) | set(_AEOLIAN_CANONICAL_KEYS):
         canonical_key = _AEOLIAN_ALIASES.get(key, key)
         if canonical_key != "C":
