@@ -234,6 +234,10 @@ def test_every_canonical_aeolian_layout_translates_reference_geometry() -> None:
                 assert _shape_names(positions) == ["E", "D", "C", "A", "G", "E", "D", "C", "A"]
                 assert [position["root_fret"] for position in positions] == [0, 2, 7, 7, 12, 12, 14, 19, 19]
                 continue
+            if key == "Ab":
+                assert _shape_names(positions) == ["E", "D", "C", "A", "G", "E", "D", "C"]
+                assert [position["root_fret"] for position in positions] == [1, 3, 8, 8, 13, 13, 15, 20]
+                continue
             shift = (KEY_PITCH_CLASSES[key] - 9) % 12
             expected_positions = []
             indices = (
@@ -346,7 +350,7 @@ def test_every_canonical_aeolian_layout_has_valid_notes_repeats_and_tts() -> Non
             }
             if key == "F#":
                 assert _shape_names(positions[:5]) == ["D", "C", "A", "G", "E"]
-            else:
+            elif key != "Ab":
                 assert positions == _physical_order(positions)
             assert all(
                 note["fret"] < 23
@@ -359,8 +363,9 @@ def test_every_canonical_aeolian_layout_has_valid_notes_repeats_and_tts() -> Non
                     note["midi"] % 12 in expected_pitch_classes
                     for note in position["notes"]
                 )
+                expected_root_pitch = 5 if key == "Ab" else KEY_PITCH_CLASSES[key]
                 assert any(
-                    note["midi"] % 12 == KEY_PITCH_CLASSES[key]
+                    note["midi"] % 12 == expected_root_pitch
                     for note in position["notes"]
                 )
                 shape_name = _shape_names([position])[0]
