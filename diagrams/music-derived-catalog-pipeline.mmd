@@ -1,0 +1,85 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1a2e3a', 'primaryTextColor': '#d0ecf8', 'edgeLabelBackground': '#0f1318', 'lineColor': '#4a7a9a'}}}%%
+%% is_derived_view=true
+%% Traceability.parent: diagrams/music-architecture.mmd
+graph TB
+    subgraph Inputs
+        Suno[Suno releases]
+        Audius[Audius catalog]
+        SheetMusic[Sheet Music PDFs]
+        GDriveSheetMusic[(Google Drive PDFs · DOCX · Docs)]
+        Setlists[Band setlists]
+        AudioFiles["MP3 / FLAC / M4A<br/>G:\Muzic · f:\Masters · f:\recordings"]
+    end
+    subgraph Catalog["catalog/"]
+        Export[export_catalog.py]
+        Songs[(songs · setlists<br/>sheet_music · audio)]
+    end
+    subgraph Services["src/services/"]
+        AudioTagger["audio_tagger.py\nBPM + key detection\n(librosa · mutagen)"]
+    end
+    subgraph Tools["tools/"]
+        AutoTagger["auto_tagger.py\n--smoke-test N\n--dry-run / --apply"]
+        SyncCC["sync_cc_charts_catalog.py\n--dry-run"]
+        IngestScript["ingest_sheet_music_gdrive.py ⚑spike"]
+    end
+    subgraph Trainer["Guitar Trainer"]
+        TrainerApp[Flask app:5055]
+        TrainerDB[(exercises<br/>cards)]
+    end
+    subgraph Hyperthreat["Hyperthreat Studio Templates"]
+        HyperthreatApp["hyperthreat_app.py<br/>minimal Flask launcher"]
+        HyperthreatRoutes["/ · /mic-config · /patch-bay<br/>/patch_bay.html · /health"]
+        HyperthreatAssets["static templates only<br/>mic_config_template.html · patch_bay.html"]
+    end
+    subgraph Reports["reports/"]
+        Portal[portal.html]
+        Dash[band-mgmt dashboard]
+        TaggerReport[auto_tagger_*.html]
+    end
+    DB[(heartmusic.db<br/>tracks · catalog_songs<br/>recordings)]
+    WSIntegrations[(⊕Workspace<br/>src/integrations/)]
+    VeraPortrait[src/utils/<br/>vera_portrait.py]
+    ImagesOut[output/images/]
+    Inputs --> Catalog
+    Catalog --> Songs
+    Songs --> Export
+    Export --> Portal
+    Export --> Dash
+    TrainerApp --> TrainerDB
+    Songs -.shared db.-> TrainerDB
+    HyperthreatApp --> HyperthreatRoutes
+    HyperthreatApp --> HyperthreatAssets
+    AudioFiles -->|scan| AutoTagger
+    DB -->|source_file · file_path| AutoTagger
+    AutoTagger --> AudioTagger
+    AudioTagger -->|tempo_bpm · key_signature| DB
+    AudioTagger -->|ID3 write-back TBPM/TKEY| AudioFiles
+    AutoTagger --> TaggerReport
+    SyncCC -->|INSERT missing songs| DB
+    SyncCC -->|link band_song_arrangements| DB
+    VeraPortrait -->|daily portrait PNG| ImagesOut
+    VeraPortrait -.->|lazy import HFSpaces+Pollinations| WSIntegrations
+    GDriveSheetMusic -->|pull PDFs· DOCX· Docs| IngestScript
+    IngestScript -.->|gdrive client SA auth| WSIntegrations
+    IngestScript -->|upsert rows| DB
+    class Inputs,Reports io
+    class Catalog,Trainer music
+    class Services,Tools,Hyperthreat svc
+    class VeraPortrait util
+    class ImagesOut out
+    class WSIntegrations ws
+    class GDriveSheetMusic ext
+    class IngestScript svc
+    class DB,TrainerDB db
+
+classDef life     fill:#1a2e3a,stroke:#6ab4d4,color:#d0ecf8
+classDef music    fill:#3a1a24,stroke:#d47a8f,color:#f8d0dc
+classDef quantum  fill:#251a3a,stroke:#a07adf,color:#e8d0f8
+classDef manifest fill:#3a2e1a,stroke:#d4a96a,color:#f8ead0
+classDef ws       fill:#1a3a30,stroke:#6ad4b4,color:#d0f8ee
+classDef tyler    fill:#2a1a3a,stroke:#9e4aff,color:#fff
+classDef ext      fill:#3a2020,stroke:#ff7a7a,color:#ffd0d0
+classDef db       fill:#3a3010,stroke:#d4c050,color:#f8f0c0
+classDef state    fill:#1a1a1a,stroke:#888888,color:#cccccc
+classDef util     fill:#1a2a3a,stroke:#4a8ab4,color:#c0daf0
+classDef out      fill:#3a2a10,stroke:#d4a050,color:#f8e8c0
