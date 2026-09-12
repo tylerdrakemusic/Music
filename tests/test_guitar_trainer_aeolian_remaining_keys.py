@@ -230,6 +230,10 @@ def test_every_canonical_aeolian_layout_translates_reference_geometry() -> None:
             if key == "F":
                 assert _shape_names(positions) == ["D", "C", "A", "G", "E", "D", "C", "A", "G"]
                 continue
+            if key == "G":
+                assert _shape_names(positions) == ["E", "D", "C", "A", "G", "E", "D", "C", "A"]
+                assert [position["root_fret"] for position in positions] == [0, 2, 7, 7, 12, 12, 14, 19, 19]
+                continue
             shift = (KEY_PITCH_CLASSES[key] - 9) % 12
             expected_positions = []
             indices = (
@@ -314,6 +318,17 @@ def test_every_canonical_aeolian_layout_translates_reference_geometry() -> None:
                     }
                     for note in expected["notes"]
                 ]
+
+
+def test_g_aeolian_preserves_position_seven_and_nine_d_string_rows() -> None:
+    positions = get_scale_positions("G", "Aeolian")
+
+    assert [
+        note["fret"] for note in positions[6]["notes"] if note["string"] == 4
+    ] == [14, 16, 17]
+    assert [
+        note["fret"] for note in positions[8]["notes"] if note["string"] == 4
+    ] == [19, 21, 22]
 
 
 def test_every_canonical_aeolian_layout_has_valid_notes_repeats_and_tts() -> None:

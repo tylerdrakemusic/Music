@@ -434,6 +434,30 @@ _C_AEOLIAN_E_SHAPE_OFFSETS = [
     [2, 0], [2, 1], [2, 3],
     [1, 0], [1, 2], [1, 3],
 ]
+_G_E_AEOLIAN_E_SHAPE_OFFSETS = [
+    [6, 0], [6, 2], [6, 3],
+    [5, 0], [5, 2], [5, 3],
+    [4, 0], [4, 2], [4, 4],
+    [3, 0], [3, 2],
+    [2, 0], [2, 1], [2, 3],
+    [1, 0], [1, 2], [1, 3],
+]
+_G_E_AEOLIAN_A_SHAPE_OFFSETS = [
+    [6, 0], [6, 1], [6, 3],
+    [5, 0], [5, 2], [5, 3],
+    [4, 0], [4, 2], [4, 3],
+    [3, 0], [3, 2],
+    [2, 0], [2, 1], [2, 3],
+    [1, 0], [1, 1], [1, 3],
+]
+_G_E_AEOLIAN_D_SHAPE_OFFSETS = [
+    [6, 0], [6, 1], [6, 3],
+    [5, 0], [5, 1], [5, 3],
+    [4, 0], [4, 2], [4, 3],
+    [3, 0], [3, 2], [3, 3],
+    [2, 1], [2, 3],
+    [1, 0], [1, 1], [1, 3],
+]
 _C_AEOLIAN_D_SHAPE_OFFSETS = [
     [6, 0], [6, 1], [6, 3],
     [5, 0], [5, 1], [5, 3],
@@ -484,6 +508,44 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
     positions = SCALE_POSITIONS.get(key)
     if positions is None:
         raise ValueError(f"Unknown key {key!r}; available: {list(SCALE_POSITIONS)}")
+    if key == "G" and mode == "Aeolian":
+        shape_plans = (
+            ("E", "Low E string", 0, _G_E_AEOLIAN_E_SHAPE_OFFSETS),
+            ("D", "D string", 2, _C_AEOLIAN_D_SHAPE_OFFSETS),
+            ("C", "A string", 7, _C_AEOLIAN_C_SHAPE_OFFSETS),
+            ("A", "A string", 7, _G_E_AEOLIAN_A_SHAPE_OFFSETS),
+            ("G", "Low E string", 12, _C_AEOLIAN_G_SHAPE_OFFSETS),
+            ("E", "Low E string", 12, _G_E_AEOLIAN_E_SHAPE_OFFSETS),
+            ("D", "D string", 14, _G_E_AEOLIAN_D_SHAPE_OFFSETS),
+            ("C", "A string", 19, _C_AEOLIAN_C_SHAPE_OFFSETS),
+            ("A", "A string", 19, _G_E_AEOLIAN_A_SHAPE_OFFSETS),
+        )
+        selected: list[CagedPosition] = []
+        for shape_name, root_string, root_fret, offsets in shape_plans:
+            selected.append({
+                "label": (
+                    f"Position {len(selected) + 1} — {shape_name} shape "
+                    f"({'open' if root_fret == 0 else _fret_label(root_fret) + ' fret'})"
+                ),
+                "root_string": root_string,
+                "root_fret": root_fret,
+                "instructor_phrase": (
+                    f"Start on the open {root_string.replace('Low E', 'low E')}. "
+                    f"{shape_name} Shape."
+                    if root_fret == 0
+                    else f"Start on the {_fret_label(root_fret)} fret of "
+                    f"the {root_string.replace('Low E', 'low E')}. {shape_name} Shape."
+                ),
+                "notes": [
+                    ScaleNote(
+                        string=string,
+                        fret=root_fret + delta,
+                        midi=_OPEN_MIDI[string] + root_fret + delta,
+                    )
+                    for string, delta in offsets
+                ],
+            })
+        return selected
     if key == "F" and mode == "Aeolian":
         d_open_offsets = [
             [6, 0], [6, 1], [6, 3],
