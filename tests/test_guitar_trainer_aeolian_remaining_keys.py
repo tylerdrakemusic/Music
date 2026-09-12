@@ -238,6 +238,10 @@ def test_every_canonical_aeolian_layout_translates_reference_geometry() -> None:
                 assert _shape_names(positions) == ["E", "D", "C", "A", "G", "E", "D", "C"]
                 assert [position["root_fret"] for position in positions] == [1, 3, 8, 8, 13, 13, 15, 20]
                 continue
+            if key == "A":
+                assert _shape_names(positions) == ["E", "D", "C", "A", "G", "E", "D", "C"]
+                assert [position["root_fret"] for position in positions] == [2, 4, 9, 9, 14, 14, 16, 21]
+                continue
             shift = (KEY_PITCH_CLASSES[key] - 9) % 12
             expected_positions = []
             indices = (
