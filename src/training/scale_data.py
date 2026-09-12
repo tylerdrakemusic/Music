@@ -688,6 +688,40 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
                 ],
             })
         return selected
+    if key in {"Bb", "A#"} and mode == "Aeolian":
+        shape_plans = (
+            ("E", "Low E string", 3, _G_E_AEOLIAN_E_SHAPE_OFFSETS),
+            ("D", "D string", 5, _C_AEOLIAN_D_SHAPE_OFFSETS),
+            ("C", "A string", 10, _C_AEOLIAN_C_SHAPE_OFFSETS),
+            ("A", "A string", 10, _G_E_AEOLIAN_A_SHAPE_OFFSETS),
+            ("G", "Low E string", 15, _C_AEOLIAN_G_SHAPE_OFFSETS),
+            ("E", "Low E string", 15, _G_E_AEOLIAN_E_SHAPE_OFFSETS),
+            ("D", "D string", 17, _C_AEOLIAN_D_SHAPE_OFFSETS),
+            ("C", "A string", 22, _C_AEOLIAN_C_SHAPE_OFFSETS),
+        )
+        selected: list[CagedPosition] = []
+        for shape_name, root_string, root_fret, offsets in shape_plans:
+            selected.append({
+                "label": (
+                    f"Position {len(selected) + 1} — {shape_name} shape "
+                    f"({_fret_label(root_fret)} fret)"
+                ),
+                "root_string": root_string,
+                "root_fret": root_fret,
+                "instructor_phrase": (
+                    f"Start on the {_fret_label(root_fret)} fret of "
+                    f"the {root_string.replace('Low E', 'low E')}. {shape_name} Shape."
+                ),
+                "notes": [
+                    ScaleNote(
+                        string=string,
+                        fret=root_fret + delta,
+                        midi=_OPEN_MIDI[string] + root_fret + delta,
+                    )
+                    for string, delta in offsets
+                ],
+            })
+        return selected
     if key == "F" and mode == "Aeolian":
         d_open_offsets = [
             [6, 0], [6, 1], [6, 3],

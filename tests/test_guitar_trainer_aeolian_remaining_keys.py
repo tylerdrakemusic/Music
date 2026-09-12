@@ -25,6 +25,8 @@ KEY_PITCH_CLASSES = {
     "Bb": 10,
     "B": 11,
 }
+OPEN_MIDI = {1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 40}
+G_NATURAL_MINOR_PITCH_CLASSES = {0, 2, 3, 5, 7, 9, 10}
 
 
 def _query_key(key: str) -> str:
@@ -55,33 +57,57 @@ def _physical_order(positions: list[dict]) -> list[dict]:
 def test_bb_aeolian_positions_follow_ascending_neck_order() -> None:
     positions = get_scale_positions("Bb", "Aeolian")
 
-    assert _shape_names(positions)[:5] == ["A", "G", "E", "D", "C"]
-    assert positions[0]["root_fret"] == 10
-    assert positions[0]["label"] == "Position 1 — A shape (10th fret)"
-    reference = get_scale_positions("C", "Aeolian")[0]
-    assert positions[0]["notes"] == [
-        {
-            "string": note["string"],
-            "fret": note["fret"] + 10,
-            "midi": {1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 40}[note["string"]]
-            + note["fret"] + 10,
-        }
-        for note in reference["notes"]
+    expected = [
+        ("E", "Low E string", 3),
+        ("D", "D string", 5),
+        ("C", "A string", 10),
+        ("A", "A string", 10),
+        ("G", "Low E string", 15),
+        ("E", "Low E string", 15),
+        ("D", "D string", 17),
+        ("C", "A string", 22),
     ]
-    assert (
-        min(note["fret"] for note in positions[0]["notes"]),
-        max(note["fret"] for note in positions[0]["notes"]),
-    ) == (10, 13)
-    assert {
-        note["midi"] % 12
-        for note in positions[0]["notes"]
-    } <= {0, 2, 3, 5, 7, 9, 10}
 
-    effective_starts = [
-        min(note["fret"] for note in position["notes"])
-        for position in positions
+    assert list(zip(
+        _shape_names(positions),
+        [position["root_string"] for position in positions],
+        [position["root_fret"] for position in positions],
+    )) == expected
+    assert [position["label"] for position in positions] == [
+        "Position 1 — E shape (3rd fret)",
+        "Position 2 — D shape (5th fret)",
+        "Position 3 — C shape (10th fret)",
+        "Position 4 — A shape (10th fret)",
+        "Position 5 — G shape (15th fret)",
+        "Position 6 — E shape (15th fret)",
+        "Position 7 — D shape (17th fret)",
+        "Position 8 — C shape (22nd fret)",
     ]
-    assert effective_starts == sorted(effective_starts)
+    assert [position["instructor_phrase"] for position in positions] == [
+        "Start on the 3rd fret of the low E string. E Shape.",
+        "Start on the 5th fret of the D string. D Shape.",
+        "Start on the 10th fret of the A string. C Shape.",
+        "Start on the 10th fret of the A string. A Shape.",
+        "Start on the 15th fret of the low E string. G Shape.",
+        "Start on the 15th fret of the low E string. E Shape.",
+        "Start on the 17th fret of the D string. D Shape.",
+        "Start on the 22nd fret of the A string. C Shape.",
+    ]
+
+    for position in positions:
+        notes = position["notes"]
+        root_string = {"Low E string": 6, "D string": 4, "A string": 5}[
+            position["root_string"]
+        ]
+        assert {note["string"] for note in notes} == set(range(1, 7))
+        assert (OPEN_MIDI[root_string] + position["root_fret"]) % 12 == 7
+        assert any(note["midi"] % 12 == 7 for note in notes)
+        assert all(
+            0 <= note["fret"] <= 22
+            and note["midi"] == OPEN_MIDI[note["string"]] + note["fret"]
+            and note["midi"] % 12 in G_NATURAL_MINOR_PITCH_CLASSES
+            for note in notes
+        )
 
 
 def test_b_aeolian_positions_follow_actual_physical_neck_order() -> None:
@@ -206,8 +232,50 @@ def test_instructor_audio_uses_bb_aeolian_position_phrase(monkeypatch) -> None:
         )
 
     assert response.status_code == 204
-    assert requested_phrases == ["Start on the 10th fret of the A string. A Shape."]
+    assert requested_phrases == ["Start on the 3rd fret of the low E string. E Shape."]
     assert "major" not in requested_phrases[0].lower()
+
+
+def test_bb_aeolian_api_and_relative_minor_selector_match_contract(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(ui, "ENABLE_EXERCISE_CARDS", False)
+    monkeypatch.setattr(ui, "ENABLE_SCALE_LOG", False)
+
+    with ui.app.test_client() as client:
+        response = client.get("/api/scale-positions?key=Bb&mode=Aeolian")
+        html = client.get("/").get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert response.get_json() == get_scale_positions("Bb", "Aeolian")
+    assert '<option value="Bb">Bb major / G minor</option>' in html
+
+
+def test_bb_aeolian_change_preserves_other_scale_families_and_keys(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(ui, "PENTA_CAGED_ENABLED", False)
+
+    with ui.app.test_client() as client:
+        bb_default = client.get("/api/scale-positions?key=Bb").get_json()
+        bb_ionian = client.get(
+            "/api/scale-positions?key=Bb&mode=Ionian"
+        ).get_json()
+        bb_minor_pentatonic = client.get(
+            "/api/scale-positions?key=Bb&family=minor_pentatonic"
+        ).get_json()
+        g_aeolian = client.get(
+            "/api/scale-positions?key=G&mode=Aeolian"
+        ).get_json()
+
+    assert bb_default == bb_ionian == get_scale_positions("Bb", "Ionian")
+    assert [
+        {key: value for key, value in position.items() if key != "group"}
+        for position in bb_minor_pentatonic
+    ] == ui.BOX_PENTA_POSITIONS["Bb"]["minor_pentatonic"]
+    assert [position["root_fret"] for position in g_aeolian] == [
+        0, 2, 7, 7, 12, 12, 14, 19, 19
+    ]
 
 
 def test_enharmonic_aeolian_aliases_reuse_canonical_layouts() -> None:
@@ -241,6 +309,10 @@ def test_every_canonical_aeolian_layout_translates_reference_geometry() -> None:
             if key == "A":
                 assert _shape_names(positions) == ["E", "D", "C", "A", "G", "E", "D", "C"]
                 assert [position["root_fret"] for position in positions] == [2, 4, 9, 9, 14, 14, 16, 21]
+                continue
+            if key == "Bb":
+                assert _shape_names(positions) == ["E", "D", "C", "A", "G", "E", "D", "C"]
+                assert [position["root_fret"] for position in positions] == [3, 5, 10, 10, 15, 15, 17, 22]
                 continue
             shift = (KEY_PITCH_CLASSES[key] - 9) % 12
             expected_positions = []
