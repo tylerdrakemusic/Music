@@ -1,0 +1,69 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1a2e3a', 'primaryTextColor': '#d0ecf8', 'edgeLabelBackground': '#0f1318', 'lineColor': '#4a7a9a'}}}%%
+%% is_derived_view=true
+%% Traceability.parent: diagrams/music-architecture.mmd
+graph TB
+    Dashboard[music_dashboard.py]
+    DB[(heartmusic.db<br/>tracks · catalog_songs<br/>recordings)]
+    subgraph ArtistLinksMod["src/artist_links/"]
+        ArtistLinksPanel[generate_artist_links_panel.py]
+        ArtistLinksRoutes["/api/links CRUD"]
+        ArtistLinksDB[(artist_links)]
+    end
+    subgraph ReleaseOps["Release Ops"]
+        ReleaseOpsRoutes["/api/release_ops"]
+        ReleasesDB[(releases)]
+    end
+    subgraph BandMgmt["src/band_mgmt/"]
+        BandMgmtPanel[generate_band_mgmt_panel.py]
+        BandMgmtDB[(bands · band_song_arrangements<br/>catalog_song_aliases)]
+    end
+    subgraph RhymeGrouper["Rhyme Grouper"]
+        RhymeUtils[src/analysis/rhyme_utils.py]
+        RhymeRoute["/rhymes"]
+        RhymeDB[(vault_lines · phonetic_groups)]
+    end
+    subgraph Studio["src/studio/"]
+        StudioPanel[studio_panel.py]
+        StudioDB[(studio_equipment)]
+    end
+    subgraph GuitarTech["src/guitar_tech/ · Guitar Tech Persona"]
+        GuitarTechCLI[tools/generate_guitar_tech_pilot.py]
+        PersonaEngine["persona_rubric.py -> hlx_generator.py -> hlx_validator.py"]
+        GuitarToneDB[(guitar_tone_profiles)]
+    end
+    HelixRef[(catalog/helix_reference/ HX Edit model snapshot)]
+    HelixFilesOut["HelixFiles/*.hlx + TODO.md"]
+    Dashboard --> ArtistLinksRoutes
+    ArtistLinksRoutes --> ArtistLinksPanel
+    ArtistLinksPanel --> ArtistLinksDB
+    Dashboard --> ReleaseOpsRoutes
+    ReleaseOpsRoutes --> ReleasesDB
+    Dashboard --> BandMgmtPanel
+    BandMgmtPanel --> BandMgmtDB
+    Dashboard --> RhymeRoute
+    RhymeRoute --> RhymeUtils
+    RhymeUtils --> RhymeDB
+    Dashboard --> StudioPanel
+    StudioPanel --> StudioDB
+    DB -->|catalog_songs + HelixFiles scan| GuitarTechCLI
+    GuitarTechCLI --> PersonaEngine
+    PersonaEngine -.->|read-only| HelixRef
+    PersonaEngine --> HelixFilesOut
+    GuitarTechCLI -->|proposed rows| GuitarToneDB
+    GuitarToneDB -.->|FK catalog_song_id| DB
+    class ArtistLinksMod,ReleaseOps,BandMgmt,RhymeGrouper,Studio,GuitarTech music
+    class Dashboard svc
+    class HelixFilesOut out
+    class DB,ArtistLinksDB,ReleasesDB,BandMgmtDB,RhymeDB,StudioDB,GuitarToneDB db
+
+classDef life     fill:#1a2e3a,stroke:#6ab4d4,color:#d0ecf8
+classDef music    fill:#3a1a24,stroke:#d47a8f,color:#f8d0dc
+classDef quantum  fill:#251a3a,stroke:#a07adf,color:#e8d0f8
+classDef manifest fill:#3a2e1a,stroke:#d4a96a,color:#f8ead0
+classDef ws       fill:#1a3a30,stroke:#6ad4b4,color:#d0f8ee
+classDef tyler    fill:#2a1a3a,stroke:#9e4aff,color:#fff
+classDef ext      fill:#3a2020,stroke:#ff7a7a,color:#ffd0d0
+classDef db       fill:#3a3010,stroke:#d4c050,color:#f8f0c0
+classDef state    fill:#1a1a1a,stroke:#888888,color:#cccccc
+classDef util     fill:#1a2a3a,stroke:#4a8ab4,color:#c0daf0
+classDef out      fill:#3a2a10,stroke:#d4a050,color:#f8e8c0
