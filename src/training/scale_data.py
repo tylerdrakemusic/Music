@@ -618,6 +618,76 @@ def get_scale_positions(key: str = "C", mode: str = "Ionian") -> list[CagedPosit
                 ],
             })
         return selected
+    if key == "A" and mode == "Aeolian":
+        f_sharp_minor_pitch_classes = {1, 2, 4, 6, 8, 9, 11}
+        shape_plans = (
+            ("E", "Low E string", 2, _G_E_AEOLIAN_E_SHAPE_OFFSETS),
+            ("D", "D string", 4, _C_AEOLIAN_D_SHAPE_OFFSETS),
+            ("C", "A string", 9, _C_AEOLIAN_C_SHAPE_OFFSETS),
+            ("A", "A string", 9, _G_E_AEOLIAN_A_SHAPE_OFFSETS),
+            ("G", "Low E string", 14, _C_AEOLIAN_G_SHAPE_OFFSETS),
+            ("E", "Low E string", 14, _G_E_AEOLIAN_E_SHAPE_OFFSETS),
+        )
+
+        def minor_shape_offsets(root_fret: int, candidates: list[list[int]]) -> list[list[int]]:
+            return [
+                [string, delta]
+                for string, delta in candidates
+                if root_fret + delta <= 22
+                and (_OPEN_MIDI[string] + root_fret + delta) % 12
+                in f_sharp_minor_pitch_classes
+            ]
+
+        selected: list[CagedPosition] = []
+        for shape_name, root_string, root_fret, offsets in shape_plans:
+            offsets = minor_shape_offsets(root_fret, offsets)
+            selected.append({
+                "label": (
+                    f"Position {len(selected) + 1} — {shape_name} shape "
+                    f"({_fret_label(root_fret)} fret)"
+                ),
+                "root_string": root_string,
+                "root_fret": root_fret,
+                "instructor_phrase": (
+                    f"Start on the {_fret_label(root_fret)} fret of "
+                    f"the {root_string.replace('Low E', 'low E')}. {shape_name} Shape."
+                ),
+                "notes": [
+                    ScaleNote(
+                        string=string,
+                        fret=root_fret + delta,
+                        midi=_OPEN_MIDI[string] + root_fret + delta,
+                    )
+                    for string, delta in offsets
+                ],
+            })
+
+        for shape_name, root_string, root_fret, offsets in (
+            ("D", "D string", 16, _C_AEOLIAN_D_SHAPE_OFFSETS),
+            ("C", "A string", 21, _C_AEOLIAN_C_SHAPE_OFFSETS),
+        ):
+            offsets = minor_shape_offsets(root_fret, offsets)
+            selected.append({
+                "label": (
+                    f"Position {len(selected) + 1} — {shape_name} shape "
+                    f"({_fret_label(root_fret)} fret)"
+                ),
+                "root_string": root_string,
+                "root_fret": root_fret,
+                "instructor_phrase": (
+                    f"Start on the {_fret_label(root_fret)} fret of "
+                    f"the {root_string.replace('Low E', 'low E')}. {shape_name} Shape."
+                ),
+                "notes": [
+                    ScaleNote(
+                        string=string,
+                        fret=root_fret + delta,
+                        midi=_OPEN_MIDI[string] + root_fret + delta,
+                    )
+                    for string, delta in offsets
+                ],
+            })
+        return selected
     if key == "F" and mode == "Aeolian":
         d_open_offsets = [
             [6, 0], [6, 1], [6, 3],
