@@ -127,6 +127,7 @@ tmp/
 # by gdrive_client) — ephemeral, not tracked. Generated .docx chord sheet
 # deliverables (FR-20260703-music-agentic-chord-sheets) ARE tracked.
 catalog/sheet_music/**/*.pdf
+!catalog/sheet_music/covers/DW Scores - Guthrie Govan - Combining Pentatonics Solo CG.pdf
 catalog/sheet_music/**/*.jpg
 catalog/sheet_music/**/*.jpeg
 catalog/sheet_music/**/*.png
