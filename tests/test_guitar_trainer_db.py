@@ -38,6 +38,10 @@ def test_training_ui_rejects_non_loopback_host() -> None:
         ui._require_loopback_host("0.0.0.0")
 
 
+def test_training_ui_allows_explicit_network_bind_for_cloud_deploy() -> None:
+    assert ui._require_loopback_host("0.0.0.0", allow_network_bind=True) == "0.0.0.0"
+
+
 @pytest.mark.parametrize("host", ["127.0.0.1", "localhost", "::1"])
 def test_training_ui_accepts_loopback_hosts(host: str) -> None:
     assert ui._require_loopback_host(host) == host

@@ -50,8 +50,10 @@ from training.pentatonic_spec import (  # noqa: E402
 )
 
 
-def _require_loopback_host(host: str) -> str:
+def _require_loopback_host(host: str, *, allow_network_bind: bool = False) -> str:
     """Reject network-exposed binds for the local training UI."""
+    if allow_network_bind:
+        return host
     if host.lower() == "localhost":
         return host
     try:
@@ -2208,9 +2210,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="❤Music Lead Guitar Training UI")
     parser.add_argument("--port", type=int, default=5055)
     parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--allow-network-bind", action="store_true")
     args = parser.parse_args()
 
     TRAINING_DIR.mkdir(parents=True, exist_ok=True)
-    host = _require_loopback_host(args.host)
+    host = _require_loopback_host(args.host, allow_network_bind=args.allow_network_bind)
     print(f"Lead Guitar Trainer -> http://{host}:{args.port}")
     app.run(host=host, port=args.port, debug=False)
