@@ -37,4 +37,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Shell form so ${PORT} expands at container start (Fly.io convention).
-CMD python src/training/musician_training_ui.py --host 0.0.0.0 --port ${PORT}
+CMD python src/training/musician_training_ui.py --host 0.0.0.0 --port ${PORT} --allow-network-bind
