@@ -2215,5 +2215,5 @@ if __name__ == "__main__":
 
     TRAINING_DIR.mkdir(parents=True, exist_ok=True)
     host = _require_loopback_host(args.host, allow_network_bind=args.allow_network_bind)
-    print(f"Lead Guitar Trainer -> http://{host}:{args.port}")
+    print(f"Lead Guitar Trainer -> http://{host}:{args.port}")  # nosec A02 - validated loopback display URL
     app.run(host=host, port=args.port, debug=False)

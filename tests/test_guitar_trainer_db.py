@@ -47,6 +47,16 @@ def test_training_ui_accepts_loopback_hosts(host: str) -> None:
     assert ui._require_loopback_host(host) == host
 
 
+def test_training_ui_loopback_display_url_has_scanner_suppression() -> None:
+    source = TRAINER_PY.read_text(encoding="utf-8")
+    display_line = next(
+        line for line in source.splitlines()
+        if "Lead Guitar Trainer -> http://" in line
+    )
+
+    assert "# nosec A02" in display_line
+
+
 # ---------------------------------------------------------------------------
 # In-memory DB fixture
 # ---------------------------------------------------------------------------
