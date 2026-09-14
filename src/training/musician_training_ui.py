@@ -1497,7 +1497,7 @@ async function createSession() {
   const STAFF_COLORS = DEGREE_COLORS;
   const STAFF_TEXT   = DEGREE_TEXT;
   // Key signature accidental counts (positive = sharps, negative = flats)
-  const KEY_SIGS = { C: 0, Db: -5, D: 2, Eb: -3, E: 4, F: -1, 'F#': 6, G: 1, Ab: -4, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
+  const KEY_SIGS = { C: 0, Db: -5, D: 2, Eb: -3, E: 4, F: -1, 'F#': 6, G: 1, A: 3, Ab: -4, Bb: -2, B: 5, 'A#': -2, 'D#': -3 };
   const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
   const FLAT_ORDER  = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
   // Y positions for accidentals on treble/bass clef (per accidental order slot)
