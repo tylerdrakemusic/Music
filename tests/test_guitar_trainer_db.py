@@ -51,7 +51,7 @@ def test_training_ui_loopback_display_url_has_scanner_suppression() -> None:
     source = TRAINER_PY.read_text(encoding="utf-8")
     display_line = next(
         line for line in source.splitlines()
-        if "Lead Guitar Trainer -> http://" in line
+        if "Lead Guitar Trainer -> http://" in line  # nosec A02 - scanner fixture text
     )
 
     assert "# nosec A02" in display_line
