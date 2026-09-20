@@ -1,7 +1,7 @@
 ---
 name: ❤music-guitar-tech
-description: Guitar-tech persona agent for Tyler James Drake's ❤Music project. Use for assigning guitar-legend tone personas (Stevie Ray Vaughan, Jimi Hendrix, Prince, B.B. King, Albert King, John Mayer, John Frusciante, Eddie Van Halen) to catalog songs lacking a dedicated Line 6 HX Stomp preset, generating and validating .hlx preset files from the committed HX Edit reference catalog, and maintaining the guitar_tone_profiles table.
-user-invocable: false
+description: Guitar-tech persona agent for Tyler James Drake's ❤Music project. Use for assigning guitar-legend tone personas (Stevie Ray Vaughan, Jimi Hendrix, Prince, B.B. King, Albert King, John Mayer, John Frusciante, Eddie Van Halen) to catalog songs lacking a dedicated Line 6 HX Stomp preset, generating and validating .hlx preset files from the committed HX Edit reference catalog, and maintaining the guitar_tone_profiles table. Also handles hand-authored/refined .hlx tone requests (song-specific tones, EXP2 pedal assignments, level fixes) and .hls setlist packing/inspection.
+user-invocable: true
 ---
 <!-- inherits: ../instructions/❤music-base.instructions.md -->
 <!-- inherits: ../instructions/agent-self-regen.instructions.md -->
@@ -40,6 +40,17 @@ Modules: `src/guitar_tech/hlx_catalog.py`, `hlx_generator.py`, `hlx_validator.py
 - `todo_writer.append_todo_entries(todo_path, filenames)` appends new preset filenames to `HelixFiles/TODO.md`'s two checklist sections.
 
 Orchestration CLI: `tools/generate_guitar_tech_pilot.py [--dry-run] [--song-id ID ...]` — ties all of the above together against the real DB + real `HelixFiles/` directory.
+
+## Capability: Manual Tone Refinement (`.hlx`) and Setlist Packing (`.hls`)
+
+Beyond the automated persona-matching pilot, this agent also directly authors/refines individual `.hlx` presets by hand (song-specific requests, "grill-me for tone clarification" interviews, level fixes) and packs presets into HX Stomp `.hls` setlist files.
+
+- **Model lookup discipline**: before writing or editing any block, grep `catalog/helix_reference/*.models` for the real `symbolicID`. Never invent a model ID, parameter name, or default value. When a prompt names a real-world pedal/amp not present in the catalog (e.g. "Boss OD-3", "MXR Dyna Comp", "JCM2000 TSL-100"), pick the closest catalog-confirmed equivalent and say so explicitly — do not silently pretend it's exact. Confirmed substitutions in use: Dyna Comp → `HD2_CompressorKinkyComp`, Klon/Timmy/Rat → `HD2_DistTopSecretOD`, JCM800-ish → `HD2_AmpBrit2204`, Tweed Deluxe → `HD2_AmpUSDeluxeNrm` (not `HD2_AmpUSSmallTweed`, a 1x8 Champ-sized model).
+- **EXP2 pedal assignment schema** (verified against real files like `Cool.hlx`, `Voodoo Child - H.hlx`): top-level `tone.controller.dsp0.blockN.Pedal = {"@controller": 2, "@max": 1.0, "@min": 0.0, "@snapshot_disable": false}`, PLUS each `snapshotN` needs `controllers.dsp0.blockN.Pedal = {"@fs_enabled": false, "@value": <resting position>}`. A missing per-snapshot `controllers` entry or a target block left `@enabled: false` are the two most common "EXP2/wah isn't working" bugs — check both before reporting a fix.
+- **Standard chain-building convention**: block0 = `HD2_VolPanVol` EXP2-mapped volume (resting ~0.85 normally; lower, e.g. 0.65, for a "cranked amp + rolled-back guitar volume" emulation), then drive/amp/EQ/comp/mod/delay/reverb in that rough order. Noise gate on inputA/inputB at `-55dB` whenever any gain-adding block is present.
+- **"Sounds quieter than my other tones" fixes**: adjust the compressor's `Level` (makeup gain, 0-36dB range) — not amp `Master`/`ChVol` (those change breakup character, not just loudness). If there's no always-on compressor (e.g. disabled by default in the main snapshot), add makeup gain via an always-on EQ block's `Level` param instead.
+- **`.hls` setlists are plain JSON, not a proprietary binary format**: `encoded_data` = `base64(zlib.compress(inner_json_utf8))`, where the inner JSON is `{"meta": {"name": ...}, "presets": [<.hlx "data" object>, ...]}` (one entry per slot, no outer `.hlx` wrapper fields). `compression.crc32`/`decompressed_size` are integrity checks over the *decompressed* bytes. Use `tools/hls_setlist_tool.py` (`inspect` / `build`) to decode existing setlists and swap `.hlx` presets into specific slot indices — verified round-trip byte-exact against real HX Edit exports. `build` only rewrites the slots you pass; everything else copies through unchanged from the template.
+- **Always validate** every hand-edited `.hlx`/`.hls` with `python -c "import json; json.load(open(path, encoding='utf-8'))"` before calling it done — stray `//` comments or malformed JSON silently break HX Edit on load.
 
 ## Database: heartmusic.db
 

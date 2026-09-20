@@ -7,82 +7,108 @@
    "appversion": 57671680,
    "build_sha": "v3.70-10-ge773a6f",
    "modifieddate": 1783271745,
-   "name": "Black Magic Woman - Jimi Hendrix (Proposed)"
+   "name": "Black Magic Woman - Santana"
   },
   "tone": {
+   "controller": {
+    "dsp0": {
+     "block2": {
+      "Pedal": {
+       "@controller": 2,
+       "@max": 1.0,
+       "@min": 0.0,
+       "@snapshot_disable": false
+      }
+     }
+    }
+   },
    "dsp0": {
     "block0": {
-     "@enabled": true,
-     "@model": "HD2_DistArbitratorFuzz",
+     "@enabled": false,
+     "@model": "HD2_DistCompulsiveDrive",
      "@path": 0,
      "@position": 0,
      "@no_snapshot_bypass": false,
      "@type": 0,
-     "Fuzz": 0.9,
-     "Level": 0.55,
+     "Gain": 0.250,
+     "Tone": 0.500,
+     "LPHP": false,
+     "Version": false,
+     "Level": 0.550,
      "@stereo": false
     },
     "block1": {
      "@enabled": true,
-     "@model": "HD2_AmpBritPlexiJump",
+     "@model": "HD2_AmpUSDoubleNrm",
      "@path": 0,
      "@position": 1,
      "@no_snapshot_bypass": false,
      "@type": 3,
-     "BrtDrive": 0.76,
-     "NrmDrive": 0.72,
-     "Bass": 0.9,
-     "Mid": 0.81,
-     "Treble": 0.73,
-     "ChVol": 0.6,
-     "Presence": 0.7,
-     "Master": 1.0,
-     "Sag": 0.5,
-     "Hum": 0.5,
-     "Ripple": 0.5,
-     "Bias": 0.65,
-     "BiasX": 0.5,
+     "Drive": 0.550,
+     "Bass": 0.500,
+     "Mid": 0.650,
+     "Treble": 0.550,
+     "ChVol": 0.850,
+     "Presence": 0.400,
+     "Master": 0.900,
+     "Sag": 0.500,
+     "Hum": 0.400,
+     "Ripple": 0.450,
+     "Bias": 0.600,
+     "BiasX": 0.500,
      "@bypassvolume": 1.0,
      "@cab": "cab0"
     },
     "block2": {
      "@enabled": true,
-     "@model": "HD2_PhaserUbiquitousVibe",
+     "@model": "HD2_WahTeardrop310",
      "@path": 0,
      "@position": 2,
      "@no_snapshot_bypass": false,
      "@type": 0,
+     "@stereo": false,
+     "Pedal": 0.500,
+     "Mix": 1.0,
+     "Level": 0.0
+    },
+    "block3": {
+     "@enabled": true,
+     "@model": "HD2_PhaserUbiquitousVibe",
+     "@path": 0,
+     "@position": 3,
+     "@no_snapshot_bypass": false,
+     "@type": 0,
      "Rate": 0.29,
-     "Intensity": 1.0,
+     "Intensity": 0.500,
      "Mode": false,
      "LampBias": 0.5,
      "Spread": 0.25,
-     "Mix": 0.5,
+     "Mix": 0.300,
      "Level": 0.0,
      "SyncSelect1": 6,
      "TempoSync1": false,
      "@stereo": false
     },
-    "block3": {
+    "block4": {
      "@enabled": true,
      "@model": "HD2_Reverb63Spring",
      "@path": 0,
-     "@position": 3,
+     "@position": 4,
      "@no_snapshot_bypass": false,
      "@type": 7,
-     "Decay": 0.56,
+     "Decay": 0.400,
      "Predelay": 0.0,
      "LowCut": 87.0,
      "HighCut": 5000.0,
-     "Mix": 0.38,
+     "Mix": 0.150,
      "Level": 0.0,
      "@trails": false
     },
     "cab0": {
      "@enabled": true,
-     "@model": "HD2_CabMicIr_4x12Greenback25",
+     "@model": "HD2_CabMicIr_2x12DoubleC12N",
      "Mic": 0,
-     "Position": 0.24,
+     "Position": 0.0,
      "Distance": 1.0,
      "Angle": 0.0,
      "LowCut": 19.9,
@@ -92,22 +118,22 @@
     "inputA": {
      "@input": 1,
      "@model": "HelixStomp_AppDSPFlowInput",
-     "decay": 0.5,
-     "noiseGate": false,
-     "threshold": -48.0
+     "decay": 0.30,
+     "noiseGate": true,
+     "threshold": -55.0
     },
     "inputB": {
      "@input": 0,
      "@model": "HelixStomp_AppDSPFlowInput",
-     "decay": 0.5,
-     "noiseGate": false,
-     "threshold": -48.0
+     "decay": 0.30,
+     "noiseGate": true,
+     "threshold": -55.0
     },
     "join": {
      "@enabled": true,
      "@model": "HD2_AppDSPFlowJoin",
      "@no_snapshot_bypass": false,
-     "@position": 4,
+     "@position": 8,
      "A Level": 0.0,
      "A Pan": 0.5,
      "B Level": 0.0,
@@ -118,14 +144,14 @@
     "outputA": {
      "@model": "HelixStomp_AppDSPFlowOutputMain",
      "@output": 1,
-     "gain": 1.0,
+     "gain": 0.0,
      "pan": 0.5
     },
     "outputB": {
      "@model": "HelixStomp_AppDSPFlowOutputSend",
      "@output": 0,
      "Type": true,
-     "gain": 1.0,
+     "gain": 0.0,
      "pan": 0.5
     },
     "split": {
@@ -140,7 +166,32 @@
    },
    "dsp1": {},
    "footswitch": {
-    "dsp0": {}
+    "dsp0": {
+     "block0": {
+      "@fs_enabled": true,
+      "@fs_index": 0,
+      "@fs_label": "Boost",
+      "@fs_ledcolor": 16711680,
+      "@fs_momentary": false,
+      "@fs_primary": true
+     },
+     "block2": {
+      "@fs_enabled": true,
+      "@fs_index": 1,
+      "@fs_label": "Wah",
+      "@fs_ledcolor": 13676288,
+      "@fs_momentary": false,
+      "@fs_primary": true
+     },
+     "block3": {
+      "@fs_enabled": true,
+      "@fs_index": 2,
+      "@fs_label": "Uni-Vibe",
+      "@fs_ledcolor": 458496,
+      "@fs_momentary": false,
+      "@fs_primary": true
+     }
+    }
    },
    "global": {
     "@DtSelect": 2,
@@ -149,7 +200,7 @@
     "@PowercabVoicing": 0,
     "@current_snapshot": 0,
     "@cursor_dsp": 0,
-    "@cursor_group": "block0",
+    "@cursor_group": "block1",
     "@cursor_path": 0,
     "@cursor_position": 1,
     "@guitarinputZ": 0,
@@ -169,17 +220,28 @@
     "@valid": true,
     "blocks": {
      "dsp0": {
-      "block0": true,
+      "block0": false,
       "block1": true,
       "block2": true,
-      "block3": true
+      "block3": true,
+      "block4": true
+     }
+    },
+    "controllers": {
+     "dsp0": {
+      "block2": {
+       "Pedal": {
+        "@fs_enabled": false,
+        "@value": 0.500
+       }
+      }
      }
     }
    },
    "snapshot1": {
-    "@custom_name": false,
+    "@custom_name": true,
     "@ledcolor": 0,
-    "@name": "Snapshot 2",
+    "@name": "Lead Boost",
     "@pedalstate": 0,
     "@tempo": 120.0,
     "@valid": true,
@@ -188,7 +250,18 @@
       "block0": true,
       "block1": true,
       "block2": true,
-      "block3": true
+      "block3": true,
+      "block4": true
+     }
+    },
+    "controllers": {
+     "dsp0": {
+      "block2": {
+       "Pedal": {
+        "@fs_enabled": false,
+        "@value": 0.500
+       }
+      }
      }
     }
    },
@@ -201,10 +274,21 @@
     "@valid": true,
     "blocks": {
      "dsp0": {
-      "block0": true,
+      "block0": false,
       "block1": true,
       "block2": true,
-      "block3": true
+      "block3": true,
+      "block4": true
+     }
+    },
+    "controllers": {
+     "dsp0": {
+      "block2": {
+       "Pedal": {
+        "@fs_enabled": false,
+        "@value": 0.500
+       }
+      }
      }
     }
    },

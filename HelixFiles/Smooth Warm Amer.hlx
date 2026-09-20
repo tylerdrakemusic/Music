@@ -12,7 +12,7 @@
   "tone" : {
    "controller" : {
     "dsp0" : {
-     "block3" : {
+     "block4" : {
       "Pedal" : {
        "@controller" : 2,
        "@max" : 1.0,
@@ -40,11 +40,44 @@
      "Threshold" : -28.0
     },
     "block1" : {
+     "@bypassvolume" : 1.0,
+     "@cab" : "cab0",
+     "@enabled" : true,
+     "@model" : "HD2_AmpUSDoubleNrm",
+     "@no_snapshot_bypass" : false,
+     "@path" : 0,
+     "@position" : 1,
+     "@type" : 3,
+     "Bass" : 0.480,
+     "Bias" : 0.600,
+     "BiasX" : 0.500,
+     "ChVol" : 0.750,
+     "Drive" : 0.400,
+     "Hum" : 0.300,
+     "Master" : 0.850,
+     "Mid" : 0.550,
+     "Presence" : 0.350,
+     "Ripple" : 0.400,
+     "Sag" : 0.450,
+     "Treble" : 0.550
+    },
+    "cab0" : {
+     "@enabled" : true,
+     "@model" : "HD2_CabMicIr_2x12DoubleC12N",
+     "Angle" : 0.0,
+     "Distance" : 1.0,
+     "HighCut" : 20100.0,
+     "Level" : 0.0,
+     "LowCut" : 19.90,
+     "Mic" : 0,
+     "Position" : 0.0
+    },
+    "block2" : {
      "@enabled" : true,
      "@model" : "HD2_ReverbPlate",
      "@no_snapshot_bypass" : false,
      "@path" : 0,
-     "@position" : 1,
+     "@position" : 2,
      "@trails" : false,
      "@type" : 7,
      "Decay" : 0.20,
@@ -54,12 +87,12 @@
      "Mix" : 0.160,
      "Predelay" : 0.0120
     },
-    "block2" : {
+    "block3" : {
      "@enabled" : true,
      "@model" : "HD2_EQSimple3Band",
      "@no_snapshot_bypass" : false,
      "@path" : 0,
-     "@position" : 2,
+     "@position" : 3,
      "@stereo" : false,
      "@type" : 0,
      "HighGain" : -0.60,
@@ -68,12 +101,12 @@
      "MidFreq" : 350.0,
      "MidGain" : 1.0
     },
-    "block3" : {
+    "block4" : {
      "@enabled" : true,
      "@model" : "HD2_VolPanVol",
      "@no_snapshot_bypass" : false,
      "@path" : 0,
-     "@position" : 3,
+     "@position" : 4,
      "@stereo" : false,
      "@type" : 0,
      "Pedal" : 1.0,
@@ -131,7 +164,7 @@
    "dsp1" : {},
    "footswitch" : {
     "dsp0" : {
-     "block1" : {
+     "block2" : {
       "@fs_enabled" : true,
       "@fs_index" : 1,
       "@fs_label" : "Plate Reverb",
@@ -148,9 +181,9 @@
     "@PowercabVoicing" : 0,
     "@current_snapshot" : 0,
     "@cursor_dsp" : 0,
-    "@cursor_group" : "block3",
+    "@cursor_group" : "block4",
     "@cursor_path" : 0,
-    "@cursor_position" : 3,
+    "@cursor_position" : 4,
     "@guitarinputZ" : 0,
     "@guitarpad" : 0,
     "@model" : "@global_params",
@@ -171,12 +204,13 @@
       "block0" : true,
       "block1" : true,
       "block2" : true,
-      "block3" : true
+      "block3" : true,
+      "block4" : true
      }
     },
     "controllers" : {
      "dsp0" : {
-      "block3" : {
+      "block4" : {
        "Pedal" : {
         "@fs_enabled" : false,
         "@value" : 1.0
@@ -197,12 +231,13 @@
       "block0" : true,
       "block1" : true,
       "block2" : true,
-      "block3" : true
+      "block3" : true,
+      "block4" : true
      }
     },
     "controllers" : {
      "dsp0" : {
-      "block3" : {
+      "block4" : {
        "Pedal" : {
         "@fs_enabled" : false,
         "@value" : 0.85
@@ -223,12 +258,13 @@
       "block0" : true,
       "block1" : true,
       "block2" : true,
-      "block3" : true
+      "block3" : true,
+      "block4" : true
      }
     },
     "controllers" : {
      "dsp0" : {
-      "block3" : {
+      "block4" : {
        "Pedal" : {
         "@fs_enabled" : false,
         "@value" : 1.0
