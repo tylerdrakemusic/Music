@@ -26,17 +26,29 @@ Do not edit the catalog to make preflight pass. Do not call an image provider di
 
 ## Run
 
-Run the Music module from the Music repository root with the authorized ID and count:
+Start the chat-mediated batch from the Music repository root with the authorized ID and count:
 
 ```powershell
-C:\G\python.exe -m src.merch.tee_image_approval --catalog-id TJD-TEE-001 --count 2
+C:\G\python.exe -m src.merch.tee_image_approval --chat-start --catalog-id TJD-TEE-001 --count 2
 ```
 
 Substitute Tyler's requested values. Use the current Music feature worktree when it is the checked-out workspace. The module delegates every candidate independently to the Workspace-owned cascade. If that cascade is unavailable, report the configured `WORKSPACE_SRC` requirement; do not fall back to direct provider clients.
 
+The command stages only the first successful candidate in a random OS-temp session and prints JSON with its ID and image path. Use the image-view tool to display that path in chat before asking for an exact-image decision. Do not use terminal-interactive generation for agent-managed approvals.
+
 ## Exact-Image Decisions
 
-The script presents each successful candidate separately and asks `Approve this exact image? [y/n]`. Show/open that candidate for Tyler and obtain a decision for that specific image. Enter only Tyler's explicit `y` or `n`; never infer approval from silence, generation, or approval of another candidate. Multiple candidates may be approved. Rejected candidate files and rejection records are discarded by the script.
+After Tyler replies `y` or `n` for the displayed candidate, resolve only that image:
+
+```powershell
+C:\G\python.exe -m src.merch.tee_image_approval --chat-decide --session-id <session-id> --candidate-id <candidate-id> --decision y
+```
+
+Substitute only Tyler's explicit decision. Never infer approval from silence, generation, or approval of another candidate. Multiple candidates may be approved. An approval is persisted only after the matching chat decision; a rejection is discarded before another candidate is generated. The decision command returns the next candidate or a completion summary. If Tyler cancels the remaining batch, discard its pending image and session:
+
+```powershell
+C:\G\python.exe -m src.merch.tee_image_approval --chat-cancel --session-id <session-id>
+```
 
 Provider failures are not approval decisions. Let the script preserve their diagnostics, then report the number of generated, approved, rejected, and failed candidates. Approved files and sidecars are retained only under ignored `output/images/tee-merch/<catalog-id>/<run-id>/`.
 

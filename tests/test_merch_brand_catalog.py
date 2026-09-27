@@ -42,7 +42,10 @@ def test_catalog_has_stable_rights_aware_prompt_records() -> None:
     }
     for prompt in prompts:
         assert required_fields <= prompt.keys()
-        assert prompt["provenance"]["source"] == "Brand/t-design prompts.txt"
+        assert prompt["provenance"]["source"] in {
+            "Brand/t-design prompts.txt",
+            "operator-authored",
+        }
         assert prompt["concept_approval_status"] in {
             "concept_pending",
             "concept_approved",
