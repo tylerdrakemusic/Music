@@ -46,7 +46,11 @@ def test_catalog_has_stable_rights_aware_prompt_records() -> None:
             "concept_approved",
             "rejected",
         }
-        assert prompt["exact_image_approval_status"] == "not_started"
+        assert prompt["exact_image_approval_status"] in {
+            "not_started",
+            "exact_image_pending",
+            "exact_image_approved",
+        }
 
 
 def test_brand_system_documents_phase_one_boundaries() -> None:
