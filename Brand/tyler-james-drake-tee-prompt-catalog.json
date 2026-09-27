@@ -30,6 +30,8 @@
       "intended_garment_use": "Front graphic for black or washed charcoal tee; alternate back print for black hoodie.",
       "palette": ["ink black", "washed charcoal", "muted brick red", "dirty gray", "aged cream"],
       "print_notes": "One-color or two-color distressed screen-print treatment; preserve a clear silhouette and avoid tiny sticker details. No readable third-party marks.",
+      "concept_revision": 1,
+      "concept_approval_revision": 1,
       "provenance": {
         "source": "Brand/t-design prompts.txt",
         "source_entry": "gritty vintage illustration of a rebellious electric guitar player walking away from a burning jukebox",
@@ -45,6 +47,8 @@
       "intended_garment_use": "Centered front print for faded black, navy, or dark forest tee; small left-chest mark may be derived later.",
       "palette": ["near-black", "midnight blue", "dusty silver", "muted gold", "faded teal"],
       "print_notes": "Use a limited halftone field and open negative space. Keep the moon and guitar readable at thumbnail size; no gradients that depend on transparent rendering.",
+      "concept_revision": 1,
+      "concept_approval_revision": 1,
       "provenance": {
         "source": "Brand/t-design prompts.txt",
         "source_entry": "peaceful vintage-style illustration of a guitarist sitting on a rooftop at night",
@@ -60,6 +64,8 @@
       "intended_garment_use": "Large back print for washed black or dark brown tee; small front title lockup only after concept approval.",
       "palette": ["washed black", "dust brown", "faded denim blue", "smoke gray", "rust accent"],
       "print_notes": "Favor rough linework, woodgrain texture, and two to three spot colors. Remove bottles, labels, or props that could imply a third-party brand or endorsement.",
+      "concept_revision": 1,
+      "concept_approval_revision": 1,
       "provenance": {
         "source": "Brand/t-design prompts.txt",
         "source_entry": "weathered blues guitarist sitting on a wooden porch",
@@ -75,6 +81,8 @@
       "intended_garment_use": "Centered front print for black or deep navy tee; suitable for a restrained cosmic sub-series.",
       "palette": ["ink black", "deep cobalt", "muted violet", "aged white", "amber glow"],
       "print_notes": "Translate the nebula into halftone texture and use the amplifier as the visual anchor. Keep the artwork opaque, separable, and readable in two to four spot colors.",
+      "concept_revision": 1,
+      "concept_approval_revision": 1,
       "provenance": {
         "source": "Brand/t-design prompts.txt",
         "source_entry": "cosmic dreamscape illustration of a lone guitarist floating in space",
@@ -90,6 +98,8 @@
       "intended_garment_use": "Large back print for black hoodie or washed charcoal tee.",
       "palette": ["black", "muted gold", "deep maroon", "smoke gray", "aged cream"],
       "print_notes": "Treat the phrase as provisional because it is generic. Concept approval must include a distinct Tyler James Drake naming lockup before any exact image is approved.",
+      "concept_revision": 1,
+      "concept_approval_revision": 1,
       "provenance": {
         "source": "Brand/t-design prompts.txt",
         "source_entry": "older guitar player standing on a dimly lit stage with Still Plugged In",

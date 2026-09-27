@@ -28,17 +28,19 @@ Do not infer a destructive edit from an ambiguous request. If the request does n
 3. Draft the complete entry before writing it.
 4. Check that the concept is original music-world merchandise, rights-aware, print-conscious, and consistent with the brand system.
 5. Set new entries to `concept_pending` and `exact_image_approval_status: not_started`.
-6. Preserve provenance. If the concept is new, use `source: operator-authored` and identify the request in `source_entry`.
-7. Show the proposed entry and wait for Tyler's concept approval before treating it as approved.
+6. Initialize `concept_revision` to `1`; set `concept_approval_revision` to that value only after Tyler explicitly approves the concept.
+7. Preserve provenance. If the concept is new, use `source: operator-authored` and identify the request in `source_entry`.
+8. Show the proposed entry and wait for Tyler's concept approval before treating it as approved.
 
 ## Edit workflow
 
 1. Locate the exact requested ID. Never silently substitute another entry.
 2. Preserve the ID, catalog structure, provenance, and unrelated fields.
 3. Re-run the rights, duplication, brand, and print-readiness checks after editing.
-4. If the concept or artwork direction changes materially, reset `concept_approval_status` to `concept_pending` and `exact_image_approval_status` to `not_started`.
-5. Do not mark either approval state as approved without explicit Tyler approval.
-6. Show a concise before/after summary and the complete resulting entry.
+4. If the concept or artwork direction changes materially, increment `concept_revision` and reset `concept_approval_status` to `concept_pending`. Reset `exact_image_approval_status` to `not_started` only when no exact image has already been approved.
+5. When Tyler explicitly reapproves the revised concept, set `concept_approval_revision` to the current `concept_revision`.
+6. Do not mark either approval state as approved without explicit Tyler approval.
+7. Show a concise before/after summary and the complete resulting entry.
 
 ## Required entry fields
 
@@ -51,10 +53,13 @@ Every retained prompt must contain:
 - `palette`
 - `print_notes`
 - `provenance`
+- `concept_revision`
+- `concept_approval_revision`
 - `concept_approval_status`
 - `exact_image_approval_status`
 
 Allowed concept states are `concept_pending` and `concept_approved`. Allowed exact-image states are `not_started`, `exact_image_pending`, and `exact_image_approved`.
+Generation requires `concept_approval_revision` to match `concept_revision`; a mismatch returns the entry to concept curation.
 
 ## Hard boundaries
 
@@ -62,6 +67,7 @@ Allowed concept states are `concept_pending` and `concept_approved`. Allowed exa
 - Reject recognizable artists, athletes, teams, logos, protected characters, and religious or cultural figures unless Tyler documents a separate license.
 - Do not copy third-party marks, readable labels, signatures, or named artist likenesses.
 - Do not generate images, select providers, render transparent artwork, create product listings, or publish commerce output from this prompt.
+- For an explicit image-generation request, use the separate `tyler-tee-image-generation.prompt.md` workflow; do not generate from this curation prompt.
 - Do not edit the rejected-source list to hide a rejected concept; add a new curated entry only when it passes the brand and rights checks.
 - Keep edits limited to the requested catalog entry unless a related schema correction is required and explicitly reported.
 

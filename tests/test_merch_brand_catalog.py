@@ -35,6 +35,8 @@ def test_catalog_has_stable_rights_aware_prompt_records() -> None:
         "palette",
         "print_notes",
         "provenance",
+        "concept_revision",
+        "concept_approval_revision",
         "concept_approval_status",
         "exact_image_approval_status",
     }
@@ -46,6 +48,8 @@ def test_catalog_has_stable_rights_aware_prompt_records() -> None:
             "concept_approved",
             "rejected",
         }
+        assert prompt["concept_revision"] >= 1
+        assert prompt["concept_approval_revision"] == prompt["concept_revision"]
         assert prompt["exact_image_approval_status"] in {
             "not_started",
             "exact_image_pending",
