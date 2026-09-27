@@ -215,8 +215,17 @@ def test_default_workspace_cascade_loads_from_configured_src_without_generation(
 ) -> None:
     from src.merch.tee_image_approval import _workspace_cascade
 
-    workspace_src = Path(
-        r"F:\⊕Workspace\.worktrees\FR-20260927-tee-image-generation-approval\workspace\src"
+    workspace_src = tmp_path / "workspace" / "src"
+    integration_dir = workspace_src / "integrations"
+    integration_dir.mkdir(parents=True)
+    (integration_dir / "image_cascade.py").write_text(
+        "class Cascade:\n"
+        "    def generate(self, prompt, *, output_dir=None):\n"
+        "        raise AssertionError('generation must not run in this test')\n"
+        "\n"
+        "def default_image_cascade():\n"
+        "    return Cascade()\n",
+        encoding="utf-8",
     )
 
     cascade = _workspace_cascade(workspace_src)
@@ -224,9 +233,27 @@ def test_default_workspace_cascade_loads_from_configured_src_without_generation(
     assert callable(cascade.generate)
 
 
-def test_default_workspace_source_resolves_feature_worktree_before_canonical_root() -> None:
-    from src.merch.tee_image_approval import _resolve_workspace_src
+def test_default_workspace_source_resolves_feature_worktree_before_canonical_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.merch import tee_image_approval
 
-    workspace_src = _resolve_workspace_src()
+    workspace_root = tmp_path / "workspace"
+    feature_src = (
+        workspace_root
+        / ".worktrees"
+        / "FR-20260927-tee-image-generation-approval"
+        / "workspace"
+        / "src"
+    )
+    canonical_src = workspace_root / "src"
+    for source in (feature_src, canonical_src):
+        integration_dir = source / "integrations"
+        integration_dir.mkdir(parents=True)
+        (integration_dir / "image_cascade.py").touch()
 
-    assert (workspace_src / "integrations" / "image_cascade.py").is_file()
+    monkeypatch.delenv("WORKSPACE_SRC", raising=False)
+    monkeypatch.setattr(tee_image_approval, "_WORKSPACE_ROOT", workspace_root)
+    monkeypatch.setattr(tee_image_approval, "_FEATURE_WORKSPACE_SRC", feature_src)
+
+    assert tee_image_approval._resolve_workspace_src() == feature_src
