@@ -7,7 +7,10 @@ Usage:
     # Initialize schema (idempotent, safe to re-run)
     C:\\G\\python.exe src/utils/init_db.py
 """
+import hashlib
+import json
 import os
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -398,6 +401,59 @@ CREATE TABLE IF NOT EXISTS guitar_tone_profiles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_guitar_tone_profiles_song ON guitar_tone_profiles(catalog_song_id);
+
+-- Tee merchandise concept catalog (FR-20260927-tee-catalog-heartmusic-db)
+CREATE TABLE IF NOT EXISTS tee_prompt_catalogs (
+    catalog_id              TEXT PRIMARY KEY,
+    version                 TEXT NOT NULL,
+    phase                   TEXT NOT NULL,
+    artist                  TEXT NOT NULL,
+    aliases_json            TEXT NOT NULL,
+    evidence_json           TEXT NOT NULL,
+    approval_workflow_json  TEXT NOT NULL,
+    provider_tracking_json  TEXT NOT NULL,
+    created_at              TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at              TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS tee_prompts (
+    id                            TEXT PRIMARY KEY,
+    catalog_id                    TEXT NOT NULL REFERENCES tee_prompt_catalogs(catalog_id),
+    title                         TEXT NOT NULL,
+    concept                       TEXT NOT NULL,
+    intended_garment_use          TEXT NOT NULL,
+    palette_json                  TEXT NOT NULL,
+    print_notes                   TEXT NOT NULL,
+    provenance_source             TEXT NOT NULL,
+    provenance_source_entry       TEXT NOT NULL,
+    provenance_curation_decision  TEXT NOT NULL,
+    concept_revision              INTEGER NOT NULL CHECK (concept_revision > 0),
+    concept_approval_revision     INTEGER CHECK (
+                                      concept_approval_revision IS NULL
+                                      OR concept_approval_revision > 0
+                                  ),
+    concept_approval_status       TEXT NOT NULL CHECK (
+                                      concept_approval_status IN ('concept_pending', 'concept_approved')
+                                  ),
+    exact_image_approval_status   TEXT NOT NULL CHECK (
+                                      exact_image_approval_status IN (
+                                          'not_started', 'exact_image_pending', 'exact_image_approved'
+                                      )
+                                  ),
+    created_at                    TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at                    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_tee_prompts_catalog
+    ON tee_prompts(catalog_id);
+
+CREATE TABLE IF NOT EXISTS tee_catalog_bootstrap_imports (
+    migration_key  TEXT PRIMARY KEY,
+    catalog_id     TEXT NOT NULL REFERENCES tee_prompt_catalogs(catalog_id),
+    source_sha256  TEXT NOT NULL,
+    prompt_count   INTEGER NOT NULL CHECK (prompt_count >= 0),
+    imported_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 _SEED_SQL = """
@@ -600,6 +656,89 @@ def init_db(*, seed: bool = True) -> None:
         conn.executescript(_SEED_SQL)
     conn.commit()
     conn.close()
+
+
+def import_tee_catalog_bootstrap(
+    conn: sqlite3.Connection, seed_path: Path | None = None
+) -> bool:
+    """Import the immutable six-prompt bootstrap snapshot once, without replaying edits."""
+    path = seed_path or Path(__file__).resolve().parents[1] / "data" / "tee_catalog_bootstrap_seed.json"
+    snapshot_bytes = path.read_bytes()
+    snapshot = json.loads(snapshot_bytes)
+    if snapshot.get("snapshot_kind") != "import_only_bootstrap":
+        raise ValueError("tee catalog seed is not an import-only bootstrap snapshot")
+    if "rejected_source_entries" in snapshot:
+        raise ValueError("tee catalog bootstrap must omit rejected source entries")
+    prompts = snapshot.get("prompts")
+    if not isinstance(prompts, list) or len(prompts) != 6:
+        raise ValueError("tee catalog bootstrap must contain the six retained prompts")
+
+    catalog_id = snapshot["catalog_id"]
+    migration_key = "tee_catalog_bootstrap_v1"
+    source_sha256 = hashlib.sha256(snapshot_bytes).hexdigest()
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        if conn.execute(
+            "SELECT 1 FROM tee_catalog_bootstrap_imports WHERE migration_key = ?",
+            (migration_key,),
+        ).fetchone():
+            conn.commit()
+            return False
+
+        conn.execute(
+            """INSERT INTO tee_prompt_catalogs
+               (catalog_id, version, phase, artist, aliases_json, evidence_json,
+                approval_workflow_json, provider_tracking_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                catalog_id,
+                snapshot["version"],
+                snapshot["phase"],
+                snapshot["artist"],
+                json.dumps(snapshot["aliases"], ensure_ascii=False),
+                json.dumps(snapshot["evidence"], ensure_ascii=False),
+                json.dumps(snapshot["approval_workflow"], ensure_ascii=False),
+                json.dumps(snapshot["provider_tracking"], ensure_ascii=False),
+            ),
+        )
+        for prompt in prompts:
+            provenance = prompt["provenance"]
+            conn.execute(
+                """INSERT INTO tee_prompts
+                   (id, catalog_id, title, concept, intended_garment_use, palette_json,
+                    print_notes, provenance_source, provenance_source_entry,
+                    provenance_curation_decision, concept_revision,
+                    concept_approval_revision, concept_approval_status,
+                    exact_image_approval_status)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    prompt["id"],
+                    catalog_id,
+                    prompt["title"],
+                    prompt["concept"],
+                    prompt["intended_garment_use"],
+                    json.dumps(prompt["palette"], ensure_ascii=False),
+                    prompt["print_notes"],
+                    provenance["source"],
+                    provenance["source_entry"],
+                    provenance["curation_decision"],
+                    prompt["concept_revision"],
+                    prompt.get("concept_approval_revision"),
+                    prompt["concept_approval_status"],
+                    prompt["exact_image_approval_status"],
+                ),
+            )
+        conn.execute(
+            """INSERT INTO tee_catalog_bootstrap_imports
+               (migration_key, catalog_id, source_sha256, prompt_count)
+               VALUES (?, ?, ?, ?)""",
+            (migration_key, catalog_id, source_sha256, len(prompts)),
+        )
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        raise
 
 
 if __name__ == "__main__":
