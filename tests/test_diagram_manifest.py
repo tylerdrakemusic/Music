@@ -45,6 +45,8 @@ def test_music_manifest_declares_parent_child_lineage_for_architecture_split() -
         "derived_views": [
             "diagrams/music-derived-catalog-pipeline.mmd",
             "diagrams/music-derived-operations-surfaces.mmd",
+            "diagrams/music-db-schema.mmd",
+            "diagrams/music-tech-stack.mmd",
         ],
     }
     assert records["diagrams/music-derived-catalog-pipeline.mmd"]["lineage"] == {
