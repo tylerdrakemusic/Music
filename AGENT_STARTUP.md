@@ -70,6 +70,9 @@ conn = get_connection()
 The canonical initializer, `src/utils/init_db.py`, calls
 `import_tee_catalog_bootstrap(conn)` to import the tee prompt snapshot once;
 `tee_catalog_bootstrap_imports` records the import.
+The public class is `TeePromptCatalog`, defined in
+`src/merch/tee_prompt_catalog.py`; its constructor is
+`__init__(self, connection: sqlite3.Connection) -> None`.
 
 ### Schema
 
