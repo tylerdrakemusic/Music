@@ -54,7 +54,7 @@ The command stages only the first successful candidate in a random OS-temp sessi
 
 ## Exact-Image Decisions
 
-After Tyler replies `y` or `n` for the displayed candidate, resolve only that image. An approval is accepted only if the concept, catalog version, and prompt revision still match the staged candidate. If any revision changed, return to curation and start a new batch; approval of a prior revision does not approve the changed prompt.
+After Tyler replies `y` or `n` for the displayed candidate, resolve only that image. An approval is accepted only if the concept is still `concept_approved`, its `concept_revision` and `concept_approval_revision` still match the staged concept revision, its `image_prompt_revision` matches, and the generator's `prompt_revision` is unchanged. `catalog_version` is recorded for provenance, but is not an approval gate, so edits to other concepts in the catalog do not invalidate this candidate. If any of those concept, image-prompt, or generator-prompt revisions changed, return to curation and start a new batch; approval of a prior revision does not approve the changed prompt.
 
 ```powershell
 C:\G\python.exe -m src.merch.tee_image_approval --chat-decide --session-id <session-id> --candidate-id <candidate-id> --decision y
