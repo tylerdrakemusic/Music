@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import re
 import sqlite3
-import sys
 from collections.abc import Mapping
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Any, Iterator
 
 
@@ -391,59 +388,3 @@ class TeePromptCatalog:
             (version, CATALOG_ID),
         )
         return version
-
-
-def _read_stdin_json() -> dict[str, Any]:
-    value = json.load(sys.stdin)
-    if not isinstance(value, dict):
-        raise ValueError("JSON input must be an object")
-    return value
-
-
-def _live_connection() -> sqlite3.Connection:
-    from src.utils import init_db
-
-    init_db.use_worktree_aware_db_path(Path(__file__).resolve().parents[2])
-    return init_db.get_connection()
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="tee_prompt_catalog")
-    operations = parser.add_subparsers(dest="operation", required=True)
-    operations.add_parser("list")
-    read_parser = operations.add_parser("read")
-    read_parser.add_argument("id")
-    create_parser = operations.add_parser("create")
-    create_parser.add_argument("--approved-by-tyler", action="store_true")
-    edit_parser = operations.add_parser("edit")
-    edit_parser.add_argument("id")
-    edit_parser.add_argument("--approved-by-tyler", action="store_true")
-    args = parser.parse_args(argv)
-
-    try:
-        with _live_connection() as connection:
-            catalog = TeePromptCatalog(connection)
-            if args.operation == "list":
-                result = catalog.read_catalog()
-            elif args.operation == "read":
-                result = catalog.read_prompt(args.id)
-            elif args.operation == "create":
-                result = catalog.create_prompt(
-                    _read_stdin_json(), approved_by_tyler=args.approved_by_tyler
-                )
-            else:
-                result = catalog.edit_prompt(
-                    args.id,
-                    _read_stdin_json(),
-                    approved_by_tyler=args.approved_by_tyler,
-                )
-    except (KeyError, PermissionError, ValueError) as error:
-        print(str(error), file=sys.stderr)
-        return 2
-
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

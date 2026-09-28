@@ -20,13 +20,23 @@ Extract the stable catalog ID and candidate count from Tyler's request.
 
 ## Preflight
 
-From the Music repository root, read the requested concept through the validated catalog command:
+From the Music repository root, read the requested concept through the catalog API:
 
-```powershell
-C:\G\python.exe -m src.merch.tee_prompt_catalog read TJD-TEE-001
+```python
+from contextlib import closing
+from src.utils.init_db import get_connection
+from src.merch.tee_prompt_catalog import TeePromptCatalog
+
+with closing(get_connection()) as connection:
+    prompt = TeePromptCatalog(connection).read_prompt(catalog_id)
 ```
 
-Substitute Tyler's catalog ID. Verify the database record has `concept_approval_status: concept_approved` and matching `concept_revision` and `concept_approval_revision`. The generation command repeats this preflight against the database before any provider call. If any check fails, do not run generation; explain that the concept must return to curation and receive explicit approval.
+Set `catalog_id` to Tyler's requested stable ID. Verify the returned record has
+`concept_approval_status: concept_approved` and matching `concept_revision` and
+`concept_approval_revision`. The generation command repeats this preflight
+against the database before any provider call. If any check fails, do not run
+generation; explain that the concept must return to curation and receive
+explicit approval.
 
 Do not edit the catalog to make preflight pass. Do not call an image provider directly, copy provider order into this prompt, or use the Vera portrait generator.
 

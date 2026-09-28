@@ -16,6 +16,7 @@ import json
 import os
 import re
 import shutil
+import sqlite3
 import sys
 import tempfile
 import uuid
@@ -24,7 +25,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Protocol
 
-from src.merch.tee_prompt_catalog import TeePromptCatalog, _live_connection
+from src.merch.tee_prompt_catalog import TeePromptCatalog
+from src.utils import init_db
 
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -51,6 +53,11 @@ _CANDIDATE_ART_DIRECTIONS = (
     "the main subject crossing the frame and bold, simplified background shapes.",
 )
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
+
+
+def _live_connection() -> sqlite3.Connection:
+    init_db.use_worktree_aware_db_path(_PROJECT_ROOT)
+    return init_db.get_connection()
 
 
 class ImageCascade(Protocol):
