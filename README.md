@@ -64,6 +64,9 @@ C:\G\python.exe src/utils/init_db.py
 C:\G\python.exe tools/catalog_index.py
 ```
 
+The canonical initializer calls `import_tee_catalog_bootstrap(conn)` to import
+the tee prompt snapshot once and track that import in `tee_catalog_bootstrap_imports`.
+
 ## DB Schema
 
 | Table | Purpose |
@@ -80,3 +83,6 @@ C:\G\python.exe tools/catalog_index.py
 | `budget` | Studio costs, gear, distribution |
 | `releases` | Platform links and release dates |
 | `catalog_index` | Flat index of all source files by path |
+| `tee_prompt_catalogs` | Tee prompt catalog metadata and workflow configuration |
+| `tee_prompts` | Tee merchandise concepts, provenance, and approval state |
+| `tee_catalog_bootstrap_imports` | Idempotency and source hash for the bootstrap import |

@@ -67,6 +67,10 @@ from utils.init_db import get_connection
 conn = get_connection()
 ```
 
+The canonical initializer, `src/utils/init_db.py`, calls
+`import_tee_catalog_bootstrap(conn)` to import the tee prompt snapshot once;
+`tee_catalog_bootstrap_imports` records the import.
+
 ### Schema
 
 | Table | Purpose |
@@ -83,6 +87,9 @@ conn = get_connection()
 | `budget` | Studio time, gear, distribution costs |
 | `releases` | Platform links and release dates |
 | `catalog_index` | Flat index of all source files — category, path, size |
+| `tee_prompt_catalogs` | Tee prompt catalog metadata and workflow configuration |
+| `tee_prompts` | Tee merchandise concepts, provenance, and approval state |
+| `tee_catalog_bootstrap_imports` | Idempotency and source hash for the bootstrap import |
 
 ## 5. Workflow Rules
 

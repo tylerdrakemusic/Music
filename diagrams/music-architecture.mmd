@@ -11,6 +11,11 @@ graph TB
     Reports["reports/\nportal + dashboards + tagging output"]
     Workspace["⊕Workspace integrations"]
     Images[output/images/]
+    TeeInitializer["src/utils/init_db.py\nimport_tee_catalog_bootstrap(conn)"]
+    TeeCatalog[src/merch/tee_prompt_catalog.py]
+    TeeApproval[src/merch/tee_image_approval.py]
+    WorkspaceImageCascade["⊕Workspace integrations/image_cascade.py"]
+    TeeImages[output/images/tee-merch/]
     Hyperthreat["Hyperthreat studio templates"]
     DerivedCatalog["music-derived-catalog-pipeline"]
     DerivedOps["music-derived-operations-surfaces"]
@@ -28,11 +33,19 @@ graph TB
     OpsSurfaces -.-> Workspace
     MusicDB --> Images
     MusicDB --> Reports
+    TeeInitializer -->|schema + one-time bootstrap| MusicDB
+    TeeCatalog -->|catalog reads and writes| MusicDB
+    TeeApproval --> TeeCatalog
+    TeeApproval -.->|image generation| WorkspaceImageCascade
+    TeeApproval --> TeeImages
     class Inputs,Reports io
     class CatalogFlow,Trainer,OpsSurfaces music
     class Dashboard,Hyperthreat svc
     class Workspace ws
+    class TeeInitializer,TeeCatalog,TeeApproval music
+    class WorkspaceImageCascade ws
     class Images out
+    class TeeImages out
     class MusicDB db
     class DerivedCatalog,DerivedOps state
 
