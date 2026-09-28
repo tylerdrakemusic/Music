@@ -3,13 +3,31 @@ mode: ❤music-orchestrator
 ---
 # Tyler James Drake Tee Prompt Catalog
 
-Use this prompt to create or edit one stable-ID entry in the canonical tee prompt catalog.
+Use this prompt to read, create, or edit one stable-ID entry in the database-backed tee prompt catalog.
 
 ## Canonical files
 
-- Catalog: `Brand/tyler-james-drake-tee-prompt-catalog.json`
+- Catalog data: `tee_prompt_catalogs` and `tee_prompts` in `src/data/heartmusic.db`
+- Internal catalog helper: `src.merch.tee_prompt_catalog`
 - Brand rules: `Brand/tyler-james-drake-merch-brand-system.md`
 - Source prompts: `Brand/t-design prompts.txt`
+
+The helper is the sole operator read/write path for this prompt. Run its
+`list`, `read`, `create`, and `edit` operations from the Music repository root;
+do not use SQL or edit the retired JSON catalog directly. `create` and `edit`
+read one JSON object from standard input. For example:
+
+```powershell
+C:\G\python.exe -m src.merch.tee_prompt_catalog list
+C:\G\python.exe -m src.merch.tee_prompt_catalog read TJD-TEE-001
+@'
+{"title":"A revised title"}
+'@ | C:\G\python.exe -m src.merch.tee_prompt_catalog edit TJD-TEE-001
+```
+
+Only add `--approved-by-tyler` to a `create` or `edit` invocation after Tyler
+has explicitly approved the complete proposed concept in the current prompt
+conversation. The helper rejects unapproved creation and core-concept edits.
 
 ## Required request
 
@@ -23,24 +41,25 @@ Do not infer a destructive edit from an ambiguous request. If the request does n
 
 ## Create workflow
 
-1. Read the catalog and brand system before proposing content.
+1. Read the catalog with the helper and review the brand system before proposing content.
 2. If no ID is supplied, assign the next available numeric ID using `TJD-TEE-NNN`, preserving existing IDs.
-3. Draft the complete entry before writing it.
+3. Draft the complete entry without writing it.
 4. Check that the concept is original music-world merchandise, rights-aware, print-conscious, and consistent with the brand system.
-5. Set new entries to `concept_pending` and `exact_image_approval_status: not_started`.
-6. Initialize `concept_revision` to `1`; set `concept_approval_revision` to that value only after Tyler explicitly approves the concept.
-7. Preserve provenance. If the concept is new, use `source: operator-authored` and identify the request in `source_entry`.
-8. Show the proposed entry and wait for Tyler's concept approval before treating it as approved.
+5. Preserve provenance. If the concept is new, use `source: operator-authored` and identify the request in `source_entry`.
+6. Show the complete proposed entry and wait for Tyler's explicit approval. A new concept is not persisted before that approval.
+7. After approval, pipe the complete JSON entry to `python -m src.merch.tee_prompt_catalog create --approved-by-tyler`. The helper initializes both concept revisions to `1`, marks the concept approved, and starts exact-image approval at `not_started`.
+8. A declined or unapproved proposal is not written anywhere in the catalog; do not create rejected-source entries.
 
 ## Edit workflow
 
-1. Locate the exact requested ID. Never silently substitute another entry.
-2. Preserve the ID, catalog structure, provenance, and unrelated fields.
+1. Read the exact requested ID with the helper. Never silently substitute another entry.
+2. Preserve the ID, provenance, catalog metadata, and every field not explicitly changed.
 3. Re-run the rights, duplication, brand, and print-readiness checks after editing.
-4. If the concept or artwork direction changes materially, increment `concept_revision` and reset `concept_approval_status` to `concept_pending`. Reset `exact_image_approval_status` to `not_started` only when no exact image has already been approved.
-5. When Tyler explicitly reapproves the revised concept, set `concept_approval_revision` to the current `concept_revision`.
-6. Do not mark either approval state as approved without explicit Tyler approval.
-7. Show a concise before/after summary and the complete resulting entry.
+4. A change to `concept` or its depicted subject requires showing the full revised concept and receiving Tyler's explicit approval before persistence. Then invoke `edit <ID> --approved-by-tyler`; the helper increments `concept_revision` and sets `concept_approval_revision` to that revision.
+5. Edits to other fields can be saved without concept reapproval. Send only the requested changes to the helper; it merges partial provenance edits and preserves unrelated values.
+6. Every changed image-generation input (`title`, `concept`, `intended_garment_use`, `palette`, or `print_notes`) advances the catalog's semantic patch version and resets the current `exact_image_approval_status` to `not_started`. Prior approved assets and records are retained; do not delete or rewrite them.
+7. Do not set approval states or revisions manually. The helper owns these transitions.
+8. Show a concise before/after summary, the catalog version, and the complete resulting entry.
 
 ## Required entry fields
 
@@ -73,13 +92,13 @@ Generation requires `concept_approval_revision` to match `concept_revision`; a m
 
 ## Validation and response
 
-After an edit, parse the JSON and verify unique IDs, required fields, valid approval states, provenance, and valid JSON formatting. Report:
+After a change, read the result back through the helper and verify stable unique IDs, required fields, valid approval states, and provenance. Report:
 
 - operation and ID
-- whether the entry was created or changed
+- whether the entry was created or changed and its catalog version
 - validation result
 - approval state
 - files changed
 - any unresolved human decision
 
-If validation fails, do not leave a partial catalog edit. Never claim exact-image approval or commerce readiness from this workflow.
+If validation fails, do not leave a partial catalog edit or retry by changing the database directly. Never claim exact-image approval or commerce readiness from this workflow. For an explicit image-generation request, direct Tyler to the separate `tyler-tee-image-generation.prompt.md` workflow.
