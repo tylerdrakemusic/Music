@@ -20,7 +20,13 @@ Extract the stable catalog ID and candidate count from Tyler's request.
 
 ## Preflight
 
-From the Music repository root, inspect `Brand/tyler-james-drake-tee-prompt-catalog.json` and verify the requested entry exists, has `concept_approval_status: concept_approved`, and has matching `concept_revision` and `concept_approval_revision`. If any check fails, do not run the script; explain that the concept must return to curation and receive explicit approval.
+From the Music repository root, read the requested concept through the validated catalog command:
+
+```powershell
+C:\G\python.exe -m src.merch.tee_prompt_catalog read TJD-TEE-001
+```
+
+Substitute Tyler's catalog ID. Verify the database record has `concept_approval_status: concept_approved` and matching `concept_revision` and `concept_approval_revision`. The generation command repeats this preflight against the database before any provider call. If any check fails, do not run generation; explain that the concept must return to curation and receive explicit approval.
 
 Do not edit the catalog to make preflight pass. Do not call an image provider directly, copy provider order into this prompt, or use the Vera portrait generator.
 
@@ -34,11 +40,11 @@ C:\G\python.exe -m src.merch.tee_image_approval --chat-start --catalog-id TJD-TE
 
 Substitute Tyler's requested values. Use the current Music feature worktree when it is the checked-out workspace. The module delegates every candidate independently to the Workspace-owned cascade. If that cascade is unavailable, report the configured `WORKSPACE_SRC` requirement; do not fall back to direct provider clients.
 
-The command stages only the first successful candidate in a random OS-temp session and prints JSON with its ID and image path. Use the image-view tool to display that path in chat before asking for an exact-image decision. Do not use terminal-interactive generation for agent-managed approvals.
+The command stages only the first successful candidate in a random OS-temp session and prints JSON with its ID and image path. Its session records the catalog version, concept revision, and prompt revision used for generation. Use the image-view tool to display that path in chat before asking for an exact-image decision. Do not use terminal-interactive generation for agent-managed approvals.
 
 ## Exact-Image Decisions
 
-After Tyler replies `y` or `n` for the displayed candidate, resolve only that image:
+After Tyler replies `y` or `n` for the displayed candidate, resolve only that image. An approval is accepted only if the concept, catalog version, and prompt revision still match the staged candidate. If any revision changed, return to curation and start a new batch; approval of a prior revision does not approve the changed prompt.
 
 ```powershell
 C:\G\python.exe -m src.merch.tee_image_approval --chat-decide --session-id <session-id> --candidate-id <candidate-id> --decision y

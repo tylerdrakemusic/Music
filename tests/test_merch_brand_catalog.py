@@ -1,16 +1,22 @@
 """Contract checks for the phase-one Tyler James Drake merch catalog."""
 
-import json
+import sqlite3
 from pathlib import Path
+
+from src.merch.tee_prompt_catalog import TeePromptCatalog
+from src.utils import init_db
 
 
 REPO_ROOT = Path(__file__).parents[1]
-CATALOG_PATH = REPO_ROOT / "Brand" / "tyler-james-drake-tee-prompt-catalog.json"
 BRAND_SYSTEM_PATH = REPO_ROOT / "Brand" / "tyler-james-drake-merch-brand-system.md"
 
 
 def test_catalog_has_stable_rights_aware_prompt_records() -> None:
-    catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    connection = sqlite3.connect(":memory:")
+    connection.row_factory = sqlite3.Row
+    connection.executescript(init_db._SCHEMA_SQL)
+    init_db.import_tee_catalog_bootstrap(connection)
+    catalog = TeePromptCatalog(connection).read_catalog()
 
     assert catalog["phase"] == "phase-one"
     assert catalog["artist"] == "Tyler James Drake"
@@ -58,6 +64,7 @@ def test_catalog_has_stable_rights_aware_prompt_records() -> None:
             "exact_image_pending",
             "exact_image_approved",
         }
+    connection.close()
 
 
 def test_brand_system_documents_phase_one_boundaries() -> None:

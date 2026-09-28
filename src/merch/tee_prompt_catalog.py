@@ -292,6 +292,78 @@ class TeePromptCatalog:
             )
         return self.read_prompt(stable_id)
 
+    def approve_exact_image(
+        self,
+        prompt_id: str,
+        *,
+        expected_catalog_version: str,
+        expected_concept_revision: int,
+        approved_by_tyler: bool = False,
+    ) -> dict[str, Any]:
+        """Persist an exact-image decision only for the approved current revision."""
+        stable_id = _validate_id(prompt_id)
+        version = _require_text(expected_catalog_version, "catalog version")
+        if type(expected_concept_revision) is not int or expected_concept_revision < 1:
+            raise ValueError("concept revision must be a positive integer")
+        if approved_by_tyler is not True:
+            raise PermissionError("exact-image approval requires Tyler's explicit decision")
+
+        with _write_transaction(self.connection):
+            row = self._get_prompt_row(stable_id)
+            if row is None:
+                raise KeyError(f"tee concept not found: {stable_id}")
+            current = _prompt_from_row(row)
+            if (
+                current["catalog_version"] != version
+                or current["concept_revision"] != expected_concept_revision
+                or current["concept_approval_revision"] != expected_concept_revision
+                or current["concept_approval_status"] != "concept_approved"
+            ):
+                raise ValueError("tee catalog or concept revision changed before image approval")
+            self.connection.execute(
+                "UPDATE tee_prompts SET exact_image_approval_status = 'exact_image_approved', "
+                "updated_at = datetime('now') WHERE id = ?",
+                (stable_id,),
+            )
+        return self.read_prompt(stable_id)
+
+    def reconcile_exact_image_approval(
+        self,
+        prompt_id: str,
+        *,
+        expected_catalog_version: str,
+        expected_concept_revision: int,
+        has_matching_approved_sidecar: bool,
+    ) -> dict[str, Any]:
+        """Reconcile current image state from verified sidecars for one revision."""
+        stable_id = _validate_id(prompt_id)
+        version = _require_text(expected_catalog_version, "catalog version")
+        if type(expected_concept_revision) is not int or expected_concept_revision < 1:
+            raise ValueError("concept revision must be a positive integer")
+        if type(has_matching_approved_sidecar) is not bool:
+            raise ValueError("sidecar approval state must be a boolean")
+
+        status = "exact_image_approved" if has_matching_approved_sidecar else "not_started"
+        with _write_transaction(self.connection):
+            row = self._get_prompt_row(stable_id)
+            if row is None:
+                raise KeyError(f"tee concept not found: {stable_id}")
+            current = _prompt_from_row(row)
+            if (
+                current["catalog_version"] != version
+                or current["concept_revision"] != expected_concept_revision
+                or current["concept_approval_revision"] != expected_concept_revision
+                or current["concept_approval_status"] != "concept_approved"
+            ):
+                raise ValueError("tee catalog or concept revision changed during reconciliation")
+            if current["exact_image_approval_status"] != status:
+                self.connection.execute(
+                    "UPDATE tee_prompts SET exact_image_approval_status = ?, "
+                    "updated_at = datetime('now') WHERE id = ?",
+                    (status, stable_id),
+                )
+        return self.read_prompt(stable_id)
+
     def _require_catalog(self) -> dict[str, Any]:
         cursor = self.connection.execute(
             "SELECT * FROM tee_prompt_catalogs WHERE catalog_id = ?", (CATALOG_ID,)

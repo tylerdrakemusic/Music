@@ -24,9 +24,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Protocol
 
+from src.merch.tee_prompt_catalog import TeePromptCatalog, _live_connection
+
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-_CATALOG_PATH = _PROJECT_ROOT / "Brand" / "tyler-james-drake-tee-prompt-catalog.json"
 _OUTPUT_ROOT = _PROJECT_ROOT / "output" / "images" / "tee-merch"
 _PENDING_ROOT = Path(tempfile.gettempdir()) / "tee-image-approval-sessions"
 _WORKSPACE_ROOT = Path(os.environ.get("WORKSPACE_ROOT", r"F:\⊕Workspace"))
@@ -127,14 +128,6 @@ def _diagnostic_dict(diagnostic: object) -> dict[str, object]:
     return {"error": str(diagnostic)}
 
 
-def _read_catalog(path: Path) -> dict[str, object]:
-    with path.open(encoding="utf-8") as catalog_file:
-        data = json.load(catalog_file)
-    if not isinstance(data, dict) or not isinstance(data.get("prompts"), list):
-        raise ValueError("tee prompt catalog must contain a prompts list")
-    return data
-
-
 def _write_json(path: Path, data: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary_path = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
@@ -148,10 +141,6 @@ def _write_json(path: Path, data: dict[str, object]) -> None:
         temporary_path.unlink(missing_ok=True)
 
 
-def _write_catalog(path: Path, catalog: dict[str, object]) -> None:
-    _write_json(path, catalog)
-
-
 def _find_entry(catalog: dict[str, object], catalog_id: str) -> dict[str, object]:
     entries = catalog["prompts"]
     for entry in entries:
@@ -160,22 +149,68 @@ def _find_entry(catalog: dict[str, object], catalog_id: str) -> dict[str, object
     raise KeyError(f"tee concept not found: {catalog_id}")
 
 
-def _has_approved_images(output_root: Path, catalog_id: str) -> bool:
+def _has_approved_images(
+    output_root: Path,
+    catalog_id: str,
+    catalog_revision: str,
+    exact_prompt: str,
+) -> bool:
     catalog_dir = output_root / catalog_id
-    if not catalog_dir.is_dir():
+    if catalog_dir.is_symlink() or not catalog_dir.is_dir():
         return False
-    for sidecar_path in catalog_dir.rglob("*.json"):
-        if sidecar_path.name == "provider-failures.json":
-            continue
-        try:
-            sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
+
+    resolved_catalog_dir = catalog_dir.resolve()
+    for run_dir in catalog_dir.iterdir():
         if (
-            isinstance(sidecar, dict)
-            and sidecar.get("catalog_id") == catalog_id
-            and sidecar.get("approval") == "approved"
+            run_dir.is_symlink()
+            or not run_dir.is_dir()
+            or not re.fullmatch(r"[0-9a-f]{32}", run_dir.name)
+            or run_dir.resolve().parent != resolved_catalog_dir
         ):
+            continue
+        for sidecar_path in run_dir.glob("*.json"):
+            match = re.fullmatch(r"([0-9a-f]{8})-([0-9]{2})\.json", sidecar_path.name)
+            if (
+                match is None
+                or sidecar_path.is_symlink()
+                or sidecar_path.resolve().parent != run_dir.resolve()
+                or match.group(1) != run_dir.name[:8]
+            ):
+                continue
+            candidate_number = int(match.group(2))
+            if not 1 <= candidate_number <= _MAX_BATCH_SIZE:
+                continue
+            try:
+                sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if not isinstance(sidecar, dict) or any(
+                (
+                    sidecar.get("candidate_id") != sidecar_path.stem,
+                    sidecar.get("catalog_id") != catalog_id,
+                    sidecar.get("approval") != "approved",
+                    sidecar.get("catalog_revision") != catalog_revision,
+                    sidecar.get("prompt_revision") != _PROMPT_REVISION,
+                    sidecar.get("exact_prompt")
+                    != _compose_candidate_prompt(exact_prompt, candidate_number),
+                )
+            ):
+                continue
+            revision = int(catalog_revision.rsplit(":", maxsplit=1)[1])
+            if sidecar.get("concept_revision", revision) != revision:
+                continue
+            image_paths = [
+                run_dir / f"{sidecar_path.stem}{suffix}"
+                for suffix in _IMAGE_SUFFIXES
+                if (run_dir / f"{sidecar_path.stem}{suffix}").is_file()
+            ]
+            if len(image_paths) != 1 or image_paths[0].is_symlink():
+                continue
+            image_path = image_paths[0]
+            if image_path.resolve().parent != run_dir.resolve():
+                continue
+            if sidecar.get("content_sha256") != hashlib.sha256(image_path.read_bytes()).hexdigest():
+                continue
             return True
     return False
 
@@ -222,14 +257,14 @@ class TeeImageApprovalFlow:
 
     def __init__(
         self,
-        catalog_path: Path = _CATALOG_PATH,
+        catalog: TeePromptCatalog,
         output_root: Path = _OUTPUT_ROOT,
         *,
         cascade: ImageCascade | None = None,
         workspace_src: Path | None = None,
         pending_root: Path | None = None,
     ) -> None:
-        self.catalog_path = Path(catalog_path)
+        self.catalog = catalog
         self.output_root = Path(output_root)
         self.pending_root = Path(pending_root) if pending_root is not None else _PENDING_ROOT
         self.cascade = cascade if cascade is not None else _workspace_cascade(workspace_src)
@@ -240,7 +275,7 @@ class TeeImageApprovalFlow:
         if not re.fullmatch(r"TJD-TEE-\d{3}", catalog_id):
             raise ValueError("catalog ID must use the TJD-TEE-NNN format")
 
-        catalog = _read_catalog(self.catalog_path)
+        catalog = self.catalog.read_catalog()
         entry = _find_entry(catalog, catalog_id)
         if entry.get("concept_approval_status") != "concept_approved":
             raise ValueError("tee concept must be concept_approved before image generation")
@@ -252,23 +287,23 @@ class TeeImageApprovalFlow:
                 "concept approval revision is missing; return the concept to curation"
             ) from exc
 
-        has_approved_images = (
-            entry.get("exact_image_approval_status") == "exact_image_approved"
-            or _has_approved_images(self.output_root, catalog_id)
-        )
         if approval_revision != concept_revision:
-            entry["concept_approval_status"] = "concept_pending"
-            if not has_approved_images:
-                entry["exact_image_approval_status"] = "not_started"
-            _write_catalog(self.catalog_path, catalog)
             raise ValueError("concept revision changed; curation and explicit reapproval are required")
 
-        catalog_revision = f"{catalog.get('version', 'unversioned')}:{concept_revision}"
+        catalog_revision = f"{entry['catalog_version']}:{concept_revision}"
         exact_prompt = _compose_prompt(entry, catalog_revision)
+        has_approved_images = _has_approved_images(
+            self.output_root, catalog_id, catalog_revision, exact_prompt
+        )
+        entry = self.catalog.reconcile_exact_image_approval(
+            catalog_id,
+            expected_catalog_version=str(entry["catalog_version"]),
+            expected_concept_revision=concept_revision,
+            has_matching_approved_sidecar=has_approved_images,
+        )
         entry["exact_image_approval_status"] = (
             "exact_image_approved" if has_approved_images else "exact_image_pending"
         )
-        _write_catalog(self.catalog_path, catalog)
         return catalog, entry, concept_revision, catalog_revision, exact_prompt, has_approved_images
 
     def _chat_session_directory(self, session_id: str) -> Path:
@@ -300,6 +335,7 @@ class TeeImageApprovalFlow:
             "catalog_id": catalog_id,
             "concept_revision": concept_revision,
             "catalog_revision": catalog_revision,
+            "prompt_revision": _PROMPT_REVISION,
             "exact_prompt": exact_prompt,
             "run_id": run_id,
             "total_count": count,
@@ -469,8 +505,7 @@ class TeeImageApprovalFlow:
         pending_path = self._pending_candidate_path(session_dir, pending)
 
         if decision == "y":
-            catalog = _read_catalog(self.catalog_path)
-            entry = _find_entry(catalog, str(state["catalog_id"]))
+            entry = self.catalog.read_prompt(str(state["catalog_id"]))
             try:
                 current_revision = int(entry["concept_revision"])
                 approval_revision = int(entry["concept_approval_revision"])
@@ -482,10 +517,13 @@ class TeeImageApprovalFlow:
                 entry.get("concept_approval_status") != "concept_approved"
                 or current_revision != int(state["concept_revision"])
                 or approval_revision != current_revision
+                or f"{entry['catalog_version']}:{current_revision}"
+                != state.get("catalog_revision")
+                or state.get("prompt_revision") != _PROMPT_REVISION
             ):
                 pending_path.unlink(missing_ok=True)
                 shutil.rmtree(session_dir)
-                raise ValueError("concept changed while image was pending; return to curation")
+                raise ValueError("concept or prompt revision changed while image was pending")
 
             run_dir = self.output_root / str(state["catalog_id"]) / str(state["run_id"])
             approved_path = run_dir / f"{candidate_id}{pending_path.suffix}"
@@ -495,6 +533,7 @@ class TeeImageApprovalFlow:
             sidecar = {
                 "candidate_id": candidate_id,
                 "catalog_id": state["catalog_id"],
+                "concept_revision": current_revision,
                 "provider": pending["provider"],
                 "model": pending["model"],
                 "exact_prompt": pending["exact_prompt"],
@@ -509,8 +548,12 @@ class TeeImageApprovalFlow:
             try:
                 shutil.copyfile(pending_path, approved_path)
                 _write_json(sidecar_path, sidecar)
-                entry["exact_image_approval_status"] = "exact_image_approved"
-                _write_catalog(self.catalog_path, catalog)
+                self.catalog.approve_exact_image(
+                    str(state["catalog_id"]),
+                    expected_catalog_version=str(entry["catalog_version"]),
+                    expected_concept_revision=current_revision,
+                    approved_by_tyler=True,
+                )
             except Exception:
                 approved_path.unlink(missing_ok=True)
                 sidecar_path.unlink(missing_ok=True)
@@ -613,17 +656,17 @@ class TeeImageApprovalFlow:
                 run_dir.mkdir(parents=True, exist_ok=True)
                 suffix = source_path.suffix.lower()
                 approved_path = run_dir / f"{candidate_id}{suffix}"
-                shutil.copyfile(source_path, approved_path)
-                content_hash = hashlib.sha256(approved_path.read_bytes()).hexdigest()
+                sidecar_path = run_dir / f"{candidate_id}.json"
                 sidecar = {
                     "candidate_id": candidate_id,
                     "catalog_id": catalog_id,
+                    "concept_revision": concept_revision,
                     "provider": candidate.provider,
                     "model": candidate.model,
                     "exact_prompt": candidate_prompt,
                     "catalog_revision": catalog_revision,
                     "prompt_revision": _PROMPT_REVISION,
-                    "content_sha256": content_hash,
+                    "content_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest(),
                     "approval": "approved",
                     "approved_at": datetime.now(timezone.utc).isoformat(),
                     "provider_diagnostics": [
@@ -631,11 +674,22 @@ class TeeImageApprovalFlow:
                         for item in getattr(result, "diagnostics", ())
                     ],
                 }
-                sidecar_path = run_dir / f"{candidate_id}.json"
-                sidecar_path.write_text(
-                    json.dumps(sidecar, ensure_ascii=False, indent=2) + "\n",
-                    encoding="utf-8",
-                )
+                try:
+                    shutil.copyfile(source_path, approved_path)
+                    sidecar["content_sha256"] = hashlib.sha256(
+                        approved_path.read_bytes()
+                    ).hexdigest()
+                    _write_json(sidecar_path, sidecar)
+                    self.catalog.approve_exact_image(
+                        catalog_id,
+                        expected_catalog_version=str(entry["catalog_version"]),
+                        expected_concept_revision=concept_revision,
+                        approved_by_tyler=True,
+                    )
+                except Exception:
+                    approved_path.unlink(missing_ok=True)
+                    sidecar_path.unlink(missing_ok=True)
+                    raise
                 approved.append(
                     TeeImageCandidate(
                         candidate_id=candidate_id,
@@ -645,8 +699,6 @@ class TeeImageApprovalFlow:
                         exact_prompt=exact_prompt,
                     )
                 )
-                entry["exact_image_approval_status"] = "exact_image_approved"
-                _write_catalog(self.catalog_path, catalog)
 
         if failures:
             run_dir.mkdir(parents=True, exist_ok=True)
@@ -676,56 +728,60 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--decision", choices=("y", "n"))
     args = parser.parse_args(argv)
 
-    flow = TeeImageApprovalFlow(
-        _CATALOG_PATH,
-        _OUTPUT_ROOT,
-        pending_root=_PENDING_ROOT,
-    )
-    if args.chat_start:
+    connection = _live_connection()
+    try:
+        flow = TeeImageApprovalFlow(
+            TeePromptCatalog(connection),
+            _OUTPUT_ROOT,
+            pending_root=_PENDING_ROOT,
+        )
+        if args.chat_start:
+            if not args.catalog_id or args.session_id or args.candidate_id or args.decision:
+                parser.error("--chat-start requires --catalog-id and no decision fields")
+            result = flow.start_chat_batch(
+                args.catalog_id,
+                count=args.count if args.count is not None else 2,
+            )
+            print(json.dumps(result, ensure_ascii=False))
+            return 0
+        if args.chat_decide:
+            if args.catalog_id or args.count is not None or not all(
+                (args.session_id, args.candidate_id, args.decision)
+            ):
+                parser.error("--chat-decide requires --session-id, --candidate-id, and --decision")
+            result = flow.decide_chat_candidate(
+                args.session_id,
+                args.candidate_id,
+                decision=args.decision,
+            )
+            print(json.dumps(result, ensure_ascii=False))
+            return 0
+        if args.chat_cancel:
+            if (
+                args.catalog_id
+                or args.count is not None
+                or args.candidate_id
+                or args.decision
+                or not args.session_id
+            ):
+                parser.error("--chat-cancel requires only --session-id")
+            result = flow.cancel_chat_batch(args.session_id)
+            print(json.dumps(result, ensure_ascii=False))
+            return 0
+
         if not args.catalog_id or args.session_id or args.candidate_id or args.decision:
-            parser.error("--chat-start requires --catalog-id and no decision fields")
-        result = flow.start_chat_batch(
+            parser.error("--catalog-id is required for terminal-interactive generation")
+        result = flow.generate_batch(
             args.catalog_id,
             count=args.count if args.count is not None else 2,
         )
-        print(json.dumps(result, ensure_ascii=False))
-        return 0
-    if args.chat_decide:
-        if args.catalog_id or args.count is not None or not all(
-            (args.session_id, args.candidate_id, args.decision)
-        ):
-            parser.error("--chat-decide requires --session-id, --candidate-id, and --decision")
-        result = flow.decide_chat_candidate(
-            args.session_id,
-            args.candidate_id,
-            decision=args.decision,
+        print(
+            f"Run {result.run_id}: {len(result.approved)} approved, "
+            f"{result.rejected_count} rejected, {len(result.failures)} provider failures"
         )
-        print(json.dumps(result, ensure_ascii=False))
         return 0
-    if args.chat_cancel:
-        if (
-            args.catalog_id
-            or args.count is not None
-            or args.candidate_id
-            or args.decision
-            or not args.session_id
-        ):
-            parser.error("--chat-cancel requires only --session-id")
-        result = flow.cancel_chat_batch(args.session_id)
-        print(json.dumps(result, ensure_ascii=False))
-        return 0
-
-    if not args.catalog_id or args.session_id or args.candidate_id or args.decision:
-        parser.error("--catalog-id is required for terminal-interactive generation")
-    result = flow.generate_batch(
-        args.catalog_id,
-        count=args.count if args.count is not None else 2,
-    )
-    print(
-        f"Run {result.run_id}: {len(result.approved)} approved, "
-        f"{result.rejected_count} rejected, {len(result.failures)} provider failures"
-    )
-    return 0
+    finally:
+        connection.close()
 
 
 if __name__ == "__main__":
