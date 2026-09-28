@@ -654,6 +654,7 @@ def init_db(*, seed: bool = True) -> None:
         pass  # column already exists
     if seed:
         conn.executescript(_SEED_SQL)
+    import_tee_catalog_bootstrap(conn)
     conn.commit()
     conn.close()
 

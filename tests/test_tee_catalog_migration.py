@@ -7,6 +7,52 @@ from pathlib import Path
 from src.utils import init_db
 
 
+def test_fresh_initializer_bootstraps_tee_catalog_and_preserves_edits(
+    tmp_path: Path, monkeypatch
+) -> None:
+    database_path = tmp_path / "heartmusic-init.sqlite"
+
+    def connect_to_temporary_database(*, create_if_missing: bool = False) -> sqlite3.Connection:
+        del create_if_missing
+        return sqlite3.connect(database_path)
+
+    monkeypatch.setattr(init_db, "get_connection", connect_to_temporary_database)
+
+    init_db.init_db()
+
+    connection = sqlite3.connect(database_path)
+    try:
+        prompt_ids = [
+            row[0]
+            for row in connection.execute("SELECT id FROM tee_prompts ORDER BY id")
+        ]
+        assert prompt_ids == [
+            "TJD-TEE-001",
+            "TJD-TEE-002",
+            "TJD-TEE-003",
+            "TJD-TEE-004",
+            "TJD-TEE-005",
+            "TJD-TEE-006",
+        ]
+        connection.execute(
+            "UPDATE tee_prompts SET title = ? WHERE id = ?",
+            ("Curated title", "TJD-TEE-001"),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    init_db.init_db()
+
+    connection = sqlite3.connect(database_path)
+    try:
+        assert connection.execute(
+            "SELECT title FROM tee_prompts WHERE id = ?", ("TJD-TEE-001",)
+        ).fetchone() == ("Curated title",)
+    finally:
+        connection.close()
+
+
 def test_bootstrap_import_preserves_curated_catalog_edits(tmp_path: Path) -> None:
     connection = sqlite3.connect(tmp_path / "tee-catalog.sqlite")
     connection.row_factory = sqlite3.Row
