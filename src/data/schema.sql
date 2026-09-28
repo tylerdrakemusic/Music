@@ -262,6 +262,7 @@ CREATE TABLE IF NOT EXISTS tee_prompts (
     provenance_source_entry       TEXT NOT NULL,
     provenance_curation_decision  TEXT NOT NULL,
     concept_revision              INTEGER NOT NULL CHECK (concept_revision > 0),
+    image_prompt_revision         INTEGER NOT NULL DEFAULT 1 CHECK (image_prompt_revision > 0),
     concept_approval_revision     INTEGER CHECK (
                                       concept_approval_revision IS NULL
                                       OR concept_approval_revision > 0

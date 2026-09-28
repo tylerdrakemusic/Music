@@ -128,7 +128,7 @@ def test_batch_persists_only_explicitly_approved_images_and_sidecars(
     assert not hasattr(run, "rejected")
     assert cascade.calls[0][0] != "Porchlight Blues"
     assert all("TJD-TEE-001" in prompt for prompt, _ in cascade.calls)
-    assert all("catalog revision" in prompt.lower() for prompt, _ in cascade.calls)
+    assert all("image prompt revision" in prompt.lower() for prompt, _ in cascade.calls)
     assert cascade.calls[0][1] != cascade.calls[1][1]
 
     run_dir = output_root / "TJD-TEE-001" / run.run_id
@@ -141,7 +141,8 @@ def test_batch_persists_only_explicitly_approved_images_and_sidecars(
     assert manifest["provider"] == "fake-provider"
     assert manifest["model"] == "fake-model"
     assert manifest["catalog_id"] == "TJD-TEE-001"
-    assert manifest["catalog_revision"] == "1.0.0:1"
+    assert manifest["image_prompt_revision"] == 1
+    assert manifest["catalog_version"] == "1.0.0"
     assert manifest["concept_revision"] == 1
     assert manifest["prompt_revision"] == "tee-artwork-prompt-v2"
     assert manifest["approval"] == "approved"
@@ -385,6 +386,102 @@ def test_stale_revision_sidecar_is_preserved_but_not_current_approval(
     assert old_image.read_bytes() == prior_image_bytes
     assert old_sidecar.read_bytes() == prior_sidecar_bytes
     flow.cancel_chat_batch(stage["session_id"])
+
+
+def test_editing_another_concept_preserves_current_approved_sidecar(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    from src.merch import tee_image_approval
+
+    catalog, _ = db_catalog
+    output_root = tmp_path / "output"
+    pending_root = tmp_path / "pending"
+    monkeypatch.setattr(tee_image_approval, "_PENDING_ROOT", pending_root)
+    cascade = FakeCascade()
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=cascade)
+    approved = flow.generate_batch("TJD-TEE-002", count=1, decide=lambda candidate: True)
+    approved_image = approved.approved[0].path
+    sidecar_path = approved_image.with_suffix(".json")
+    approved_prompt = json.loads(sidecar_path.read_text(encoding="utf-8"))["exact_prompt"]
+    image_bytes = approved_image.read_bytes()
+    sidecar_bytes = sidecar_path.read_bytes()
+
+    catalog.edit_prompt("TJD-TEE-001", {"title": "A different concept"})
+    stage = flow.start_chat_batch("TJD-TEE-002", count=1)
+
+    assert catalog.read_prompt("TJD-TEE-002")["exact_image_approval_status"] == (
+        "exact_image_approved"
+    )
+    assert cascade.calls[-1][0] == approved_prompt
+    assert approved_image.read_bytes() == image_bytes
+    assert sidecar_path.read_bytes() == sidecar_bytes
+    flow.cancel_chat_batch(stage["session_id"])
+
+
+def test_legacy_approved_sidecar_survives_an_unrelated_prompt_edit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    from src.merch import tee_image_approval
+
+    catalog, _ = db_catalog
+    output_root = tmp_path / "output"
+    pending_root = tmp_path / "pending"
+    monkeypatch.setattr(tee_image_approval, "_PENDING_ROOT", pending_root)
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=FakeCascade())
+    approved = flow.generate_batch("TJD-TEE-002", count=1, decide=lambda candidate: True)
+    sidecar_path = approved.approved[0].path.with_suffix(".json")
+    sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    sidecar["catalog_revision"] = "1.0.0:1"
+    sidecar["exact_prompt"] = sidecar["exact_prompt"].replace(
+        "Image prompt revision: 1", "Catalog revision: 1.0.0:1"
+    )
+    sidecar.pop("image_prompt_revision")
+    sidecar.pop("catalog_version")
+    sidecar_path.write_text(json.dumps(sidecar), encoding="utf-8")
+    sidecar_bytes = sidecar_path.read_bytes()
+
+    catalog.edit_prompt("TJD-TEE-001", {"title": "A different concept"})
+    stage = flow.start_chat_batch("TJD-TEE-002", count=1)
+
+    assert catalog.read_prompt("TJD-TEE-002")["exact_image_approval_status"] == (
+        "exact_image_approved"
+    )
+    assert sidecar_path.read_bytes() == sidecar_bytes
+    flow.cancel_chat_batch(stage["session_id"])
+
+
+def test_chat_approval_survives_another_concepts_prompt_edit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    from src.merch import tee_image_approval
+
+    catalog, _ = db_catalog
+    output_root = tmp_path / "output"
+    pending_root = tmp_path / "pending"
+    monkeypatch.setattr(tee_image_approval, "_PENDING_ROOT", pending_root)
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=FakeCascade())
+    stage = flow.start_chat_batch("TJD-TEE-002", count=1)
+
+    catalog.edit_prompt("TJD-TEE-001", {"title": "A different concept"})
+    result = flow.decide_chat_candidate(
+        stage["session_id"], stage["candidate_id"], decision="y"
+    )
+
+    sidecar = json.loads(
+        (output_root / "TJD-TEE-002" / stage["run_id"] / f"{stage['candidate_id']}.json")
+        .read_text(encoding="utf-8")
+    )
+    assert result["status"] == "completed"
+    assert sidecar["catalog_id"] == "TJD-TEE-002"
+    assert catalog.read_prompt("TJD-TEE-002")["exact_image_approval_status"] == (
+        "exact_image_approved"
+    )
 
 
 def test_chat_decision_validates_session_candidate_and_choice(
@@ -711,7 +808,7 @@ def test_generation_uses_the_database_catalog(tmp_path: Path) -> None:
 
         assert len(cascade.calls) == 1
         assert "Walk Away From the Jukebox" in cascade.calls[0][0]
-        assert "Catalog revision: 1.0.0:1" in cascade.calls[0][0]
+        assert "Image prompt revision: 1" in cascade.calls[0][0]
     finally:
         connection.close()
 
@@ -729,7 +826,8 @@ def test_exact_image_approval_persists_revision_through_catalog_boundary(
         assert len(run.approved) == 1
         sidecar_path = run.approved[0].path.with_suffix(".json")
         sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
-        assert sidecar["catalog_revision"] == "1.0.0:1"
+        assert sidecar["image_prompt_revision"] == 1
+        assert sidecar["catalog_version"] == "1.0.0"
         assert sidecar["concept_revision"] == 1
         assert sidecar["prompt_revision"] == "tee-artwork-prompt-v2"
         assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (

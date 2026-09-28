@@ -159,8 +159,11 @@ def _find_entry(catalog: dict[str, object], catalog_id: str) -> dict[str, object
 def _has_approved_images(
     output_root: Path,
     catalog_id: str,
-    catalog_revision: str,
+    image_prompt_revision: int,
+    concept_revision: int,
     exact_prompt: str,
+    *,
+    allow_legacy_sidecars: bool,
 ) -> bool:
     catalog_dir = output_root / catalog_id
     if catalog_dir.is_symlink() or not catalog_dir.is_dir():
@@ -191,20 +194,32 @@ def _has_approved_images(
                 sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 continue
-            if not isinstance(sidecar, dict) or any(
+            if not isinstance(sidecar, dict):
+                continue
+            is_legacy_sidecar = (
+                allow_legacy_sidecars
+                and "image_prompt_revision" not in sidecar
+                and isinstance(sidecar.get("catalog_revision"), str)
+                and sidecar.get("concept_revision") == concept_revision
+            )
+            if any(
                 (
                     sidecar.get("candidate_id") != sidecar_path.stem,
                     sidecar.get("catalog_id") != catalog_id,
                     sidecar.get("approval") != "approved",
-                    sidecar.get("catalog_revision") != catalog_revision,
+                    sidecar.get("image_prompt_revision") != image_prompt_revision
+                    and not is_legacy_sidecar,
                     sidecar.get("prompt_revision") != _PROMPT_REVISION,
-                    sidecar.get("exact_prompt")
-                    != _compose_candidate_prompt(exact_prompt, candidate_number),
                 )
             ):
                 continue
-            revision = int(catalog_revision.rsplit(":", maxsplit=1)[1])
-            if sidecar.get("concept_revision", revision) != revision:
+            if sidecar.get("concept_revision") != concept_revision:
+                continue
+            expected_prompt = _compose_candidate_prompt(exact_prompt, candidate_number)
+            if sidecar.get("exact_prompt") != expected_prompt and not (
+                is_legacy_sidecar
+                and _legacy_prompt_matches(sidecar.get("exact_prompt"), expected_prompt)
+            ):
                 continue
             image_paths = [
                 run_dir / f"{sidecar_path.stem}{suffix}"
@@ -222,13 +237,13 @@ def _has_approved_images(
     return False
 
 
-def _compose_prompt(entry: dict[str, object], catalog_revision: str) -> str:
+def _compose_prompt(entry: dict[str, object], image_prompt_revision: int) -> str:
     palette = entry.get("palette", [])
     palette_text = ", ".join(str(color) for color in palette) if isinstance(palette, list) else str(palette)
     return "\n".join(
         (
             f"Catalog ID: {entry['id']}",
-            f"Catalog revision: {catalog_revision}",
+            f"Image prompt revision: {image_prompt_revision}",
             f"Prompt revision: {_PROMPT_REVISION}",
             f"Title: {entry['title']}",
             f"Concept: {entry['concept']}",
@@ -243,6 +258,27 @@ def _compose_prompt(entry: dict[str, object], catalog_revision: str) -> str:
 def _compose_candidate_prompt(exact_prompt: str, candidate_number: int) -> str:
     direction = _CANDIDATE_ART_DIRECTIONS[candidate_number - 1]
     return f"{direction}\n{exact_prompt}"
+
+
+def _legacy_prompt_matches(legacy_prompt: object, current_prompt: str) -> bool:
+    if not isinstance(legacy_prompt, str):
+        return False
+
+    def without_revision(prompt: str) -> tuple[str, ...] | None:
+        lines: list[str] = []
+        revision_lines = 0
+        for line in prompt.splitlines():
+            if line.startswith("Catalog revision: ") or line.startswith(
+                "Image prompt revision: "
+            ):
+                revision_lines += 1
+                lines.append("<prompt revision>")
+            else:
+                lines.append(line)
+        return tuple(lines) if revision_lines == 1 else None
+
+    legacy_lines = without_revision(legacy_prompt)
+    return legacy_lines is not None and legacy_lines == without_revision(current_prompt)
 
 
 def _interactive_decision(candidate: TeeImageCandidate) -> bool:
@@ -278,7 +314,7 @@ class TeeImageApprovalFlow:
 
     def _prepare_generation(
         self, catalog_id: str
-    ) -> tuple[dict[str, object], dict[str, object], int, str, str, bool]:
+    ) -> tuple[dict[str, object], dict[str, object], int, int, str, str, bool]:
         if not re.fullmatch(r"TJD-TEE-\d{3}", catalog_id):
             raise ValueError("catalog ID must use the TJD-TEE-NNN format")
 
@@ -297,21 +333,37 @@ class TeeImageApprovalFlow:
         if approval_revision != concept_revision:
             raise ValueError("concept revision changed; curation and explicit reapproval are required")
 
-        catalog_revision = f"{entry['catalog_version']}:{concept_revision}"
-        exact_prompt = _compose_prompt(entry, catalog_revision)
+        image_prompt_revision = int(entry["image_prompt_revision"])
+        catalog_version = str(entry["catalog_version"])
+        exact_prompt = _compose_prompt(entry, image_prompt_revision)
         has_approved_images = _has_approved_images(
-            self.output_root, catalog_id, catalog_revision, exact_prompt
+            self.output_root,
+            catalog_id,
+            image_prompt_revision,
+            concept_revision,
+            exact_prompt,
+            allow_legacy_sidecars=(
+                entry.get("exact_image_approval_status") == "exact_image_approved"
+            ),
         )
         entry = self.catalog.reconcile_exact_image_approval(
             catalog_id,
-            expected_catalog_version=str(entry["catalog_version"]),
+            expected_image_prompt_revision=image_prompt_revision,
             expected_concept_revision=concept_revision,
             has_matching_approved_sidecar=has_approved_images,
         )
         entry["exact_image_approval_status"] = (
             "exact_image_approved" if has_approved_images else "exact_image_pending"
         )
-        return catalog, entry, concept_revision, catalog_revision, exact_prompt, has_approved_images
+        return (
+            catalog,
+            entry,
+            concept_revision,
+            image_prompt_revision,
+            catalog_version,
+            exact_prompt,
+            has_approved_images,
+        )
 
     def _chat_session_directory(self, session_id: str) -> Path:
         if not re.fullmatch(r"[0-9a-f]{32}", session_id):
@@ -330,9 +382,15 @@ class TeeImageApprovalFlow:
         if type(count) is not int or not 1 <= count <= _MAX_BATCH_SIZE:
             raise ValueError("candidate count must be between 1 and 4")
 
-        catalog, _, concept_revision, catalog_revision, exact_prompt, _ = self._prepare_generation(
-            catalog_id
-        )
+        (
+            catalog,
+            _,
+            concept_revision,
+            image_prompt_revision,
+            catalog_version,
+            exact_prompt,
+            _,
+        ) = self._prepare_generation(catalog_id)
         run_id = uuid.uuid4().hex
         session_id = uuid.uuid4().hex
         session_dir = self._chat_session_directory(session_id)
@@ -341,7 +399,8 @@ class TeeImageApprovalFlow:
             "session_id": session_id,
             "catalog_id": catalog_id,
             "concept_revision": concept_revision,
-            "catalog_revision": catalog_revision,
+            "image_prompt_revision": image_prompt_revision,
+            "catalog_version": catalog_version,
             "prompt_revision": _PROMPT_REVISION,
             "exact_prompt": exact_prompt,
             "run_id": run_id,
@@ -524,8 +583,8 @@ class TeeImageApprovalFlow:
                 entry.get("concept_approval_status") != "concept_approved"
                 or current_revision != int(state["concept_revision"])
                 or approval_revision != current_revision
-                or f"{entry['catalog_version']}:{current_revision}"
-                != state.get("catalog_revision")
+                or int(entry["image_prompt_revision"])
+                != int(state["image_prompt_revision"])
                 or state.get("prompt_revision") != _PROMPT_REVISION
             ):
                 pending_path.unlink(missing_ok=True)
@@ -544,7 +603,8 @@ class TeeImageApprovalFlow:
                 "provider": pending["provider"],
                 "model": pending["model"],
                 "exact_prompt": pending["exact_prompt"],
-                "catalog_revision": state["catalog_revision"],
+                "image_prompt_revision": int(state["image_prompt_revision"]),
+                "catalog_version": state["catalog_version"],
                 "prompt_revision": _PROMPT_REVISION,
                 "content_sha256": hashlib.sha256(pending_path.read_bytes()).hexdigest(),
                 "approval": "approved",
@@ -557,7 +617,7 @@ class TeeImageApprovalFlow:
                 _write_json(sidecar_path, sidecar)
                 self.catalog.approve_exact_image(
                     str(state["catalog_id"]),
-                    expected_catalog_version=str(entry["catalog_version"]),
+                    expected_image_prompt_revision=int(state["image_prompt_revision"]),
                     expected_concept_revision=current_revision,
                     approved_by_tyler=True,
                 )
@@ -601,9 +661,15 @@ class TeeImageApprovalFlow:
         if type(count) is not int or not 1 <= count <= _MAX_BATCH_SIZE:
             raise ValueError("candidate count must be between 1 and 4")
 
-        catalog, entry, concept_revision, catalog_revision, exact_prompt, has_approved_images = (
-            self._prepare_generation(catalog_id)
-        )
+        (
+            catalog,
+            entry,
+            concept_revision,
+            image_prompt_revision,
+            catalog_version,
+            exact_prompt,
+            has_approved_images,
+        ) = self._prepare_generation(catalog_id)
 
         run_id = uuid.uuid4().hex
         run_dir = self.output_root / catalog_id / run_id
@@ -671,7 +737,8 @@ class TeeImageApprovalFlow:
                     "provider": candidate.provider,
                     "model": candidate.model,
                     "exact_prompt": candidate_prompt,
-                    "catalog_revision": catalog_revision,
+                    "image_prompt_revision": image_prompt_revision,
+                    "catalog_version": catalog_version,
                     "prompt_revision": _PROMPT_REVISION,
                     "content_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest(),
                     "approval": "approved",
@@ -689,7 +756,7 @@ class TeeImageApprovalFlow:
                     _write_json(sidecar_path, sidecar)
                     self.catalog.approve_exact_image(
                         catalog_id,
-                        expected_catalog_version=str(entry["catalog_version"]),
+                        expected_image_prompt_revision=image_prompt_revision,
                         expected_concept_revision=concept_revision,
                         approved_by_tyler=True,
                     )

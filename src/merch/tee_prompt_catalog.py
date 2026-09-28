@@ -136,6 +136,7 @@ def _prompt_from_row(row: Mapping[str, Any]) -> dict[str, Any]:
             "curation_decision": row["provenance_curation_decision"],
         },
         "concept_revision": row["concept_revision"],
+        "image_prompt_revision": row["image_prompt_revision"],
         "concept_approval_revision": row["concept_approval_revision"],
         "concept_approval_status": row["concept_approval_status"],
         "exact_image_approval_status": row["exact_image_approval_status"],
@@ -280,6 +281,7 @@ class TeePromptCatalog:
                 columns["concept_approval_status"] = "concept_approved"
             if image_input_changed:
                 self._advance_catalog_version()
+                columns["image_prompt_revision"] = int(current["image_prompt_revision"]) + 1
                 columns["exact_image_approval_status"] = "not_started"
 
             assignments = ", ".join(f"{column} = ?" for column in columns)
@@ -293,13 +295,14 @@ class TeePromptCatalog:
         self,
         prompt_id: str,
         *,
-        expected_catalog_version: str,
+        expected_image_prompt_revision: int,
         expected_concept_revision: int,
         approved_by_tyler: bool = False,
     ) -> dict[str, Any]:
         """Persist an exact-image decision only for the approved current revision."""
         stable_id = _validate_id(prompt_id)
-        version = _require_text(expected_catalog_version, "catalog version")
+        if type(expected_image_prompt_revision) is not int or expected_image_prompt_revision < 1:
+            raise ValueError("image prompt revision must be a positive integer")
         if type(expected_concept_revision) is not int or expected_concept_revision < 1:
             raise ValueError("concept revision must be a positive integer")
         if approved_by_tyler is not True:
@@ -311,7 +314,7 @@ class TeePromptCatalog:
                 raise KeyError(f"tee concept not found: {stable_id}")
             current = _prompt_from_row(row)
             if (
-                current["catalog_version"] != version
+                current["image_prompt_revision"] != expected_image_prompt_revision
                 or current["concept_revision"] != expected_concept_revision
                 or current["concept_approval_revision"] != expected_concept_revision
                 or current["concept_approval_status"] != "concept_approved"
@@ -328,13 +331,14 @@ class TeePromptCatalog:
         self,
         prompt_id: str,
         *,
-        expected_catalog_version: str,
+        expected_image_prompt_revision: int,
         expected_concept_revision: int,
         has_matching_approved_sidecar: bool,
     ) -> dict[str, Any]:
         """Reconcile current image state from verified sidecars for one revision."""
         stable_id = _validate_id(prompt_id)
-        version = _require_text(expected_catalog_version, "catalog version")
+        if type(expected_image_prompt_revision) is not int or expected_image_prompt_revision < 1:
+            raise ValueError("image prompt revision must be a positive integer")
         if type(expected_concept_revision) is not int or expected_concept_revision < 1:
             raise ValueError("concept revision must be a positive integer")
         if type(has_matching_approved_sidecar) is not bool:
@@ -347,7 +351,7 @@ class TeePromptCatalog:
                 raise KeyError(f"tee concept not found: {stable_id}")
             current = _prompt_from_row(row)
             if (
-                current["catalog_version"] != version
+                current["image_prompt_revision"] != expected_image_prompt_revision
                 or current["concept_revision"] != expected_concept_revision
                 or current["concept_approval_revision"] != expected_concept_revision
                 or current["concept_approval_status"] != "concept_approved"

@@ -134,6 +134,47 @@ def test_non_core_edit_preserves_concept_and_provenance(
     assert _catalog_version(connection) == "1.0.1"
 
 
+def test_image_prompt_revision_is_per_concept_and_tracks_only_image_inputs(
+    tee_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    catalog, connection = tee_catalog
+
+    edited = catalog.edit_prompt("TJD-TEE-001", {"title": "Jukebox in the Rain"})
+
+    assert edited["image_prompt_revision"] == 2
+    assert catalog.read_prompt("TJD-TEE-002")["image_prompt_revision"] == 1
+    edited = catalog.edit_prompt(
+        "TJD-TEE-001", {"provenance": {"source_entry": "updated provenance"}}
+    )
+    assert edited["image_prompt_revision"] == 2
+    assert _catalog_version(connection) == "1.0.1"
+
+
+def test_image_prompt_revision_migration_backfills_once_and_is_idempotent() -> None:
+    connection = sqlite3.connect(":memory:")
+    connection.execute("CREATE TABLE tee_prompts (id TEXT PRIMARY KEY)")
+    connection.executemany(
+        "INSERT INTO tee_prompts (id) VALUES (?)",
+        [("TJD-TEE-001",), ("TJD-TEE-002",)],
+    )
+
+    init_db._ensure_tee_image_prompt_revision(connection)
+
+    assert connection.execute(
+        "SELECT image_prompt_revision FROM tee_prompts ORDER BY id"
+    ).fetchall() == [(1,), (1,)]
+    connection.execute(
+        "UPDATE tee_prompts SET image_prompt_revision = 4 WHERE id = ?",
+        ("TJD-TEE-002",),
+    )
+    init_db._ensure_tee_image_prompt_revision(connection)
+
+    assert connection.execute(
+        "SELECT image_prompt_revision FROM tee_prompts ORDER BY id"
+    ).fetchall() == [(1,), (4,)]
+    connection.close()
+
+
 def test_core_concept_requires_approval_and_approval_advances_revision(
     tee_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
 ) -> None:

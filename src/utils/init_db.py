@@ -428,6 +428,7 @@ CREATE TABLE IF NOT EXISTS tee_prompts (
     provenance_source_entry       TEXT NOT NULL,
     provenance_curation_decision  TEXT NOT NULL,
     concept_revision              INTEGER NOT NULL CHECK (concept_revision > 0),
+    image_prompt_revision         INTEGER NOT NULL DEFAULT 1 CHECK (image_prompt_revision > 0),
     concept_approval_revision     INTEGER CHECK (
                                       concept_approval_revision IS NULL
                                       OR concept_approval_revision > 0
@@ -616,6 +617,7 @@ def init_db(*, seed: bool = True) -> None:
     """Create all tables and optionally seed with catalog data. Safe to re-run."""
     conn = get_connection(create_if_missing=True)
     conn.executescript(_SCHEMA_SQL)
+    _ensure_tee_image_prompt_revision(conn)
     # FR-20260522: add 'key' column to scale_practice_log for existing DBs
     try:
         conn.execute(
@@ -657,6 +659,21 @@ def init_db(*, seed: bool = True) -> None:
     import_tee_catalog_bootstrap(conn)
     conn.commit()
     conn.close()
+
+
+def _ensure_tee_image_prompt_revision(conn: sqlite3.Connection) -> None:
+    """Backfill per-concept prompt revisions in existing tee catalog databases."""
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(tee_prompts)")}
+    if "image_prompt_revision" not in columns:
+        conn.execute(
+            "ALTER TABLE tee_prompts ADD COLUMN image_prompt_revision "
+            "INTEGER NOT NULL DEFAULT 1 CHECK (image_prompt_revision > 0)"
+        )
+    else:
+        conn.execute(
+            "UPDATE tee_prompts SET image_prompt_revision = 1 "
+            "WHERE image_prompt_revision IS NULL OR image_prompt_revision < 1"
+        )
 
 
 def import_tee_catalog_bootstrap(
