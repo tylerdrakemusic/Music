@@ -53,6 +53,38 @@ def test_fresh_initializer_bootstraps_tee_catalog_and_preserves_edits(
         connection.close()
 
 
+def test_initializer_without_seed_imports_tee_catalog_without_album_or_track_seeds(
+    tmp_path: Path, monkeypatch
+) -> None:
+    database_path = tmp_path / "heartmusic-no-seed.sqlite"
+
+    def connect_to_temporary_database(*, create_if_missing: bool = False) -> sqlite3.Connection:
+        del create_if_missing
+        return sqlite3.connect(database_path)
+
+    monkeypatch.setattr(init_db, "get_connection", connect_to_temporary_database)
+
+    init_db.init_db(seed=False)
+
+    connection = sqlite3.connect(database_path)
+    try:
+        assert [
+            row[0]
+            for row in connection.execute("SELECT id FROM tee_prompts ORDER BY id")
+        ] == [
+            "TJD-TEE-001",
+            "TJD-TEE-002",
+            "TJD-TEE-003",
+            "TJD-TEE-004",
+            "TJD-TEE-005",
+            "TJD-TEE-006",
+        ]
+        assert connection.execute("SELECT COUNT(*) FROM albums").fetchone()[0] == 0
+        assert connection.execute("SELECT COUNT(*) FROM tracks").fetchone()[0] == 0
+    finally:
+        connection.close()
+
+
 def test_bootstrap_import_preserves_curated_catalog_edits(tmp_path: Path) -> None:
     connection = sqlite3.connect(tmp_path / "tee-catalog.sqlite")
     connection.row_factory = sqlite3.Row
