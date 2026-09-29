@@ -33,13 +33,6 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _OUTPUT_ROOT = _PROJECT_ROOT / "output" / "images" / "tee-merch"
 _PENDING_ROOT = Path(tempfile.gettempdir()) / "tee-image-approval-sessions"
 _WORKSPACE_ROOT = Path(os.environ.get("WORKSPACE_ROOT", r"F:\⊕Workspace"))
-_FEATURE_WORKSPACE_SRC = (
-    _WORKSPACE_ROOT
-    / ".worktrees"
-    / "FR-20260927-tee-image-generation-approval"
-    / "workspace"
-    / "src"
-)
 _PROMPT_REVISION = "tee-artwork-prompt-v2"
 _MAX_BATCH_SIZE = 4
 _CANDIDATE_ART_DIRECTIONS = (
@@ -92,8 +85,6 @@ def _resolve_workspace_src() -> Path:
     configured_src = os.environ.get("WORKSPACE_SRC")
     if configured_src:
         return Path(configured_src)
-    if (_FEATURE_WORKSPACE_SRC / "integrations" / "image_cascade.py").is_file():
-        return _FEATURE_WORKSPACE_SRC
     return _WORKSPACE_ROOT / "src"
 
 

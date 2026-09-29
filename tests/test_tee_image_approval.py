@@ -772,7 +772,7 @@ def test_default_workspace_cascade_loads_from_configured_src_without_generation(
     assert callable(cascade.generate)
 
 
-def test_default_workspace_source_resolves_feature_worktree_before_canonical_root(
+def test_default_workspace_source_prefers_canonical_root_over_stale_feature_worktree(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from src.merch import tee_image_approval
@@ -793,9 +793,60 @@ def test_default_workspace_source_resolves_feature_worktree_before_canonical_roo
 
     monkeypatch.delenv("WORKSPACE_SRC", raising=False)
     monkeypatch.setattr(tee_image_approval, "_WORKSPACE_ROOT", workspace_root)
-    monkeypatch.setattr(tee_image_approval, "_FEATURE_WORKSPACE_SRC", feature_src)
 
-    assert tee_image_approval._resolve_workspace_src() == feature_src
+    assert tee_image_approval._resolve_workspace_src() == canonical_src
+
+
+def test_explicit_workspace_source_override_is_retained(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.merch import tee_image_approval
+
+    workspace_root = tmp_path / "workspace"
+    override_src = tmp_path / "configured-workspace" / "src"
+    monkeypatch.setenv("WORKSPACE_SRC", str(override_src))
+    monkeypatch.setattr(tee_image_approval, "_WORKSPACE_ROOT", workspace_root)
+
+    assert tee_image_approval._resolve_workspace_src() == override_src
+
+
+def test_approved_asset_keeps_provenance_from_selected_workspace_source(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    from src.merch import tee_image_approval
+
+    workspace_root = tmp_path / "workspace"
+    canonical_src = workspace_root / "src"
+    integration_dir = canonical_src / "integrations"
+    integration_dir.mkdir(parents=True)
+    (integration_dir / "image_cascade.py").write_text(
+        "from pathlib import Path\n"
+        "from types import SimpleNamespace\n"
+        "\n"
+        "class Cascade:\n"
+        "    def generate(self, prompt, *, output_dir=None):\n"
+        "        path = Path(output_dir) / 'candidate.png'\n"
+        "        path.write_bytes(b'workspace-image')\n"
+        "        return SimpleNamespace(path=path, provider='workspace-provider', "
+        "model='workspace-selected-model', diagnostics=())\n"
+        "\n"
+        "def default_image_cascade():\n"
+        "    return Cascade()\n",
+        encoding="utf-8",
+    )
+
+    catalog, _ = db_catalog
+    flow = TeeImageApprovalFlow(
+        catalog, tmp_path / "output", cascade=tee_image_approval._workspace_cascade(canonical_src)
+    )
+
+    run = flow.generate_batch("TJD-TEE-001", count=1, decide=lambda candidate: True)
+
+    sidecar = json.loads(run.approved[0].path.with_suffix(".json").read_text(encoding="utf-8"))
+    assert sidecar["provider"] == "workspace-provider"
+    assert sidecar["model"] == "workspace-selected-model"
 
 
 def test_generation_uses_the_database_catalog(tmp_path: Path) -> None:
