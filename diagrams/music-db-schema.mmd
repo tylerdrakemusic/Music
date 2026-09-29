@@ -1,4 +1,6 @@
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1a2e3a', 'primaryTextColor': '#d0ecf8', 'edgeLabelBackground': '#0f1318', 'lineColor': '#4a7a9a'}}}%%
+%% is_derived_view=true
+%% Traceability.parent: diagrams/music-architecture.mmd
 erDiagram
     TRACKS ||--o{ RECORDINGS : has
     ALBUMS ||--o{ TRACKS : contains
@@ -233,4 +235,44 @@ erDiagram
         text status
         text created_at
         text updated_at
+    }
+    tee_prompt_catalogs ||--o{ tee_prompts : contains
+    tee_prompt_catalogs ||--o{ tee_catalog_bootstrap_imports : tracks_imports
+    tee_prompt_catalogs {
+        text catalog_id PK
+        text version
+        text phase
+        text artist
+        text aliases_json
+        text evidence_json
+        text approval_workflow_json
+        text provider_tracking_json
+        text created_at
+        text updated_at
+    }
+    tee_prompts {
+        text id PK
+        text catalog_id FK
+        text title
+        text concept
+        text intended_garment_use
+        text palette_json
+        text print_notes
+        text provenance_source
+        text provenance_source_entry
+        text provenance_curation_decision
+        integer concept_revision
+        integer image_prompt_revision
+        integer concept_approval_revision
+        text concept_approval_status
+        text exact_image_approval_status
+        text created_at
+        text updated_at
+    }
+    tee_catalog_bootstrap_imports {
+        text migration_key PK
+        text catalog_id FK
+        text source_sha256
+        integer prompt_count
+        text imported_at
     }

@@ -1,4 +1,5 @@
 {
+  "snapshot_kind": "import_only_bootstrap",
   "catalog_id": "TJD-MERCH-TEE-PROMPTS",
   "version": "1.0.0",
   "phase": "phase-one",
@@ -30,13 +31,7 @@
       "title": "Walk Away From the Jukebox",
       "concept": "An original rebellious electric guitarist walks away from a burning jukebox in a city alley, carrying a guitar case with abstract, non-branded sticker shapes.",
       "intended_garment_use": "Front graphic for black or washed charcoal tee; alternate back print for black hoodie.",
-      "palette": [
-        "ink black",
-        "washed charcoal",
-        "muted brick red",
-        "dirty gray",
-        "aged cream"
-      ],
+      "palette": ["ink black", "washed charcoal", "muted brick red", "dirty gray", "aged cream"],
       "print_notes": "One-color or two-color distressed screen-print treatment; preserve a clear silhouette and avoid tiny sticker details. No readable third-party marks.",
       "concept_revision": 1,
       "concept_approval_revision": 1,
@@ -53,13 +48,7 @@
       "title": "Rooftop After the Set",
       "concept": "A lone guitarist sits on a rooftop at night under a crescent moon, with restrained stars, soft clouds, and a low city glow suggesting the quiet after a live performance.",
       "intended_garment_use": "Centered front print for faded black, navy, or dark forest tee; small left-chest mark may be derived later.",
-      "palette": [
-        "near-black",
-        "midnight blue",
-        "dusty silver",
-        "muted gold",
-        "faded teal"
-      ],
+      "palette": ["near-black", "midnight blue", "dusty silver", "muted gold", "faded teal"],
       "print_notes": "Use a limited halftone field and open negative space. Keep the moon and guitar readable at thumbnail size; no gradients that depend on transparent rendering.",
       "concept_revision": 1,
       "concept_approval_revision": 1,
@@ -76,13 +65,7 @@
       "title": "Porchlight Blues",
       "concept": "A weathered, fictional blues guitarist sits on a wooden porch with a hollow-body guitar, porchlight shadows, worn boards, and a restrained southern-night atmosphere.",
       "intended_garment_use": "Large back print for washed black or dark brown tee; small front title lockup only after concept approval.",
-      "palette": [
-        "washed black",
-        "dust brown",
-        "faded denim blue",
-        "smoke gray",
-        "rust accent"
-      ],
+      "palette": ["washed black", "dust brown", "faded denim blue", "smoke gray", "rust accent"],
       "print_notes": "Favor rough linework, woodgrain texture, and two to three spot colors. Remove bottles, labels, or props that could imply a third-party brand or endorsement.",
       "concept_revision": 1,
       "concept_approval_revision": 1,
@@ -99,13 +82,7 @@
       "title": "Amplifier Constellation",
       "concept": "A fictional guitarist floats in an abstract night sky, tethered to a glowing amplifier while sparse star paths echo musical motion without literal notes or copied imagery.",
       "intended_garment_use": "Centered front print for black or deep navy tee; suitable for a restrained cosmic sub-series.",
-      "palette": [
-        "ink black",
-        "deep cobalt",
-        "muted violet",
-        "aged white",
-        "amber glow"
-      ],
+      "palette": ["ink black", "deep cobalt", "muted violet", "aged white", "amber glow"],
       "print_notes": "Translate the nebula into halftone texture and use the amplifier as the visual anchor. Keep the artwork opaque, separable, and readable in two to four spot colors.",
       "concept_revision": 1,
       "concept_approval_revision": 1,
@@ -122,13 +99,7 @@
       "title": "Still Plugged In",
       "concept": "A fictional older guitar player stands on a dim stage with a glowing amplifier, coiled cable, long shadows, and a small perseverance message reserved for later lettering review.",
       "intended_garment_use": "Large back print for black hoodie or washed charcoal tee.",
-      "palette": [
-        "black",
-        "muted gold",
-        "deep maroon",
-        "smoke gray",
-        "aged cream"
-      ],
+      "palette": ["black", "muted gold", "deep maroon", "smoke gray", "aged cream"],
       "print_notes": "Treat the phrase as provisional because it is generic. Concept approval must include a distinct Tyler James Drake naming lockup before any exact image is approved.",
       "concept_revision": 1,
       "concept_approval_revision": 1,
@@ -145,13 +116,7 @@
       "title": "Subtle Drift",
       "concept": "A guitar and handwritten lyric page rest beside a rain-streaked window, with a choppy ocean beyond the glass. The page carries the original phrase \"I feel every subtle drift in your emotion,\" while the coastal scene expresses tender longing and emotional distance.",
       "intended_garment_use": "Large back print for a black, washed charcoal, or dark forest tee.",
-      "palette": [
-        "dark forest",
-        "slate blue",
-        "fog gray",
-        "aged cream",
-        "deep maroon"
-      ],
+      "palette": ["dark forest", "slate blue", "fog gray", "aged cream", "deep maroon"],
       "print_notes": "Rough linework with restrained halftone; preserve the guitar, lyric page, window, and ocean as clear shapes. Keep the phrase legible but subject to lettering review. Use opaque, separable artwork with limited spot colors; avoid photorealism, transparent glow, tiny background detail, and third-party marks.",
       "provenance": {
         "source": "operator-authored",
@@ -162,43 +127,6 @@
       "concept_approval_revision": 1,
       "concept_approval_status": "concept_approved",
       "exact_image_approval_status": "exact_image_approved"
-    }
-  ],
-  "rejected_source_entries": [
-    {
-      "source_entry": "Denver Nuggets champions with Nikola Jokic and Jamal Murray",
-      "disposition": "rejected",
-      "reason": "Recognizable athletes and team identity; sports merchandise rights risk."
-    },
-    {
-      "source_entry": "three specific aircraft against a black background",
-      "disposition": "rejected",
-      "reason": "Generic aviation concept with no Tyler James Drake music-world anchor; non-merch fit is weak."
-    },
-    {
-      "source_entry": "guitar hero with devil wings and gemstone sun",
-      "disposition": "rejected",
-      "reason": "Religious or culturally loaded figure language plus generic fantasy hero framing."
-    },
-    {
-      "source_entry": "basketball player with guardian angel wings",
-      "disposition": "rejected",
-      "reason": "Recognizable-athlete and religious-figure risk; sports concept is outside the brand direction."
-    },
-    {
-      "source_entry": "rockstar with Leonardo da Vinci, Michelangelo, Raphael, Jesus, and Salvador Dali",
-      "disposition": "rejected",
-      "reason": "Named artists and religious figure references; also generic, contradictory, and not print-ready."
-    },
-    {
-      "source_entry": "mosaic of iconic guitarists and named guitars",
-      "disposition": "rejected",
-      "reason": "Recognizable artists, signatures, and likely protected instrument references; duplicate wall-tapestry use is outside tee scope."
-    },
-    {
-      "source_entry": "mosaic of iconic drummers, deities, angels, demons, and named cultural figures",
-      "disposition": "rejected",
-      "reason": "Named artists and religious or cultural figures; duplicate wall-tapestry use is outside tee scope."
     }
   ]
 }

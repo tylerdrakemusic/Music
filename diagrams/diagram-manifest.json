@@ -13,7 +13,9 @@
         "parent": null,
         "derived_views": [
           "diagrams/music-derived-catalog-pipeline.mmd",
-          "diagrams/music-derived-operations-surfaces.mmd"
+          "diagrams/music-derived-operations-surfaces.mmd",
+          "diagrams/music-db-schema.mmd",
+          "diagrams/music-tech-stack.mmd"
         ]
       }
     },

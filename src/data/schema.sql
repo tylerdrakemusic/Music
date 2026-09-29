@@ -235,3 +235,57 @@ CREATE TABLE IF NOT EXISTS guitar_tone_profiles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_guitar_tone_profiles_song ON guitar_tone_profiles(catalog_song_id);
+
+-- Tee merchandise concept catalog (FR-20260927-tee-catalog-heartmusic-db)
+CREATE TABLE IF NOT EXISTS tee_prompt_catalogs (
+    catalog_id              TEXT PRIMARY KEY,
+    version                 TEXT NOT NULL,
+    phase                   TEXT NOT NULL,
+    artist                  TEXT NOT NULL,
+    aliases_json            TEXT NOT NULL,
+    evidence_json           TEXT NOT NULL,
+    approval_workflow_json  TEXT NOT NULL,
+    provider_tracking_json  TEXT NOT NULL,
+    created_at              TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at              TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS tee_prompts (
+    id                            TEXT PRIMARY KEY,
+    catalog_id                    TEXT NOT NULL REFERENCES tee_prompt_catalogs(catalog_id),
+    title                         TEXT NOT NULL,
+    concept                       TEXT NOT NULL,
+    intended_garment_use          TEXT NOT NULL,
+    palette_json                  TEXT NOT NULL,
+    print_notes                   TEXT NOT NULL,
+    provenance_source             TEXT NOT NULL,
+    provenance_source_entry       TEXT NOT NULL,
+    provenance_curation_decision  TEXT NOT NULL,
+    concept_revision              INTEGER NOT NULL CHECK (concept_revision > 0),
+    image_prompt_revision         INTEGER NOT NULL DEFAULT 1 CHECK (image_prompt_revision > 0),
+    concept_approval_revision     INTEGER CHECK (
+                                      concept_approval_revision IS NULL
+                                      OR concept_approval_revision > 0
+                                  ),
+    concept_approval_status       TEXT NOT NULL CHECK (
+                                      concept_approval_status IN ('concept_pending', 'concept_approved')
+                                  ),
+    exact_image_approval_status   TEXT NOT NULL CHECK (
+                                      exact_image_approval_status IN (
+                                          'not_started', 'exact_image_pending', 'exact_image_approved'
+                                      )
+                                  ),
+    created_at                    TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at                    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_tee_prompts_catalog
+    ON tee_prompts(catalog_id);
+
+CREATE TABLE IF NOT EXISTS tee_catalog_bootstrap_imports (
+    migration_key  TEXT PRIMARY KEY,
+    catalog_id     TEXT NOT NULL REFERENCES tee_prompt_catalogs(catalog_id),
+    source_sha256  TEXT NOT NULL,
+    prompt_count   INTEGER NOT NULL CHECK (prompt_count >= 0),
+    imported_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);

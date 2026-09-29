@@ -3,7 +3,7 @@
 %% Traceability.parent: diagrams/music-architecture.mmd
 graph TB
     Dashboard[music_dashboard.py]
-    DB[(heartmusic.db<br/>tracks · catalog_songs<br/>recordings)]
+    DB[(heartmusic.db<br/>tracks · catalog_songs · recordings<br/>tee_prompt_catalogs · tee_prompts<br/>tee_catalog_bootstrap_imports)]
     subgraph ArtistLinksMod["src/artist_links/"]
         ArtistLinksPanel[generate_artist_links_panel.py]
         ArtistLinksRoutes["/api/links CRUD"]
@@ -31,8 +31,15 @@ graph TB
         PersonaEngine["persona_rubric.py -> hlx_generator.py -> hlx_validator.py"]
         GuitarToneDB[(guitar_tone_profiles)]
     end
+    subgraph TeeMerch["Tee merchandise"]
+        TeeCatalog[src/merch/tee_prompt_catalog.py]
+        TeeApproval[src/merch/tee_image_approval.py]
+        TeeImages[output/images/tee-merch/]
+    end
+    TeeInitializer["src/utils/init_db.py\nimport_tee_catalog_bootstrap(conn)"]
     HelixRef[(catalog/helix_reference/ HX Edit model snapshot)]
     HelixFilesOut["HelixFiles/*.hlx + TODO.md"]
+    WorkspaceImageCascade["⊕Workspace src/integrations/image_cascade.py"]
     Dashboard --> ArtistLinksRoutes
     ArtistLinksRoutes --> ArtistLinksPanel
     ArtistLinksPanel --> ArtistLinksDB
@@ -51,9 +58,17 @@ graph TB
     PersonaEngine --> HelixFilesOut
     GuitarTechCLI -->|proposed rows| GuitarToneDB
     GuitarToneDB -.->|FK catalog_song_id| DB
+    TeeInitializer -->|schema + one-time bootstrap| DB
+    TeeCatalog -->|catalog reads and writes| DB
+    TeeApproval --> TeeCatalog
+    TeeApproval -.->|image generation| WorkspaceImageCascade
+    TeeApproval --> TeeImages
     class ArtistLinksMod,ReleaseOps,BandMgmt,RhymeGrouper,Studio,GuitarTech music
     class Dashboard svc
+    class TeeInitializer,TeeCatalog,TeeApproval music
+    class WorkspaceImageCascade ws
     class HelixFilesOut out
+    class TeeImages out
     class DB,ArtistLinksDB,ReleasesDB,BandMgmtDB,RhymeDB,StudioDB,GuitarToneDB db
 
 classDef life     fill:#1a2e3a,stroke:#6ab4d4,color:#d0ecf8
