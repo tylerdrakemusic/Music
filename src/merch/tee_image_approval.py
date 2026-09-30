@@ -688,16 +688,15 @@ class TeeImageApprovalFlow:
                     continue
 
                 source_path = Path(result.path)
-                if not source_path.is_file() or source_path.suffix.lower() not in {
-                    ".png",
-                    ".jpg",
-                    ".jpeg",
-                    ".webp",
-                }:
+                if (
+                    not source_path.is_file()
+                    or source_path.suffix.lower() not in _IMAGE_SUFFIXES
+                    or not source_path.resolve().is_relative_to(temporary_root.resolve())
+                ):
                     failures.append(
                         {
                             "candidate_id": candidate_id,
-                            "error": "image cascade returned a missing or unsupported image file",
+                            "error": "image cascade returned a missing, unsupported, or out-of-directory image file",
                             "diagnostics": [
                                 _diagnostic_dict(item)
                                 for item in getattr(result, "diagnostics", ())

@@ -696,6 +696,52 @@ def test_provider_failures_are_preserved_without_persisting_candidates(
     )
 
 
+def test_batch_rejects_images_outside_generation_directory(
+    tmp_path: Path, db_catalog: tuple[TeePromptCatalog, sqlite3.Connection]
+) -> None:
+    catalog, _ = db_catalog
+    external_image = tmp_path / "external" / "candidate.png"
+    external_image.parent.mkdir()
+    external_image.write_bytes(b"external-image")
+
+    class ExternalPathCascade:
+        def generate(self, prompt: str, *, output_dir: Path) -> SimpleNamespace:
+            return SimpleNamespace(
+                path=external_image,
+                provider="fake-provider",
+                model="fake-model",
+                diagnostics=(),
+            )
+
+    output_root = tmp_path / "output"
+    decisions: list[object] = []
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=ExternalPathCascade())
+
+    run = flow.generate_batch(
+        "TJD-TEE-001",
+        count=1,
+        decide=lambda candidate: decisions.append(candidate) or True,
+    )
+
+    assert decisions == []
+    assert run.approved == ()
+    assert len(run.failures) == 1
+    assert run.failures[0]["error"] == (
+        "image cascade returned a missing, unsupported, or out-of-directory image file"
+    )
+    run_dir = output_root / "TJD-TEE-001" / run.run_id
+    assert (run_dir / "provider-failures.json").is_file()
+    assert not list(run_dir.glob("*.png"))
+    assert not [
+        sidecar
+        for sidecar in run_dir.glob("*.json")
+        if sidecar.name != "provider-failures.json"
+    ]
+    assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
+        "not_started"
+    )
+
+
 def test_catalog_revision_change_requires_concept_reapproval(
     tmp_path: Path, db_catalog: tuple[TeePromptCatalog, sqlite3.Connection]
 ) -> None:
