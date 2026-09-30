@@ -17,6 +17,7 @@ import os
 import re
 import shutil
 import sqlite3
+import stat
 import sys
 import tempfile
 import uuid
@@ -46,6 +47,7 @@ _CANDIDATE_ART_DIRECTIONS = (
     "the main subject crossing the frame and bold, simplified background shapes.",
 )
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
+_DIRECTORY_MTIME_SENTINEL_NS = 4_000_000_000_000_000_000
 
 
 def _matches_image_signature(suffix: str, content: bytes) -> bool:
@@ -56,6 +58,42 @@ def _matches_image_signature(suffix: str, content: bytes) -> bool:
     if suffix == ".webp":
         return len(content) >= 12 and content.startswith(b"RIFF") and content[8:12] == b"WEBP"
     return False
+
+
+def _is_reparse_point(path: Path) -> bool:
+    try:
+        path_stat = path.lstat()
+    except FileNotFoundError:
+        return False
+    return stat.S_ISLNK(path_stat.st_mode) or bool(
+        getattr(path_stat, "st_file_attributes", 0) & 0x400
+    )
+
+
+def _stat_fingerprint(path_stat: os.stat_result) -> tuple[int, int, int, int, int]:
+    return (
+        path_stat.st_dev,
+        path_stat.st_ino,
+        path_stat.st_size,
+        path_stat.st_mtime_ns,
+        path_stat.st_ctime_ns,
+    )
+
+
+def _pin_directory_mtime_for_mutation_detection(path: Path) -> None:
+    directory_stat = path.stat()
+    # Future mtime makes directory-entry changes visible on coarse-resolution filesystems.
+    os.utime(
+        path,
+        ns=(
+            directory_stat.st_atime_ns,
+            max(directory_stat.st_mtime_ns, _DIRECTORY_MTIME_SENTINEL_NS),
+        ),
+    )
+def _write_json_exclusive(path: Path, data: object) -> None:
+    with path.open("x", encoding="utf-8") as output_file:
+        json.dump(data, output_file, ensure_ascii=False, indent=2)
+        output_file.write("\n")
 
 
 def _live_connection() -> sqlite3.Connection:
@@ -309,13 +347,33 @@ class TeeImageApprovalFlow:
         pending_root: Path | None = None,
     ) -> None:
         self.catalog = catalog
-        self.output_root = Path(output_root)
+        self.output_root = Path(output_root).absolute()
         self.pending_root = Path(pending_root) if pending_root is not None else _PENDING_ROOT
         self.cascade = cascade if cascade is not None else _workspace_cascade(workspace_src)
+
+    def _output_path(self, *parts: str) -> Path:
+        root = self.output_root
+        for ancestor in (root, *root.parents):
+            if _is_reparse_point(ancestor):
+                raise ValueError("output path may not contain symlinked or reparse-point parents")
+
+        try:
+            resolved_root = root.resolve(strict=False)
+            candidate = root
+            for part in parts:
+                candidate = candidate / part
+                if _is_reparse_point(candidate):
+                    raise ValueError("output path may not contain symlinks or reparse points")
+                if not candidate.resolve(strict=False).is_relative_to(resolved_root):
+                    raise ValueError("output path escapes the configured output root")
+        except OSError as exc:
+            raise ValueError("output path could not be safely resolved") from exc
+        return candidate
 
     def _prepare_generation(
         self, catalog_id: str
     ) -> tuple[dict[str, object], dict[str, object], int, int, str, str, bool]:
+        self._output_path()
         if not re.fullmatch(r"TJD-TEE-\d{3}", catalog_id):
             raise ValueError("catalog ID must use the TJD-TEE-NNN format")
 
@@ -371,13 +429,17 @@ class TeeImageApprovalFlow:
             raise ValueError("chat approval session ID is invalid")
         root = self.pending_root.resolve()
         session_dir = root / session_id
-        if session_dir.is_symlink() or session_dir.resolve().parent != root:
+        if _is_reparse_point(session_dir) or session_dir.resolve().parent != root:
             raise ValueError("chat approval session path is invalid")
         return session_dir
 
     @staticmethod
     def _write_chat_session(session_dir: Path, state: dict[str, object]) -> None:
         _write_json(session_dir / "session.json", state)
+
+    @staticmethod
+    def _presentation_record_path(session_dir: Path) -> Path:
+        return session_dir.parent / f".{session_dir.name}.presentation.json"
 
     def start_chat_batch(self, catalog_id: str, *, count: int = 2) -> dict[str, object]:
         if type(count) is not int or not 1 <= count <= _MAX_BATCH_SIZE:
@@ -456,6 +518,7 @@ class TeeImageApprovalFlow:
                 suffix = source_path.suffix.lower()
                 if (
                     not source_path.is_file()
+                    or _is_reparse_point(source_path)
                     or suffix not in _IMAGE_SUFFIXES
                     or not source_path.resolve().is_relative_to(temporary_root.resolve())
                 ):
@@ -474,7 +537,26 @@ class TeeImageApprovalFlow:
 
                 image_name = f"{candidate_id}{suffix}"
                 staged_path = session_dir / image_name
-                shutil.copyfile(source_path, staged_path)
+                try:
+                    with source_path.open("rb") as source_file:
+                        staged_bytes = source_file.read()
+                    if not _matches_image_signature(suffix, staged_bytes):
+                        raise ValueError("image file content does not match its extension")
+                    with staged_path.open("xb") as staged_file:
+                        staged_file.write(staged_bytes)
+                except (OSError, ValueError) as exc:
+                    failures.append(
+                        {
+                            "candidate_id": candidate_id,
+                            "error": str(exc),
+                            "diagnostics": [
+                                _diagnostic_dict(item)
+                                for item in getattr(result, "diagnostics", ())
+                            ],
+                        }
+                    )
+                    self._write_chat_session(session_dir, state)
+                    continue
                 state["generated_count"] = int(state["generated_count"]) + 1
                 state["pending_candidate"] = {
                     "candidate_id": candidate_id,
@@ -483,12 +565,24 @@ class TeeImageApprovalFlow:
                     "provider": str(result.provider),
                     "model": str(result.model),
                     "exact_prompt": candidate_prompt,
+                    "content_sha256": hashlib.sha256(staged_bytes).hexdigest(),
+                    "file_fingerprint": list(_stat_fingerprint(staged_path.stat())),
                     "provider_diagnostics": [
                         _diagnostic_dict(item)
                         for item in getattr(result, "diagnostics", ())
                     ],
                 }
                 self._write_chat_session(session_dir, state)
+                _pin_directory_mtime_for_mutation_detection(session_dir)
+                _write_json_exclusive(
+                    self._presentation_record_path(session_dir),
+                    {
+                        "candidate_id": candidate_id,
+                        "directory_fingerprint": list(
+                            _stat_fingerprint(session_dir.stat())
+                        ),
+                    },
+                )
                 return {
                     "status": "candidate_pending",
                     "session_id": session_id,
@@ -503,11 +597,12 @@ class TeeImageApprovalFlow:
                 }
 
         if failures:
-            run_dir = self.output_root / catalog_id / run_id
+            run_dir = self._output_path(catalog_id, run_id)
             run_dir.mkdir(parents=True, exist_ok=True)
-            (run_dir / "provider-failures.json").write_text(
-                json.dumps(failures, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
+            run_dir = self._output_path(catalog_id, run_id)
+            _write_json_exclusive(
+                self._output_path(catalog_id, run_id, "provider-failures.json"),
+                failures,
             )
         summary = {
             "status": "completed",
@@ -518,6 +613,7 @@ class TeeImageApprovalFlow:
             "failed": len(failures),
             "failures": failures,
         }
+        self._presentation_record_path(session_dir).unlink(missing_ok=True)
         shutil.rmtree(session_dir)
         return summary
 
@@ -554,9 +650,41 @@ class TeeImageApprovalFlow:
         ):
             raise ValueError("pending candidate image path is invalid")
         image_path = session_dir / image_name
-        if image_path.resolve().parent != session_dir.resolve() or not image_path.is_file():
+        if (
+            _is_reparse_point(image_path)
+            or image_path.resolve().parent != session_dir.resolve()
+            or not image_path.is_file()
+        ):
             raise ValueError("pending candidate image is unavailable")
         return image_path
+
+    @staticmethod
+    def _read_verified_pending_candidate(
+        pending_path: Path, session_dir: Path, pending: dict[str, object]
+    ) -> bytes:
+        try:
+            content = pending_path.read_bytes()
+            current_fingerprint = _stat_fingerprint(pending_path.stat())
+            directory_fingerprint = _stat_fingerprint(session_dir.stat())
+            presentation_record = json.loads(
+                TeeImageApprovalFlow._presentation_record_path(session_dir).read_text(
+                    encoding="utf-8"
+                )
+            )
+        except OSError as exc:
+            raise ValueError("pending candidate changed after presentation") from exc
+        except json.JSONDecodeError as exc:
+            raise ValueError("pending candidate changed after presentation") from exc
+        if (
+            not isinstance(presentation_record, dict)
+            or presentation_record.get("candidate_id") != pending.get("candidate_id")
+            or presentation_record.get("directory_fingerprint")
+            != list(directory_fingerprint)
+            or pending.get("content_sha256") != hashlib.sha256(content).hexdigest()
+            or pending.get("file_fingerprint") != list(current_fingerprint)
+        ):
+            raise ValueError("pending candidate changed after presentation")
+        return content
 
     def decide_chat_candidate(
         self, session_id: str, candidate_id: str, *, decision: str
@@ -570,6 +698,9 @@ class TeeImageApprovalFlow:
         if pending.get("candidate_id") != candidate_id:
             raise ValueError("candidate ID does not match the pending candidate")
         pending_path = self._pending_candidate_path(session_dir, pending)
+        candidate_bytes = self._read_verified_pending_candidate(
+            pending_path, session_dir, pending
+        )
 
         if decision == "y":
             entry = self.catalog.read_prompt(str(state["catalog_id"]))
@@ -578,6 +709,7 @@ class TeeImageApprovalFlow:
                 approval_revision = int(entry["concept_approval_revision"])
             except (KeyError, TypeError, ValueError) as exc:
                 pending_path.unlink(missing_ok=True)
+                self._presentation_record_path(session_dir).unlink(missing_ok=True)
                 shutil.rmtree(session_dir)
                 raise ValueError("concept approval changed while image was pending") from exc
             if (
@@ -589,12 +721,19 @@ class TeeImageApprovalFlow:
                 or state.get("prompt_revision") != _PROMPT_REVISION
             ):
                 pending_path.unlink(missing_ok=True)
+                self._presentation_record_path(session_dir).unlink(missing_ok=True)
                 shutil.rmtree(session_dir)
                 raise ValueError("concept or prompt revision changed while image was pending")
 
-            run_dir = self.output_root / str(state["catalog_id"]) / str(state["run_id"])
-            approved_path = run_dir / f"{candidate_id}{pending_path.suffix}"
-            sidecar_path = run_dir / f"{candidate_id}.json"
+            catalog_id = str(state["catalog_id"])
+            run_id = str(state["run_id"])
+            run_dir = self._output_path(catalog_id, run_id)
+            run_dir.mkdir(parents=True, exist_ok=True)
+            run_dir = self._output_path(catalog_id, run_id)
+            approved_path = self._output_path(
+                catalog_id, run_id, f"{candidate_id}{pending_path.suffix}"
+            )
+            sidecar_path = self._output_path(catalog_id, run_id, f"{candidate_id}.json")
             if approved_path.exists() or sidecar_path.exists():
                 raise FileExistsError("approved candidate output already exists")
             sidecar = {
@@ -607,30 +746,39 @@ class TeeImageApprovalFlow:
                 "image_prompt_revision": int(state["image_prompt_revision"]),
                 "catalog_version": state["catalog_version"],
                 "prompt_revision": _PROMPT_REVISION,
-                "content_sha256": hashlib.sha256(pending_path.read_bytes()).hexdigest(),
+                "content_sha256": pending["content_sha256"],
                 "approval": "approved",
                 "approved_at": datetime.now(timezone.utc).isoformat(),
                 "provider_diagnostics": pending["provider_diagnostics"],
             }
-            run_dir.mkdir(parents=True, exist_ok=True)
+            approved_created = False
+            sidecar_created = False
             try:
-                shutil.copyfile(pending_path, approved_path)
-                _write_json(sidecar_path, sidecar)
+                with approved_path.open("xb") as approved_file:
+                    approved_created = True
+                    approved_file.write(candidate_bytes)
+                with sidecar_path.open("x", encoding="utf-8") as sidecar_file:
+                    sidecar_created = True
+                    json.dump(sidecar, sidecar_file, ensure_ascii=False, indent=2)
+                    sidecar_file.write("\n")
                 self.catalog.approve_exact_image(
-                    str(state["catalog_id"]),
+                    catalog_id,
                     expected_image_prompt_revision=int(state["image_prompt_revision"]),
                     expected_concept_revision=current_revision,
                     approved_by_tyler=True,
                 )
             except Exception:
-                approved_path.unlink(missing_ok=True)
-                sidecar_path.unlink(missing_ok=True)
+                if approved_created:
+                    approved_path.unlink(missing_ok=True)
+                if sidecar_created:
+                    sidecar_path.unlink(missing_ok=True)
                 raise
             state["approved_count"] = int(state["approved_count"]) + 1
         else:
             state["rejected_count"] = int(state["rejected_count"]) + 1
 
         pending_path.unlink(missing_ok=True)
+        self._presentation_record_path(session_dir).unlink(missing_ok=True)
         state["pending_candidate"] = None
         self._write_chat_session(session_dir, state)
         return self._stage_next_chat_candidate(session_dir, state)
@@ -640,6 +788,7 @@ class TeeImageApprovalFlow:
         pending = state.get("pending_candidate")
         if isinstance(pending, dict):
             self._pending_candidate_path(session_dir, pending).unlink(missing_ok=True)
+        self._presentation_record_path(session_dir).unlink(missing_ok=True)
         result = {
             "status": "cancelled",
             "run_id": state["run_id"],
@@ -673,7 +822,7 @@ class TeeImageApprovalFlow:
         ) = self._prepare_generation(catalog_id)
 
         run_id = uuid.uuid4().hex
-        run_dir = self.output_root / catalog_id / run_id
+        run_dir = self._output_path(catalog_id, run_id)
         approved: list[TeeImageCandidate] = []
         rejected_count = 0
         failures: list[dict[str, object]] = []
@@ -700,6 +849,7 @@ class TeeImageApprovalFlow:
                 source_path = Path(result.path)
                 source_bytes: bytes | None = None
                 source_identity: os.stat_result | None = None
+                source_parent_fingerprint: tuple[int, int, int, int, int] | None = None
                 content_mismatch = False
                 try:
                     if (
@@ -722,6 +872,12 @@ class TeeImageApprovalFlow:
                                 ):
                                     source_bytes = content
                                     source_identity = opened_stat
+                                    _pin_directory_mtime_for_mutation_detection(
+                                        source_path.parent
+                                    )
+                                    source_parent_fingerprint = _stat_fingerprint(
+                                        source_path.parent.stat()
+                                    )
                                 else:
                                     content_mismatch = True
                 except (OSError, RuntimeError):
@@ -757,18 +913,25 @@ class TeeImageApprovalFlow:
 
                 try:
                     resolved_path = source_path.resolve(strict=True)
-                    candidate_is_unchanged = (
+                    current_stat = resolved_path.stat()
+                    candidate_path_is_unchanged = (
                         resolved_path.is_relative_to(temporary_root.resolve())
                         and os.path.samestat(source_identity, resolved_path.stat())
+                        and source_parent_fingerprint is not None
+                        and _stat_fingerprint(source_path.parent.stat())
+                        == source_parent_fingerprint
                     )
                     candidate_content_is_unchanged = (
-                        candidate_is_unchanged
+                        candidate_path_is_unchanged
+                        and source_identity is not None
+                        and _stat_fingerprint(current_stat)
+                        == _stat_fingerprint(source_identity)
                         and resolved_path.read_bytes() == source_bytes
                     )
                 except (OSError, RuntimeError):
-                    candidate_is_unchanged = False
+                    candidate_path_is_unchanged = False
                     candidate_content_is_unchanged = False
-                if not candidate_is_unchanged:
+                if not candidate_path_is_unchanged:
                     failures.append(
                         {
                             "candidate_id": candidate_id,
@@ -793,10 +956,16 @@ class TeeImageApprovalFlow:
                     )
                     continue
 
+                run_dir = self._output_path(catalog_id, run_id)
                 run_dir.mkdir(parents=True, exist_ok=True)
+                run_dir = self._output_path(catalog_id, run_id)
                 suffix = source_path.suffix.lower()
-                approved_path = run_dir / f"{candidate_id}{suffix}"
-                sidecar_path = run_dir / f"{candidate_id}.json"
+                approved_path = self._output_path(
+                    catalog_id, run_id, f"{candidate_id}{suffix}"
+                )
+                sidecar_path = self._output_path(
+                    catalog_id, run_id, f"{candidate_id}.json"
+                )
                 sidecar = {
                     "candidate_id": candidate_id,
                     "catalog_id": catalog_id,
@@ -870,10 +1039,12 @@ class TeeImageApprovalFlow:
                 )
 
         if failures:
+            run_dir = self._output_path(catalog_id, run_id)
             run_dir.mkdir(parents=True, exist_ok=True)
-            (run_dir / "provider-failures.json").write_text(
-                json.dumps(failures, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
+            run_dir = self._output_path(catalog_id, run_id)
+            _write_json_exclusive(
+                self._output_path(catalog_id, run_id, "provider-failures.json"),
+                failures,
             )
 
         return TeeImageBatchResult(
