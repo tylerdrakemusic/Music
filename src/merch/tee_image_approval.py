@@ -48,6 +48,16 @@ _CANDIDATE_ART_DIRECTIONS = (
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
 
+def _matches_image_signature(suffix: str, content: bytes) -> bool:
+    if suffix == ".png":
+        return content.startswith(b"\x89PNG\r\n\x1a\n")
+    if suffix in {".jpg", ".jpeg"}:
+        return content.startswith(b"\xff\xd8\xff")
+    if suffix == ".webp":
+        return len(content) >= 12 and content.startswith(b"RIFF") and content[8:12] == b"WEBP"
+    return False
+
+
 def _live_connection() -> sqlite3.Connection:
     init_db.use_worktree_aware_db_path(_PROJECT_ROOT)
     return init_db.get_connection()
@@ -688,15 +698,44 @@ class TeeImageApprovalFlow:
                     continue
 
                 source_path = Path(result.path)
-                if (
-                    not source_path.is_file()
-                    or source_path.suffix.lower() not in _IMAGE_SUFFIXES
-                    or not source_path.resolve().is_relative_to(temporary_root.resolve())
-                ):
+                source_bytes: bytes | None = None
+                source_identity: os.stat_result | None = None
+                content_mismatch = False
+                try:
+                    if (
+                        source_path.is_file()
+                        and source_path.suffix.lower() in _IMAGE_SUFFIXES
+                        and source_path.resolve(strict=True).is_relative_to(
+                            temporary_root.resolve()
+                        )
+                    ):
+                        with source_path.open("rb") as source_file:
+                            opened_stat = os.fstat(source_file.fileno())
+                            resolved_path = source_path.resolve(strict=True)
+                            if (
+                                resolved_path.is_relative_to(temporary_root.resolve())
+                                and os.path.samestat(opened_stat, resolved_path.stat())
+                            ):
+                                content = source_file.read()
+                                if _matches_image_signature(
+                                    source_path.suffix.lower(), content
+                                ):
+                                    source_bytes = content
+                                    source_identity = opened_stat
+                                else:
+                                    content_mismatch = True
+                except (OSError, RuntimeError):
+                    pass
+
+                if source_identity is None or source_bytes is None:
                     failures.append(
                         {
                             "candidate_id": candidate_id,
-                            "error": "image cascade returned a missing, unsupported, or out-of-directory image file",
+                            "error": (
+                                "image file content does not match its extension"
+                                if content_mismatch
+                                else "image cascade returned a missing, unsupported, or out-of-directory image file"
+                            ),
                             "diagnostics": [
                                 _diagnostic_dict(item)
                                 for item in getattr(result, "diagnostics", ())
@@ -716,6 +755,44 @@ class TeeImageApprovalFlow:
                     rejected_count += 1
                     continue
 
+                try:
+                    resolved_path = source_path.resolve(strict=True)
+                    candidate_is_unchanged = (
+                        resolved_path.is_relative_to(temporary_root.resolve())
+                        and os.path.samestat(source_identity, resolved_path.stat())
+                    )
+                    candidate_content_is_unchanged = (
+                        candidate_is_unchanged
+                        and resolved_path.read_bytes() == source_bytes
+                    )
+                except (OSError, RuntimeError):
+                    candidate_is_unchanged = False
+                    candidate_content_is_unchanged = False
+                if not candidate_is_unchanged:
+                    failures.append(
+                        {
+                            "candidate_id": candidate_id,
+                            "error": "image candidate changed or escaped the generation directory during approval",
+                            "diagnostics": [
+                                _diagnostic_dict(item)
+                                for item in getattr(result, "diagnostics", ())
+                            ],
+                        }
+                    )
+                    continue
+                if not candidate_content_is_unchanged:
+                    failures.append(
+                        {
+                            "candidate_id": candidate_id,
+                            "error": "image candidate content changed during approval",
+                            "diagnostics": [
+                                _diagnostic_dict(item)
+                                for item in getattr(result, "diagnostics", ())
+                            ],
+                        }
+                    )
+                    continue
+
                 run_dir.mkdir(parents=True, exist_ok=True)
                 suffix = source_path.suffix.lower()
                 approved_path = run_dir / f"{candidate_id}{suffix}"
@@ -730,7 +807,7 @@ class TeeImageApprovalFlow:
                     "image_prompt_revision": image_prompt_revision,
                     "catalog_version": catalog_version,
                     "prompt_revision": _PROMPT_REVISION,
-                    "content_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest(),
+                    "content_sha256": hashlib.sha256(source_bytes).hexdigest(),
                     "approval": "approved",
                     "approved_at": datetime.now(timezone.utc).isoformat(),
                     "provider_diagnostics": [
@@ -738,21 +815,49 @@ class TeeImageApprovalFlow:
                         for item in getattr(result, "diagnostics", ())
                     ],
                 }
+                approved_created = False
+                sidecar_created = False
                 try:
-                    shutil.copyfile(source_path, approved_path)
+                    with approved_path.open("xb") as approved_file:
+                        approved_created = True
+                        approved_file.write(source_bytes)
+                    approved_content = approved_path.read_bytes()
+                    if approved_content != source_bytes:
+                        raise OSError("approved image changed while being written")
                     sidecar["content_sha256"] = hashlib.sha256(
-                        approved_path.read_bytes()
+                        approved_content
                     ).hexdigest()
-                    _write_json(sidecar_path, sidecar)
+                    with sidecar_path.open("x", encoding="utf-8") as sidecar_file:
+                        sidecar_created = True
+                        json.dump(sidecar, sidecar_file, ensure_ascii=False, indent=2)
+                        sidecar_file.write("\n")
                     self.catalog.approve_exact_image(
                         catalog_id,
                         expected_image_prompt_revision=image_prompt_revision,
                         expected_concept_revision=concept_revision,
                         approved_by_tyler=True,
                     )
+                except FileExistsError:
+                    if approved_created:
+                        approved_path.unlink(missing_ok=True)
+                    if sidecar_created:
+                        sidecar_path.unlink(missing_ok=True)
+                    failures.append(
+                        {
+                            "candidate_id": candidate_id,
+                            "error": "approved image or sidecar destination already exists",
+                            "diagnostics": [
+                                _diagnostic_dict(item)
+                                for item in getattr(result, "diagnostics", ())
+                            ],
+                        }
+                    )
+                    continue
                 except Exception:
-                    approved_path.unlink(missing_ok=True)
-                    sidecar_path.unlink(missing_ok=True)
+                    if approved_created:
+                        approved_path.unlink(missing_ok=True)
+                    if sidecar_created:
+                        sidecar_path.unlink(missing_ok=True)
                     raise
                 approved.append(
                     TeeImageCandidate(
