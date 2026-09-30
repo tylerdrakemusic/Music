@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
@@ -11,7 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 from src.merch.tee_prompt_catalog import TeePromptCatalog
-from src.merch.tee_image_approval import TeeImageApprovalFlow
+from src.merch.tee_image_approval import TeeImageApprovalFlow, TeeImageCandidate
 from src.utils import init_db
 
 
@@ -48,7 +49,9 @@ class FakeCascade:
         self.calls.append((prompt, output_dir))
         output_dir.mkdir(parents=True, exist_ok=True)
         candidate_path = output_dir / f"candidate-{len(self.calls)}.png"
-        candidate_path.write_bytes(f"image-{len(self.calls)}".encode("ascii"))
+        candidate_path.write_bytes(
+            b"\x89PNG\r\n\x1a\n" + f"image-{len(self.calls)}".encode("ascii")
+        )
         if self.failures:
             raise FakeGenerationError(
                 "all fake providers failed",
@@ -146,7 +149,9 @@ def test_batch_persists_only_explicitly_approved_images_and_sidecars(
     assert manifest["concept_revision"] == 1
     assert manifest["prompt_revision"] == "tee-artwork-prompt-v2"
     assert manifest["approval"] == "approved"
-    assert manifest["content_sha256"] == hashlib.sha256(b"image-1").hexdigest()
+    assert manifest["content_sha256"] == hashlib.sha256(
+        b"\x89PNG\r\n\x1a\nimage-1"
+    ).hexdigest()
     assert "exact_prompt" in manifest
     assert manifest["exact_prompt"] == cascade.calls[0][0]
     assert not list(run_dir.glob("*rejected*"))
@@ -267,6 +272,10 @@ def test_chat_approval_persists_only_after_explicit_decision(
     flow = TeeImageApprovalFlow(catalog, output_root, cascade=cascade)
     stage = flow.start_chat_batch("TJD-TEE-001", count=1)
     pending_path = Path(stage["image_path"])
+    session = json.loads((pending_path.parent / "session.json").read_text(encoding="utf-8"))
+    assert session["pending_candidate"]["content_sha256"] == hashlib.sha256(
+        b"\x89PNG\r\n\x1a\nimage-1"
+    ).hexdigest()
     assert not output_root.exists()
 
     finished = flow.decide_chat_candidate(
@@ -281,7 +290,7 @@ def test_chat_approval_persists_only_after_explicit_decision(
     assert finished["generated"] == 1
     assert finished["approved"] == 1
     assert finished["rejected"] == 0
-    assert image_path.read_bytes() == b"image-1"
+    assert image_path.read_bytes() == b"\x89PNG\r\n\x1a\nimage-1"
     assert not pending_path.exists()
     assert sidecar["approval"] == "approved"
     assert sidecar["exact_prompt"] == cascade.calls[0][0]
@@ -289,6 +298,44 @@ def test_chat_approval_persists_only_after_explicit_decision(
     assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
         "exact_image_approved"
     )
+
+
+def test_chat_approval_keeps_assets_when_post_commit_readback_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    from src.merch import tee_image_approval
+
+    catalog, connection = db_catalog
+    output_root = tmp_path / "output"
+    monkeypatch.setattr(tee_image_approval, "_PENDING_ROOT", tmp_path / "pending")
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=FakeCascade())
+    stage = flow.start_chat_batch("TJD-TEE-001", count=1)
+    original_read_prompt = catalog.read_prompt
+
+    def fail_after_approval(prompt_id: str) -> dict[str, object]:
+        prompt = original_read_prompt(prompt_id)
+        if prompt["exact_image_approval_status"] == "exact_image_approved":
+            raise RuntimeError("post-commit readback failed")
+        return prompt
+
+    monkeypatch.setattr(catalog, "read_prompt", fail_after_approval)
+
+    result = flow.decide_chat_candidate(
+        stage["session_id"], stage["candidate_id"], decision="y"
+    )
+
+    run_dir = output_root / "TJD-TEE-001" / stage["run_id"]
+    image_path = run_dir / f"{stage['candidate_id']}.png"
+    sidecar_path = run_dir / f"{stage['candidate_id']}.json"
+    assert result["status"] == "completed"
+    assert image_path.read_bytes() == b"\x89PNG\r\n\x1a\nimage-1"
+    assert json.loads(sidecar_path.read_text(encoding="utf-8"))["approval"] == "approved"
+    assert connection.execute(
+        "SELECT exact_image_approval_status FROM tee_prompts WHERE id = ?",
+        ("TJD-TEE-001",),
+    ).fetchone()[0] == "exact_image_approved"
 
 
 def test_current_approval_sidecar_reconciles_database_without_changing_assets(
@@ -537,6 +584,10 @@ def test_chat_approval_is_blocked_if_concept_changes_while_pending(
         flow.decide_chat_candidate(stage["session_id"], stage["candidate_id"], decision="y")
 
     assert not pending_path.exists()
+    assert not (
+        pending_path.parent.parent
+        / f".{stage['session_id']}.presentation.json"
+    ).exists()
     assert not output_root.exists()
 
 
@@ -696,6 +747,205 @@ def test_provider_failures_are_preserved_without_persisting_candidates(
     )
 
 
+def test_batch_rejects_images_outside_generation_directory(
+    tmp_path: Path, db_catalog: tuple[TeePromptCatalog, sqlite3.Connection]
+) -> None:
+    catalog, _ = db_catalog
+    external_image = tmp_path / "external" / "candidate.png"
+    external_image.parent.mkdir()
+    external_image.write_bytes(b"external-image")
+
+    class ExternalPathCascade:
+        def generate(self, prompt: str, *, output_dir: Path) -> SimpleNamespace:
+            return SimpleNamespace(
+                path=external_image,
+                provider="fake-provider",
+                model="fake-model",
+                diagnostics=(),
+            )
+
+    output_root = tmp_path / "output"
+    decisions: list[object] = []
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=ExternalPathCascade())
+
+    run = flow.generate_batch(
+        "TJD-TEE-001",
+        count=1,
+        decide=lambda candidate: decisions.append(candidate) or True,
+    )
+
+    assert decisions == []
+    assert run.approved == ()
+    assert len(run.failures) == 1
+    assert run.failures[0]["error"] == (
+        "image cascade returned a missing, unsupported, or out-of-directory image file"
+    )
+    run_dir = output_root / "TJD-TEE-001" / run.run_id
+    assert (run_dir / "provider-failures.json").is_file()
+    assert not list(run_dir.glob("*.png"))
+    assert not [
+        sidecar
+        for sidecar in run_dir.glob("*.json")
+        if sidecar.name != "provider-failures.json"
+    ]
+    assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
+        "not_started"
+    )
+
+
+def test_batch_rejects_candidate_replaced_during_approval(
+    tmp_path: Path, db_catalog: tuple[TeePromptCatalog, sqlite3.Connection]
+) -> None:
+    catalog, _ = db_catalog
+    external_image = tmp_path / "external.png"
+    external_image.write_bytes(b"\x89PNG\r\n\x1a\nexternal-image")
+
+    class ReplacedPathCascade:
+        def generate(self, prompt: str, *, output_dir: Path) -> SimpleNamespace:
+            candidate_path = output_dir / "candidate.png"
+            candidate_path.write_bytes(b"\x89PNG\r\n\x1a\nvalidated-image")
+            return SimpleNamespace(
+                path=candidate_path,
+                provider="fake-provider",
+                model="fake-model",
+                diagnostics=(),
+            )
+
+    output_root = tmp_path / "output"
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=ReplacedPathCascade())
+
+    def replace_candidate(candidate: TeeImageCandidate) -> bool:
+        candidate.path.unlink()
+        external_image.replace(candidate.path)
+        return True
+
+    run = flow.generate_batch("TJD-TEE-001", count=1, decide=replace_candidate)
+
+    assert run.approved == ()
+    assert len(run.failures) == 1
+    assert run.failures[0]["error"] == (
+        "image candidate changed or escaped the generation directory during approval"
+    )
+    run_dir = output_root / "TJD-TEE-001" / run.run_id
+    assert not list(run_dir.glob("*.png"))
+    assert not [
+        sidecar
+        for sidecar in run_dir.glob("*.json")
+        if sidecar.name != "provider-failures.json"
+    ]
+    assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
+        "not_started"
+    )
+
+
+def test_batch_rejects_candidate_modified_in_place_during_approval(
+    tmp_path: Path, db_catalog: tuple[TeePromptCatalog, sqlite3.Connection]
+) -> None:
+    catalog, _ = db_catalog
+    output_root = tmp_path / "output"
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=FakeCascade())
+
+    def modify_candidate(candidate: TeeImageCandidate) -> bool:
+        candidate.path.write_bytes(b"\x89PNG\r\n\x1a\nmodified-after-display")
+        return True
+
+    run = flow.generate_batch("TJD-TEE-001", count=1, decide=modify_candidate)
+
+    assert run.approved == ()
+    assert len(run.failures) == 1
+    assert run.failures[0]["error"] == (
+        "image candidate content changed during approval"
+    )
+    run_dir = output_root / "TJD-TEE-001" / run.run_id
+    assert not list(run_dir.glob("*.png"))
+    assert not [
+        sidecar
+        for sidecar in run_dir.glob("*.json")
+        if sidecar.name != "provider-failures.json"
+    ]
+    assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
+        "not_started"
+    )
+
+
+def test_batch_rejects_non_image_content_before_approval(
+    tmp_path: Path, db_catalog: tuple[TeePromptCatalog, sqlite3.Connection]
+) -> None:
+    catalog, _ = db_catalog
+
+    class InvalidImageCascade:
+        def generate(self, prompt: str, *, output_dir: Path) -> SimpleNamespace:
+            candidate_path = output_dir / "candidate.png"
+            candidate_path.write_bytes(b"not-an-image")
+            return SimpleNamespace(
+                path=candidate_path,
+                provider="fake-provider",
+                model="fake-model",
+                diagnostics=(),
+            )
+
+    decisions: list[TeeImageCandidate] = []
+    output_root = tmp_path / "output"
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=InvalidImageCascade())
+
+    run = flow.generate_batch(
+        "TJD-TEE-001",
+        count=1,
+        decide=lambda candidate: decisions.append(candidate) or True,
+    )
+
+    assert decisions == []
+    assert run.approved == ()
+    assert len(run.failures) == 1
+    assert run.failures[0]["error"] == (
+        "image file content does not match its extension"
+    )
+    run_dir = output_root / "TJD-TEE-001" / run.run_id
+    assert (run_dir / "provider-failures.json").is_file()
+    assert not list(run_dir.glob("*.png"))
+    assert not [
+        sidecar
+        for sidecar in run_dir.glob("*.json")
+        if sidecar.name != "provider-failures.json"
+    ]
+    assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
+        "not_started"
+    )
+
+
+def test_batch_does_not_overwrite_existing_approved_candidate(
+    tmp_path: Path,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    catalog, _ = db_catalog
+    run_id = "0123456789abcdef0123456789abcdef"
+    monkeypatch.setattr(
+        "src.merch.tee_image_approval.uuid.uuid4",
+        lambda: SimpleNamespace(hex=run_id),
+    )
+    output_root = tmp_path / "output"
+    run_dir = output_root / "TJD-TEE-001" / run_id
+    run_dir.mkdir(parents=True)
+    existing_image = run_dir / "01234567-01.png"
+    existing_image.write_bytes(b"preexisting-output")
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=FakeCascade())
+
+    run = flow.generate_batch("TJD-TEE-001", count=1, decide=lambda candidate: True)
+
+    assert run.approved == ()
+    assert len(run.failures) == 1
+    assert existing_image.read_bytes() == b"preexisting-output"
+    assert not [
+        sidecar
+        for sidecar in run_dir.glob("*.json")
+        if sidecar.name != "provider-failures.json"
+    ]
+    assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
+        "not_started"
+    )
+
+
 def test_catalog_revision_change_requires_concept_reapproval(
     tmp_path: Path, db_catalog: tuple[TeePromptCatalog, sqlite3.Connection]
 ) -> None:
@@ -772,7 +1022,7 @@ def test_default_workspace_cascade_loads_from_configured_src_without_generation(
     assert callable(cascade.generate)
 
 
-def test_default_workspace_source_resolves_feature_worktree_before_canonical_root(
+def test_default_workspace_source_prefers_canonical_root_over_stale_feature_worktree(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from src.merch import tee_image_approval
@@ -793,9 +1043,60 @@ def test_default_workspace_source_resolves_feature_worktree_before_canonical_roo
 
     monkeypatch.delenv("WORKSPACE_SRC", raising=False)
     monkeypatch.setattr(tee_image_approval, "_WORKSPACE_ROOT", workspace_root)
-    monkeypatch.setattr(tee_image_approval, "_FEATURE_WORKSPACE_SRC", feature_src)
 
-    assert tee_image_approval._resolve_workspace_src() == feature_src
+    assert tee_image_approval._resolve_workspace_src() == canonical_src
+
+
+def test_explicit_workspace_source_override_is_retained(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.merch import tee_image_approval
+
+    workspace_root = tmp_path / "workspace"
+    override_src = tmp_path / "configured-workspace" / "src"
+    monkeypatch.setenv("WORKSPACE_SRC", str(override_src))
+    monkeypatch.setattr(tee_image_approval, "_WORKSPACE_ROOT", workspace_root)
+
+    assert tee_image_approval._resolve_workspace_src() == override_src
+
+
+def test_approved_asset_keeps_provenance_from_selected_workspace_source(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    from src.merch import tee_image_approval
+
+    workspace_root = tmp_path / "workspace"
+    canonical_src = workspace_root / "src"
+    integration_dir = canonical_src / "integrations"
+    integration_dir.mkdir(parents=True)
+    (integration_dir / "image_cascade.py").write_text(
+        "from pathlib import Path\n"
+        "from types import SimpleNamespace\n"
+        "\n"
+        "class Cascade:\n"
+        "    def generate(self, prompt, *, output_dir=None):\n"
+        "        path = Path(output_dir) / 'candidate.png'\n"
+        "        path.write_bytes(b'\\x89PNG\\r\\n\\x1a\\nworkspace-image')\n"
+        "        return SimpleNamespace(path=path, provider='workspace-provider', "
+        "model='workspace-selected-model', diagnostics=())\n"
+        "\n"
+        "def default_image_cascade():\n"
+        "    return Cascade()\n",
+        encoding="utf-8",
+    )
+
+    catalog, _ = db_catalog
+    flow = TeeImageApprovalFlow(
+        catalog, tmp_path / "output", cascade=tee_image_approval._workspace_cascade(canonical_src)
+    )
+
+    run = flow.generate_batch("TJD-TEE-001", count=1, decide=lambda candidate: True)
+
+    sidecar = json.loads(run.approved[0].path.with_suffix(".json").read_text(encoding="utf-8"))
+    assert sidecar["provider"] == "workspace-provider"
+    assert sidecar["model"] == "workspace-selected-model"
 
 
 def test_generation_uses_the_database_catalog(tmp_path: Path) -> None:
@@ -835,3 +1136,219 @@ def test_exact_image_approval_persists_revision_through_catalog_boundary(
         )
     finally:
         connection.close()
+
+
+def test_batch_rejects_candidate_swapped_and_restored_during_decision(
+    tmp_path: Path, db_catalog: tuple[TeePromptCatalog, sqlite3.Connection]
+) -> None:
+    catalog, _ = db_catalog
+    flow = TeeImageApprovalFlow(catalog, tmp_path / "output", cascade=FakeCascade())
+    original_bytes = b"\x89PNG\r\n\x1a\nimage-1"
+    replacement_bytes = b"\x89PNG\r\n\x1a\nreplacement"
+    presented_bytes: list[bytes] = []
+
+    def swap_and_restore(candidate: TeeImageCandidate) -> bool:
+        presented_bytes.append(candidate.path.read_bytes())
+        original_path = candidate.path.with_suffix(".original")
+        candidate.path.replace(original_path)
+        candidate.path.write_bytes(replacement_bytes)
+        candidate.path.unlink()
+        original_path.replace(candidate.path)
+        return True
+
+    run = flow.generate_batch("TJD-TEE-001", count=1, decide=swap_and_restore)
+
+    assert presented_bytes == [original_bytes]
+    assert run.approved == ()
+    assert len(run.failures) == 1
+    assert not list((tmp_path / "output").rglob("*.png"))
+
+
+def test_chat_rejects_staged_image_changed_after_display(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    from src.merch import tee_image_approval
+
+    catalog, _ = db_catalog
+    monkeypatch.setattr(tee_image_approval, "_PENDING_ROOT", tmp_path / "pending")
+    output_root = tmp_path / "output"
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=FakeCascade())
+    stage = flow.start_chat_batch("TJD-TEE-001", count=1)
+    pending_path = Path(stage["image_path"])
+    pending_path.write_bytes(b"\x89PNG\r\n\x1a\nchanged-after-display")
+
+    with pytest.raises(ValueError, match="candidate changed"):
+        flow.decide_chat_candidate(
+            stage["session_id"], stage["candidate_id"], decision="y"
+        )
+
+    assert not output_root.exists()
+    assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
+        "not_started"
+    )
+
+
+def test_chat_rejects_candidate_swapped_and_restored_before_decision(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    from src.merch import tee_image_approval
+
+    catalog, _ = db_catalog
+    monkeypatch.setattr(tee_image_approval, "_PENDING_ROOT", tmp_path / "pending")
+    output_root = tmp_path / "output"
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=FakeCascade())
+    stage = flow.start_chat_batch("TJD-TEE-001", count=1)
+    pending_path = Path(stage["image_path"])
+    original_path = pending_path.with_suffix(".original")
+    original_bytes = pending_path.read_bytes()
+    pending_path.replace(original_path)
+    pending_path.write_bytes(b"\x89PNG\r\n\x1a\ntransient-replacement")
+    pending_path.unlink()
+    original_path.replace(pending_path)
+    from src.merch import tee_image_approval
+
+    presentation_record = json.loads(
+        (
+            pending_path.parent.parent
+            / f".{stage['session_id']}.presentation.json"
+        ).read_text(encoding="utf-8")
+    )
+    current_directory_stat = pending_path.parent.stat()
+    os.utime(
+        pending_path.parent,
+        ns=(
+            current_directory_stat.st_atime_ns,
+            presentation_record["directory_fingerprint"][3] + 100_000_000,
+        ),
+    )
+    assert presentation_record["directory_fingerprint"] != list(
+        tee_image_approval._stat_fingerprint(pending_path.parent.stat())
+    )
+
+    with pytest.raises(ValueError, match="candidate changed"):
+        flow.decide_chat_candidate(
+            stage["session_id"], stage["candidate_id"], decision="y"
+        )
+
+    assert pending_path.read_bytes() == original_bytes
+    assert not output_root.exists()
+
+
+@pytest.mark.parametrize("entry_path", ("batch", "chat"))
+@pytest.mark.parametrize("symlink_location", ("root", "parent"))
+def test_generation_rejects_symlinked_output_root_ancestors(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+    entry_path: str,
+    symlink_location: str,
+) -> None:
+    from src.merch import tee_image_approval
+
+    catalog, _ = db_catalog
+    outside_root = tmp_path / "outside"
+    outside_root.mkdir()
+    if symlink_location == "root":
+        output_root = tmp_path / "output"
+        link = output_root
+    else:
+        linked_parent = tmp_path / "linked-parent"
+        link = linked_parent
+        output_root = linked_parent / "output"
+    if os.name == "nt":
+        reparse_path = output_root if symlink_location == "root" else output_root.parent
+        monkeypatch.setattr(
+            tee_image_approval,
+            "_is_reparse_point",
+            lambda path: Path(path) == reparse_path,
+            raising=False,
+        )
+    else:
+        link.symlink_to(outside_root, target_is_directory=True)
+
+    monkeypatch.setattr(tee_image_approval, "_PENDING_ROOT", tmp_path / "pending")
+    cascade = FakeCascade()
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=cascade)
+
+    with pytest.raises(ValueError, match="symlink|output path"):
+        if entry_path == "batch":
+            flow.generate_batch("TJD-TEE-001", count=1, decide=lambda candidate: True)
+        else:
+            flow.start_chat_batch("TJD-TEE-001", count=1)
+
+    assert cascade.calls == []
+    assert list(outside_root.iterdir()) == []
+
+
+@pytest.mark.parametrize("entry_path", ("batch", "chat"))
+@pytest.mark.parametrize("collision_type", ("image", "sidecar"))
+def test_generation_preserves_existing_approved_output_collisions(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+    entry_path: str,
+    collision_type: str,
+) -> None:
+    from src.merch import tee_image_approval
+
+    catalog, _ = db_catalog
+    run_id = "0123456789abcdef0123456789abcdef"
+    monkeypatch.setattr(
+        tee_image_approval.uuid, "uuid4", lambda: SimpleNamespace(hex=run_id)
+    )
+    monkeypatch.setattr(tee_image_approval, "_PENDING_ROOT", tmp_path / "pending")
+    output_root = tmp_path / "output"
+    run_dir = output_root / "TJD-TEE-001" / run_id
+    run_dir.mkdir(parents=True)
+    suffix = ".png" if collision_type == "image" else ".json"
+    collision_path = run_dir / f"01234567-01{suffix}"
+    collision_bytes = b"approved bytes that must survive"
+    collision_path.write_bytes(collision_bytes)
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=FakeCascade())
+
+    if entry_path == "batch":
+        result = flow.generate_batch(
+            "TJD-TEE-001", count=1, decide=lambda candidate: True
+        )
+        assert result.approved == ()
+        assert result.failures
+    else:
+        stage = flow.start_chat_batch("TJD-TEE-001", count=1)
+        with pytest.raises(FileExistsError):
+            flow.decide_chat_candidate(
+                stage["session_id"], stage["candidate_id"], decision="y"
+            )
+
+    assert collision_path.read_bytes() == collision_bytes
+
+
+def test_batch_revalidates_output_root_after_decision_callback(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    db_catalog: tuple[TeePromptCatalog, sqlite3.Connection],
+) -> None:
+    from src.merch import tee_image_approval
+
+    catalog, _ = db_catalog
+    output_root = tmp_path / "output"
+    became_reparse_point = False
+    monkeypatch.setattr(
+        tee_image_approval,
+        "_is_reparse_point",
+        lambda path: became_reparse_point and Path(path) == output_root,
+    )
+    flow = TeeImageApprovalFlow(catalog, output_root, cascade=FakeCascade())
+
+    def replace_output_root(candidate: TeeImageCandidate) -> bool:
+        nonlocal became_reparse_point
+        became_reparse_point = True
+        return True
+
+    with pytest.raises(ValueError, match="output path"):
+        flow.generate_batch("TJD-TEE-001", count=1, decide=replace_output_root)
+
+    assert not output_root.exists()

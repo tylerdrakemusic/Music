@@ -325,7 +325,8 @@ class TeePromptCatalog:
                 "updated_at = datetime('now') WHERE id = ?",
                 (stable_id,),
             )
-        return self.read_prompt(stable_id)
+            current["exact_image_approval_status"] = "exact_image_approved"
+        return current
 
     def reconcile_exact_image_approval(
         self,
