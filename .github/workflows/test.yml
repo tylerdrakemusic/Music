@@ -1,5 +1,8 @@
 name: test
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -13,16 +16,132 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Enforce repository file-size policy
         shell: bash
         run: bash .github/scripts/check_tracked_file_sizes.sh "$GITHUB_WORKSPACE"
 
-      - name: Check out Workspace repository
-        uses: actions/checkout@v4
-        with:
-          repository: tylerdrakemusic/-Workspace
-          path: workspace
+      - name: Resolve Workspace peer revision
+        id: workspace_revision
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          repository=tylerdrakemusic/-Workspace
+          remote="https://github.com/${repository}.git"
+          default_ref=main
+          selected_ref="$default_ref"
+          fallback=none
+
+          lookup_ref() {
+            local requested_ref="$1"
+            local wanted_ref="refs/heads/${requested_ref}"
+            local attempt output revision status
+            for attempt in 1 2 3; do
+              if output=$(git ls-remote --exit-code --heads "$remote" "$wanted_ref" 2>&1); then
+                revision=$(printf '%s\n' "$output" | awk -v wanted="$wanted_ref" '$2 == wanted {print $1}')
+                if [ -n "$revision" ]; then
+                  printf '%s\n' "$revision"
+                  return 0
+                fi
+                return 2
+              else
+                status=$?
+                if [ "$status" -eq 2 ]; then
+                  return 2
+                fi
+                printf 'Workspace ref lookup attempt %s failed for %s: %s\n' "$attempt" "$wanted_ref" "$output" >&2
+                if [ "$attempt" -lt 3 ]; then
+                  sleep 1
+                fi
+              fi
+            done
+            return 1
+          }
+
+          if [ "$EVENT_NAME" = pull_request ]; then
+            if [ -z "$PR_HEAD_REF" ]; then
+              echo 'GITHUB_HEAD_REF is empty for a pull request.' >&2
+              exit 1
+            fi
+            if revision_sha=$(lookup_ref "$PR_HEAD_REF"); then
+              selected_ref="$PR_HEAD_REF"
+            else
+              lookup_status=$?
+              if [ "$lookup_status" -ne 2 ]; then
+                echo "Workspace PR ref lookup exhausted retries for $PR_HEAD_REF." >&2
+                exit 1
+              fi
+              fallback="main (PR ref $PR_HEAD_REF not found)"
+              selected_ref="$default_ref"
+              if ! revision_sha=$(lookup_ref "$selected_ref"); then
+                echo 'Workspace main ref lookup exhausted retries after confirmed PR-ref absence.' >&2
+                exit 1
+              fi
+            fi
+          else
+            if ! revision_sha=$(lookup_ref "$selected_ref"); then
+              echo 'Workspace default ref lookup exhausted retries.' >&2
+              exit 1
+            fi
+          fi
+
+          echo "repository=$repository" >> "$GITHUB_OUTPUT"
+          echo "selected_ref=$selected_ref" >> "$GITHUB_OUTPUT"
+          echo "fallback=$fallback" >> "$GITHUB_OUTPUT"
+          echo "revision_sha=$revision_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Check out Workspace peer revision
+        shell: bash
+        env:
+          REVISION_SHA: ${{ steps.workspace_revision.outputs.revision_sha }}
+          WORKSPACE_REPOSITORY: ${{ steps.workspace_revision.outputs.repository }}
+          SELECTED_REF: ${{ steps.workspace_revision.outputs.selected_ref }}
+          FALLBACK: ${{ steps.workspace_revision.outputs.fallback }}
+        run: |
+          set -euo pipefail
+          workspace_path="${GITHUB_WORKSPACE}/workspace"
+          remote="https://github.com/${WORKSPACE_REPOSITORY}.git"
+          mkdir -p "$workspace_path"
+          git -C "$workspace_path" init
+          git -C "$workspace_path" remote add origin "$remote"
+
+          checked_out=false
+          for attempt in 1 2 3; do
+            if git -C "$workspace_path" fetch --no-tags --depth=1 origin "$REVISION_SHA"; then
+              if git -C "$workspace_path" checkout --detach "$REVISION_SHA"; then
+                checked_out_sha=$(git -C "$workspace_path" rev-parse HEAD) || checked_out_sha=
+                if [ "$checked_out_sha" = "$REVISION_SHA" ]; then
+                  checked_out=true
+                  break
+                fi
+                echo "Workspace checkout SHA mismatch on attempt ${attempt}: expected ${REVISION_SHA}, got ${checked_out_sha:-unavailable}." >&2
+              else
+                echo "Workspace checkout attempt ${attempt} failed for ${REVISION_SHA}." >&2
+              fi
+            else
+              echo "Workspace fetch attempt ${attempt} failed for ${REVISION_SHA}." >&2
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              sleep 1
+            fi
+          done
+          if [ "$checked_out" != true ]; then
+            echo 'Workspace peer checkout exhausted retries.' >&2
+            exit 1
+          fi
+
+          {
+            echo "## Workspace peer checkout"
+            echo "- Peer repository: ${WORKSPACE_REPOSITORY}"
+            echo "- Selected ref: ${SELECTED_REF}"
+            echo "- Fallback: ${FALLBACK}"
+            echo "- Checked-out SHA: ${checked_out_sha}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -72,7 +191,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+        with:
+          persist-credentials: false
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1
+        with:
+          version: 0.4.111
       - name: Deploy to Fly.io (guitartrainer)
         run: flyctl deploy --remote-only --app guitartrainer
         env:

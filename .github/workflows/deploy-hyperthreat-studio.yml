@@ -1,5 +1,8 @@
 name: Deploy Hyperthreat Studios templates
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -29,6 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -43,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Validate approved app name
         shell: bash
         run: |
@@ -50,7 +57,9 @@ jobs:
             ht|hthreat|hyperthreat) ;;
             *) echo "App name must be ht, hthreat, or hyperthreat"; exit 1 ;;
           esac
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1
+        with:
+          version: 0.4.111
       - name: Deploy only after explicit approval
         run: flyctl deploy --app "$APP_NAME" --config fly.hyperthreat-studio.toml --remote-only
         env:
