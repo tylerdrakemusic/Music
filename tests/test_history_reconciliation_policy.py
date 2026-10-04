@@ -104,8 +104,8 @@ def test_gitignore_allows_the_approved_root_helix_file_only():
     )
 
 
-def test_size_policy_warns_at_50_mib(tmp_path):
-    repo = ROOT / "tmp" / f"size-policy-{tmp_path.name}-{uuid4().hex}"
+def test_size_policy_warns_at_50_mib():
+    repo = ROOT / "tmp" / f"sp-{uuid4().hex[:12]}"
     repo.mkdir(parents=True)
     try:
         (repo / "warning.bin").write_bytes(b"0" * (50 * 1024 * 1024))
@@ -121,8 +121,8 @@ def test_size_policy_warns_at_50_mib(tmp_path):
     assert "warning.bin" in result.stdout
 
 
-def test_size_policy_blocks_at_100_mib(tmp_path):
-    repo = ROOT / "tmp" / f"size-policy-{tmp_path.name}-{uuid4().hex}"
+def test_size_policy_blocks_at_100_mib():
+    repo = ROOT / "tmp" / f"sp-{uuid4().hex[:12]}"
     repo.mkdir(parents=True)
     try:
         (repo / "blocking.bin").write_bytes(b"0" * (100 * 1024 * 1024))
