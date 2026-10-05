@@ -182,9 +182,25 @@ def test_batch_uses_distinct_art_directions_for_each_candidate(
     assert len(set(directions)) == 4
     assert all(f"Concept: {expected_concept}" in prompt for prompt in prompts)
     assert all("Catalog ID: TJD-TEE-001" in prompt for prompt in prompts)
-    assert all("t-shirt design" in preface for preface in prefaces)
+    assert all("t-shirt design" not in prompt.lower() for prompt in prompts)
+    assert all("selected concept itself" in prompt.lower() for prompt in prompts)
+    assert all("standalone 2d design artwork" in prompt.lower() for prompt in prompts)
+    assert all("do not depict clothing or apparel" in prompt.lower() for prompt in prompts)
+    assert all("wearers" in prompt.lower() for prompt in prompts)
+    assert all("product mockups" in prompt.lower() for prompt in prompts)
+    assert all("clothing or apparel as the background" in prompt.lower() for prompt in prompts)
     style_markers = {"screen-print", "abstract", "line-work", "woodcut"}
     assert {style for preface in prefaces for style in style_markers if style in preface} == style_markers
+    composition_markers = (
+        ("center the main subject", "balanced, emblematic composition", "sparse background"),
+        ("wide environmental composition", "main subject off-center", "setting more space"),
+        ("intimate close crop", "concept's key subjects", "secondary setting details"),
+        ("dynamic diagonal composition", "main subject crossing the frame", "background shapes"),
+    )
+    assert all(
+        all(marker in prompt.lower() for marker in markers)
+        for prompt, markers in zip(prompts, composition_markers, strict=True)
+    )
 
 
 def test_chat_batch_stages_one_candidate_without_approving_it(
