@@ -289,7 +289,7 @@ def _compose_prompt(entry: dict[str, object], image_prompt_revision: int) -> str
             f"Garment use: {entry['intended_garment_use']}",
             f"Palette: {palette_text}",
             f"Print notes: {entry['print_notes']}",
-            "Create the selected concept itself as standalone 2D design artwork. Do not depict clothing or apparel, wearers, garments, or garment/product mockups. Do not use clothing or apparel as the background.",
+            "Create the selected concept itself as standalone 2D design artwork. Do not depict clothing or apparel, wearers, garments, or garment/product mockups. Do not use clothing or apparel as the background. Require opaque artwork; do not use transparent rendering.",
         )
     )
 

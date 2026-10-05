@@ -189,6 +189,10 @@ def test_batch_uses_distinct_art_directions_for_each_candidate(
     assert all("wearers" in prompt.lower() for prompt in prompts)
     assert all("product mockups" in prompt.lower() for prompt in prompts)
     assert all("clothing or apparel as the background" in prompt.lower() for prompt in prompts)
+    assert all(
+        "opaque artwork" in prompt.lower() and "do not use transparent rendering" in prompt.lower()
+        for prompt in prompts
+    )
     style_markers = {"screen-print", "abstract", "line-work", "woodcut"}
     assert {style for preface in prefaces for style in style_markers if style in preface} == style_markers
     composition_markers = (
