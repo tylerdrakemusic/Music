@@ -37,13 +37,13 @@ _WORKSPACE_ROOT = Path(os.environ.get("WORKSPACE_ROOT", r"F:\⊕Workspace"))
 _PROMPT_REVISION = "tee-artwork-prompt-v2"
 _MAX_BATCH_SIZE = 4
 _CANDIDATE_ART_DIRECTIONS = (
-    "T-shirt design in vintage screen-print style: center the main subject in a "
+    "Vintage screen-print artwork: center the main subject in a "
     "balanced, emblematic composition with a sparse background.",
-    "Abstract t-shirt design: use a wide environmental composition, placing the "
+    "Abstract artwork: use a wide environmental composition, placing the "
     "main subject off-center and giving the setting more space.",
-    "Line-work t-shirt design: use an intimate close crop on the concept's key "
+    "Line-work artwork: use an intimate close crop on the concept's key "
     "subjects, reducing secondary setting details.",
-    "Woodcut-inspired t-shirt design: use a dynamic diagonal composition with "
+    "Woodcut-inspired artwork: use a dynamic diagonal composition with "
     "the main subject crossing the frame and bold, simplified background shapes.",
 )
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
@@ -289,7 +289,7 @@ def _compose_prompt(entry: dict[str, object], image_prompt_revision: int) -> str
             f"Garment use: {entry['intended_garment_use']}",
             f"Palette: {palette_text}",
             f"Print notes: {entry['print_notes']}",
-            "Create one standalone, opaque tee artwork image. Do not show a garment, person, product mockup, or transparent rendering.",
+            "Create the selected concept itself as standalone 2D design artwork. Do not depict clothing or apparel, wearers, garments, or garment/product mockups. Do not use clothing or apparel as the background. Require opaque artwork; do not use transparent rendering.",
         )
     )
 
