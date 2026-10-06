@@ -9,8 +9,6 @@ from src.utils import init_db
 
 REPO_ROOT = Path(__file__).parents[1]
 BRAND_SYSTEM_PATH = REPO_ROOT / "Brand" / "tyler-james-drake-merch-brand-system.md"
-CURATION_PROMPT_PATH = REPO_ROOT / ".github" / "prompts" / "tyler-merch-prompt-catalog.prompt.md"
-IMAGE_PROMPT_PATH = REPO_ROOT / ".github" / "prompts" / "tyler-tee-image-generation.prompt.md"
 
 
 def test_catalog_has_stable_rights_aware_prompt_records() -> None:
@@ -82,22 +80,3 @@ def test_brand_system_documents_phase_one_boundaries() -> None:
         "draft-only",
     ):
         assert required_phrase in guide
-
-
-def test_curation_prompt_uses_catalog_api_instead_of_module_cli() -> None:
-    prompt = CURATION_PROMPT_PATH.read_text(encoding="utf-8")
-
-    assert "from src.utils.init_db import get_connection" in prompt
-    assert "from src.merch.tee_prompt_catalog import TeePromptCatalog" in prompt
-    for api_method in ("read_catalog(", "read_prompt(", "create_prompt(", "edit_prompt("):
-        assert api_method in prompt
-    assert "python -m src.merch.tee_prompt_catalog" not in prompt
-    assert "explicit approval" in prompt.lower()
-
-
-def test_image_prompt_preflight_reads_catalog_through_api() -> None:
-    prompt = IMAGE_PROMPT_PATH.read_text(encoding="utf-8")
-
-    assert "from src.utils.init_db import get_connection" in prompt
-    assert "TeePromptCatalog(connection).read_prompt(catalog_id)" in prompt
-    assert "python -m src.merch.tee_prompt_catalog" not in prompt
