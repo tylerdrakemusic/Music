@@ -34,7 +34,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _OUTPUT_ROOT = _PROJECT_ROOT / "output" / "images" / "tee-merch"
 _PENDING_ROOT = Path(tempfile.gettempdir()) / "tee-image-approval-sessions"
 _WORKSPACE_ROOT = Path(os.environ.get("WORKSPACE_ROOT", r"F:\⊕Workspace"))
-_PROMPT_REVISION = "tee-artwork-prompt-v2"
+_PROMPT_REVISION = "tee-artwork-prompt-v3"
 _MAX_BATCH_SIZE = 4
 _CANDIDATE_ART_DIRECTIONS = (
     "Vintage screen-print artwork: center the main subject in a "
@@ -286,7 +286,6 @@ def _compose_prompt(entry: dict[str, object], image_prompt_revision: int) -> str
             f"Prompt revision: {_PROMPT_REVISION}",
             f"Title: {entry['title']}",
             f"Concept: {entry['concept']}",
-            f"Garment use: {entry['intended_garment_use']}",
             f"Palette: {palette_text}",
             f"Print notes: {entry['print_notes']}",
             "Create the selected concept itself as standalone 2D design artwork. Do not depict clothing or apparel, wearers, garments, or garment/product mockups. Do not use clothing or apparel as the background. Require opaque artwork; do not use transparent rendering.",
