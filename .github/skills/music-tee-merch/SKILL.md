@@ -1,9 +1,9 @@
 ---
-name: ❤music-tee-merch
+name: music-tee-merch
 description: 'Tee merch catalog and artwork directives for ❤Music. Use when Tyler asks to create or edit a tee concept, generate artwork candidates from an approved concept, or decide on a generated candidate.'
 ---
 
-# ❤music-tee-merch
+# music-tee-merch
 
 Use these directives for Tyler James Drake tee merchandise. Keep concept curation and image generation distinct: catalog requests do not authorize image generation, and image requests do not authorize concept edits or image approval.
 
