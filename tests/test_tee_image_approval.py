@@ -147,7 +147,7 @@ def test_batch_persists_only_explicitly_approved_images_and_sidecars(
     assert manifest["image_prompt_revision"] == 1
     assert manifest["catalog_version"] == "1.0.0"
     assert manifest["concept_revision"] == 1
-    assert manifest["prompt_revision"] == "tee-artwork-prompt-v2"
+    assert manifest["prompt_revision"] == "tee-artwork-prompt-v3"
     assert manifest["approval"] == "approved"
     assert manifest["content_sha256"] == hashlib.sha256(
         b"\x89PNG\r\n\x1a\nimage-1"
@@ -314,7 +314,7 @@ def test_chat_approval_persists_only_after_explicit_decision(
     assert not pending_path.exists()
     assert sidecar["approval"] == "approved"
     assert sidecar["exact_prompt"] == cascade.calls[0][0]
-    assert sidecar["prompt_revision"] == "tee-artwork-prompt-v2"
+    assert sidecar["prompt_revision"] == "tee-artwork-prompt-v3"
     assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
         "exact_image_approved"
     )
@@ -1134,6 +1134,26 @@ def test_generation_uses_the_database_catalog(tmp_path: Path) -> None:
         connection.close()
 
 
+
+def test_generation_prompt_omits_catalog_garment_use(tmp_path: Path) -> None:
+    connection, catalog = _in_memory_catalog()
+    prompt_entry = catalog.read_prompt("TJD-TEE-001")
+    garment_use = str(prompt_entry["intended_garment_use"])
+    cascade = FakeCascade()
+    flow = TeeImageApprovalFlow(catalog, tmp_path / "output", cascade=cascade)
+
+    try:
+        flow.generate_batch("TJD-TEE-001", count=1, decide=lambda candidate: False)
+
+        generated_prompt = cascade.calls[0][0]
+        assert f"Garment use: {garment_use}" not in generated_prompt
+        assert "Garment use:" not in generated_prompt
+        assert "Prompt revision: tee-artwork-prompt-v3" in generated_prompt
+        assert catalog.read_prompt("TJD-TEE-001")["intended_garment_use"] == garment_use
+    finally:
+        connection.close()
+
+
 def test_exact_image_approval_persists_revision_through_catalog_boundary(
     tmp_path: Path,
 ) -> None:
@@ -1150,7 +1170,7 @@ def test_exact_image_approval_persists_revision_through_catalog_boundary(
         assert sidecar["image_prompt_revision"] == 1
         assert sidecar["catalog_version"] == "1.0.0"
         assert sidecar["concept_revision"] == 1
-        assert sidecar["prompt_revision"] == "tee-artwork-prompt-v2"
+        assert sidecar["prompt_revision"] == "tee-artwork-prompt-v3"
         assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
             "exact_image_approved"
         )
