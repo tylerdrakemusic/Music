@@ -17,6 +17,7 @@ graph LR
     Python --> Pronouncing[pronouncing<br/>CMU phoneme lookup]
     Python --> Demucs[demucs<br/>stem separation]
     Python --> Requests[requests<br/>GetSongBPM HTTP client]
+    ColorTransparency[/tools/color_transparency.py<br>color-to-alpha CLI/] --> Pillow[Pillow<br>local PNG I/O]
     Web[HTML · CSS · JS] --> Tone[Tone.js<br/>Strudel]
     Python -->|Dockerfile| Docker[Docker<br/>python:3.11-slim image] -->|"flyctl deploy (CI, main-only)"| FlyIO[(Fly.io<br/>guitartrainer.fly.dev)]
     HyperthreatLauncher["hyperthreat_app.py<br/>minimal Flask launcher<br/>/ · /mic-config · /patch-bay<br/>/patch_bay.html · /health"]
@@ -29,7 +30,7 @@ graph LR
     HyperthreatDocker --> HyperthreatGate
     HyperthreatGate -->|"manual deploy after exact approval"| HyperthreatFly
     class Python,Web lang
-    class SQLCipher,Flask,Librosa,Mutagen,Pytest,TestRunner,TestPolicy,Xdist,Tone,PythonDocx,Pypdf,Pronouncing,Demucs,Requests lib
+    class SQLCipher,Flask,Librosa,Mutagen,Pytest,TestRunner,TestPolicy,Xdist,Tone,PythonDocx,Pypdf,Pronouncing,Demucs,Requests,ColorTransparency,Pillow lib
     class ParallelEvidence state
     class FlyIO,HyperthreatFly ext
     class HyperthreatLauncher,HyperthreatTemplates,HyperthreatDocker svc
