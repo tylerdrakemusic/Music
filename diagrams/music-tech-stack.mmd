@@ -6,12 +6,14 @@ graph LR
     Python --> Flask[Flask<br/>:5050 · :5055]
     Python --> Librosa["librosa<br/>BPM detection<br/>⚑ not in requirements.txt"]
     Python --> Mutagen[mutagen<br/>audio tags]
-    Python --> Pytest["pytest<br/>⚑ not in requirements.txt"]
+    Python --> Pytest["pytest<br/>CI-installed test runner"]
+    Python --> PytestBDD["pytest-bdd<br/>&gt;=7.3, &lt;8.0<br/>requirements.txt"]
+    PytestBDD --> Pytest
     Python --> TestRunner[/tools/run_tests.py<br/>paired parallel + serial lanes · local fallback/]
     TestRunner --> Pytest
     TestRunner -.-> TestPolicy[tools/parallel_test_policy.json<br/>parallel_ci=true · max_workers=2<br/>exclude playwright + ci_unavailable + serial_only]
     Pytest -.-> Xdist[pytest-xdist<br/>bounded two workers]
-    TestRunner -.-> ParallelEvidence[Paired CI lanes<br/>parallel lane + serial lane · bounded to two workers]
+    TestRunner -.-> ParallelEvidence[Paired CI lanes<br/>pytest including BDD scenarios<br/>parallel + serial · max two workers]
     Python --> PythonDocx[python-docx<br/>lyrics .docx import]
     Python --> Pypdf[pypdf<br/>lyrics .pdf import]
     Python --> Pronouncing[pronouncing<br/>CMU phoneme lookup]
@@ -30,7 +32,7 @@ graph LR
     HyperthreatDocker --> HyperthreatGate
     HyperthreatGate -->|"manual deploy after exact approval"| HyperthreatFly
     class Python,Web lang
-    class SQLCipher,Flask,Librosa,Mutagen,Pytest,TestRunner,TestPolicy,Xdist,Tone,PythonDocx,Pypdf,Pronouncing,Demucs,Requests,ColorTransparency,Pillow lib
+    class SQLCipher,Flask,Librosa,Mutagen,Pytest,PytestBDD,TestRunner,TestPolicy,Xdist,Tone,PythonDocx,Pypdf,Pronouncing,Demucs,Requests,ColorTransparency,Pillow lib
     class ParallelEvidence state
     class FlyIO,HyperthreatFly ext
     class HyperthreatLauncher,HyperthreatTemplates,HyperthreatDocker svc

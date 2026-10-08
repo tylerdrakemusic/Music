@@ -67,7 +67,18 @@ def build_command(*, parallel: bool, junitxml: Path | None, repo_root: Path | No
     repo_root = repo_root or Path(__file__).resolve().parents[1]
     if parallel and not _parallel_ci_enabled(repo_root):
         raise RuntimeError("parallel CI is disabled by tools/parallel_test_policy.json")
-    command = [sys.executable, "-m", "pytest", "-p", "pytest_mock", "--quiet", "--tb=short", "-rs"]
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-p",
+        "pytest_mock",
+        "-p",
+        "pytest_bdd.plugin",
+        "--quiet",
+        "--tb=short",
+        "-rs",
+    ]
     command.extend(["-m", _combined_marker_expression(repo_root) if parallel else _serial_marker_expression(repo_root)])
     if parallel:
         workers = int(_policy(repo_root).get("max_workers", 2))
@@ -146,7 +157,17 @@ def build_run_report(
 
 
 def _collection_nodeids(repo_root: Path, marker_expression: str | None) -> tuple[int, list[str], str]:
-    command = [sys.executable, "-m", "pytest", "-p", "pytest_mock", "--collect-only", "-q"]
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-p",
+        "pytest_mock",
+        "-p",
+        "pytest_bdd.plugin",
+        "--collect-only",
+        "-q",
+    ]
     if marker_expression:
         command.extend(["-m", marker_expression])
     result = subprocess.run(
