@@ -34,6 +34,7 @@ graph TB
     subgraph TeeMerch["Tee merchandise"]
         TeeCatalog[src/merch/tee_prompt_catalog.py]
         TeeApproval[src/merch/tee_image_approval.py]
+        ColorTransparency[/tools/color_transparency.py<br>color-to-alpha CLI/]
         TeeImages[output/images/tee-merch/]
     end
     TeeInitializer["src/utils/init_db.py\nimport_tee_catalog_bootstrap(conn)"]
@@ -61,11 +62,15 @@ graph TB
     TeeInitializer -->|schema + one-time bootstrap| DB
     TeeCatalog -->|catalog reads and writes| DB
     TeeApproval --> TeeCatalog
+    TeeApproval -->|"after explicit approval, synchronous CLI call"| ColorTransparency
+    TeeImages -->|"approved opaque PNG input"| ColorTransparency
+    ColorTransparency ==>|"RGBA PNG + transparency JSON sidecar, alongside unchanged source"| TeeImages
     TeeApproval -.->|image generation| WorkspaceImageCascade
     TeeApproval --> TeeImages
     class ArtistLinksMod,ReleaseOps,BandMgmt,RhymeGrouper,Studio,GuitarTech music
     class Dashboard svc
     class TeeInitializer,TeeCatalog,TeeApproval music
+    class ColorTransparency music
     class WorkspaceImageCascade ws
     class HelixFilesOut out
     class TeeImages out
