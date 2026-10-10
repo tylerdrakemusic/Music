@@ -3,6 +3,7 @@ import configparser
 import importlib.util
 import json
 import shlex
+import subprocess
 
 
 def load_runner():
@@ -219,7 +220,24 @@ def test_build_commands_explicitly_load_required_plugins_when_autoload_is_disabl
 
     assert parallel_command[parallel_command.index("-p") + 1] == "pytest_mock"
     assert "xdist.plugin" in parallel_command
+    assert "pytest_bdd.plugin" in parallel_command
     assert serial_command[serial_command.index("-p") + 1] == "pytest_mock"
+    assert "pytest_bdd.plugin" in serial_command
+
+
+def test_collection_command_loads_bdd_plugin_when_autoload_is_disabled(monkeypatch, tmp_path):
+    runner = load_runner()
+    captured = {}
+
+    def run(command, **kwargs):
+        captured["command"] = command
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(runner.subprocess, "run", run)
+
+    runner._collection_nodeids(tmp_path, None)
+
+    assert "pytest_bdd.plugin" in captured["command"]
 
 
 def test_runner_environment_disables_ambient_plugin_configuration(monkeypatch):
