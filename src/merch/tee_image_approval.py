@@ -35,8 +35,35 @@ from src.utils import init_db
 from tools.color_transparency import delta_e_ciede2000, rgb_to_lab
 
 
+def _resolve_main_project_root(project_root: Path) -> Path:
+    try:
+        git_common_dir = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(project_root),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-common-dir",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return project_root
+
+    common_git_path = Path(git_common_dir)
+    if common_git_path.name != ".git":
+        return project_root
+    return common_git_path.parent.resolve()
+
+
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-_OUTPUT_ROOT = _PROJECT_ROOT / "output" / "images" / "tee-merch"
+_OUTPUT_ROOT = (
+    _resolve_main_project_root(_PROJECT_ROOT) / "output" / "images" / "tee-merch"
+)
 _PENDING_ROOT = Path(tempfile.gettempdir()) / "tee-image-approval-sessions"
 _WORKSPACE_ROOT = Path(os.environ.get("WORKSPACE_ROOT", r"F:\⊕Workspace"))
 _PROMPT_REVISION = "tee-artwork-prompt-v3"
