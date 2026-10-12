@@ -1441,3 +1441,30 @@ def test_batch_revalidates_output_root_after_decision_callback(
         flow.generate_batch("TJD-TEE-001", count=1, decide=replace_output_root)
 
     assert not output_root.exists()
+
+
+def test_default_output_root_uses_shared_repository_root_from_worktree() -> None:
+    import subprocess
+
+    from src.merch import tee_image_approval
+
+    project_root = Path(__file__).resolve().parents[1]
+    git_common_dir = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(project_root),
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-common-dir",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
+    main_project_root = Path(git_common_dir).parent.resolve()
+
+    assert tee_image_approval._OUTPUT_ROOT == (
+        main_project_root / "output" / "images" / "tee-merch"
+    )
