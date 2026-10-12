@@ -10,6 +10,7 @@ Workspace source is not at its standard ``F:\\⊕Workspace\\src`` location.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import importlib.util
 import json
@@ -18,6 +19,7 @@ import re
 import shutil
 import sqlite3
 import stat
+import subprocess
 import sys
 import tempfile
 import uuid
@@ -26,8 +28,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Protocol
 
+from PIL import Image
+
 from src.merch.tee_prompt_catalog import TeePromptCatalog
 from src.utils import init_db
+from tools.color_transparency import delta_e_ciede2000, rgb_to_lab
 
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -295,7 +300,250 @@ def _compose_prompt(entry: dict[str, object], image_prompt_revision: int) -> str
 
 def _compose_candidate_prompt(exact_prompt: str, candidate_number: int) -> str:
     direction = _CANDIDATE_ART_DIRECTIONS[candidate_number - 1]
-    return f"{direction}\n{exact_prompt}"
+    polarity = (
+        "Use a dark blank and a lighter key edge."
+        if candidate_number % 2 == 1
+        else "Use a light blank and a darker key edge."
+    )
+    edge_constraints = (
+        "Reserve the key shade for the border, and make it touch at least one "
+        "point on the image perimeter. The frame may be irregular or partial "
+        "and does not need to span every side."
+    )
+    return f"{direction}\n{polarity} {edge_constraints}\n{exact_prompt}"
+
+
+def _hex_color(color: tuple[int, int, int]) -> str:
+    return "#{:02X}{:02X}{:02X}".format(*color)
+
+
+def _sample_perimeter_key(source_path: Path) -> dict[str, object]:
+    with Image.open(source_path) as image:
+        if image.format != "PNG":
+            raise ValueError("transparent derivatives require an approved PNG")
+        rgb_image = image.convert("RGB")
+        width, height = rgb_image.size
+        if width < 2 or height < 2:
+            raise ValueError("PNG is too small to sample its perimeter")
+        perimeter = (
+            [(x, 0) for x in range(width)]
+            + [(width - 1, y) for y in range(1, height)]
+            + [(x, height - 1) for x in range(width - 2, -1, -1)]
+            + [(0, y) for y in range(height - 2, 0, -1)]
+        )
+        if len(perimeter) < 64:
+            raise ValueError("PNG perimeter has fewer than 64 distinct pixels")
+        sample_positions = [
+            round(index * len(perimeter) / 64) % len(perimeter)
+            for index in range(64)
+        ]
+        sample_colors = [
+            tuple(int(channel) for channel in rgb_image.getpixel(perimeter[position]))
+            for position in sample_positions
+        ]
+
+    sample_labs = [rgb_to_lab(color) for color in sample_colors]
+    clusters: list[list[int]] = []
+    representatives: list[int] = []
+    sample_cluster_ids: list[int] = []
+    for sample_index, sample_lab in enumerate(sample_labs):
+        cluster_id = next(
+            (
+                candidate_id
+                for candidate_id, representative_index in enumerate(representatives)
+                if delta_e_ciede2000(
+                    sample_lab, sample_labs[representative_index]
+                ) <= 10
+            ),
+            None,
+        )
+        if cluster_id is None:
+            cluster_id = len(clusters)
+            clusters.append([])
+            representatives.append(sample_index)
+        clusters[cluster_id].append(sample_index)
+        sample_cluster_ids.append(cluster_id)
+
+    cluster_order = sorted(range(len(clusters)), key=lambda item: len(clusters[item]), reverse=True)
+    dominant_id = cluster_order[0]
+    dominant_count = len(clusters[dominant_id])
+    runner_up_count = len(clusters[cluster_order[1]]) if len(cluster_order) > 1 else 0
+    dominant_samples = [cluster_id == dominant_id for cluster_id in sample_cluster_ids]
+    if all(dominant_samples):
+        longest_run = 64
+    else:
+        current_run = 0
+        longest_run = 0
+        for is_dominant in dominant_samples * 2:
+            current_run = min(current_run + 1, 64) if is_dominant else 0
+            longest_run = max(longest_run, current_run)
+
+    selected_rgb = Counter(
+        sample_colors[index] for index in clusters[dominant_id]
+    ).most_common(1)[0][0]
+    evidence: dict[str, object] = {
+        "sample_count": 64,
+        "sampled_colors": [_hex_color(color) for color in sample_colors],
+        "clusters": [
+            {
+                "representative_color": _hex_color(sample_colors[representatives[index]]),
+                "sample_count": len(clusters[index]),
+            }
+            for index in cluster_order
+        ],
+        "dominant_count": dominant_count,
+        "runner_up_count": runner_up_count,
+        "confidence_ratio": (
+            round(dominant_count / runner_up_count, 3) if runner_up_count else None
+        ),
+        "longest_consecutive_dominant_run": longest_run,
+        "delta_e00_cluster_threshold": 10,
+        "minimum_consecutive_samples": 8,
+        "minimum_dominant_multiple": 3,
+    }
+    if longest_run < 8 or dominant_count < 3 * runner_up_count:
+        return {
+            "selected_color": None,
+            "evidence": evidence,
+            "error": "perimeter key color did not meet the confidence rule",
+        }
+    return {
+        "selected_color": _hex_color(selected_rgb),
+        "evidence": evidence,
+        "error": None,
+    }
+
+
+def _transparency_output_paths(source_path: Path) -> tuple[Path, Path]:
+    for suffix_number in range(1, 1000):
+        suffix = "" if suffix_number == 1 else f"_{suffix_number}"
+        derivative_path = source_path.with_name(
+            f"{source_path.stem}_transparent{suffix}.png"
+        )
+        sidecar_path = source_path.with_name(
+            f"{source_path.stem}_transparency{suffix}.json"
+        )
+        if not any(
+            path.exists() or _is_reparse_point(path)
+            for path in (derivative_path, sidecar_path)
+        ):
+            return derivative_path, sidecar_path
+    raise FileExistsError("no non-colliding transparent derivative name is available")
+
+
+def _candidate_polarity(candidate_id: str) -> str:
+    try:
+        candidate_number = int(candidate_id.rsplit("-", 1)[1])
+    except (IndexError, ValueError) as exc:
+        raise ValueError("candidate ID does not contain an authorized number") from exc
+    if not 1 <= candidate_number <= _MAX_BATCH_SIZE:
+        raise ValueError("candidate ID is outside the authorized batch size")
+    return (
+        "lighter-key-on-dark-blank"
+        if candidate_number % 2 == 1
+        else "darker-key-on-light-blank"
+    )
+
+
+def _create_transparent_derivative(
+    source_path: Path, candidate_id: str
+) -> dict[str, object]:
+    derivative_path: Path | None = None
+    sidecar_path: Path | None = None
+    cli_started = False
+    sidecar_written = False
+    sidecar: dict[str, object] = {
+        "candidate_id": candidate_id,
+        "status": "failed",
+        "selected_color": None,
+        "polarity": None,
+        "sampling": {},
+        "settings": {
+            "global_match": True,
+            "tolerance": 10,
+            "smooth_radius": 1,
+        },
+        "source_sha256": None,
+        "output_sha256": None,
+    }
+    try:
+        if _is_reparse_point(source_path):
+            raise ValueError("approved image cannot be a reparse point")
+        source_bytes = source_path.read_bytes()
+        source_sha256 = hashlib.sha256(source_bytes).hexdigest()
+        derivative_path, sidecar_path = _transparency_output_paths(source_path)
+        sidecar.update(
+            {
+                "source_path": str(source_path),
+                "output_path": str(derivative_path),
+                "sidecar_path": str(sidecar_path),
+                "source_sha256": source_sha256,
+                "polarity": _candidate_polarity(candidate_id),
+            }
+        )
+        if source_path.suffix.lower() != ".png":
+            raise ValueError("transparent derivatives require an approved PNG")
+
+        selection = _sample_perimeter_key(source_path)
+        sidecar["sampling"] = selection["evidence"]
+        selected_color = selection["selected_color"]
+        if not isinstance(selected_color, str):
+            raise ValueError(str(selection["error"]))
+        sidecar["selected_color"] = selected_color
+
+        cli_started = True
+        subprocess.run(
+            [
+                sys.executable,
+                str(_PROJECT_ROOT / "tools" / "color_transparency.py"),
+                str(source_path),
+                "--color",
+                selected_color,
+                "--global-match",
+                "--tolerance",
+                "10",
+                "--smooth-radius",
+                "1",
+                "--output",
+                str(derivative_path),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=_PROJECT_ROOT,
+        )
+        with Image.open(derivative_path) as derivative:
+            if derivative.format != "PNG" or derivative.mode != "RGBA":
+                raise OSError("transparency CLI did not produce an RGBA PNG")
+        if hashlib.sha256(source_path.read_bytes()).hexdigest() != source_sha256:
+            raise OSError("approved opaque source changed during conversion")
+        sidecar["output_sha256"] = hashlib.sha256(
+            derivative_path.read_bytes()
+        ).hexdigest()
+        sidecar["status"] = "success"
+        _write_json_exclusive(sidecar_path, sidecar)
+        sidecar_written = True
+        return sidecar
+    except Exception as exc:
+        if cli_started and derivative_path is not None:
+            derivative_path.unlink(missing_ok=True)
+        error = str(exc)
+        if isinstance(exc, subprocess.CalledProcessError):
+            detail = exc.stderr or exc.stdout
+            if detail:
+                error = f"{error}: {str(detail).strip()}"
+        sidecar["status"] = "failed"
+        sidecar["error"] = error
+        sidecar["output_sha256"] = None
+        if sidecar_path is not None:
+            try:
+                if not sidecar_written:
+                    sidecar_path.unlink(missing_ok=True)
+                _write_json_exclusive(sidecar_path, sidecar)
+            except Exception as sidecar_error:
+                sidecar["sidecar_error"] = str(sidecar_error)
+        return sidecar
 
 
 def _legacy_prompt_matches(legacy_prompt: object, current_prompt: str) -> bool:
@@ -472,6 +720,7 @@ class TeeImageApprovalFlow:
             "approved_count": 0,
             "rejected_count": 0,
             "failures": [],
+            "transparency_failures": [],
             "pending_candidate": None,
         }
         self._write_chat_session(session_dir, state)
@@ -603,14 +852,24 @@ class TeeImageApprovalFlow:
                 self._output_path(catalog_id, run_id, "provider-failures.json"),
                 failures,
             )
+        transparency_failures = state.get("transparency_failures", [])
+        assert isinstance(transparency_failures, list)
+        if transparency_failures:
+            run_dir = self._output_path(catalog_id, run_id)
+            run_dir.mkdir(parents=True, exist_ok=True)
+            _write_json_exclusive(
+                self._output_path(catalog_id, run_id, "transparency-failures.json"),
+                transparency_failures,
+            )
         summary = {
             "status": "completed",
             "run_id": run_id,
             "generated": int(state["generated_count"]),
             "approved": int(state["approved_count"]),
             "rejected": int(state["rejected_count"]),
-            "failed": len(failures),
+            "failed": len(failures) + len(transparency_failures),
             "failures": failures,
+            "transparency_failures": transparency_failures,
         }
         self._presentation_record_path(session_dir).unlink(missing_ok=True)
         shutil.rmtree(session_dir)
@@ -700,6 +959,7 @@ class TeeImageApprovalFlow:
         candidate_bytes = self._read_verified_pending_candidate(
             pending_path, session_dir, pending
         )
+        transparency_result: dict[str, object] | None = None
 
         if decision == "y":
             entry = self.catalog.read_prompt(str(state["catalog_id"]))
@@ -773,6 +1033,19 @@ class TeeImageApprovalFlow:
                     sidecar_path.unlink(missing_ok=True)
                 raise
             state["approved_count"] = int(state["approved_count"]) + 1
+            transparency_result = _create_transparent_derivative(
+                approved_path, candidate_id
+            )
+            if transparency_result["status"] == "failed":
+                transparency_failures = state["transparency_failures"]
+                assert isinstance(transparency_failures, list)
+                transparency_failures.append(
+                    {
+                        "candidate_id": candidate_id,
+                        "error": transparency_result.get("error"),
+                        "sidecar_path": transparency_result.get("sidecar_path"),
+                    }
+                )
         else:
             state["rejected_count"] = int(state["rejected_count"]) + 1
 
@@ -780,7 +1053,10 @@ class TeeImageApprovalFlow:
         self._presentation_record_path(session_dir).unlink(missing_ok=True)
         state["pending_candidate"] = None
         self._write_chat_session(session_dir, state)
-        return self._stage_next_chat_candidate(session_dir, state)
+        response = self._stage_next_chat_candidate(session_dir, state)
+        if transparency_result is not None:
+            response["transparency"] = transparency_result
+        return response
 
     def cancel_chat_batch(self, session_id: str) -> dict[str, object]:
         session_dir, state = self._load_chat_session(session_id)
@@ -825,6 +1101,7 @@ class TeeImageApprovalFlow:
         approved: list[TeeImageCandidate] = []
         rejected_count = 0
         failures: list[dict[str, object]] = []
+        transparency_failures: list[dict[str, object]] = []
         decision_callback = decide if decide is not None else _interactive_decision
 
         for candidate_number in range(1, count + 1):
@@ -1036,6 +1313,17 @@ class TeeImageApprovalFlow:
                         exact_prompt=exact_prompt,
                     )
                 )
+                transparency_result = _create_transparent_derivative(
+                    approved_path, candidate_id
+                )
+                if transparency_result["status"] == "failed":
+                    transparency_failures.append(
+                        {
+                            "candidate_id": candidate_id,
+                            "error": transparency_result.get("error"),
+                            "sidecar_path": transparency_result.get("sidecar_path"),
+                        }
+                    )
 
         if failures:
             run_dir = self._output_path(catalog_id, run_id)
@@ -1045,12 +1333,21 @@ class TeeImageApprovalFlow:
                 self._output_path(catalog_id, run_id, "provider-failures.json"),
                 failures,
             )
+        if transparency_failures:
+            run_dir = self._output_path(catalog_id, run_id)
+            run_dir.mkdir(parents=True, exist_ok=True)
+            _write_json_exclusive(
+                self._output_path(
+                    catalog_id, run_id, "transparency-failures.json"
+                ),
+                transparency_failures,
+            )
 
         return TeeImageBatchResult(
             run_id=run_id,
             approved=tuple(approved),
             rejected_count=rejected_count,
-            failures=tuple(failures),
+            failures=tuple([*failures, *transparency_failures]),
         )
 
 
@@ -1114,10 +1411,17 @@ def main(argv: list[str] | None = None) -> int:
             args.catalog_id,
             count=args.count if args.count is not None else 2,
         )
+        failure_count = len(result.failures)
+        failure_label = "failure" if failure_count == 1 else "failures"
         print(
             f"Run {result.run_id}: {len(result.approved)} approved, "
-            f"{result.rejected_count} rejected, {len(result.failures)} provider failures"
+            f"{result.rejected_count} rejected, {failure_count} candidate {failure_label}"
         )
+        for failure in result.failures:
+            print(
+                f"{failure.get('candidate_id', 'unknown candidate')}: "
+                f"{failure.get('error', 'unspecified failure')}"
+            )
         return 0
     finally:
         connection.close()

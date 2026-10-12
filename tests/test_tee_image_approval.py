@@ -138,8 +138,9 @@ def test_batch_persists_only_explicitly_approved_images_and_sidecars(
     image_files = list(run_dir.glob("*.png"))
     sidecars = list(run_dir.glob("*.json"))
     assert len(image_files) == 1
-    assert len(sidecars) == 1
-    manifest = json.loads(sidecars[0].read_text(encoding="utf-8"))
+    assert len(sidecars) == 3
+    candidate_id = run.approved[0].candidate_id
+    manifest = json.loads((run_dir / f"{candidate_id}.json").read_text(encoding="utf-8"))
     assert manifest["candidate_id"] == run.approved[0].candidate_id
     assert manifest["provider"] == "fake-provider"
     assert manifest["model"] == "fake-model"
@@ -155,6 +156,14 @@ def test_batch_persists_only_explicitly_approved_images_and_sidecars(
     assert "exact_prompt" in manifest
     assert manifest["exact_prompt"] == cascade.calls[0][0]
     assert not list(run_dir.glob("*rejected*"))
+    transformation = json.loads(
+        (run_dir / f"{candidate_id}_transparency.json").read_text(encoding="utf-8")
+    )
+    assert transformation["status"] == "failed"
+    assert transformation["source_sha256"] == manifest["content_sha256"]
+    assert transformation["output_sha256"] is None
+    assert run.failures[0]["candidate_id"] == candidate_id
+    assert (run_dir / "transparency-failures.json").is_file()
 
     assert catalog.read_prompt("TJD-TEE-001")["exact_image_approval_status"] == (
         "exact_image_approved"
@@ -725,6 +734,46 @@ def test_chat_decide_cli_approves_exact_image_and_prints_next_candidate(
     )
     flow.cancel_chat_batch(first["session_id"])
     connection.close()
+
+
+
+def test_batch_cli_reports_transparency_failures_with_details(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from src.merch import tee_image_approval
+
+    connection, _ = _in_memory_catalog()
+    failure = {
+        "candidate_id": "abc12345-01",
+        "error": "perimeter key color did not meet the confidence rule",
+    }
+
+    class FailedBatchFlow:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            pass
+
+        def generate_batch(
+            self, catalog_id: str, *, count: int = 2
+        ) -> SimpleNamespace:
+            return SimpleNamespace(
+                run_id="abc12345",
+                approved=(),
+                rejected_count=0,
+                failures=(failure,),
+            )
+
+    monkeypatch.setattr(tee_image_approval, "_live_connection", lambda: connection)
+    monkeypatch.setattr(tee_image_approval, "TeeImageApprovalFlow", FailedBatchFlow)
+
+    assert tee_image_approval.main(["--catalog-id", "TJD-TEE-001"]) == 0
+
+    output = capsys.readouterr().out
+    assert "1 candidate failure" in output
+    assert (
+        "abc12345-01: perimeter key color did not meet the confidence rule"
+        in output
+    )
 
 
 def test_batch_count_is_limited_to_one_through_four(

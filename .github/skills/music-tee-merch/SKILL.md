@@ -36,6 +36,8 @@ Use these directives for Tyler James Drake tee merchandise. Keep concept curatio
   Substitute Tyler's values. Use the current Music feature worktree when one is checked out. The module delegates candidates to the Workspace-owned cascade. If it is unavailable, report the configured `WORKSPACE_SRC` requirement; do not call providers directly or fall back to direct provider clients.
 - The command stages the first successful candidate in an OS-temp session and returns its ID and image path. Display that image in chat before asking Tyler for an exact-image decision. Do not use terminal-interactive generation for agent-managed approvals.
 - A generation request authorizes candidate generation only. Approve an image only after Tyler's explicit decision for that displayed candidate. Never infer approval from silence, generation, or approval of another candidate.
+- After each explicit `y` decision for a PNG, the workflow samples 64 evenly spaced perimeter points and selects a key only when a Delta E00 10 color cluster has at least eight consecutive samples and three times the runner-up support. It then runs the existing transparency CLI with global matching, tolerance 10, and one-pixel feathering. The approved opaque original and its approval remain intact; ambiguous sampling or CLI failure is reported, partial derivatives are removed, and no new approval is inferred.
+- A successful conversion saves a non-colliding RGBA PNG derivative and transformation sidecar beside the approved original. The sidecar records key color, polarity, sample/confidence evidence, CLI settings, source/output hashes, and status. Review the derivative and sidecar separately from the approval record.
 - Resolve only the matching candidate with the chat-decision command:
 
   ```powershell
@@ -44,7 +46,7 @@ Use these directives for Tyler James Drake tee merchandise. Keep concept curatio
 
   Substitute the session ID, candidate ID, and Tyler's explicit `y` or `n`. Approval is valid only while the concept is approved, concept revisions match the staged revision, the image-prompt revision matches, and the generator prompt revision is unchanged. A catalog-version change alone does not invalidate the candidate. If a required revision changed, return to curation and start a new batch.
 - A rejected candidate is discarded before another candidate is generated. Provider failures are not approval decisions. If Tyler cancels the remaining batch, discard its pending image and session with `--chat-cancel --session-id <session-id>`.
-- Keep approved files and sidecars under ignored `output/images/tee-merch/<catalog-id>/<run-id>/`. Report generated, approved, rejected, and failed candidate counts. Do not create mockups, transparent artwork, product listings, or commerce output, and do not claim production or commerce readiness.
+- Keep approved files and sidecars under ignored `output/images/tee-merch/<catalog-id>/<run-id>/`. Report generated, approved, rejected, and failed candidate counts. Do not create mockups, product listings, or commerce output, and do not claim production or commerce readiness.
 
 ## Shared boundaries
 
