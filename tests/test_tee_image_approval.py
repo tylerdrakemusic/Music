@@ -1082,6 +1082,9 @@ def test_default_workspace_cascade_loads_from_configured_src_without_generation(
         "        raise AssertionError('generation must not run in this test')\n"
         "\n"
         "def default_image_cascade():\n"
+        "    return Cascade()\n"
+        "\n"
+        "def tee_image_cascade():\n"
         "    return Cascade()\n",
         encoding="utf-8",
     )
@@ -1152,6 +1155,9 @@ def test_approved_asset_keeps_provenance_from_selected_workspace_source(
         "model='workspace-selected-model', diagnostics=())\n"
         "\n"
         "def default_image_cascade():\n"
+        "    return Cascade()\n"
+        "\n"
+        "def tee_image_cascade():\n"
         "    return Cascade()\n",
         encoding="utf-8",
     )

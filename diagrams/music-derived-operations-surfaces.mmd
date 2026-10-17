@@ -36,11 +36,13 @@ graph TB
         TeeApproval[src/merch/tee_image_approval.py]
         ColorTransparency[/tools/color_transparency.py<br>color-to-alpha CLI/]
         TeeImages[output/images/tee-merch/]
+        PendingCandidate[Temporary pending candidate<br/>system temp approval session<br/>actual provider · model · provider_route<br/>provider_metadata + field status]
+        ApprovedSidecar[Approved image sidecar JSON<br/>alongside approved image<br/>provider · model · provider_route<br/>provider_metadata: job_id · immutable_revision · seed · settings · request_id if returned<br/>provider_metadata_status: reported or unverified for job_id · revision · seed · settings]
     end
     TeeInitializer["src/utils/init_db.py\nimport_tee_catalog_bootstrap(conn)"]
     HelixRef[(catalog/helix_reference/ HX Edit model snapshot)]
     HelixFilesOut["HelixFiles/*.hlx + TODO.md"]
-    WorkspaceImageCascade["⊕Workspace src/integrations/image_cascade.py"]
+    WorkspaceImageCascade["⊕Workspace src/integrations/image_cascade.py<br/>tee_image_cascade() only"]
     Dashboard --> ArtistLinksRoutes
     ArtistLinksRoutes --> ArtistLinksPanel
     ArtistLinksPanel --> ArtistLinksDB
@@ -65,12 +67,16 @@ graph TB
     TeeApproval -->|"after explicit approval, synchronous CLI call"| ColorTransparency
     TeeImages -->|"approved opaque PNG input"| ColorTransparency
     ColorTransparency ==>|"RGBA PNG + transparency JSON sidecar, alongside unchanged source"| TeeImages
-    TeeApproval -.->|image generation| WorkspaceImageCascade
+    TeeApproval -.->|"tee_image_cascade() only"| WorkspaceImageCascade
+    WorkspaceImageCascade ==> |image + actual provider/model/route + available metadata| PendingCandidate
+    PendingCandidate -->|explicit exact-image decision| TeeApproval
+    TeeApproval ==> |on approval, copy pending provider/model/route + metadata/status| ApprovedSidecar
     TeeApproval --> TeeImages
     class ArtistLinksMod,ReleaseOps,BandMgmt,RhymeGrouper,Studio,GuitarTech music
     class Dashboard svc
     class TeeInitializer,TeeCatalog,TeeApproval music
     class ColorTransparency music
+    class PendingCandidate,ApprovedSidecar music
     class WorkspaceImageCascade ws
     class HelixFilesOut out
     class TeeImages out

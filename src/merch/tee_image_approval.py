@@ -146,6 +146,7 @@ class TeeImageCandidate:
     provider: str
     model: str
     exact_prompt: str
+    provider_route: str | None = None
 
 
 @dataclass(frozen=True)
@@ -195,7 +196,7 @@ def _workspace_cascade(workspace_src: Path | None = None) -> ImageCascade:
         except Exception:
             del sys.modules[module_name]
             raise
-    return module.default_image_cascade()
+    return module.tee_image_cascade()
 
 
 def _diagnostic_dict(diagnostic: object) -> dict[str, object]:
@@ -204,6 +205,29 @@ def _diagnostic_dict(diagnostic: object) -> dict[str, object]:
     if hasattr(diagnostic, "__dict__"):
         return {str(key): value for key, value in vars(diagnostic).items()}
     return {"error": str(diagnostic)}
+
+
+def _provider_metadata_record(
+    result: object,
+) -> tuple[dict[str, object], dict[str, str]]:
+    exposed = getattr(result, "provider_metadata", {})
+    if not isinstance(exposed, dict):
+        exposed = {}
+    allowed_fields = {
+        "job_id",
+        "immutable_revision",
+        "seed",
+        "settings",
+        "request_id",
+    }
+    metadata = {
+        str(key): value for key, value in exposed.items() if key in allowed_fields
+    }
+    status = {
+        field: "reported" if metadata.get(field) is not None else "unverified"
+        for field in ("job_id", "immutable_revision", "seed", "settings")
+    }
+    return metadata, status
 
 
 def _write_json(path: Path, data: dict[str, object]) -> None:
@@ -833,12 +857,21 @@ class TeeImageApprovalFlow:
                     self._write_chat_session(session_dir, state)
                     continue
                 state["generated_count"] = int(state["generated_count"]) + 1
+                provider_metadata, provider_metadata_status = _provider_metadata_record(
+                    result
+                )
+                provider_route = getattr(result, "route", None)
+                if provider_route is not None:
+                    provider_route = str(provider_route)
                 state["pending_candidate"] = {
                     "candidate_id": candidate_id,
                     "candidate_number": candidate_number,
                     "image_name": image_name,
                     "provider": str(result.provider),
                     "model": str(result.model),
+                    "provider_route": provider_route,
+                    "provider_metadata": provider_metadata,
+                    "provider_metadata_status": provider_metadata_status,
                     "exact_prompt": candidate_prompt,
                     "content_sha256": hashlib.sha256(staged_bytes).hexdigest(),
                     "file_fingerprint": list(_stat_fingerprint(staged_path.stat())),
@@ -869,6 +902,9 @@ class TeeImageApprovalFlow:
                     "art_direction": candidate_prompt.splitlines()[0],
                     "provider": str(result.provider),
                     "model": str(result.model),
+                    "provider_route": provider_route,
+                    "provider_metadata": provider_metadata,
+                    "provider_metadata_status": provider_metadata_status,
                 }
 
         if failures:
@@ -1028,6 +1064,9 @@ class TeeImageApprovalFlow:
                 "concept_revision": current_revision,
                 "provider": pending["provider"],
                 "model": pending["model"],
+                "provider_route": pending["provider_route"],
+                "provider_metadata": pending["provider_metadata"],
+                "provider_metadata_status": pending["provider_metadata_status"],
                 "exact_prompt": pending["exact_prompt"],
                 "image_prompt_revision": int(state["image_prompt_revision"]),
                 "catalog_version": state["catalog_version"],
@@ -1209,6 +1248,12 @@ class TeeImageApprovalFlow:
                     provider=str(result.provider),
                     model=str(result.model),
                     exact_prompt=candidate_prompt,
+                    provider_route=(
+                        str(result.route) if getattr(result, "route", None) is not None else None
+                    ),
+                )
+                provider_metadata, provider_metadata_status = _provider_metadata_record(
+                    result
                 )
                 if not decision_callback(candidate):
                     rejected_count += 1
@@ -1275,6 +1320,9 @@ class TeeImageApprovalFlow:
                     "concept_revision": concept_revision,
                     "provider": candidate.provider,
                     "model": candidate.model,
+                    "provider_route": candidate.provider_route,
+                    "provider_metadata": provider_metadata,
+                    "provider_metadata_status": provider_metadata_status,
                     "exact_prompt": candidate_prompt,
                     "image_prompt_revision": image_prompt_revision,
                     "catalog_version": catalog_version,
@@ -1338,6 +1386,7 @@ class TeeImageApprovalFlow:
                         provider=candidate.provider,
                         model=candidate.model,
                         exact_prompt=exact_prompt,
+                        provider_route=candidate.provider_route,
                     )
                 )
                 transparency_result = _create_transparent_derivative(

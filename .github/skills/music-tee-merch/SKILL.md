@@ -25,6 +25,8 @@ Use these directives for Tyler James Drake tee merchandise. Keep concept curatio
 
 ## Image-generation directives
 
+- Current provider-specific commercial-use research: [tee image provider authorization assessment](../../../legal/tee-image-provider-authorization-2026-10-17.md).
+
 - Generate candidates only when Tyler explicitly requests tee artwork from a catalog concept. Require a `TJD-TEE-NNN` catalog ID. Candidate count must be 1 through 4; if omitted, state that the default is 2 and get Tyler's authorization before running generation. The authorized count permits that many independent cascade calls and may incur provider costs. A new batch requires a new request.
 - Read the requested concept through `TeePromptCatalog` before generation. Require `concept_approval_status: concept_approved` and matching `concept_revision` and `concept_approval_revision`. If either check fails, stop and explain that the concept must return to curation and receive explicit approval. Do not edit the catalog to make preflight pass.
 - Start the chat-mediated batch from the Music repository root with the requested ID and authorized count:
