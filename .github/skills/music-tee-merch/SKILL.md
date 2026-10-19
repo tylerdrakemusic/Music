@@ -25,6 +25,8 @@ Use these directives for Tyler James Drake tee merchandise. Keep concept curatio
 
 ## Image-generation directives
 
+- Current provider-specific commercial-use research: [tee image provider authorization assessment](../../../legal/tee-image-provider-authorization-2026-10-17.md).
+
 - Generate candidates only when Tyler explicitly requests tee artwork from a catalog concept. Require a `TJD-TEE-NNN` catalog ID. Candidate count must be 1 through 4; if omitted, state that the default is 2 and get Tyler's authorization before running generation. The authorized count permits that many independent cascade calls and may incur provider costs. A new batch requires a new request.
 - Read the requested concept through `TeePromptCatalog` before generation. Require `concept_approval_status: concept_approved` and matching `concept_revision` and `concept_approval_revision`. If either check fails, stop and explain that the concept must return to curation and receive explicit approval. Do not edit the catalog to make preflight pass.
 - Start the chat-mediated batch from the Music repository root with the requested ID and authorized count:
@@ -33,7 +35,7 @@ Use these directives for Tyler James Drake tee merchandise. Keep concept curatio
   C:\G\python.exe -m src.merch.tee_image_approval --chat-start --catalog-id TJD-TEE-001 --count 2
   ```
 
-  Substitute Tyler's values. Use the current Music feature worktree when one is checked out. The module delegates candidates to the Workspace-owned cascade. If it is unavailable, report the configured `WORKSPACE_SRC` requirement; do not call providers directly or fall back to direct provider clients.
+  Replace `TJD-TEE-001` with the catalog ID Tyler requested and `2` with the candidate count Tyler authorized. If Tyler omitted the count, ask before running, as described above. After this implementation is merged, run both `--chat-start` and `--chat-decide` from the canonical Music main checkout at `F:\❤Music`; do not run provider operations from a feature worktree. Pending candidates are staged in the OS temporary directory. After approval, images and sidecars are written under main's ignored `F:\❤Music\output\images\tee-merch\<catalog-id>\<run-id>\` directory. The module loads the canonical Workspace cascade at `F:\⊕Workspace\src` and verifies its pinned hashes. If that source is unavailable or mismatched, report the provenance failure; do not set `WORKSPACE_SRC`, call providers directly, or fall back to direct provider clients.
 - The command stages the first successful candidate in an OS-temp session and returns its ID and image path. Display that image in chat before asking Tyler for an exact-image decision. Do not use terminal-interactive generation for agent-managed approvals.
 - A generation request authorizes candidate generation only. Approve an image only after Tyler's explicit decision for that displayed candidate. Never infer approval from silence, generation, or approval of another candidate.
 - After each explicit `y` decision for a PNG, the workflow samples 64 evenly spaced perimeter points and selects a key only when a Delta E00 10 color cluster has at least eight consecutive samples and three times the runner-up support. It then runs the existing transparency CLI with global matching, tolerance 10, and one-pixel feathering. The approved opaque original and its approval remain intact; ambiguous sampling or CLI failure is reported, partial derivatives are removed, and no new approval is inferred.

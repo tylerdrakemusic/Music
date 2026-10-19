@@ -3,16 +3,16 @@ Run from the Music repository root with
 ``python -m src.merch.tee_image_approval --chat-start --catalog-id TJD-TEE-001``.
 Use ``--count`` to authorize one through four independent candidate calls; the
 default is two. Resolve each displayed image with ``--chat-decide`` and cancel
-an unfinished session with ``--chat-cancel``. Set ``WORKSPACE_SRC`` when the
-Workspace source is not at its standard ``F:\\⊕Workspace\\src`` location.
+an unfinished session with ``--chat-cancel``.
 """
-
 from __future__ import annotations
+
 
 import argparse
 from collections import Counter
 import hashlib
-import importlib.util
+import hmac
+from io import BytesIO
 import json
 import os
 import re
@@ -26,10 +26,12 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from types import ModuleType
 from typing import Callable, Protocol
 
 from PIL import Image
 
+from src.merch.tee_image_lock import tee_image_approval_lock as _tee_approval_lock
 from src.merch.tee_prompt_catalog import TeePromptCatalog
 from src.utils import init_db
 from tools.color_transparency import delta_e_ciede2000, rgb_to_lab
@@ -65,7 +67,31 @@ _OUTPUT_ROOT = (
     _resolve_main_project_root(_PROJECT_ROOT) / "output" / "images" / "tee-merch"
 )
 _PENDING_ROOT = Path(tempfile.gettempdir()) / "tee-image-approval-sessions"
-_WORKSPACE_ROOT = Path(os.environ.get("WORKSPACE_ROOT", r"F:\⊕Workspace"))
+_WORKSPACE_ROOT = Path(r"F:\⊕Workspace")
+_APPROVED_WORKSPACE_CASCADE_SHA256_BY_PATH = {
+    "image_cascade.py": "6c8a9be85c8598198f933f410eb94e5d5fd38bf0dcbff6251c038b13af183687",
+    "dalle3/__init__.py": "d99c26bc8bc668b95f2cbfb125a65524ea7f0bf07980f7b5fb9426b99396b071",
+    "dalle3/client.py": "3f574df139799cc6b5b1f0a12b11472719f18dea9d4f024e20913d63089f2602",
+    "huggingface/__init__.py": "2d6601370f7fa1eeb36304be7955a5ef9da74fc0a1a4358be898eb191ef80a3c",
+    "huggingface/client.py": "e3ed8f772666eb53092739b4ff2ff575303f0764bf14cf1055e138dedf9ca82c",
+    "pollinations/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pollinations/client.py": "c571a193d04b6811c4b0fbeda8e43ecad82878b64d3ab9ed26e62d908ff23b8a",
+}
+_WORKSPACE_CASCADE_RELATIVE_PATHS = frozenset(
+    {
+        "image_cascade.py",
+        "dalle3/__init__.py",
+        "dalle3/client.py",
+        "huggingface/__init__.py",
+        "huggingface/client.py",
+        "pollinations/__init__.py",
+        "pollinations/client.py",
+    }
+)
+_TEE_INTEGRITY_KEY_DOMAIN = b"heartmusic.tee-image-approval.integrity-key.v1"
+_ALLOWED_TEE_PROVIDER_TUPLES = frozenset(
+    {("fal-ai", "black-forest-labs/FLUX.1-Krea-dev", "fal-ai/flux/krea")}
+)
 _PROMPT_REVISION = "tee-artwork-prompt-v3"
 _MAX_BATCH_SIZE = 4
 _CANDIDATE_ART_DIRECTIONS = (
@@ -123,9 +149,8 @@ def _pin_directory_mtime_for_mutation_detection(path: Path) -> None:
         ),
     )
 def _write_json_exclusive(path: Path, data: object) -> None:
-    with path.open("x", encoding="utf-8") as output_file:
-        json.dump(data, output_file, ensure_ascii=False, indent=2)
-        output_file.write("\n")
+    payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
+    _write_file_exclusive_without_reparse_components(path, payload)
 
 
 def _live_connection() -> sqlite3.Connection:
@@ -146,6 +171,7 @@ class TeeImageCandidate:
     provider: str
     model: str
     exact_prompt: str
+    provider_route: str | None = None
 
 
 @dataclass(frozen=True)
@@ -162,40 +188,624 @@ Decision = Callable[[TeeImageCandidate], bool]
 
 
 def _resolve_workspace_src() -> Path:
-    configured_src = os.environ.get("WORKSPACE_SRC")
-    if configured_src:
-        return Path(configured_src)
     return _WORKSPACE_ROOT / "src"
 
 
-def _workspace_cascade(workspace_src: Path | None = None) -> ImageCascade:
-    workspace_src = workspace_src or _resolve_workspace_src()
-    integration_dir = workspace_src / "integrations"
-    cascade_path = integration_dir / "image_cascade.py"
-    if not cascade_path.is_file():
-        raise RuntimeError(
-            "Workspace image cascade is unavailable; set WORKSPACE_SRC to the Workspace src directory"
+def _workspace_path_has_reparse_point(path: Path) -> bool:
+    current = Path(os.path.abspath(path))
+    while True:
+        if _is_reparse_point(current):
+            return True
+        parent = current.parent
+        if parent == current:
+            return False
+        current = parent
+
+
+def _workspace_cascade_source_path_is_safe(
+    workspace_src: Path,
+    integration_dir: Path,
+    source_path: Path,
+) -> bool:
+    try:
+        resolved_src = workspace_src.resolve(strict=True)
+        resolved_integration = integration_dir.resolve(strict=True)
+        resolved_source = source_path.resolve(strict=True)
+        return (
+            not _workspace_path_has_reparse_point(workspace_src)
+            and not _workspace_path_has_reparse_point(source_path)
+            and resolved_integration.is_relative_to(resolved_src)
+            and resolved_source.is_relative_to(resolved_integration)
+            and resolved_source == source_path.absolute()
+            and resolved_integration.is_dir()
+            and stat.S_ISREG(source_path.lstat().st_mode)
         )
-    module_name = "_music_workspace_image_cascade_" + hashlib.sha256(
-        str(cascade_path.resolve()).encode("utf-8")
-    ).hexdigest()[:12]
-    module = sys.modules.get(module_name)
-    if module is None:
-        spec = importlib.util.spec_from_file_location(
-            module_name,
-            cascade_path,
-            submodule_search_locations=[str(integration_dir)],
+    except (OSError, RuntimeError):
+        return False
+
+
+def _read_file_without_reparse_components(
+    source_path: Path,
+    *,
+    expected_fingerprint: tuple[int, int, int, int, int] | list[int] | None = None,
+) -> bytes:
+    absolute_path = Path(os.path.abspath(source_path))
+    if os.name == "nt":
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        create_file = kernel32.CreateFileW
+        create_file.argtypes = (
+            wintypes.LPCWSTR,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.HANDLE,
         )
-        if spec is None or spec.loader is None:
-            raise RuntimeError(f"unable to load Workspace cascade from {cascade_path}")
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module
+        create_file.restype = wintypes.HANDLE
+        get_file_type = kernel32.GetFileType
+        get_file_type.argtypes = (wintypes.HANDLE,)
+        get_file_type.restype = wintypes.DWORD
+        close_handle = kernel32.CloseHandle
+        close_handle.argtypes = (wintypes.HANDLE,)
+        close_handle.restype = wintypes.BOOL
+
+        class FileBasicInfo(ctypes.Structure):
+            _fields_ = (
+                ("creation_time", ctypes.c_longlong),
+                ("last_access_time", ctypes.c_longlong),
+                ("last_write_time", ctypes.c_longlong),
+                ("change_time", ctypes.c_longlong),
+                ("attributes", wintypes.DWORD),
+            )
+
+        get_file_information = kernel32.GetFileInformationByHandleEx
+        get_file_information.argtypes = (
+            wintypes.HANDLE,
+            ctypes.c_int,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+        )
+        get_file_information.restype = wintypes.BOOL
+
+        file_share_read = 0x00000001
+        open_existing = 3
+        file_flag_open_reparse_point = 0x00200000
+        file_flag_backup_semantics = 0x02000000
+        file_attribute_directory = 0x00000010
+        file_attribute_reparse_point = 0x00000400
+        file_basic_info = 0
+        invalid_handle = ctypes.c_void_p(-1).value
+
+        def open_checked(path: Path, *, directory: bool) -> int:
+            desired_access = 0x00000080 if directory else 0x80000080
+            flags = file_flag_open_reparse_point
+            if directory:
+                flags |= file_flag_backup_semantics
+            handle = create_file(
+                str(path),
+                desired_access,
+                file_share_read,
+                None,
+                open_existing,
+                flags,
+                None,
+            )
+            if handle == invalid_handle:
+                raise ctypes.WinError(ctypes.get_last_error())
+            info = FileBasicInfo()
+            if not get_file_information(
+                handle,
+                file_basic_info,
+                ctypes.byref(info),
+                ctypes.sizeof(info),
+            ):
+                error = ctypes.WinError(ctypes.get_last_error())
+                close_handle(handle)
+                raise error
+            is_directory = bool(info.attributes & file_attribute_directory)
+            if (
+                info.attributes & file_attribute_reparse_point
+                or is_directory != directory
+                or (not directory and get_file_type(handle) != 1)
+            ):
+                close_handle(handle)
+                raise RuntimeError("Workspace image cascade failed path validation")
+            return int(handle)
+
+        directory_handles: list[int] = []
+        file_handle: int | None = None
         try:
-            spec.loader.exec_module(module)
-        except Exception:
-            del sys.modules[module_name]
-            raise
-    return module.default_image_cascade()
+            if not absolute_path.anchor:
+                raise RuntimeError("Workspace image cascade failed path validation")
+            current = Path(absolute_path.anchor)
+            directory_handles.append(open_checked(current, directory=True))
+            for component in absolute_path.parts[1:-1]:
+                current = current / component
+                directory_handles.append(open_checked(current, directory=True))
+            file_handle = open_checked(current / absolute_path.name, directory=False)
+            descriptor = msvcrt.open_osfhandle(
+                file_handle, os.O_RDONLY | os.O_BINARY
+            )
+            file_handle = None
+            with os.fdopen(descriptor, "rb") as source_file:
+                opened_fingerprint = _stat_fingerprint(os.fstat(source_file.fileno()))
+                if expected_fingerprint is not None and tuple(
+                    expected_fingerprint
+                ) != opened_fingerprint:
+                    raise RuntimeError("file changed before it could be read")
+                return source_file.read()
+        finally:
+            if file_handle is not None:
+                close_handle(file_handle)
+            for handle in reversed(directory_handles):
+                close_handle(handle)
+
+    no_follow = getattr(os, "O_NOFOLLOW", 0)
+    directory_flag = getattr(os, "O_DIRECTORY", 0)
+    if not no_follow or not directory_flag or not absolute_path.anchor:
+        raise RuntimeError("Workspace image cascade failed path validation")
+
+    flags = os.O_RDONLY | no_follow | getattr(os, "O_CLOEXEC", 0)
+    directory_fds: list[int] = []
+    file_fd: int | None = None
+    try:
+        directory_fds.append(os.open(absolute_path.anchor, flags | directory_flag))
+        for component in absolute_path.parts[1:-1]:
+            directory_fds.append(
+                os.open(component, flags | directory_flag, dir_fd=directory_fds[-1])
+            )
+        file_fd = os.open(absolute_path.name, flags, dir_fd=directory_fds[-1])
+        if not stat.S_ISREG(os.fstat(file_fd).st_mode):
+            raise RuntimeError("Workspace image cascade failed path validation")
+        opened_fingerprint = _stat_fingerprint(os.fstat(file_fd))
+        if expected_fingerprint is not None and tuple(
+            expected_fingerprint
+        ) != opened_fingerprint:
+            raise RuntimeError("file changed before it could be read")
+        with os.fdopen(file_fd, "rb") as source_file:
+            file_fd = None
+            return source_file.read()
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        for descriptor in reversed(directory_fds):
+            os.close(descriptor)
+
+
+def _write_file_exclusive_without_reparse_components(
+    path: Path, content: bytes
+) -> None:
+    with _tee_approval_lock():
+        _write_file_exclusive_unlocked(path, content)
+
+
+def _write_file_exclusive_unlocked(
+    path: Path, content: bytes
+) -> None:
+    absolute_path = Path(os.path.abspath(path))
+    if not absolute_path.anchor or not absolute_path.name:
+        raise RuntimeError("output path failed validation")
+    created_output = False
+
+    if os.name == "nt":
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        create_file = kernel32.CreateFileW
+        create_file.argtypes = (
+            wintypes.LPCWSTR,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.HANDLE,
+        )
+        create_file.restype = wintypes.HANDLE
+        create_directory = kernel32.CreateDirectoryW
+        create_directory.argtypes = (wintypes.LPCWSTR, wintypes.LPVOID)
+        create_directory.restype = wintypes.BOOL
+        get_file_type = kernel32.GetFileType
+        get_file_type.argtypes = (wintypes.HANDLE,)
+        get_file_type.restype = wintypes.DWORD
+        close_handle = kernel32.CloseHandle
+        close_handle.argtypes = (wintypes.HANDLE,)
+        close_handle.restype = wintypes.BOOL
+
+        class FileBasicInfo(ctypes.Structure):
+            _fields_ = (
+                ("creation_time", ctypes.c_longlong),
+                ("last_access_time", ctypes.c_longlong),
+                ("last_write_time", ctypes.c_longlong),
+                ("change_time", ctypes.c_longlong),
+                ("attributes", wintypes.DWORD),
+            )
+
+        get_file_information = kernel32.GetFileInformationByHandleEx
+        get_file_information.argtypes = (
+            wintypes.HANDLE,
+            ctypes.c_int,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+        )
+        get_file_information.restype = wintypes.BOOL
+
+        file_attribute_directory = 0x10
+        file_attribute_reparse_point = 0x400
+        file_attribute_normal = 0x80
+        file_flag_open_reparse_point = 0x00200000
+        file_flag_backup_semantics = 0x02000000
+        file_basic_info = 0
+        file_share_read_write = 0x3
+        file_share_read = 0x1
+        open_existing = 3
+        create_new = 1
+        invalid_handle = ctypes.c_void_p(-1).value
+        directory_handles: list[int] = []
+        file_handle: int | None = None
+
+        def open_directory(directory_path: Path) -> int:
+            handle = create_file(
+                str(directory_path),
+                0x80,
+                file_share_read_write,
+                None,
+                open_existing,
+                file_flag_open_reparse_point | file_flag_backup_semantics,
+                None,
+            )
+            if handle == invalid_handle:
+                raise ctypes.WinError(ctypes.get_last_error())
+            info = FileBasicInfo()
+            if not get_file_information(
+                handle,
+                file_basic_info,
+                ctypes.byref(info),
+                ctypes.sizeof(info),
+            ):
+                error = ctypes.WinError(ctypes.get_last_error())
+                close_handle(handle)
+                raise error
+            if not info.attributes & file_attribute_directory or (
+                info.attributes & file_attribute_reparse_point
+            ):
+                close_handle(handle)
+                raise RuntimeError("output path contains a reparse point")
+            return int(handle)
+
+        try:
+            current = Path(absolute_path.anchor)
+            directory_handles.append(open_directory(current))
+            for component in absolute_path.parts[1:-1]:
+                current = current / component
+                try:
+                    directory_handle = open_directory(current)
+                except OSError as exc:
+                    if getattr(exc, "winerror", None) not in {2, 3}:
+                        raise
+                    if not create_directory(str(current), None):
+                        create_error = ctypes.get_last_error()
+                        if create_error not in {80, 183}:
+                            raise ctypes.WinError(create_error)
+                    directory_handle = open_directory(current)
+                directory_handles.append(directory_handle)
+
+            file_handle = create_file(
+                str(absolute_path),
+                0x40000000,
+                file_share_read,
+                None,
+                create_new,
+                file_flag_open_reparse_point | file_attribute_normal,
+                None,
+            )
+            if file_handle == invalid_handle:
+                raise ctypes.WinError(ctypes.get_last_error())
+            created_output = True
+            info = FileBasicInfo()
+            if not get_file_information(
+                file_handle,
+                file_basic_info,
+                ctypes.byref(info),
+                ctypes.sizeof(info),
+            ):
+                raise ctypes.WinError(ctypes.get_last_error())
+            if (
+                info.attributes & file_attribute_reparse_point
+                or info.attributes & file_attribute_directory
+                or get_file_type(file_handle) != 1
+            ):
+                raise RuntimeError("output file failed handle validation")
+            descriptor = msvcrt.open_osfhandle(
+                file_handle, os.O_WRONLY | os.O_BINARY
+            )
+            file_handle = None
+            with os.fdopen(descriptor, "wb") as output_file:
+                output_file.write(content)
+                output_file.flush()
+                os.fsync(output_file.fileno())
+            created_output = False
+        finally:
+            if file_handle is not None:
+                close_handle(file_handle)
+            for handle in reversed(directory_handles):
+                close_handle(handle)
+            if created_output:
+                try:
+                    absolute_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+        return
+
+    no_follow = getattr(os, "O_NOFOLLOW", 0)
+    directory_flag = getattr(os, "O_DIRECTORY", 0)
+    if not no_follow or not directory_flag:
+        raise RuntimeError("secure output creation is unavailable on this platform")
+    directory_flags = os.O_RDONLY | directory_flag | no_follow | getattr(os, "O_CLOEXEC", 0)
+    directory_fds: list[int] = []
+    file_fd: int | None = None
+    try:
+        directory_fds.append(os.open(absolute_path.anchor, directory_flags))
+        for component in absolute_path.parts[1:-1]:
+            try:
+                directory_fd = os.open(
+                    component, directory_flags, dir_fd=directory_fds[-1]
+                )
+            except FileNotFoundError:
+                os.mkdir(component, dir_fd=directory_fds[-1])
+                directory_fd = os.open(
+                    component, directory_flags, dir_fd=directory_fds[-1]
+                )
+            directory_fds.append(directory_fd)
+        file_fd = os.open(
+            absolute_path.name,
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_EXCL
+            | no_follow
+            | getattr(os, "O_CLOEXEC", 0),
+            0o600,
+            dir_fd=directory_fds[-1],
+        )
+        created_output = True
+        if not stat.S_ISREG(os.fstat(file_fd).st_mode):
+            raise RuntimeError("output file failed handle validation")
+        with os.fdopen(file_fd, "wb") as output_file:
+            file_fd = None
+            output_file.write(content)
+            output_file.flush()
+            os.fsync(output_file.fileno())
+        created_output = False
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        for descriptor in reversed(directory_fds):
+            os.close(descriptor)
+        if created_output:
+            try:
+                absolute_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+
+def _read_workspace_cascade_source(
+    workspace_src: Path,
+    integration_dir: Path,
+    relative_path: str,
+) -> tuple[Path, bytes]:
+    source_path = integration_dir / relative_path
+    if not _workspace_cascade_source_path_is_safe(
+        workspace_src, integration_dir, source_path
+    ):
+        raise RuntimeError("Workspace image cascade failed path validation")
+    try:
+        source_bytes = _read_file_without_reparse_components(source_path)
+    except OSError as exc:
+        raise RuntimeError("trusted Workspace image cascade is unavailable") from exc
+    if not _workspace_cascade_source_path_is_safe(
+        workspace_src, integration_dir, source_path
+    ):
+        raise RuntimeError("Workspace image cascade failed path validation")
+    return source_path, source_bytes
+
+
+def _workspace_cascade() -> ImageCascade:
+    approved_hashes = _APPROVED_WORKSPACE_CASCADE_SHA256_BY_PATH
+    if (
+        not isinstance(approved_hashes, dict)
+        or set(approved_hashes) != _WORKSPACE_CASCADE_RELATIVE_PATHS
+        or any(
+            not isinstance(digest, str)
+            or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+            for digest in approved_hashes.values()
+        )
+    ):
+        raise RuntimeError("Workspace image cascade failed provenance validation")
+
+    workspace_src = _resolve_workspace_src()
+    integration_dir = workspace_src / "integrations"
+    source_paths: dict[str, Path] = {}
+    verified_sources: dict[str, bytes] = {}
+
+    for relative_path, expected_sha256 in approved_hashes.items():
+        source_path, source_bytes = _read_workspace_cascade_source(
+            workspace_src, integration_dir, relative_path
+        )
+        if hashlib.sha256(source_bytes).hexdigest() != expected_sha256:
+            raise RuntimeError("Workspace image cascade failed provenance validation")
+        source_paths[relative_path] = source_path
+        verified_sources[relative_path] = source_bytes
+
+    module_root = "_music_workspace_image_cascade_" + uuid.uuid4().hex
+    modules: dict[str, ModuleType] = {}
+    source_module_names: dict[str, str] = {}
+
+    for relative_path, source_path in source_paths.items():
+        relative = Path(relative_path)
+        if relative_path == "image_cascade.py":
+            module_name = module_root
+            is_package = True
+            package_path = integration_dir
+        elif relative.name == "__init__.py":
+            package_parts = relative.parts[:-1]
+            module_name = f"{module_root}.{'.'.join(package_parts)}"
+            is_package = True
+            package_path = source_path.parent
+        else:
+            module_parts = (*relative.parts[:-1], relative.stem)
+            module_name = f"{module_root}.{'.'.join(module_parts)}"
+            is_package = False
+            package_path = None
+
+        module = ModuleType(module_name)
+        module.__file__ = str(source_path)
+        module.__package__ = module_name if is_package else module_name.rpartition(".")[0]
+        if package_path is not None:
+            module.__path__ = []
+        sys.modules[module_name] = module
+        modules[module_name] = module
+        source_module_names[relative_path] = module_name
+
+    for module_name, module in modules.items():
+        if module_name == module_root:
+            continue
+        parent_name, child_name = module_name.rsplit(".", 1)
+        setattr(modules[parent_name], child_name, module)
+
+    execution_order = (
+        "dalle3/client.py",
+        "dalle3/__init__.py",
+        "huggingface/client.py",
+        "huggingface/__init__.py",
+        "pollinations/client.py",
+        "pollinations/__init__.py",
+        "image_cascade.py",
+    )
+
+    class ClosedCascadeImportFinder:
+        def find_spec(self, fullname: str, path: object = None, target: object = None) -> None:
+            if fullname.startswith(module_root + ".") and fullname not in modules:
+                raise ModuleNotFoundError(
+                    f"unverified Workspace cascade module: {fullname}"
+                )
+            return None
+
+    import_finder = ClosedCascadeImportFinder()
+    quantum_module_name = "src.utils.quantum_rt"
+    missing_quantum_module = object()
+    previous_quantum_module = sys.modules.pop(
+        quantum_module_name, missing_quantum_module
+    )
+    sys.modules[quantum_module_name] = None
+    original_sys_path = list(sys.path)
+    sys.meta_path.insert(0, import_finder)
+    try:
+        for relative_path in execution_order:
+            module = modules[source_module_names[relative_path]]
+            exec(
+                compile(
+                    verified_sources[relative_path],
+                    str(source_paths[relative_path]),
+                    "exec",
+                ),
+                module.__dict__,
+            )
+        factory = getattr(modules[module_root], "tee_image_cascade", None)
+        if not callable(factory):
+            raise RuntimeError("trusted Workspace source has no tee cascade factory")
+        return factory()
+    except Exception:
+        for module_name, module in modules.items():
+            if sys.modules.get(module_name) is module:
+                sys.modules.pop(module_name, None)
+        raise
+    finally:
+        if import_finder in sys.meta_path:
+            sys.meta_path.remove(import_finder)
+        sys.path[:] = original_sys_path
+        if previous_quantum_module is missing_quantum_module:
+            sys.modules.pop(quantum_module_name, None)
+        else:
+            sys.modules[quantum_module_name] = previous_quantum_module
+
+
+def _validated_provider_tuple(result: object) -> tuple[str, str, str]:
+    provider = getattr(result, "provider", None)
+    model = getattr(result, "model", None)
+    route = getattr(result, "route", None)
+    if (
+        type(provider) is not str
+        or type(model) is not str
+        or type(route) is not str
+        or (provider, model, route) not in _ALLOWED_TEE_PROVIDER_TUPLES
+    ):
+        raise ValueError("image provider provenance is not authorized")
+    return provider, model, route
+
+
+def _derive_tee_integrity_key() -> bytes:
+    database_key = os.environ.get("HEARTMUSIC_DB_KEY")
+    if not isinstance(database_key, str) or not database_key.strip():
+        raise RuntimeError("HEARTMUSIC_DB_KEY is required for tee approval integrity")
+    try:
+        key_bytes = database_key.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise RuntimeError("HEARTMUSIC_DB_KEY is invalid for tee approval integrity") from exc
+    if len(key_bytes) < 32:
+        raise RuntimeError("HEARTMUSIC_DB_KEY is too short for tee approval integrity")
+    return hmac.new(key_bytes, _TEE_INTEGRITY_KEY_DOMAIN, hashlib.sha256).digest()
+
+
+def _presentation_hmac(
+    state: dict[str, object],
+    presentation_record: dict[str, object],
+    image_digest: str,
+) -> str:
+    signed_record = {
+        key: value
+        for key, value in presentation_record.items()
+        if key != "integrity_hmac_sha256"
+    }
+    payload = json.dumps(
+        {
+            "domain": "heartmusic.tee-image-approval.pending.v1",
+            "session": state,
+            "image_sha256": image_digest,
+            "presentation": signed_record,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hmac.new(
+        _derive_tee_integrity_key(), payload, hashlib.sha256
+    ).hexdigest()
+
+
+def _approved_sidecar_hmac(sidecar: dict[str, object], image_digest: str) -> str:
+    signed_sidecar = {
+        key: value for key, value in sidecar.items() if key != "integrity_hmac_sha256"
+    }
+    payload = json.dumps(
+        {
+            "domain": "heartmusic.tee-image-approval.approved-sidecar.v1",
+            "sidecar": signed_sidecar,
+            "image_sha256": image_digest,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hmac.new(
+        _derive_tee_integrity_key(), payload, hashlib.sha256
+    ).hexdigest()
 
 
 def _diagnostic_dict(diagnostic: object) -> dict[str, object]:
@@ -206,17 +816,41 @@ def _diagnostic_dict(diagnostic: object) -> dict[str, object]:
     return {"error": str(diagnostic)}
 
 
+def _provider_metadata_record(
+    result: object,
+) -> tuple[dict[str, object], dict[str, str]]:
+    exposed = getattr(result, "provider_metadata", {})
+    if not isinstance(exposed, dict):
+        exposed = {}
+    allowed_fields = {
+        "job_id",
+        "immutable_revision",
+        "seed",
+        "settings",
+        "request_id",
+    }
+    metadata = {
+        str(key): value for key, value in exposed.items() if key in allowed_fields
+    }
+    status = {
+        field: "reported" if metadata.get(field) is not None else "unverified"
+        for field in ("job_id", "immutable_revision", "seed", "settings")
+    }
+    return metadata, status
+
+
 def _write_json(path: Path, data: dict[str, object]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
-    try:
-        temporary_path.write_text(
-            json.dumps(data, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        temporary_path.replace(path)
-    finally:
-        temporary_path.unlink(missing_ok=True)
+    with _tee_approval_lock():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary_path = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+        try:
+            temporary_path.write_text(
+                json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            temporary_path.replace(path)
+        finally:
+            temporary_path.unlink(missing_ok=True)
 
 
 def _find_entry(catalog: dict[str, object], catalog_id: str) -> dict[str, object]:
@@ -302,7 +936,16 @@ def _has_approved_images(
             image_path = image_paths[0]
             if image_path.resolve().parent != run_dir.resolve():
                 continue
-            if sidecar.get("content_sha256") != hashlib.sha256(image_path.read_bytes()).hexdigest():
+            image_digest = hashlib.sha256(image_path.read_bytes()).hexdigest()
+            if sidecar.get("content_sha256") != image_digest:
+                continue
+            signature = sidecar.get("integrity_hmac_sha256")
+            if (
+                type(signature) is not str
+                or not hmac.compare_digest(
+                    signature, _approved_sidecar_hmac(sidecar, image_digest)
+                )
+            ):
                 continue
             return True
     return False
@@ -477,8 +1120,7 @@ def _create_transparent_derivative(
 ) -> dict[str, object]:
     derivative_path: Path | None = None
     sidecar_path: Path | None = None
-    cli_started = False
-    sidecar_written = False
+    derivative_published = False
     sidecar: dict[str, object] = {
         "candidate_id": candidate_id,
         "status": "failed",
@@ -494,11 +1136,13 @@ def _create_transparent_derivative(
         "output_sha256": None,
     }
     try:
-        if _is_reparse_point(source_path):
-            raise ValueError("approved image cannot be a reparse point")
-        source_bytes = source_path.read_bytes()
+        source_fingerprint = _stat_fingerprint(source_path.stat())
+        source_bytes = _read_file_without_reparse_components(
+            source_path, expected_fingerprint=source_fingerprint
+        )
         source_sha256 = hashlib.sha256(source_bytes).hexdigest()
-        derivative_path, sidecar_path = _transparency_output_paths(source_path)
+        with _tee_approval_lock():
+            derivative_path, sidecar_path = _transparency_output_paths(source_path)
         sidecar.update(
             {
                 "source_path": str(source_path),
@@ -511,50 +1155,76 @@ def _create_transparent_derivative(
         if source_path.suffix.lower() != ".png":
             raise ValueError("transparent derivatives require an approved PNG")
 
-        selection = _sample_perimeter_key(source_path)
-        sidecar["sampling"] = selection["evidence"]
-        selected_color = selection["selected_color"]
-        if not isinstance(selected_color, str):
-            raise ValueError(str(selection["error"]))
-        sidecar["selected_color"] = selected_color
+        with tempfile.TemporaryDirectory(prefix="tee-transparency-") as temporary_dir:
+            temporary_root = Path(temporary_dir)
+            temporary_source = temporary_root / "approved.png"
+            temporary_derivative = temporary_root / "transparent.png"
+            _write_file_exclusive_without_reparse_components(
+                temporary_source, source_bytes
+            )
 
-        cli_started = True
-        subprocess.run(
-            [
-                sys.executable,
-                str(_PROJECT_ROOT / "tools" / "color_transparency.py"),
-                str(source_path),
-                "--color",
-                selected_color,
-                "--global-match",
-                "--tolerance",
-                "10",
-                "--smooth-radius",
-                "1",
-                "--output",
-                str(derivative_path),
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=120,
-            cwd=_PROJECT_ROOT,
-        )
-        with Image.open(derivative_path) as derivative:
-            if derivative.format != "PNG" or derivative.mode != "RGBA":
-                raise OSError("transparency CLI did not produce an RGBA PNG")
-        if hashlib.sha256(source_path.read_bytes()).hexdigest() != source_sha256:
-            raise OSError("approved opaque source changed during conversion")
-        sidecar["output_sha256"] = hashlib.sha256(
-            derivative_path.read_bytes()
-        ).hexdigest()
-        sidecar["status"] = "success"
-        _write_json_exclusive(sidecar_path, sidecar)
-        sidecar_written = True
+            selection = _sample_perimeter_key(temporary_source)
+            sidecar["sampling"] = selection["evidence"]
+            selected_color = selection["selected_color"]
+            if not isinstance(selected_color, str):
+                raise ValueError(str(selection["error"]))
+            sidecar["selected_color"] = selected_color
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(_PROJECT_ROOT / "tools" / "color_transparency.py"),
+                    str(temporary_source),
+                    "--color",
+                    selected_color,
+                    "--global-match",
+                    "--tolerance",
+                    "10",
+                    "--smooth-radius",
+                    "1",
+                    "--output",
+                    str(temporary_derivative),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                cwd=_PROJECT_ROOT,
+            )
+            derivative_fingerprint = _stat_fingerprint(
+                temporary_derivative.stat()
+            )
+            derivative_bytes = _read_file_without_reparse_components(
+                temporary_derivative,
+                expected_fingerprint=derivative_fingerprint,
+            )
+            with Image.open(BytesIO(derivative_bytes)) as derivative:
+                if derivative.format != "PNG" or derivative.mode != "RGBA":
+                    raise OSError("transparency CLI did not produce an RGBA PNG")
+
+            current_source_bytes = _read_file_without_reparse_components(
+                source_path, expected_fingerprint=source_fingerprint
+            )
+            if current_source_bytes != source_bytes:
+                raise OSError("approved opaque source changed during conversion")
+
+            with _tee_approval_lock():
+                _write_file_exclusive_without_reparse_components(
+                    derivative_path, derivative_bytes
+                )
+                derivative_published = True
+                persisted_derivative = _read_file_without_reparse_components(
+                    derivative_path
+                )
+                if persisted_derivative != derivative_bytes:
+                    raise OSError("transparent derivative changed while being written")
+                sidecar["output_sha256"] = hashlib.sha256(
+                    persisted_derivative
+                ).hexdigest()
+                sidecar["status"] = "success"
+                _write_json_exclusive(sidecar_path, sidecar)
         return sidecar
     except Exception as exc:
-        if cli_started and derivative_path is not None:
-            derivative_path.unlink(missing_ok=True)
         error = str(exc)
         if isinstance(exc, subprocess.CalledProcessError):
             detail = exc.stderr or exc.stdout
@@ -563,10 +1233,13 @@ def _create_transparent_derivative(
         sidecar["status"] = "failed"
         sidecar["error"] = error
         sidecar["output_sha256"] = None
+        if derivative_published and derivative_path is not None:
+            try:
+                derivative_path.unlink(missing_ok=True)
+            except OSError as cleanup_error:
+                sidecar["cleanup_error"] = str(cleanup_error)
         if sidecar_path is not None:
             try:
-                if not sidecar_written:
-                    sidecar_path.unlink(missing_ok=True)
                 _write_json_exclusive(sidecar_path, sidecar)
             except Exception as sidecar_error:
                 sidecar["sidecar_error"] = str(sidecar_error)
@@ -599,6 +1272,10 @@ def _interactive_decision(candidate: TeeImageCandidate) -> bool:
     if opener is not None:
         opener(str(candidate.path))
     print(f"Candidate {candidate.candidate_id}: {candidate.path}")
+    print(f"Provider: {candidate.provider}")
+    print(f"Model: {candidate.model}")
+    if candidate.provider_route is not None:
+        print(f"Route: {candidate.provider_route}")
     while True:
         decision = input("Approve this exact image? [y/n]: ").strip().lower()
         if decision in {"y", "yes"}:
@@ -617,13 +1294,12 @@ class TeeImageApprovalFlow:
         output_root: Path = _OUTPUT_ROOT,
         *,
         cascade: ImageCascade | None = None,
-        workspace_src: Path | None = None,
         pending_root: Path | None = None,
     ) -> None:
         self.catalog = catalog
         self.output_root = Path(output_root).absolute()
         self.pending_root = Path(pending_root) if pending_root is not None else _PENDING_ROOT
-        self.cascade = cascade if cascade is not None else _workspace_cascade(workspace_src)
+        self.cascade = cascade if cascade is not None else _workspace_cascade()
 
     def _output_path(self, *parts: str) -> Path:
         root = self.output_root
@@ -651,24 +1327,27 @@ class TeeImageApprovalFlow:
         if not re.fullmatch(r"TJD-TEE-\d{3}", catalog_id):
             raise ValueError("catalog ID must use the TJD-TEE-NNN format")
 
-        catalog = self.catalog.read_catalog()
-        entry = _find_entry(catalog, catalog_id)
-        if entry.get("concept_approval_status") != "concept_approved":
-            raise ValueError("tee concept must be concept_approved before image generation")
-        try:
-            concept_revision = int(entry["concept_revision"])
-            approval_revision = int(entry["concept_approval_revision"])
-        except (KeyError, TypeError, ValueError) as exc:
-            raise ValueError(
-                "concept approval revision is missing; return the concept to curation"
-            ) from exc
+        with _tee_approval_lock():
+            catalog = self.catalog.read_catalog()
+            entry = _find_entry(catalog, catalog_id)
+            if entry.get("concept_approval_status") != "concept_approved":
+                raise ValueError("tee concept must be concept_approved before image generation")
+            try:
+                concept_revision = int(entry["concept_revision"])
+                approval_revision = int(entry["concept_approval_revision"])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    "concept approval revision is missing; return the concept to curation"
+                ) from exc
 
-        if approval_revision != concept_revision:
-            raise ValueError("concept revision changed; curation and explicit reapproval are required")
+            if approval_revision != concept_revision:
+                raise ValueError("concept revision changed; curation and explicit reapproval are required")
 
-        image_prompt_revision = int(entry["image_prompt_revision"])
-        catalog_version = str(entry["catalog_version"])
-        exact_prompt = _compose_prompt(entry, image_prompt_revision)
+            image_prompt_revision = int(entry["image_prompt_revision"])
+            catalog_version = str(entry["catalog_version"])
+            approval_status = entry.get("exact_image_approval_status")
+            exact_prompt = _compose_prompt(entry, image_prompt_revision)
+
         has_approved_images = _has_approved_images(
             self.output_root,
             catalog_id,
@@ -676,15 +1355,27 @@ class TeeImageApprovalFlow:
             concept_revision,
             exact_prompt,
             allow_legacy_sidecars=(
-                entry.get("exact_image_approval_status") == "exact_image_approved"
+                approval_status == "exact_image_approved"
             ),
         )
-        entry = self.catalog.reconcile_exact_image_approval(
-            catalog_id,
-            expected_image_prompt_revision=image_prompt_revision,
-            expected_concept_revision=concept_revision,
-            has_matching_approved_sidecar=has_approved_images,
-        )
+        with _tee_approval_lock():
+            if not self._catalog_generation_is_current(
+                catalog_id, concept_revision, image_prompt_revision
+            ):
+                raise ValueError(
+                    "tee catalog changed while approved-image history was scanned; retry generation"
+                )
+            current_entry = self.catalog.read_prompt(catalog_id)
+            if current_entry.get("exact_image_approval_status") != approval_status:
+                raise ValueError(
+                    "tee approved-image state changed while history was scanned; retry generation"
+                )
+            entry = self.catalog.reconcile_exact_image_approval(
+                catalog_id,
+                expected_image_prompt_revision=image_prompt_revision,
+                expected_concept_revision=concept_revision,
+                has_matching_approved_sidecar=has_approved_images,
+            )
         entry["exact_image_approval_status"] = (
             "exact_image_approved" if has_approved_images else "exact_image_pending"
         )
@@ -697,6 +1388,55 @@ class TeeImageApprovalFlow:
             exact_prompt,
             has_approved_images,
         )
+
+    def _catalog_generation_is_current(
+        self,
+        catalog_id: str,
+        concept_revision: int,
+        image_prompt_revision: int,
+    ) -> bool:
+        try:
+            entry = self.catalog.read_prompt(catalog_id)
+            current_revision = int(entry["concept_revision"])
+            approval_revision = int(entry["concept_approval_revision"])
+            current_prompt_revision = int(entry["image_prompt_revision"])
+        except (KeyError, TypeError, ValueError):
+            return False
+        return (
+            entry.get("concept_approval_status") == "concept_approved"
+            and current_revision == concept_revision
+            and approval_revision == current_revision
+            and current_prompt_revision == image_prompt_revision
+        )
+
+    def _discard_stale_chat_generation_locked(
+        self,
+        session_dir: Path,
+        state: dict[str, object],
+        *,
+        error: str = "concept or image prompt changed while the provider was generating",
+        additional_failures: int = 0,
+    ) -> dict[str, object] | None:
+        if self._catalog_generation_is_current(
+            str(state["catalog_id"]),
+            int(state["concept_revision"]),
+            int(state["image_prompt_revision"]),
+        ):
+            return None
+        self._presentation_record_path(session_dir).unlink(missing_ok=True)
+        shutil.rmtree(session_dir)
+        failures = state.get("failures", [])
+        return {
+            "status": "stale_concept",
+            "session_id": str(state["session_id"]),
+            "run_id": str(state["run_id"]),
+            "generated": int(state["generated_count"]),
+            "approved": int(state["approved_count"]),
+            "rejected": int(state["rejected_count"]),
+            "failed": (len(failures) if isinstance(failures, list) else 0)
+            + additional_failures,
+            "error": error,
+        }
 
     def _chat_session_directory(self, session_id: str) -> Path:
         if not re.fullmatch(r"[0-9a-f]{32}", session_id):
@@ -718,6 +1458,7 @@ class TeeImageApprovalFlow:
     def start_chat_batch(self, catalog_id: str, *, count: int = 2) -> dict[str, object]:
         if type(count) is not int or not 1 <= count <= _MAX_BATCH_SIZE:
             raise ValueError("candidate count must be between 1 and 4")
+        _derive_tee_integrity_key()
 
         (
             catalog,
@@ -731,7 +1472,6 @@ class TeeImageApprovalFlow:
         run_id = uuid.uuid4().hex
         session_id = uuid.uuid4().hex
         session_dir = self._chat_session_directory(session_id)
-        session_dir.mkdir(parents=True, exist_ok=False)
         state: dict[str, object] = {
             "session_id": session_id,
             "catalog_id": catalog_id,
@@ -750,8 +1490,134 @@ class TeeImageApprovalFlow:
             "transparency_failures": [],
             "pending_candidate": None,
         }
-        self._write_chat_session(session_dir, state)
+        with _tee_approval_lock():
+            session_dir.mkdir(parents=True, exist_ok=False)
+            self._write_chat_session(session_dir, state)
         return self._stage_next_chat_candidate(session_dir, state)
+
+    def _persist_pending_chat_candidate(
+        self,
+        session_dir: Path,
+        state: dict[str, object],
+        *,
+        candidate_id: str,
+        candidate_number: int,
+        candidate_prompt: str,
+        provider: str,
+        model: str,
+        provider_route: str,
+        result: object,
+        suffix: str,
+        staged_bytes: bytes,
+    ) -> dict[str, object] | None:
+        with _tee_approval_lock():
+            session_id = str(state["session_id"])
+            run_id = str(state["run_id"])
+            try:
+                current_session_dir, current_state = self._load_chat_session(
+                    session_id
+                )
+            except ValueError:
+                return None
+            if (
+                current_session_dir != session_dir
+                or current_state.get("run_id") != run_id
+                or current_state.get("pending_candidate") is not None
+                or current_state.get("next_candidate_number") != candidate_number + 1
+            ):
+                return None
+            state.clear()
+            state.update(current_state)
+            if not self._catalog_generation_is_current(
+                str(state["catalog_id"]),
+                int(state["concept_revision"]),
+                int(state["image_prompt_revision"]),
+            ):
+                self._presentation_record_path(session_dir).unlink(missing_ok=True)
+                shutil.rmtree(session_dir)
+                return {
+                    "status": "stale_concept",
+                    "session_id": session_id,
+                    "run_id": run_id,
+                    "generated": int(state["generated_count"]),
+                    "approved": int(state["approved_count"]),
+                    "rejected": int(state["rejected_count"]),
+                    "failed": len(state.get("failures", [])) + 1,
+                    "error": "concept or image prompt changed while the provider was generating",
+                }
+            total_count = int(state["total_count"])
+            staged_path = session_dir / f"{candidate_id}{suffix}"
+            try:
+                _write_file_exclusive_without_reparse_components(
+                    staged_path, staged_bytes
+                )
+                persisted_bytes = _read_file_without_reparse_components(staged_path)
+                if persisted_bytes != staged_bytes:
+                    raise OSError("staged image changed while being written")
+            except (OSError, RuntimeError, ValueError):
+                staged_path.unlink(missing_ok=True)
+                raise
+
+            provider_metadata, provider_metadata_status = _provider_metadata_record(
+                result
+            )
+            candidate_state = dict(state)
+            candidate_state["generated_count"] = int(state["generated_count"]) + 1
+            candidate_state["pending_candidate"] = {
+                "candidate_id": candidate_id,
+                "candidate_number": candidate_number,
+                "image_name": staged_path.name,
+                "provider": provider,
+                "model": model,
+                "provider_route": provider_route,
+                "provider_metadata": provider_metadata,
+                "provider_metadata_status": provider_metadata_status,
+                "exact_prompt": candidate_prompt,
+                "content_sha256": hashlib.sha256(staged_bytes).hexdigest(),
+                "file_fingerprint": list(_stat_fingerprint(staged_path.stat())),
+                "provider_diagnostics": [
+                    _diagnostic_dict(item)
+                    for item in getattr(result, "diagnostics", ())
+                ],
+            }
+            presentation_path = self._presentation_record_path(session_dir)
+            try:
+                self._write_chat_session(session_dir, candidate_state)
+                _pin_directory_mtime_for_mutation_detection(session_dir)
+                presentation_record: dict[str, object] = {
+                    "candidate_id": candidate_id,
+                    "directory_fingerprint": list(
+                        _stat_fingerprint(session_dir.stat())
+                    ),
+                }
+                presentation_record["integrity_hmac_sha256"] = _presentation_hmac(
+                    candidate_state,
+                    presentation_record,
+                    hashlib.sha256(staged_bytes).hexdigest(),
+                )
+                _write_json_exclusive(presentation_path, presentation_record)
+            except (OSError, RuntimeError, TypeError, ValueError):
+                presentation_path.unlink(missing_ok=True)
+                staged_path.unlink(missing_ok=True)
+                self._write_chat_session(session_dir, state)
+                raise
+            state.clear()
+            state.update(candidate_state)
+            return {
+                "status": "candidate_pending",
+                "session_id": session_id,
+                "run_id": run_id,
+                "candidate_id": candidate_id,
+                "candidate_number": candidate_number,
+                "count": total_count,
+                "image_path": str(staged_path),
+                "art_direction": candidate_prompt.splitlines()[0],
+                "provider": provider,
+                "model": model,
+                "provider_route": provider_route,
+                "provider_metadata": provider_metadata,
+                "provider_metadata_status": provider_metadata_status,
+            }
 
     def _stage_next_chat_candidate(
         self, session_dir: Path, state: dict[str, object]
@@ -764,9 +1630,27 @@ class TeeImageApprovalFlow:
         assert isinstance(failures, list)
 
         while int(state["next_candidate_number"]) <= total_count:
-            candidate_number = int(state["next_candidate_number"])
-            state["next_candidate_number"] = candidate_number + 1
-            self._write_chat_session(session_dir, state)
+            with _tee_approval_lock():
+                if not session_dir.is_dir():
+                    return {
+                        "status": "cancelled",
+                        "session_id": session_id,
+                        "run_id": run_id,
+                        "generated": int(state["generated_count"]),
+                        "approved": int(state["approved_count"]),
+                        "rejected": int(state["rejected_count"]),
+                        "failed": len(failures),
+                    }
+                stale_result = self._discard_stale_chat_generation_locked(
+                    session_dir,
+                    state,
+                    error="concept or image prompt changed before the next provider attempt",
+                )
+                if stale_result is not None:
+                    return stale_result
+                candidate_number = int(state["next_candidate_number"])
+                state["next_candidate_number"] = candidate_number + 1
+                self._write_chat_session(session_dir, state)
             candidate_id = f"{run_id[:8]}-{candidate_number:02d}"
             candidate_prompt = _compose_candidate_prompt(
                 str(state["exact_prompt"]), candidate_number
@@ -775,52 +1659,133 @@ class TeeImageApprovalFlow:
                 temporary_root = Path(temporary_dir)
                 try:
                     result = self.cascade.generate(candidate_prompt, output_dir=temporary_root)
+                    provider, model, provider_route = _validated_provider_tuple(result)
                 except Exception as exc:
-                    failures.append(
-                        {
-                            "candidate_id": candidate_id,
-                            "error": str(exc),
-                            "diagnostics": [
-                                _diagnostic_dict(item)
-                                for item in getattr(exc, "diagnostics", ())
-                            ],
-                        }
-                    )
-                    self._write_chat_session(session_dir, state)
+                    with _tee_approval_lock():
+                        if not session_dir.is_dir():
+                            return {
+                                "status": "cancelled",
+                                "session_id": session_id,
+                                "run_id": run_id,
+                                "generated": int(state["generated_count"]),
+                                "approved": int(state["approved_count"]),
+                                "rejected": int(state["rejected_count"]),
+                                "failed": len(failures),
+                            }
+                        stale_result = self._discard_stale_chat_generation_locked(
+                            session_dir, state, additional_failures=1
+                        )
+                        if stale_result is not None:
+                            return stale_result
+                        failures.append(
+                            {
+                                "candidate_id": candidate_id,
+                                "error": str(exc),
+                                "diagnostics": [
+                                    _diagnostic_dict(item)
+                                    for item in getattr(exc, "diagnostics", ())
+                                ],
+                            }
+                        )
+                        self._write_chat_session(session_dir, state)
                     continue
 
                 source_path = Path(result.path)
                 suffix = source_path.suffix.lower()
+                try:
+                    source_fingerprint = _stat_fingerprint(source_path.stat())
+                except OSError:
+                    source_fingerprint = None
                 if (
+                    source_fingerprint is None
+                    or
                     not source_path.is_file()
                     or _is_reparse_point(source_path)
                     or suffix not in _IMAGE_SUFFIXES
                     or not source_path.resolve().is_relative_to(temporary_root.resolve())
                 ):
-                    failures.append(
-                        {
-                            "candidate_id": candidate_id,
-                            "error": "image cascade returned a missing or unsupported image file",
-                            "diagnostics": [
-                                _diagnostic_dict(item)
-                                for item in getattr(result, "diagnostics", ())
-                            ],
-                        }
-                    )
-                    self._write_chat_session(session_dir, state)
+                    with _tee_approval_lock():
+                        if not session_dir.is_dir():
+                            return {
+                                "status": "cancelled",
+                                "session_id": session_id,
+                                "run_id": run_id,
+                                "generated": int(state["generated_count"]),
+                                "approved": int(state["approved_count"]),
+                                "rejected": int(state["rejected_count"]),
+                                "failed": len(failures),
+                            }
+                        stale_result = self._discard_stale_chat_generation_locked(
+                            session_dir, state, additional_failures=1
+                        )
+                        if stale_result is not None:
+                            return stale_result
+                        failures.append(
+                            {
+                                "candidate_id": candidate_id,
+                                "error": "image cascade returned a missing or unsupported image file",
+                                "diagnostics": [
+                                    _diagnostic_dict(item)
+                                    for item in getattr(result, "diagnostics", ())
+                                ],
+                            }
+                        )
+                        self._write_chat_session(session_dir, state)
                     continue
 
-                image_name = f"{candidate_id}{suffix}"
-                staged_path = session_dir / image_name
                 try:
-                    with source_path.open("rb") as source_file:
-                        staged_bytes = source_file.read()
+                    staged_bytes = _read_file_without_reparse_components(
+                        source_path, expected_fingerprint=source_fingerprint
+                    )
                     if not _matches_image_signature(suffix, staged_bytes):
                         raise ValueError("image file content does not match its extension")
-                    with staged_path.open("xb") as staged_file:
-                        staged_file.write(staged_bytes)
-                except (OSError, ValueError) as exc:
-                    failures.append(
+                except (OSError, RuntimeError, TypeError, ValueError) as exc:
+                    with _tee_approval_lock():
+                        if not session_dir.is_dir():
+                            return {
+                                "status": "cancelled",
+                                "session_id": session_id,
+                                "run_id": run_id,
+                                "generated": int(state["generated_count"]),
+                                "approved": int(state["approved_count"]),
+                                "rejected": int(state["rejected_count"]),
+                                "failed": len(failures),
+                            }
+                        stale_result = self._discard_stale_chat_generation_locked(
+                            session_dir, state, additional_failures=1
+                        )
+                        if stale_result is not None:
+                            return stale_result
+                        failures.append(
+                            {
+                                "candidate_id": candidate_id,
+                                "error": str(exc),
+                                "diagnostics": [
+                                    _diagnostic_dict(item)
+                                    for item in getattr(result, "diagnostics", ())
+                                ],
+                            }
+                        )
+                        self._write_chat_session(session_dir, state)
+                    continue
+                try:
+                    pending_response = self._persist_pending_chat_candidate(
+                        session_dir,
+                        state,
+                        candidate_id=candidate_id,
+                        candidate_number=candidate_number,
+                        candidate_prompt=candidate_prompt,
+                        provider=provider,
+                        model=model,
+                        provider_route=provider_route,
+                        result=result,
+                        suffix=suffix,
+                        staged_bytes=staged_bytes,
+                    )
+                except (OSError, RuntimeError, TypeError, ValueError) as exc:
+                    recorded = self._record_chat_failure_if_active(
+                        session_dir,
+                        state,
                         {
                             "candidate_id": candidate_id,
                             "error": str(exc),
@@ -828,78 +1793,92 @@ class TeeImageApprovalFlow:
                                 _diagnostic_dict(item)
                                 for item in getattr(result, "diagnostics", ())
                             ],
-                        }
+                        },
                     )
-                    self._write_chat_session(session_dir, state)
+                    if not recorded:
+                        return {
+                            "status": "cancelled",
+                            "session_id": session_id,
+                            "run_id": run_id,
+                            "generated": int(state["generated_count"]),
+                            "approved": int(state["approved_count"]),
+                            "rejected": int(state["rejected_count"]),
+                            "failed": len(failures),
+                        }
+                    failures = state["failures"]
+                    assert isinstance(failures, list)
                     continue
-                state["generated_count"] = int(state["generated_count"]) + 1
-                state["pending_candidate"] = {
-                    "candidate_id": candidate_id,
-                    "candidate_number": candidate_number,
-                    "image_name": image_name,
-                    "provider": str(result.provider),
-                    "model": str(result.model),
-                    "exact_prompt": candidate_prompt,
-                    "content_sha256": hashlib.sha256(staged_bytes).hexdigest(),
-                    "file_fingerprint": list(_stat_fingerprint(staged_path.stat())),
-                    "provider_diagnostics": [
-                        _diagnostic_dict(item)
-                        for item in getattr(result, "diagnostics", ())
-                    ],
-                }
-                self._write_chat_session(session_dir, state)
-                _pin_directory_mtime_for_mutation_detection(session_dir)
-                _write_json_exclusive(
-                    self._presentation_record_path(session_dir),
-                    {
-                        "candidate_id": candidate_id,
-                        "directory_fingerprint": list(
-                            _stat_fingerprint(session_dir.stat())
-                        ),
-                    },
+                if pending_response is None:
+                    return {
+                        "status": "cancelled",
+                        "session_id": session_id,
+                        "run_id": run_id,
+                        "generated": int(state["generated_count"]),
+                        "approved": int(state["approved_count"]),
+                        "rejected": int(state["rejected_count"]),
+                        "failed": len(failures),
+                    }
+                return pending_response
+
+        with _tee_approval_lock():
+            try:
+                current_session_dir, current_state = self._load_chat_session(
+                    session_id
                 )
+            except ValueError:
                 return {
-                    "status": "candidate_pending",
+                    "status": "cancelled",
                     "session_id": session_id,
                     "run_id": run_id,
-                    "candidate_id": candidate_id,
-                    "candidate_number": candidate_number,
-                    "count": total_count,
-                    "image_path": str(staged_path),
-                    "art_direction": candidate_prompt.splitlines()[0],
-                    "provider": str(result.provider),
-                    "model": str(result.model),
+                    "generated": int(state["generated_count"]),
+                    "approved": int(state["approved_count"]),
+                    "rejected": int(state["rejected_count"]),
+                    "failed": len(failures),
                 }
-
-        if failures:
-            run_dir = self._output_path(catalog_id, run_id)
-            run_dir.mkdir(parents=True, exist_ok=True)
-            run_dir = self._output_path(catalog_id, run_id)
-            _write_json_exclusive(
-                self._output_path(catalog_id, run_id, "provider-failures.json"),
-                failures,
-            )
-        transparency_failures = state.get("transparency_failures", [])
-        assert isinstance(transparency_failures, list)
-        if transparency_failures:
-            run_dir = self._output_path(catalog_id, run_id)
-            run_dir.mkdir(parents=True, exist_ok=True)
-            _write_json_exclusive(
-                self._output_path(catalog_id, run_id, "transparency-failures.json"),
-                transparency_failures,
-            )
-        summary = {
-            "status": "completed",
-            "run_id": run_id,
-            "generated": int(state["generated_count"]),
-            "approved": int(state["approved_count"]),
-            "rejected": int(state["rejected_count"]),
-            "failed": len(failures) + len(transparency_failures),
-            "failures": failures,
-            "transparency_failures": transparency_failures,
-        }
-        self._presentation_record_path(session_dir).unlink(missing_ok=True)
-        shutil.rmtree(session_dir)
+            if (
+                current_session_dir != session_dir
+                or current_state.get("run_id") != run_id
+                or current_state.get("pending_candidate") is not None
+            ):
+                return {
+                    "status": "cancelled",
+                    "session_id": session_id,
+                    "run_id": run_id,
+                    "generated": int(current_state.get("generated_count", 0)),
+                    "approved": int(current_state.get("approved_count", 0)),
+                    "rejected": int(current_state.get("rejected_count", 0)),
+                    "failed": len(current_state.get("failures", [])),
+                }
+            state.clear()
+            state.update(current_state)
+            failures = state.get("failures", [])
+            transparency_failures = state.get("transparency_failures", [])
+            assert isinstance(failures, list)
+            assert isinstance(transparency_failures, list)
+            if failures:
+                _write_json_exclusive(
+                    self._output_path(catalog_id, run_id, "provider-failures.json"),
+                    failures,
+                )
+            if transparency_failures:
+                _write_json_exclusive(
+                    self._output_path(
+                        catalog_id, run_id, "transparency-failures.json"
+                    ),
+                    transparency_failures,
+                )
+            summary = {
+                "status": "completed",
+                "run_id": run_id,
+                "generated": int(state["generated_count"]),
+                "approved": int(state["approved_count"]),
+                "rejected": int(state["rejected_count"]),
+                "failed": len(failures) + len(transparency_failures),
+                "failures": failures,
+                "transparency_failures": transparency_failures,
+            }
+            self._presentation_record_path(session_dir).unlink(missing_ok=True)
+            shutil.rmtree(session_dir)
         return summary
 
     def _load_chat_session(self, session_id: str) -> tuple[Path, dict[str, object]]:
@@ -916,6 +1895,36 @@ class TeeImageApprovalFlow:
         if not re.fullmatch(r"[0-9a-f]{32}", str(state.get("run_id", ""))):
             raise ValueError("chat approval session run ID is invalid")
         return session_dir, state
+
+    def _record_chat_failure_if_active(
+        self,
+        session_dir: Path,
+        state: dict[str, object],
+        failure: dict[str, object],
+    ) -> bool:
+        with _tee_approval_lock():
+            try:
+                current_session_dir, current_state = self._load_chat_session(
+                    str(state["session_id"])
+                )
+            except (KeyError, ValueError):
+                return False
+            if (
+                current_session_dir != session_dir
+                or current_state.get("run_id") != state.get("run_id")
+                or current_state.get("next_candidate_number")
+                != state.get("next_candidate_number")
+                or current_state.get("pending_candidate") is not None
+            ):
+                return False
+            failures = current_state.get("failures")
+            if not isinstance(failures, list):
+                return False
+            failures.append(failure)
+            self._write_chat_session(current_session_dir, current_state)
+            state.clear()
+            state.update(current_state)
+            return True
 
     @staticmethod
     def _pending_candidate_path(
@@ -945,23 +1954,38 @@ class TeeImageApprovalFlow:
 
     @staticmethod
     def _read_verified_pending_candidate(
-        pending_path: Path, session_dir: Path, pending: dict[str, object]
+        pending_path: Path,
+        session_dir: Path,
+        pending: dict[str, object],
+        state: dict[str, object],
     ) -> bytes:
         try:
-            content = pending_path.read_bytes()
-            current_fingerprint = _stat_fingerprint(pending_path.stat())
+            expected_fingerprint = pending.get("file_fingerprint")
+            if not isinstance(expected_fingerprint, list):
+                raise RuntimeError("pending candidate fingerprint is invalid")
+            content = _read_file_without_reparse_components(
+                pending_path, expected_fingerprint=expected_fingerprint
+            )
+            current_fingerprint = tuple(expected_fingerprint)
             directory_fingerprint = _stat_fingerprint(session_dir.stat())
             presentation_record = json.loads(
                 TeeImageApprovalFlow._presentation_record_path(session_dir).read_text(
                     encoding="utf-8"
                 )
             )
-        except OSError as exc:
+        except (OSError, RuntimeError) as exc:
             raise ValueError("pending candidate changed after presentation") from exc
         except json.JSONDecodeError as exc:
             raise ValueError("pending candidate changed after presentation") from exc
+        if not isinstance(presentation_record, dict):
+            raise ValueError("pending candidate changed after presentation")
+        signature = presentation_record.get("integrity_hmac_sha256")
+        expected_signature = _presentation_hmac(
+            state, presentation_record, hashlib.sha256(content).hexdigest()
+        )
         if (
-            not isinstance(presentation_record, dict)
+            type(signature) is not str
+            or not hmac.compare_digest(signature, expected_signature)
             or presentation_record.get("candidate_id") != pending.get("candidate_id")
             or presentation_record.get("directory_fingerprint")
             != list(directory_fingerprint)
@@ -976,90 +2000,116 @@ class TeeImageApprovalFlow:
     ) -> dict[str, object]:
         if decision not in {"y", "n"}:
             raise ValueError("chat decision must be exactly y or n")
-        session_dir, state = self._load_chat_session(session_id)
-        pending = state.get("pending_candidate")
-        if not isinstance(pending, dict):
-            raise ValueError("chat approval session has no pending candidate")
-        if pending.get("candidate_id") != candidate_id:
-            raise ValueError("candidate ID does not match the pending candidate")
-        pending_path = self._pending_candidate_path(session_dir, pending)
-        candidate_bytes = self._read_verified_pending_candidate(
-            pending_path, session_dir, pending
-        )
-        transparency_result: dict[str, object] | None = None
-
-        if decision == "y":
-            entry = self.catalog.read_prompt(str(state["catalog_id"]))
-            try:
-                current_revision = int(entry["concept_revision"])
-                approval_revision = int(entry["concept_approval_revision"])
-            except (KeyError, TypeError, ValueError) as exc:
-                pending_path.unlink(missing_ok=True)
-                self._presentation_record_path(session_dir).unlink(missing_ok=True)
-                shutil.rmtree(session_dir)
-                raise ValueError("concept approval changed while image was pending") from exc
-            if (
-                entry.get("concept_approval_status") != "concept_approved"
-                or current_revision != int(state["concept_revision"])
-                or approval_revision != current_revision
-                or int(entry["image_prompt_revision"])
-                != int(state["image_prompt_revision"])
-                or state.get("prompt_revision") != _PROMPT_REVISION
-            ):
-                pending_path.unlink(missing_ok=True)
-                self._presentation_record_path(session_dir).unlink(missing_ok=True)
-                shutil.rmtree(session_dir)
-                raise ValueError("concept or prompt revision changed while image was pending")
-
-            catalog_id = str(state["catalog_id"])
-            run_id = str(state["run_id"])
-            run_dir = self._output_path(catalog_id, run_id)
-            run_dir.mkdir(parents=True, exist_ok=True)
-            run_dir = self._output_path(catalog_id, run_id)
-            approved_path = self._output_path(
-                catalog_id, run_id, f"{candidate_id}{pending_path.suffix}"
+        approved_path: Path | None = None
+        with _tee_approval_lock():
+            session_dir, state = self._load_chat_session(session_id)
+            pending = state.get("pending_candidate")
+            if not isinstance(pending, dict):
+                raise ValueError("chat approval session has no pending candidate")
+            if pending.get("candidate_id") != candidate_id:
+                raise ValueError("candidate ID does not match the pending candidate")
+            pending_path = self._pending_candidate_path(session_dir, pending)
+            candidate_bytes = self._read_verified_pending_candidate(
+                pending_path, session_dir, pending, state
             )
-            sidecar_path = self._output_path(catalog_id, run_id, f"{candidate_id}.json")
-            if approved_path.exists() or sidecar_path.exists():
-                raise FileExistsError("approved candidate output already exists")
-            sidecar = {
-                "candidate_id": candidate_id,
-                "catalog_id": state["catalog_id"],
-                "concept_revision": current_revision,
-                "provider": pending["provider"],
-                "model": pending["model"],
-                "exact_prompt": pending["exact_prompt"],
-                "image_prompt_revision": int(state["image_prompt_revision"]),
-                "catalog_version": state["catalog_version"],
-                "prompt_revision": _PROMPT_REVISION,
-                "content_sha256": pending["content_sha256"],
-                "approval": "approved",
-                "approved_at": datetime.now(timezone.utc).isoformat(),
-                "provider_diagnostics": pending["provider_diagnostics"],
-            }
-            approved_created = False
-            sidecar_created = False
-            try:
-                with approved_path.open("xb") as approved_file:
-                    approved_created = True
-                    approved_file.write(candidate_bytes)
-                with sidecar_path.open("x", encoding="utf-8") as sidecar_file:
-                    sidecar_created = True
-                    json.dump(sidecar, sidecar_file, ensure_ascii=False, indent=2)
-                    sidecar_file.write("\n")
-                self.catalog.approve_exact_image(
-                    catalog_id,
-                    expected_image_prompt_revision=int(state["image_prompt_revision"]),
-                    expected_concept_revision=current_revision,
-                    approved_by_tyler=True,
+
+            if decision == "y":
+                entry = self.catalog.read_prompt(str(state["catalog_id"]))
+                try:
+                    current_revision = int(entry["concept_revision"])
+                    approval_revision = int(entry["concept_approval_revision"])
+                except (KeyError, TypeError, ValueError) as exc:
+                    pending_path.unlink(missing_ok=True)
+                    self._presentation_record_path(session_dir).unlink(missing_ok=True)
+                    shutil.rmtree(session_dir)
+                    raise ValueError("concept approval changed while image was pending") from exc
+                if (
+                    entry.get("concept_approval_status") != "concept_approved"
+                    or current_revision != int(state["concept_revision"])
+                    or approval_revision != current_revision
+                    or int(entry["image_prompt_revision"])
+                    != int(state["image_prompt_revision"])
+                    or state.get("prompt_revision") != _PROMPT_REVISION
+                ):
+                    pending_path.unlink(missing_ok=True)
+                    self._presentation_record_path(session_dir).unlink(missing_ok=True)
+                    shutil.rmtree(session_dir)
+                    raise ValueError(
+                        "concept or prompt revision changed while image was pending"
+                    )
+
+                catalog_id = str(state["catalog_id"])
+                run_id = str(state["run_id"])
+                approved_path = self._output_path(
+                    catalog_id, run_id, f"{candidate_id}{pending_path.suffix}"
                 )
-            except Exception:
-                if approved_created:
-                    approved_path.unlink(missing_ok=True)
-                if sidecar_created:
-                    sidecar_path.unlink(missing_ok=True)
-                raise
-            state["approved_count"] = int(state["approved_count"]) + 1
+                sidecar_path = self._output_path(
+                    catalog_id, run_id, f"{candidate_id}.json"
+                )
+                sidecar = {
+                    "candidate_id": candidate_id,
+                    "catalog_id": state["catalog_id"],
+                    "concept_revision": current_revision,
+                    "provider": pending["provider"],
+                    "model": pending["model"],
+                    "provider_route": pending["provider_route"],
+                    "provider_metadata": pending["provider_metadata"],
+                    "provider_metadata_status": pending["provider_metadata_status"],
+                    "exact_prompt": pending["exact_prompt"],
+                    "image_prompt_revision": int(state["image_prompt_revision"]),
+                    "catalog_version": state["catalog_version"],
+                    "prompt_revision": _PROMPT_REVISION,
+                    "content_sha256": pending["content_sha256"],
+                    "approval": "approved",
+                    "approved_at": datetime.now(timezone.utc).isoformat(),
+                    "provider_diagnostics": pending["provider_diagnostics"],
+                }
+                sidecar["integrity_hmac_sha256"] = _approved_sidecar_hmac(
+                    sidecar, str(sidecar["content_sha256"])
+                )
+                approved_created = False
+                sidecar_created = False
+                try:
+                    _write_file_exclusive_without_reparse_components(
+                        approved_path, candidate_bytes
+                    )
+                    approved_created = True
+                    persisted_bytes = _read_file_without_reparse_components(
+                        approved_path
+                    )
+                    if hashlib.sha256(persisted_bytes).hexdigest() != pending.get(
+                        "content_sha256"
+                    ):
+                        raise OSError(
+                            "approved image readback does not match its pending digest"
+                        )
+                    _write_json_exclusive(sidecar_path, sidecar)
+                    sidecar_created = True
+                    self.catalog.approve_exact_image(
+                        catalog_id,
+                        expected_image_prompt_revision=int(
+                            state["image_prompt_revision"]
+                        ),
+                        expected_concept_revision=current_revision,
+                        approved_by_tyler=True,
+                    )
+                except Exception:
+                    if approved_created:
+                        approved_path.unlink(missing_ok=True)
+                    if sidecar_created:
+                        sidecar_path.unlink(missing_ok=True)
+                    raise
+                state["approved_count"] = int(state["approved_count"]) + 1
+            else:
+                state["rejected_count"] = int(state["rejected_count"]) + 1
+
+            state["pending_candidate"] = None
+            self._write_chat_session(session_dir, state)
+            pending_path.unlink(missing_ok=True)
+            self._presentation_record_path(session_dir).unlink(missing_ok=True)
+
+        transparency_result: dict[str, object] | None = None
+        if approved_path is not None:
             transparency_result = _create_transparent_derivative(
                 approved_path, candidate_id
             )
@@ -1073,34 +2123,42 @@ class TeeImageApprovalFlow:
                         "sidecar_path": transparency_result.get("sidecar_path"),
                     }
                 )
-        else:
-            state["rejected_count"] = int(state["rejected_count"]) + 1
-
-        pending_path.unlink(missing_ok=True)
-        self._presentation_record_path(session_dir).unlink(missing_ok=True)
-        state["pending_candidate"] = None
-        self._write_chat_session(session_dir, state)
+                with _tee_approval_lock():
+                    try:
+                        current_session_dir, current_state = self._load_chat_session(
+                            session_id
+                        )
+                    except ValueError:
+                        pass
+                    else:
+                        current_failures = current_state["transparency_failures"]
+                        assert isinstance(current_failures, list)
+                        current_failures.append(transparency_failures[-1])
+                        self._write_chat_session(current_session_dir, current_state)
+                        state.clear()
+                        state.update(current_state)
         response = self._stage_next_chat_candidate(session_dir, state)
         if transparency_result is not None:
             response["transparency"] = transparency_result
         return response
 
     def cancel_chat_batch(self, session_id: str) -> dict[str, object]:
-        session_dir, state = self._load_chat_session(session_id)
-        pending = state.get("pending_candidate")
-        if isinstance(pending, dict):
-            self._pending_candidate_path(session_dir, pending).unlink(missing_ok=True)
-        self._presentation_record_path(session_dir).unlink(missing_ok=True)
-        result = {
-            "status": "cancelled",
-            "run_id": state["run_id"],
-            "generated": int(state["generated_count"]),
-            "approved": int(state["approved_count"]),
-            "rejected": int(state["rejected_count"]),
-            "failed": len(state["failures"]),
-        }
-        shutil.rmtree(session_dir)
-        return result
+        with _tee_approval_lock():
+            session_dir, state = self._load_chat_session(session_id)
+            pending = state.get("pending_candidate")
+            if isinstance(pending, dict):
+                self._pending_candidate_path(session_dir, pending).unlink(missing_ok=True)
+            self._presentation_record_path(session_dir).unlink(missing_ok=True)
+            result = {
+                "status": "cancelled",
+                "run_id": state["run_id"],
+                "generated": int(state["generated_count"]),
+                "approved": int(state["approved_count"]),
+                "rejected": int(state["rejected_count"]),
+                "failed": len(state["failures"]),
+            }
+            shutil.rmtree(session_dir)
+            return result
 
     def generate_batch(
         self,
@@ -1110,6 +2168,7 @@ class TeeImageApprovalFlow:
         decide: Decision | None = None,
     ) -> TeeImageBatchResult:
         """Generate an authorized batch and require a decision for each successful image."""
+        _derive_tee_integrity_key()
         if type(count) is not int or not 1 <= count <= _MAX_BATCH_SIZE:
             raise ValueError("candidate count must be between 1 and 4")
 
@@ -1133,11 +2192,24 @@ class TeeImageApprovalFlow:
 
         for candidate_number in range(1, count + 1):
             candidate_id = f"{run_id[:8]}-{candidate_number:02d}"
+            with _tee_approval_lock():
+                if not self._catalog_generation_is_current(
+                    catalog_id, concept_revision, image_prompt_revision
+                ):
+                    failures.append(
+                        {
+                            "candidate_id": candidate_id,
+                            "error": "concept or image prompt changed before the next provider attempt",
+                            "diagnostics": [],
+                        }
+                    )
+                    break
             candidate_prompt = _compose_candidate_prompt(exact_prompt, candidate_number)
             with tempfile.TemporaryDirectory(prefix="tee-image-candidate-") as temporary_dir:
                 temporary_root = Path(temporary_dir)
                 try:
                     result = self.cascade.generate(candidate_prompt, output_dir=temporary_root)
+                    provider, model, provider_route = _validated_provider_tuple(result)
                 except Exception as exc:
                     diagnostics = getattr(exc, "diagnostics", ())
                     failures.append(
@@ -1203,134 +2275,180 @@ class TeeImageApprovalFlow:
                     )
                     continue
 
+                with _tee_approval_lock():
+                    if not self._catalog_generation_is_current(
+                        catalog_id, concept_revision, image_prompt_revision
+                    ):
+                        failures.append(
+                            {
+                                "candidate_id": candidate_id,
+                                "error": "concept or image prompt changed while the provider was generating",
+                                "diagnostics": [
+                                    _diagnostic_dict(item)
+                                    for item in getattr(result, "diagnostics", ())
+                                ],
+                            }
+                        )
+                        break
+
                 candidate = TeeImageCandidate(
                     candidate_id=candidate_id,
                     path=source_path,
-                    provider=str(result.provider),
-                    model=str(result.model),
+                    provider=provider,
+                    model=model,
                     exact_prompt=candidate_prompt,
+                    provider_route=provider_route,
+                )
+                provider_metadata, provider_metadata_status = _provider_metadata_record(
+                    result
                 )
                 if not decision_callback(candidate):
                     rejected_count += 1
                     continue
 
-                try:
-                    resolved_path = source_path.resolve(strict=True)
-                    current_stat = resolved_path.stat()
-                    candidate_path_is_unchanged = (
-                        resolved_path.is_relative_to(temporary_root.resolve())
-                        and os.path.samestat(source_identity, resolved_path.stat())
-                        and source_parent_fingerprint is not None
-                        and _stat_fingerprint(source_path.parent.stat())
-                        == source_parent_fingerprint
-                    )
-                    candidate_content_is_unchanged = (
-                        candidate_path_is_unchanged
-                        and source_identity is not None
-                        and _stat_fingerprint(current_stat)
-                        == _stat_fingerprint(source_identity)
-                        and resolved_path.read_bytes() == source_bytes
-                    )
-                except (OSError, RuntimeError):
+                with _tee_approval_lock():
+                    if not self._catalog_generation_is_current(
+                        catalog_id, concept_revision, image_prompt_revision
+                    ):
+                        failures.append(
+                            {
+                                "candidate_id": candidate_id,
+                                "error": "concept or image prompt changed during candidate review",
+                                "diagnostics": [
+                                    _diagnostic_dict(item)
+                                    for item in getattr(result, "diagnostics", ())
+                                ],
+                            }
+                        )
+                        break
                     candidate_path_is_unchanged = False
                     candidate_content_is_unchanged = False
-                if not candidate_path_is_unchanged:
-                    failures.append(
-                        {
-                            "candidate_id": candidate_id,
-                            "error": "image candidate changed or escaped the generation directory during approval",
-                            "diagnostics": [
-                                _diagnostic_dict(item)
-                                for item in getattr(result, "diagnostics", ())
-                            ],
-                        }
-                    )
-                    continue
-                if not candidate_content_is_unchanged:
-                    failures.append(
-                        {
-                            "candidate_id": candidate_id,
-                            "error": "image candidate content changed during approval",
-                            "diagnostics": [
-                                _diagnostic_dict(item)
-                                for item in getattr(result, "diagnostics", ())
-                            ],
-                        }
-                    )
-                    continue
+                    try:
+                        resolved_path = source_path.resolve(strict=True)
+                        current_stat = resolved_path.stat()
+                        candidate_path_is_unchanged = (
+                            resolved_path.is_relative_to(temporary_root.resolve())
+                            and os.path.samestat(source_identity, current_stat)
+                            and source_parent_fingerprint is not None
+                            and _stat_fingerprint(source_path.parent.stat())
+                            == source_parent_fingerprint
+                        )
+                    except (OSError, RuntimeError):
+                        candidate_path_is_unchanged = False
+                    if candidate_path_is_unchanged:
+                        try:
+                            current_source_bytes = _read_file_without_reparse_components(
+                                resolved_path,
+                                expected_fingerprint=_stat_fingerprint(source_identity),
+                            )
+                            candidate_content_is_unchanged = (
+                                _stat_fingerprint(current_stat)
+                                == _stat_fingerprint(source_identity)
+                                and current_source_bytes == source_bytes
+                            )
+                        except (OSError, RuntimeError):
+                            candidate_content_is_unchanged = False
+                    if not candidate_path_is_unchanged:
+                        failures.append(
+                            {
+                                "candidate_id": candidate_id,
+                                "error": "image candidate changed or escaped the generation directory during approval",
+                                "diagnostics": [
+                                    _diagnostic_dict(item)
+                                    for item in getattr(result, "diagnostics", ())
+                                ],
+                            }
+                        )
+                        continue
+                    if not candidate_content_is_unchanged:
+                        failures.append(
+                            {
+                                "candidate_id": candidate_id,
+                                "error": "image candidate content changed during approval",
+                                "diagnostics": [
+                                    _diagnostic_dict(item)
+                                    for item in getattr(result, "diagnostics", ())
+                                ],
+                            }
+                        )
+                        continue
 
-                run_dir = self._output_path(catalog_id, run_id)
-                run_dir.mkdir(parents=True, exist_ok=True)
-                run_dir = self._output_path(catalog_id, run_id)
-                suffix = source_path.suffix.lower()
-                approved_path = self._output_path(
-                    catalog_id, run_id, f"{candidate_id}{suffix}"
-                )
-                sidecar_path = self._output_path(
-                    catalog_id, run_id, f"{candidate_id}.json"
-                )
-                sidecar = {
-                    "candidate_id": candidate_id,
-                    "catalog_id": catalog_id,
-                    "concept_revision": concept_revision,
-                    "provider": candidate.provider,
-                    "model": candidate.model,
-                    "exact_prompt": candidate_prompt,
-                    "image_prompt_revision": image_prompt_revision,
-                    "catalog_version": catalog_version,
-                    "prompt_revision": _PROMPT_REVISION,
-                    "content_sha256": hashlib.sha256(source_bytes).hexdigest(),
-                    "approval": "approved",
-                    "approved_at": datetime.now(timezone.utc).isoformat(),
-                    "provider_diagnostics": [
-                        _diagnostic_dict(item)
-                        for item in getattr(result, "diagnostics", ())
-                    ],
-                }
-                approved_created = False
-                sidecar_created = False
-                try:
-                    with approved_path.open("xb") as approved_file:
+                    suffix = source_path.suffix.lower()
+                    approved_path = self._output_path(
+                        catalog_id, run_id, f"{candidate_id}{suffix}"
+                    )
+                    sidecar_path = self._output_path(
+                        catalog_id, run_id, f"{candidate_id}.json"
+                    )
+                    sidecar = {
+                        "candidate_id": candidate_id,
+                        "catalog_id": catalog_id,
+                        "concept_revision": concept_revision,
+                        "provider": candidate.provider,
+                        "model": candidate.model,
+                        "provider_route": candidate.provider_route,
+                        "provider_metadata": provider_metadata,
+                        "provider_metadata_status": provider_metadata_status,
+                        "exact_prompt": candidate_prompt,
+                        "image_prompt_revision": image_prompt_revision,
+                        "catalog_version": catalog_version,
+                        "prompt_revision": _PROMPT_REVISION,
+                        "content_sha256": hashlib.sha256(source_bytes).hexdigest(),
+                        "approval": "approved",
+                        "approved_at": datetime.now(timezone.utc).isoformat(),
+                        "provider_diagnostics": [
+                            _diagnostic_dict(item)
+                            for item in getattr(result, "diagnostics", ())
+                        ],
+                    }
+                    approved_created = False
+                    sidecar_created = False
+                    try:
+                        _write_file_exclusive_without_reparse_components(
+                            approved_path, source_bytes
+                        )
                         approved_created = True
-                        approved_file.write(source_bytes)
-                    approved_content = approved_path.read_bytes()
-                    if approved_content != source_bytes:
-                        raise OSError("approved image changed while being written")
-                    sidecar["content_sha256"] = hashlib.sha256(
-                        approved_content
-                    ).hexdigest()
-                    with sidecar_path.open("x", encoding="utf-8") as sidecar_file:
+                        approved_content = _read_file_without_reparse_components(
+                            approved_path
+                        )
+                        if approved_content != source_bytes:
+                            raise OSError("approved image changed while being written")
+                        sidecar["content_sha256"] = hashlib.sha256(
+                            approved_content
+                        ).hexdigest()
+                        sidecar["integrity_hmac_sha256"] = _approved_sidecar_hmac(
+                            sidecar, str(sidecar["content_sha256"])
+                        )
+                        _write_json_exclusive(sidecar_path, sidecar)
                         sidecar_created = True
-                        json.dump(sidecar, sidecar_file, ensure_ascii=False, indent=2)
-                        sidecar_file.write("\n")
-                    self.catalog.approve_exact_image(
-                        catalog_id,
-                        expected_image_prompt_revision=image_prompt_revision,
-                        expected_concept_revision=concept_revision,
-                        approved_by_tyler=True,
-                    )
-                except FileExistsError:
-                    if approved_created:
-                        approved_path.unlink(missing_ok=True)
-                    if sidecar_created:
-                        sidecar_path.unlink(missing_ok=True)
-                    failures.append(
-                        {
-                            "candidate_id": candidate_id,
-                            "error": "approved image or sidecar destination already exists",
-                            "diagnostics": [
-                                _diagnostic_dict(item)
-                                for item in getattr(result, "diagnostics", ())
-                            ],
-                        }
-                    )
-                    continue
-                except Exception:
-                    if approved_created:
-                        approved_path.unlink(missing_ok=True)
-                    if sidecar_created:
-                        sidecar_path.unlink(missing_ok=True)
-                    raise
+                        self.catalog.approve_exact_image(
+                            catalog_id,
+                            expected_image_prompt_revision=image_prompt_revision,
+                            expected_concept_revision=concept_revision,
+                            approved_by_tyler=True,
+                        )
+                    except FileExistsError:
+                        if approved_created:
+                            approved_path.unlink(missing_ok=True)
+                        if sidecar_created:
+                            sidecar_path.unlink(missing_ok=True)
+                        failures.append(
+                            {
+                                "candidate_id": candidate_id,
+                                "error": "approved image or sidecar destination already exists",
+                                "diagnostics": [
+                                    _diagnostic_dict(item)
+                                    for item in getattr(result, "diagnostics", ())
+                                ],
+                            }
+                        )
+                        continue
+                    except Exception:
+                        if approved_created:
+                            approved_path.unlink(missing_ok=True)
+                        if sidecar_created:
+                            sidecar_path.unlink(missing_ok=True)
+                        raise
                 approved.append(
                     TeeImageCandidate(
                         candidate_id=candidate_id,
@@ -1338,6 +2456,7 @@ class TeeImageApprovalFlow:
                         provider=candidate.provider,
                         model=candidate.model,
                         exact_prompt=exact_prompt,
+                        provider_route=candidate.provider_route,
                     )
                 )
                 transparency_result = _create_transparent_derivative(
@@ -1353,16 +2472,11 @@ class TeeImageApprovalFlow:
                     )
 
         if failures:
-            run_dir = self._output_path(catalog_id, run_id)
-            run_dir.mkdir(parents=True, exist_ok=True)
-            run_dir = self._output_path(catalog_id, run_id)
             _write_json_exclusive(
                 self._output_path(catalog_id, run_id, "provider-failures.json"),
                 failures,
             )
         if transparency_failures:
-            run_dir = self._output_path(catalog_id, run_id)
-            run_dir.mkdir(parents=True, exist_ok=True)
             _write_json_exclusive(
                 self._output_path(
                     catalog_id, run_id, "transparency-failures.json"

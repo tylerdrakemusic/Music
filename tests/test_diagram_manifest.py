@@ -17,6 +17,7 @@ def test_music_manifest_declares_only_canonical_diagram_sources() -> None:
         "diagrams/music-architecture.mmd",
         "diagrams/music-derived-catalog-pipeline.mmd",
         "diagrams/music-derived-operations-surfaces.mmd",
+        "diagrams/music-derived-tee-image-security.mmd",
         "diagrams/music-db-schema.mmd",
         "diagrams/music-tech-stack.mmd",
     ]
@@ -55,5 +56,9 @@ def test_music_manifest_declares_parent_child_lineage_for_architecture_split() -
     }
     assert records["diagrams/music-derived-operations-surfaces.mmd"]["lineage"] == {
         "parent": "diagrams/music-architecture.mmd",
+        "derived_views": ["diagrams/music-derived-tee-image-security.mmd"],
+    }
+    assert records["diagrams/music-derived-tee-image-security.mmd"]["lineage"] == {
+        "parent": "diagrams/music-derived-operations-surfaces.mmd",
         "derived_views": [],
     }
