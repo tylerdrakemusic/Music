@@ -52,10 +52,19 @@ class _SyntheticCascade:
         self.generated_payloads.append(image_path.read_bytes())
         return SimpleNamespace(
             path=image_path,
-            provider="synthetic",
-            model="offline-fixture",
+            provider="fal-ai",
+            model="black-forest-labs/FLUX.1-Krea-dev",
+            route="fal-ai/flux/krea",
             diagnostics=(),
         )
+
+
+@pytest.fixture(autouse=True)
+def _set_test_integrity_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "HEARTMUSIC_DB_KEY",
+        "test-only-music-approval-integrity-key-not-a-secret",
+    )
 
 
 @dataclass

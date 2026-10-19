@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from dataclasses import dataclass
@@ -11,6 +12,7 @@ import pytest
 from pytest_bdd import given, scenario, then, when
 
 from src.merch import tee_image_approval
+import hashlib
 from src.merch.tee_image_approval import TeeImageApprovalFlow
 from src.merch.tee_prompt_catalog import TeePromptCatalog
 from src.utils import init_db
@@ -71,6 +73,10 @@ def approved_concept_with_provider_response(
     connection.executescript(init_db._SCHEMA_SQL)
     init_db.import_tee_catalog_bootstrap(connection)
     output_root = tmp_path / "approved"
+    monkeypatch.setenv(
+        "HEARTMUSIC_DB_KEY",
+        "test-only-music-approval-integrity-key-not-a-secret",
+    )
     monkeypatch.setattr(tee_image_approval, "_PENDING_ROOT", tmp_path / "pending")
     monkeypatch.setattr(
         tee_image_approval,
@@ -138,16 +144,40 @@ def assert_provider_provenance_and_metadata_status(
     "Workspace exports distinct generic and tee cascade factories",
     target_fixture="workspace_cascade_context",
 )
-def workspace_with_distinct_cascades(tmp_path: Path) -> dict[str, Path]:
-    workspace_src = tmp_path / "workspace" / "src"
+def workspace_with_distinct_cascades(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict[str, Path]:
+    workspace_root = tmp_path / "workspace"
+    workspace_src = workspace_root / "src"
     integration_dir = workspace_src / "integrations"
-    integration_dir.mkdir(parents=True)
-    (integration_dir / "image_cascade.py").write_text(
-        "def default_image_cascade():\n"
-        "    raise AssertionError('generic image cascade must not be selected')\n\n"
-        "def tee_image_cascade():\n"
-        "    return 'tee-authorized-cascade'\n",
-        encoding="utf-8",
+    sources = {
+        "image_cascade.py": (
+            "from .dalle3 import DallE3Client\n"
+            "from .huggingface import HuggingFaceImageClient\n"
+            "from .pollinations import PollinationsClient\n\n"
+            "def default_image_cascade():\n"
+            "    raise AssertionError('generic image cascade must not be selected')\n\n"
+            "def tee_image_cascade():\n"
+            "    return 'tee-authorized-cascade'\n"
+        ),
+        "dalle3/__init__.py": "from .client import DallE3Client\n",
+        "dalle3/client.py": "class DallE3Client: pass\n",
+        "huggingface/__init__.py": "from .client import HuggingFaceImageClient\n",
+        "huggingface/client.py": "class HuggingFaceImageClient: pass\n",
+        "pollinations/__init__.py": "from .client import PollinationsClient\n",
+        "pollinations/client.py": "class PollinationsClient: pass\n",
+    }
+    approved_hashes: dict[str, str] = {}
+    for relative_path, source in sources.items():
+        path = integration_dir / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(source, encoding="utf-8")
+        approved_hashes[relative_path] = hashlib.sha256(path.read_bytes()).hexdigest()
+    monkeypatch.setattr(tee_image_approval, "_WORKSPACE_ROOT", workspace_root)
+    monkeypatch.setattr(
+        tee_image_approval,
+        "_APPROVED_WORKSPACE_CASCADE_SHA256_BY_PATH",
+        approved_hashes,
     )
     return {"workspace_src": workspace_src}
 
@@ -156,9 +186,7 @@ def workspace_with_distinct_cascades(tmp_path: Path) -> dict[str, Path]:
 def resolve_workspace_tee_cascade(
     workspace_cascade_context: dict[str, Path],
 ) -> None:
-    workspace_cascade_context["cascade"] = tee_image_approval._workspace_cascade(
-        workspace_cascade_context["workspace_src"]
-    )
+    workspace_cascade_context["cascade"] = tee_image_approval._workspace_cascade()
 
 
 @then("it selects the tee factory and never calls the generic factory")

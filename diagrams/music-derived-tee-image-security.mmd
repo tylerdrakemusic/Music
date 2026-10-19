@@ -1,0 +1,68 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1a2e3a', 'primaryTextColor': '#d0ecf8', 'edgeLabelBackground': '#0f1318', 'lineColor': '#4a7a9a'}}}%%
+%% is_derived_view=true
+%% Traceability.parent: diagrams/music-derived-operations-surfaces.mmd
+graph TB
+    TeeFlow[src/merch/tee_image_approval.py]
+    WorkspaceSources["⊕Workspace src/integrations/image_cascade.py<br/>7 source files with exact SHA-256 pins"]
+    SourceHashes{All sources match pins?}
+    IsolatedLoader[Verified isolated loader<br/>tee_image_cascade only]
+    FailClosed[Reject unsafe path or source mismatch]
+    RouteAllowlist{Exact provider, model, route authorized?}
+    ProviderRequest[/Hosted image generation request/]
+    ProviderResult[Image bytes + actual route provenance]
+    RevisionCheck{Concept and prompt revisions current?}
+    SharedLock["tee_image_lock.py<br/>thread and process lock, 10-second wait limit"]
+    Catalog[(heartmusic.db<br/>tee prompt catalog)]
+    Pending[Temporary pending image<br/>provider, model, route, metadata status]
+    Operator[Terminal exact-image decision<br/>provider, model, route shown]
+    ApprovedImage[Approved image file]
+    Sidecar[Approved provenance sidecar<br/>actual route, available metadata,<br/>unavailable fields marked unverified]
+    Discard[Discard stale or cancelled result]
+    NoRoute[Report no authorized route]
+    PartialCleanup[Remove partial image or sidecar]
+
+    TeeFlow --> WorkspaceSources
+    WorkspaceSources --> SourceHashes
+    SourceHashes -->|all seven match| IsolatedLoader
+    SourceHashes -->|mismatch| FailClosed
+    IsolatedLoader --> RouteAllowlist
+    RouteAllowlist -->|authorized exact tuple| ProviderRequest
+    RouteAllowlist -->|not authorized| NoRoute
+    ProviderRequest -->|network wait outside lock| ProviderResult
+    ProviderResult --> RevisionCheck
+    RevisionCheck -->|brief mutation section| SharedLock
+    SharedLock -->|current revision| Pending
+    SharedLock -->|stale or cancelled| Discard
+    SharedLock -->|catalog mutation| Catalog
+    Pending -.->|operator decision outside lock| Operator
+    Operator -->|approve exact image| SharedLock
+    SharedLock -->|approved image and metadata| ApprovedImage
+    ApprovedImage --> Sidecar
+    Sidecar --> Catalog
+    ApprovedImage -.->|write failure| PartialCleanup
+    Sidecar -.->|write failure| PartialCleanup
+
+    class TeeFlow,IsolatedLoader,SharedLock,Pending,Operator music
+    class WorkspaceSources ws
+    class Catalog db
+    class SourceHashes,RouteAllowlist,RevisionCheck state
+    class ProviderRequest ext
+    class FailClosed,NoRoute,Discard,PartialCleanup state
+    class ProviderResult,ApprovedImage,Sidecar out
+
+    subgraph Legend["Legend"]
+        direction LR
+        L1["❤ Music"]:::music
+        L2["⊕ Workspace source"]:::ws
+        L3[(Database)]:::db
+        L4{Decision or boundary}:::state
+        L5[/Hosted provider/]:::ext
+        L6[Generated artifact]:::out
+    end
+
+classDef music fill:#3a1a24,stroke:#d47a8f,color:#f8d0dc
+classDef ws fill:#1a3a30,stroke:#6ad4b4,color:#d0f8ee
+classDef db fill:#3a3010,stroke:#d4c050,color:#f8f0c0
+classDef state fill:#1a1a1a,stroke:#888888,color:#cccccc
+classDef ext fill:#3a2020,stroke:#ff7a7a,color:#ffd0d0
+classDef out fill:#3a2a10,stroke:#d4a050,color:#f8e8c0

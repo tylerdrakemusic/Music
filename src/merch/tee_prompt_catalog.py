@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+from src.merch.tee_image_lock import tee_image_approval_lock
 from collections.abc import Mapping
 from contextlib import contextmanager
 from typing import Any, Iterator
@@ -30,15 +31,20 @@ _EDIT_FIELDS = frozenset(_IMAGE_INPUT_FIELDS | {"provenance"})
 
 @contextmanager
 def _write_transaction(connection: sqlite3.Connection) -> Iterator[None]:
+    if connection.in_transaction:
+        raise RuntimeError(
+            "tee catalog writes cannot join an outer transaction managed by the caller"
+        )
     savepoint = "tee_prompt_catalog_write"
-    connection.execute(f"SAVEPOINT {savepoint}")
-    try:
-        yield
-        connection.execute(f"RELEASE SAVEPOINT {savepoint}")
-    except Exception:
-        connection.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
-        connection.execute(f"RELEASE SAVEPOINT {savepoint}")
-        raise
+    with tee_image_approval_lock():
+        connection.execute(f"SAVEPOINT {savepoint}")
+        try:
+            yield
+            connection.execute(f"RELEASE SAVEPOINT {savepoint}")
+        except Exception:
+            connection.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+            connection.execute(f"RELEASE SAVEPOINT {savepoint}")
+            raise
 
 
 def _row_dict(cursor: sqlite3.Cursor, row: Any) -> dict[str, Any] | None:
