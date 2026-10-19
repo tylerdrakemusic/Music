@@ -2146,7 +2146,10 @@ def test_secure_writer_rejects_symlinked_parent(tmp_path: Path) -> None:
     linked_parent = tmp_path / "linked"
     linked_parent.symlink_to(outside_root, target_is_directory=True)
 
-    with pytest.raises((OSError, RuntimeError), match="reparse|symbolic|symlink|path"):
+    with pytest.raises(
+        (OSError, RuntimeError),
+        match=r"(?i)reparse|symbolic|symlink|path|not a directory",
+    ):
         tee_image_approval._write_file_exclusive_without_reparse_components(
             linked_parent / "escaped.bin", b"must not escape"
         )
