@@ -1,3 +1,4 @@
+# DEPRECATED: superseded by tools/auto_tagger.py (FR-20260526-bpm-key-auto-tagger)
 """
 bpm_verify.py — Multi-method BPM analysis using librosa for cross-verification.
 
@@ -121,3 +122,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
