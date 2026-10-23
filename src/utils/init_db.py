@@ -60,6 +60,8 @@ def use_worktree_aware_db_path(start: Path) -> None:
         from utils.init_db import get_connection
     """
     global DB_PATH
+    if _ENV_DB_PATH:
+        return
     resolved = resolve_worktree_db_path(start)
     if resolved is not None:
         DB_PATH = resolved

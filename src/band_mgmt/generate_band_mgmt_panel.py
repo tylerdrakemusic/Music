@@ -1,6 +1,7 @@
 """Generate a standalone Band Management Panel HTML.
 
-Reads catalog_export.json + setlist_active_export.json, builds BM_INLINE,
+Reads band, catalog, arrangement, and active-setlist data from heartmusic.db,
+builds BM_INLINE,
 and writes reports/band_management_panel.html — a fully self-contained dark
 panel that can be served as a static_html iframe in the workspace portal.
 
@@ -13,6 +14,7 @@ import ipaddress
 import json
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Vera portrait (lazy import to keep panel generation working even if vera_portrait errors)
@@ -31,8 +33,6 @@ def _get_vera_tag() -> str:
     return ""
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-CATALOG_JSON = PROJECT_ROOT / "catalog" / "setlists" / "catalog_export.json"
-SETLIST_JSON = PROJECT_ROOT / "catalog" / "setlists" / "setlist_active_export.json"
 OUTPUT_HTML = PROJECT_ROOT / "reports" / "band_management_panel.html"
 
 
@@ -98,57 +98,60 @@ def _resolve_sheet_path(raw: str) -> Path:
 # ---------------------------------------------------------------------------
 
 def load_inline_data() -> dict:
-    """Build BM_INLINE from flat catalog/setlist exports.
+    """Build BM_INLINE directly from heartmusic.db.
 
     BM_INLINE format expected by the JS:
       { "exported_at": str, "bands": [ { "id": int, "name": str, "active": bool,
           "genre": str, "catalog": {"count": int, "songs": [...]},
           "setlist": {"setlist": {...}, "count": int, "songs": [...]} }, ... ] }
     """
-    catalog_raw: dict = {}
-    setlist_raw: dict = {}
+    src_path = str(PROJECT_ROOT / "src")
+    if src_path not in sys.path:
+        sys.path.insert(0, src_path)
+    from utils import init_db  # noqa: PLC0415
+
     try:
-        catalog_raw = json.loads(CATALOG_JSON.read_text(encoding="utf-8"))
-    except Exception as e:
-        print(f"  [WARN] Could not read catalog_export.json: {e}", file=sys.stderr)
+        init_db.use_worktree_aware_db_path(PROJECT_ROOT)
+        conn = init_db.get_connection()
+    except Exception as exc:
+        raise RuntimeError(
+            f"Could not open heartmusic.db for band management panel: {exc}"
+        ) from exc
+
+    setlists_path = str(PROJECT_ROOT / "catalog" / "setlists")
+    if setlists_path not in sys.path:
+        sys.path.insert(0, setlists_path)
     try:
-        setlist_raw = json.loads(SETLIST_JSON.read_text(encoding="utf-8"))
-    except Exception as e:
-        print(f"  [WARN] Could not read setlist_active_export.json: {e}", file=sys.stderr)
+        import export_catalog  # noqa: PLC0415
 
-    exported_at = catalog_raw.get("exported_at", setlist_raw.get("exported_at", ""))
-    catalog_songs = catalog_raw.get("songs", [])
-    setlist_songs = setlist_raw.get("songs", [])
-    setlist_meta = setlist_raw.get("setlist", {})
+        sheet_music_index = export_catalog.build_sheet_music_index()
+        bands = []
+        for band in export_catalog.export_bands(conn):
+            catalog_songs = export_catalog.export_catalog_for_band(
+                conn, band["id"], sheet_music_index
+            )
+            setlist_meta, setlist_songs = export_catalog.export_active_setlist_for_band(
+                conn, band["id"]
+            )
+            bands.append(
+                {
+                    **band,
+                    "catalog": {"count": len(catalog_songs), "songs": catalog_songs},
+                    "setlist": {
+                        "setlist": setlist_meta,
+                        "count": len(setlist_songs),
+                        "songs": setlist_songs,
+                    },
+                }
+            )
+    except Exception as exc:
+        raise RuntimeError(
+            f"Could not query heartmusic.db for band management panel: {exc}"
+        ) from exc
+    finally:
+        conn.close()
 
-    # Catalog is Copper Creek (id=1). Groove Unit uses catalog_id = 2 in setlist
-    # if no songs reference id=2, the band simply shows empty.
-    cc_songs = [s for s in catalog_songs]  # all catalog songs are Copper Creek
-    gu_songs: list = []  # The Groove Unit — no separate catalog export yet
-
-    bands = [
-        {
-            "id": 1,
-            "name": "Copper Creek",
-            "active": True,
-            "genre": "Country / Americana",
-            "catalog": {"count": len(cc_songs), "songs": cc_songs},
-            "setlist": {
-                "setlist": setlist_meta,
-                "count": len(setlist_songs),
-                "songs": setlist_songs,
-            },
-        },
-        {
-            "id": 2,
-            "name": "The Groove Unit",
-            "active": True,
-            "genre": "Blues / Rock",
-            "catalog": {"count": len(gu_songs), "songs": gu_songs},
-            "setlist": {"setlist": {}, "count": 0, "songs": []},
-        },
-    ]
-    return {"exported_at": exported_at, "bands": bands}
+    return {"exported_at": datetime.now(timezone.utc).isoformat(), "bands": bands}
 
 
 def load_inventory_data() -> list:
@@ -355,7 +358,7 @@ PANEL_BODY = f"""
   </div>
   <div class="bm-footer">
     BPM: librosa on <code>G:\\Muzic</code> &middot;
-    Source: catalog_export.json &middot; setlist_active_export.json &middot;
+    Source: heartmusic.db &middot;
     <span id="bm-sort-info" style="color:var(--muted)">Default order</span>
   </div>
   <audio id="bm-audio" preload="none"></audio>
