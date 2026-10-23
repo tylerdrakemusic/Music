@@ -358,7 +358,7 @@ PANEL_BODY = f"""
   </div>
   <div class="bm-footer">
     BPM: librosa on <code>G:\\Muzic</code> &middot;
-    Source: catalog_export.json &middot; setlist_active_export.json &middot;
+    Source: heartmusic.db &middot;
     <span id="bm-sort-info" style="color:var(--muted)">Default order</span>
   </div>
   <audio id="bm-audio" preload="none"></audio>

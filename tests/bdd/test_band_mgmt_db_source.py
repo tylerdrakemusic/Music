@@ -104,6 +104,8 @@ def isolated_database(
     output_path = tmp_path / "band_management_panel.html"
     connection = _create_database()
     request.addfinalizer(connection.close)
+    original_db_path = init_db.DB_PATH
+    monkeypatch.setattr(init_db, "DB_PATH", original_db_path)
     monkeypatch.setattr(init_db, "get_connection", lambda: connection)
     monkeypatch.setattr(panel, "OUTPUT_HTML", output_path)
     monkeypatch.setattr(panel, "load_inventory_data", lambda: [])
@@ -217,6 +219,11 @@ def assert_panel_behavior_data(panel_context: _PanelContext) -> None:
     assert setlist_song["audio_url"].startswith("file:///")
     assert "STALE JSON SONG" not in panel_context.html
     assert "bm-band-select" in panel_context.html
+
+
+@then("the footer identifies heartmusic.db as its source")
+def assert_source_attribution(panel_context: _PanelContext) -> None:
+    assert "Source: heartmusic.db" in panel_context.html
 
 
 @then("generation fails clearly with a database error")

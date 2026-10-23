@@ -6,6 +6,7 @@ Feature: Band management generation uses heartmusic.db
     When band management output is generated
     Then the existing BM_INLINE shape is populated from the database
     And the band selector catalog active setlist BPM sheet music and audio behavior are preserved
+    And the footer identifies heartmusic.db as its source
 
   Scenario Outline: Database failures never fall back to legacy JSON exports
     Given legacy JSON exports contain a recognizable fallback value
