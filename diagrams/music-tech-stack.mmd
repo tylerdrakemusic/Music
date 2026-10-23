@@ -8,6 +8,7 @@ graph LR
     Python --> Mutagen[mutagen<br/>audio tags]
     Python --> Pytest["pytest<br/>CI-installed test runner"]
     Python --> PytestBDD["pytest-bdd<br/>&gt;=7.3, &lt;8.0<br/>requirements.txt"]
+    Python --> PyYAML["PyYAML<br/>&gt;=6.0, &lt;7.0<br/>requirements.txt · tests/test_agent_model_pins.py"]
     PytestBDD --> Pytest
     Python --> TestRunner[/tools/run_tests.py<br/>paired parallel + serial lanes · local fallback/]
     TestRunner --> Pytest
@@ -32,7 +33,7 @@ graph LR
     HyperthreatDocker --> HyperthreatGate
     HyperthreatGate -->|"manual deploy after exact approval"| HyperthreatFly
     class Python,Web lang
-    class SQLCipher,Flask,Librosa,Mutagen,Pytest,PytestBDD,TestRunner,TestPolicy,Xdist,Tone,PythonDocx,Pypdf,Pronouncing,Demucs,Requests,ColorTransparency,Pillow lib
+    class SQLCipher,Flask,Librosa,Mutagen,Pytest,PytestBDD,PyYAML,TestRunner,TestPolicy,Xdist,Tone,PythonDocx,Pypdf,Pronouncing,Demucs,Requests,ColorTransparency,Pillow lib
     class ParallelEvidence state
     class FlyIO,HyperthreatFly ext
     class HyperthreatLauncher,HyperthreatTemplates,HyperthreatDocker svc

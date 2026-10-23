@@ -26,10 +26,33 @@ If the request will change tracked repository files:
 
 1. Start from an isolated session branch and worktree. Default rule: **one code-changing session = one branch = one worktree = one draft PR**.
 2. Use a single-purpose branch name such as `feature/heart-music/<slug>` or `fix/heart-music/<slug>`.
-3. Open or update a draft PR early so Tyler can track ownership and parallel agents can see the active scope.
+3. Attempt to open or update a draft PR early when repository permissions allow, so remote CI can run alongside local validation. Record and escalate a permission failure, but continue local work.
 4. Never share a writable branch or checkout with another agent. If another session is already modifying the same area, stay on a separate branch and plan a rebase later.
 5. Route branch creation, rebases, merges, and conflict resolution through `⊕workspace-ci`.
 6. Analysis-only workflows do not need branch setup.
+
+## FR Delivery (Shared AIDLC)
+
+For registered feature requests, follow the canonical lifecycle and gates in
+`⊕Workspace/.github/instructions/feature-request-flow.instructions.md`; this is
+the Music-specific handoff, not a duplicate of the shared flow.
+
+- Tyler's scope approval and the persisted `BRANCHED` state are required before
+	implementation. Check only explicit technical prerequisites and same-repo
+	conflicts; an unrelated FR in `SOAKING` is not a blocker.
+- Once prerequisites are satisfied, proceed on the assigned isolated Music
+	branch/worktree through normal Music tests, functional QA, architecture
+	review, and automated review without routine operator checkpoints. If draft
+	PR creation is unavailable, record/escalate that limitation and report local
+	review as local-only.
+- After the gates pass and branches are checked out, Tyler's single final
+	approval covers the complete linked PR set. CI merges each repo only after
+	its required checks and the FR cost gate pass; do not request a second merge
+	approval. Tyler's post-soak signoff remains required.
+- This lifecycle applies only to registered FR work. Ordinary non-FR Music
+	requests retain the existing direct-edit workflow. Preserve the Music
+	context bootstrap, branch/worktree rules, and existing data, source-file,
+	secret, privacy, and output safeguards.
 
 ## Demo by Default (MANDATORY)
 
