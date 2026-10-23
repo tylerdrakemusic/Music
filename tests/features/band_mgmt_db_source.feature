@@ -19,3 +19,8 @@ Feature: Band management generation uses heartmusic.db
       | failure |
       | open    |
       | query   |
+
+  Scenario: Explicit HEARTMUSIC_DB_PATH takes precedence over worktree discovery
+    Given an explicit heartmusic database path is configured
+    When the worktree database path is resolved
+    Then the configured database path remains selected

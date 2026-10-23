@@ -94,6 +94,34 @@ def test_panel_fails_without_using_json_fallback(tmp_path: Path) -> None:
     pass
 
 
+@scenario(
+    "band_mgmt_db_source.feature",
+    "Explicit HEARTMUSIC_DB_PATH takes precedence over worktree discovery",
+)
+def test_explicit_db_path_takes_precedence(tmp_path: Path) -> None:
+    pass
+
+
+@given("an explicit heartmusic database path is configured", target_fixture="explicit_db_path")
+def configured_explicit_db_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Path:
+    explicit_db_path = tmp_path / "configured-heartmusic.db"
+    monkeypatch.setattr(init_db, "_ENV_DB_PATH", str(explicit_db_path))
+    monkeypatch.setattr(init_db, "DB_PATH", explicit_db_path)
+    return explicit_db_path
+
+
+@when("the worktree database path is resolved")
+def resolve_worktree_database_path() -> None:
+    init_db.use_worktree_aware_db_path(panel.PROJECT_ROOT)
+
+
+@then("the configured database path remains selected")
+def assert_explicit_db_path_selected(explicit_db_path: Path) -> None:
+    assert init_db.DB_PATH == explicit_db_path
+
+
 @given(
     "an isolated heartmusic database contains the band catalog arrangement and active setlist",
     target_fixture="panel_context",
