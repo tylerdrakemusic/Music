@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import sys
 from types import SimpleNamespace
+from typing import Any, Callable
 
 import pytest
 from pytest_bdd import given, scenario, then, when
@@ -22,7 +23,7 @@ class _MonitoringContext:
 
 
 class _CaptureStream:
-    def __init__(self, callback) -> None:
+    def __init__(self, callback: Callable[..., None]) -> None:
         self._callback = callback
         self.stopped = False
         self.closed = False
@@ -40,10 +41,12 @@ class _CaptureStream:
         self.closed = True
 
 
-def _new_monitoring_context(monkeypatch) -> _MonitoringContext:
+def _new_monitoring_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> _MonitoringContext:
     created: dict[str, object] = {}
 
-    def open_stream(**options):
+    def open_stream(**options: Any) -> _CaptureStream:
         stream = _CaptureStream(options["callback"])
         created.update(stream=stream, options=options)
         return stream
@@ -96,7 +99,7 @@ def _new_monitoring_context(monkeypatch) -> _MonitoringContext:
     ],
 )
 def test_capture_control_rejects_foreign_origin_before_device_access(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
     route: str,
     headers: dict[str, str],
 ) -> None:
@@ -115,7 +118,7 @@ def test_capture_control_rejects_foreign_origin_before_device_access(
 
 
 def test_capture_control_uses_same_origin_referer_when_origin_is_absent(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     context = _new_monitoring_context(monkeypatch)
     calls: list[str] = []
@@ -135,7 +138,7 @@ def test_capture_control_uses_same_origin_referer_when_origin_is_absent(
 
 
 def test_capture_control_rejects_untrusted_host_even_when_origin_matches(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     context = _new_monitoring_context(monkeypatch)
     calls: list[str] = []
@@ -152,7 +155,7 @@ def test_capture_control_rejects_untrusted_host_even_when_origin_matches(
 
 
 def test_capture_control_allows_same_origin_configured_network_host(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     allowed_hosts = set(ui.app.config["CAPTURE_CONTROL_ALLOWED_HOSTS"])
     allowed_hosts.add("192.0.2.44")
@@ -185,7 +188,9 @@ def test_start_monitoring_reports_live_input() -> None:
     "the Trainer is running on Windows, the Scarlett is available, and guitar signal reaches channel 1",
     target_fixture="monitoring_context",
 )
-def trainer_with_available_scarlett(monkeypatch) -> _MonitoringContext:
+def trainer_with_available_scarlett(
+    monkeypatch: pytest.MonkeyPatch,
+) -> _MonitoringContext:
     return _new_monitoring_context(monkeypatch)
 
 
@@ -218,7 +223,7 @@ def test_monitoring_reports_no_signal_below_threshold() -> None:
 
 
 @given("monitoring is active", target_fixture="monitoring_context")
-def active_monitoring(monkeypatch) -> _MonitoringContext:
+def active_monitoring(monkeypatch: pytest.MonkeyPatch) -> _MonitoringContext:
     context = _new_monitoring_context(monkeypatch)
     context.response = context.client.post(
         "/api/guitar-input/start",
@@ -286,10 +291,12 @@ def test_unavailable_input_is_reported_without_active_monitoring() -> None:
     "the Scarlett or its input is unavailable",
     target_fixture="monitoring_context",
 )
-def unavailable_scarlett_input(monkeypatch) -> _MonitoringContext:
+def unavailable_scarlett_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> _MonitoringContext:
     context = _new_monitoring_context(monkeypatch)
 
-    def unavailable_input(**options):
+    def unavailable_input(**options: Any) -> None:
         raise OSError("Focusrite USB ASIO input is unavailable")
 
     monkeypatch.setitem(

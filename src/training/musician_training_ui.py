@@ -116,104 +116,104 @@ def _flag_enabled(env_var: str) -> bool:
 
 
 def _capture_control_origin_key(
-  value: str,
-  *,
-  origin_header: bool,
+    value: str,
+    *,
+    origin_header: bool,
 ) -> tuple[str, str, int] | None:
-  try:
-    if value != value.strip() or any(
-      ord(character) <= 0x20 or ord(character) == 0x7F for character in value
-    ):
-      return None
-    parsed = urlsplit(value)
-    scheme = parsed.scheme.lower()
-    host = parsed.hostname
-    if (
-      scheme not in {"http", "https"}
-      or not host
-      or parsed.username is not None
-      or parsed.password is not None
-      or parsed.fragment
-      or (
-        origin_header
-        and (parsed.path or parsed.query or "?" in value or "#" in value)
-      )
-      or "%" in host
-    ):
-      return None
-
     try:
-      normalized_host = ipaddress.ip_address(host).compressed
-    except ValueError:
-      normalized_host = host.encode("idna").decode("ascii").lower()
-      labels = normalized_host.split(".")
-      if any(
-        not label
-        or len(label) > 63
-        or label.startswith("-")
-        or label.endswith("-")
-        or not all(character.isalnum() or character == "-" for character in label)
-        for label in labels
-      ):
-        return None
+        if value != value.strip() or any(
+            ord(character) <= 0x20 or ord(character) == 0x7F for character in value
+        ):
+            return None
+        parsed = urlsplit(value)
+        scheme = parsed.scheme.lower()
+        host = parsed.hostname
+        if (
+            scheme not in {"http", "https"}
+            or not host
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.fragment
+            or (
+                origin_header
+                and (parsed.path or parsed.query or "?" in value or "#" in value)
+            )
+            or "%" in host
+        ):
+            return None
 
-    port = parsed.port
-    if port == 0:
-      return None
-    return scheme, normalized_host, port or (443 if scheme == "https" else 80)
-  except (UnicodeError, ValueError):
-    return None
+        try:
+            normalized_host = ipaddress.ip_address(host).compressed
+        except ValueError:
+            normalized_host = host.encode("idna").decode("ascii").lower()
+            labels = normalized_host.split(".")
+            if any(
+                not label
+                or len(label) > 63
+                or label.startswith("-")
+                or label.endswith("-")
+                or not all(character.isalnum() or character == "-" for character in label)
+                for label in labels
+            ):
+                return None
+
+        port = parsed.port
+        if port == 0:
+            return None
+        return scheme, normalized_host, port or (443 if scheme == "https" else 80)
+    except (UnicodeError, ValueError):
+        return None
 
 
 def _capture_control_allowed_hosts(host: str | None = None) -> frozenset[str]:
-  allowed = {"localhost", "127.0.0.1", "::1"}
-  if host:
-    configured = _capture_control_origin_key(
-      f"http://{host}",
-      origin_header=True,
-    )
-    if configured is not None and configured[1] not in {"0.0.0.0", "::"}:
-      allowed.add(configured[1])
+    allowed = {"localhost", "127.0.0.1", "::1"}
+    if host:
+        configured = _capture_control_origin_key(
+            f"http://{host}",
+            origin_header=True,
+        )
+        if configured is not None and configured[1] not in {"0.0.0.0", "::"}:
+            allowed.add(configured[1])
 
-  for hostname in {socket.gethostname(), socket.getfqdn()}:
-    try:
-      addresses = socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM)
-    except OSError:
-      continue
-    for address in addresses:
-      try:
-        allowed.add(ipaddress.ip_address(address[4][0]).compressed)
-      except ValueError:
-        continue
-  return frozenset(allowed)
+    for hostname in {socket.gethostname(), socket.getfqdn()}:
+        try:
+            addresses = socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM)
+        except OSError:
+            continue
+        for address in addresses:
+            try:
+                allowed.add(ipaddress.ip_address(address[4][0]).compressed)
+            except ValueError:
+                continue
+    return frozenset(allowed)
 
 
 app.config["CAPTURE_CONTROL_ALLOWED_HOSTS"] = _capture_control_allowed_hosts()
 
 
 def _is_same_origin_capture_control_request() -> bool:
-  origins = request.headers.getlist("Origin")
-  if len(origins) > 1:
-    return False
-  if origins:
-    candidate = _capture_control_origin_key(origins[0], origin_header=True)
-  else:
-    referer = request.headers.get("Referer")
-    if referer is None:
-      return False
-    candidate = _capture_control_origin_key(referer, origin_header=False)
+    origins = request.headers.getlist("Origin")
+    if len(origins) > 1:
+        return False
+    if origins:
+        candidate = _capture_control_origin_key(origins[0], origin_header=True)
+    else:
+        referer = request.headers.get("Referer")
+        if referer is None:
+            return False
+        candidate = _capture_control_origin_key(referer, origin_header=False)
 
-  expected = _capture_control_origin_key(
-    f"{request.scheme}://{request.host}",
-    origin_header=True,
-  )
-  allowed_hosts = app.config["CAPTURE_CONTROL_ALLOWED_HOSTS"]
-  return (
-    candidate is not None
-    and expected is not None
-    and expected[1] in allowed_hosts
-    and candidate == expected
-  )
+    expected = _capture_control_origin_key(
+        f"{request.scheme}://{request.host}",
+        origin_header=True,
+    )
+    allowed_hosts = app.config["CAPTURE_CONTROL_ALLOWED_HOSTS"]
+    return (
+        candidate is not None
+        and expected is not None
+        and expected[1] in allowed_hosts
+        and candidate == expected
+    )
 
 
 # FR-20260808: cloud (Fly.io) deploys can disable the exercise-card workflow
@@ -2066,24 +2066,24 @@ def health():
 
 @app.route("/api/guitar-input/start", methods=["POST"])
 def start_guitar_input_monitoring() -> Response | tuple[Response, int]:
-  if not _is_same_origin_capture_control_request():
-    abort(403)
-  try:
-    return jsonify(guitar_input_monitor.start())
-  except Exception:
-    return jsonify(guitar_input_monitor.snapshot()), 503
+    if not _is_same_origin_capture_control_request():
+        abort(403)
+    try:
+        return jsonify(guitar_input_monitor.start())
+    except Exception:
+        return jsonify(guitar_input_monitor.snapshot()), 503
 
 
 @app.route("/api/guitar-input/status")
 def guitar_input_monitor_status() -> Response:
-  return jsonify(guitar_input_monitor.snapshot())
+    return jsonify(guitar_input_monitor.snapshot())
 
 
 @app.route("/api/guitar-input/stop", methods=["POST"])
 def stop_guitar_input_monitoring() -> Response:
-  if not _is_same_origin_capture_control_request():
-    abort(403)
-  return jsonify(guitar_input_monitor.stop())
+    if not _is_same_origin_capture_control_request():
+        abort(403)
+    return jsonify(guitar_input_monitor.stop())
 
 
 def save():
