@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import sys
 from types import SimpleNamespace
 
+import pytest
 from pytest_bdd import given, scenario, then, when
 
 from training import guitar_input_monitor as capture
@@ -70,6 +71,108 @@ def _new_monitoring_context(monkeypatch) -> _MonitoringContext:
     )
 
 
+@pytest.mark.parametrize(
+    ("route", "headers"),
+    [
+        ("/api/guitar-input/start", {"Origin": "https://attacker.example"}),
+        ("/api/guitar-input/stop", {"Origin": "https://attacker.example"}),
+        (
+            "/api/guitar-input/start",
+            {"Origin": "http://localhost.evil", "Referer": "http://localhost/"},
+        ),
+        (
+            "/api/guitar-input/stop",
+            {"Origin": "http://localhost:5056", "Referer": "http://localhost/"},
+        ),
+        (
+            "/api/guitar-input/stop",
+            {"Origin": "null", "Referer": "http://localhost/"},
+        ),
+        ("/api/guitar-input/start", {"Origin": "http://localhost?"}),
+        ("/api/guitar-input/stop", {"Origin": "http://localhost#"}),
+        ("/api/guitar-input/start", {"Origin": "http://localhost."}),
+        ("/api/guitar-input/stop", {"Origin": " http://localhost"}),
+        ("/api/guitar-input/stop", {}),
+    ],
+)
+def test_capture_control_rejects_foreign_origin_before_device_access(
+    monkeypatch,
+    route: str,
+    headers: dict[str, str],
+) -> None:
+    context = _new_monitoring_context(monkeypatch)
+    calls: list[str] = []
+    monkeypatch.setattr(context.monitor, "start", lambda: calls.append("start"))
+    monkeypatch.setattr(context.monitor, "stop", lambda: calls.append("stop"))
+
+    response = context.client.post(
+        route,
+        headers=headers,
+    )
+
+    assert response.status_code == 403
+    assert calls == []
+
+
+def test_capture_control_uses_same_origin_referer_when_origin_is_absent(
+    monkeypatch,
+) -> None:
+    context = _new_monitoring_context(monkeypatch)
+    calls: list[str] = []
+    monkeypatch.setattr(
+        context.monitor,
+        "stop",
+        lambda: calls.append("stop") or context.monitor.snapshot(),
+    )
+
+    response = context.client.post(
+        "/api/guitar-input/stop",
+        headers={"Referer": "http://localhost/trainer"},
+    )
+
+    assert response.status_code == 200
+    assert calls == ["stop"]
+
+
+def test_capture_control_rejects_untrusted_host_even_when_origin_matches(
+    monkeypatch,
+) -> None:
+    context = _new_monitoring_context(monkeypatch)
+    calls: list[str] = []
+    monkeypatch.setattr(context.monitor, "start", lambda: calls.append("start"))
+
+    response = context.client.post(
+        "/api/guitar-input/start",
+        base_url="http://attacker.example",
+        headers={"Origin": "http://attacker.example"},
+    )
+
+    assert response.status_code == 403
+    assert calls == []
+
+
+def test_capture_control_allows_same_origin_configured_network_host(
+    monkeypatch,
+) -> None:
+    allowed_hosts = set(ui.app.config["CAPTURE_CONTROL_ALLOWED_HOSTS"])
+    allowed_hosts.add("192.0.2.44")
+    monkeypatch.setitem(
+        ui.app.config,
+        "CAPTURE_CONTROL_ALLOWED_HOSTS",
+        frozenset(allowed_hosts),
+    )
+    context = _new_monitoring_context(monkeypatch)
+
+    response = context.client.post(
+        "/api/guitar-input/start",
+        base_url="http://192.0.2.44:5055",
+        headers={"Origin": "http://192.0.2.44:5055"},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["active"] is True
+
+
 @scenario(
     "windows_guitar_input_monitoring.feature",
     "Start monitoring the Scarlett input",
@@ -89,7 +192,8 @@ def trainer_with_available_scarlett(monkeypatch) -> _MonitoringContext:
 @when("the user starts monitoring")
 def start_monitoring(monitoring_context: _MonitoringContext) -> None:
     monitoring_context.response = monitoring_context.client.post(
-        "/api/guitar-input/start"
+        "/api/guitar-input/start",
+        headers={"Origin": "http://localhost"},
     )
 
 
@@ -116,7 +220,10 @@ def test_monitoring_reports_no_signal_below_threshold() -> None:
 @given("monitoring is active", target_fixture="monitoring_context")
 def active_monitoring(monkeypatch) -> _MonitoringContext:
     context = _new_monitoring_context(monkeypatch)
-    context.response = context.client.post("/api/guitar-input/start")
+    context.response = context.client.post(
+        "/api/guitar-input/start",
+        headers={"Origin": "http://localhost"},
+    )
     assert context.response.status_code == 200
     return context
 
@@ -220,7 +327,8 @@ def test_stop_capture_releases_device_and_stops_meter_updates() -> None:
 @when("the user stops monitoring or the Trainer shuts down")
 def stop_monitoring(monitoring_context: _MonitoringContext) -> None:
     monitoring_context.response = monitoring_context.client.post(
-        "/api/guitar-input/stop"
+        "/api/guitar-input/stop",
+        headers={"Origin": "http://localhost"},
     )
 
 
