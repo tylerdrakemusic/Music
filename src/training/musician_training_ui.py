@@ -6,6 +6,7 @@ Scales & Arpeggios tab added in FR-20260517-guitar-trainer-scale-exercises.
 """
 
 import argparse
+import atexit
 import ipaddress
 import json
 import mimetypes
@@ -25,6 +26,7 @@ from utils import init_db as _init_db  # noqa: E402
 _init_db.use_worktree_aware_db_path(_SRC)
 from utils.init_db import get_connection  # noqa: E402
 from training.practice_stats import get_practice_stats  # noqa: E402
+from training.guitar_input_monitor import GuitarInputMonitor  # noqa: E402
 from training.scale_data import (  # noqa: E402
     SCALE_POSITIONS, CAGED_POSITIONS, MIDI_TO_FREQ, get_scale_positions,
     get_scale_sequence,
@@ -95,6 +97,8 @@ def _scan_muzic() -> list[dict]:
 
 
 app = Flask(__name__)
+guitar_input_monitor = GuitarInputMonitor()
+atexit.register(lambda: guitar_input_monitor.stop())
 
 
 def _urlencode_path(value: str) -> str:
@@ -306,13 +310,37 @@ HTML = r"""
   /* Pentatonic family pill toggle (FR-20260806) */
   .family-btn{padding:6px 13px;background:#111;color:#ccc;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:background .12s,color .12s}
   .family-btn:first-child{border-right:1px solid var(--border)}
-  .family-btn-active{background:var(--accent);color:#fff}</style>
+  .family-btn-active{background:var(--accent);color:#fff}
+  .guitar-input-monitor{display:grid;grid-template-columns:minmax(150px,1fr) minmax(180px,2fr) auto;align-items:center;gap:12px;margin:0 0 20px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:6px}
+  .guitar-input-monitor h2{font-size:.95rem;color:#fff}
+  .guitar-input-controls{display:flex;align-items:center;gap:8px;min-width:0}
+  .guitar-input-controls button{padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:#111;color:#eee;cursor:pointer;white-space:nowrap}
+  .guitar-input-controls button:disabled{opacity:.45;cursor:default}
+  #guitar-input-level{width:100%;min-width:40px;height:14px;accent-color:#6fdc6f}
+  .guitar-input-state{font-size:.78rem;color:#ccc;min-width:90px}
+  .guitar-input-state.error,#guitar-input-warning{color:#ff6868}
+  #guitar-input-warning[hidden]{display:none}
+  @media(max-width:600px){.guitar-input-monitor{grid-template-columns:1fr;gap:9px}.guitar-input-controls{flex-wrap:wrap}.guitar-input-state{min-width:0}}</style>
 </style>
 </head>
 <body>
 <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
   <div>
     <h1>🎸 Lead Guitar Trainer</h1>
+
+<section class="guitar-input-monitor" id="guitar-input-monitor" aria-labelledby="guitar-input-title">
+  <h2 id="guitar-input-title">Live guitar input</h2>
+  <div class="guitar-input-controls">
+    <button type="button" id="guitar-input-start" onclick="startGuitarInputMonitoring()">Start monitoring</button>
+    <button type="button" id="guitar-input-stop" onclick="stopGuitarInputMonitoring()" disabled>Stop</button>
+    <progress id="guitar-input-level" max="100" value="0" aria-label="Input level">0%</progress>
+  </div>
+  <div>
+    <p class="guitar-input-state" id="guitar-input-status" aria-live="polite">Stopped</p>
+    <p class="guitar-input-state" id="guitar-input-signal">No signal</p>
+    <p class="guitar-input-state" id="guitar-input-warning" role="alert" hidden>Clipping warning</p>
+  </div>
+</section>
     <p class="sub">Focused interval training — loop lead parts, control speed, build muscle memory</p>
   </div>
   {% if enable_scale_log %}
@@ -545,6 +573,55 @@ HTML = r"""
 
 <script>
 const _saveTimers = {};
+let _guitarInputPoll = null;
+
+function renderGuitarInputState(state) {
+  document.getElementById('guitar-input-level').value = Number(state.level) || 0;
+  document.getElementById('guitar-input-start').disabled = Boolean(state.active);
+  document.getElementById('guitar-input-stop').disabled = !state.active;
+  const status = document.getElementById('guitar-input-status');
+  status.textContent = state.error ? 'Capture error: ' + state.error : (state.active ? 'Monitoring' : 'Stopped');
+  status.classList.toggle('error', Boolean(state.error));
+  document.getElementById('guitar-input-signal').textContent = state.signal_present ? 'Signal present' : 'No signal';
+  document.getElementById('guitar-input-warning').hidden = !state.clipping;
+  if (!state.active && _guitarInputPoll !== null) {
+    clearInterval(_guitarInputPoll);
+    _guitarInputPoll = null;
+  }
+}
+
+async function startGuitarInputMonitoring() {
+  try {
+    const response = await fetch('/api/guitar-input/start', {method:'POST'});
+    const state = await response.json();
+    renderGuitarInputState(state);
+    if (state.active && _guitarInputPoll === null) {
+      _guitarInputPoll = setInterval(async () => {
+        const statusResponse = await fetch('/api/guitar-input/status');
+        renderGuitarInputState(await statusResponse.json());
+      }, 120);
+    }
+  } catch (error) {
+    renderGuitarInputState({active:false, level:0, signal_present:false, clipping:false, error:String(error)});
+  }
+}
+
+async function stopGuitarInputMonitoring() {
+  if (_guitarInputPoll !== null) {
+    clearInterval(_guitarInputPoll);
+    _guitarInputPoll = null;
+  }
+  try {
+    const response = await fetch('/api/guitar-input/stop', {method:'POST'});
+    renderGuitarInputState(await response.json());
+  } catch (error) {
+    renderGuitarInputState({active:false, level:0, signal_present:false, clipping:false, error:String(error)});
+  }
+}
+
+window.addEventListener('pagehide', () => {
+  if (navigator.sendBeacon) navigator.sendBeacon('/api/guitar-input/stop');
+});
 
 function getRows(tbodyId) {
   const rows = [];
@@ -1883,6 +1960,24 @@ def index():
 @app.route("/health")
 def health():
     return jsonify({"status": "ok", "ready": True})
+
+
+@app.route("/api/guitar-input/start", methods=["POST"])
+def start_guitar_input_monitoring():
+  try:
+    return jsonify(guitar_input_monitor.start())
+  except Exception:
+    return jsonify(guitar_input_monitor.snapshot()), 503
+
+
+@app.route("/api/guitar-input/status")
+def guitar_input_monitor_status():
+  return jsonify(guitar_input_monitor.snapshot())
+
+
+@app.route("/api/guitar-input/stop", methods=["POST"])
+def stop_guitar_input_monitoring():
+  return jsonify(guitar_input_monitor.stop())
 
 
 def save():
