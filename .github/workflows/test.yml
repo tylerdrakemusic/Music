@@ -158,6 +158,11 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest
 
+      - name: Run advisory Ruff checks
+        if: always()
+        continue-on-error: true
+        run: python tools/ruff_advisory.py
+
       - name: Run bounded parallel and serial pytest lanes
         env:
           PLAYWRIGHT_ENABLED: "0"  # Set to "1" locally to run Playwright tests (FR-20260513-playwright-ui-gate)
@@ -183,6 +188,15 @@ jobs:
         with:
           name: pytest-ci-manifest
           path: tmp/pytest-ci-manifest.json
+
+      - name: Upload advisory Ruff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruff-advisory-music-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tmp/ruff-advisory-ci/${{ github.run_id }}-${{ github.run_attempt }}/summary.json
+          if-no-files-found: warn
+          retention-days: 30
 
   deploy:
     needs: test
