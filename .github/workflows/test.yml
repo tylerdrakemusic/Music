@@ -163,6 +163,52 @@ jobs:
         continue-on-error: true
         run: python tools/ruff_advisory.py
 
+      - name: Install pinned mypy for advisory checks
+        if: always()
+        continue-on-error: true
+        env:
+          MYPY_ADVISORY_LOCAL_DIR: tmp/mypy-advisory-local/${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          install_status=1
+          if mkdir -p "$MYPY_ADVISORY_LOCAL_DIR"; then
+            if python -m pip install --disable-pip-version-check --no-input mypy==1.18.2 \
+                > "$MYPY_ADVISORY_LOCAL_DIR/mypy-install.stdout.txt" 2> "$MYPY_ADVISORY_LOCAL_DIR/mypy-install.stderr.txt"; then
+              install_status=0
+              echo "Pinned mypy installed."
+            else
+              install_status=$?
+              echo "Pinned mypy install failed; the advisory report will record a tool error." >&2
+            fi
+          else
+            echo "Mypy installation skipped; advisory output is unavailable." >&2
+          fi
+          if [[ -d "$MYPY_ADVISORY_LOCAL_DIR" ]]; then
+            printf '%s\n' "$install_status" > "$MYPY_ADVISORY_LOCAL_DIR/mypy-install.exit-code" || echo "Could not persist mypy install status locally." >&2
+          fi
+          printf 'MYPY_INSTALL_EXIT_CODE=%s\n' "$install_status" >> "$GITHUB_ENV" || echo "Could not export mypy install status; CI remains advisory." >&2
+
+      - name: Run advisory mypy checks
+        if: always()
+        continue-on-error: true
+        env:
+          MYPY_ADVISORY_LOCAL_DIR: tmp/mypy-advisory-local/${{ github.run_id }}-${{ github.run_attempt }}
+          MYPY_ADVISORY_CI_DIR: tmp/mypy-advisory-ci/${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          if mkdir -p "$MYPY_ADVISORY_LOCAL_DIR" "$MYPY_ADVISORY_CI_DIR"; then
+            if python tools/mypy_ci_advisory.py \
+              --config-path mypy.ini \
+              --local-output-dir "$MYPY_ADVISORY_LOCAL_DIR" \
+              --ci-output-dir "$MYPY_ADVISORY_CI_DIR" \
+              > "$MYPY_ADVISORY_LOCAL_DIR/mypy-advisory-helper.stdout.txt" \
+              2> "$MYPY_ADVISORY_LOCAL_DIR/mypy-advisory-helper.stderr.txt"; then
+              :
+            else
+              echo "Advisory report generation failed; CI remains advisory." >&2
+            fi
+          else
+            echo "Advisory output directories unavailable; CI remains advisory." >&2
+          fi
+
       - name: Run bounded parallel and serial pytest lanes
         env:
           PLAYWRIGHT_ENABLED: "0"  # Set to "1" locally to run Playwright tests (FR-20260513-playwright-ui-gate)
@@ -181,6 +227,15 @@ jobs:
         with:
           name: pytest-junit-serial
           path: tmp/pytest-serial-junit.xml
+
+      - name: Upload advisory mypy report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mypy-advisory-music-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tmp/mypy-advisory-ci/${{ github.run_id }}-${{ github.run_attempt }}/summary.json
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Upload CI test manifest
         if: always()
