@@ -113,6 +113,55 @@ def test_mypy_findings_are_reported_without_gating_ci(
         assert raw_finding.strip() not in ci_output
 
 
+def test_mypy_exit_one_without_diagnostics_is_reported_as_tool_error(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    runner_path = ROOT / "tools" / "mypy_ci_advisory.py"
+    spec = importlib.util.spec_from_file_location("music_mypy_advisory_empty", runner_path)
+    assert spec is not None and spec.loader is not None
+    runner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runner)
+
+    config_path = tmp_path / "mypy.ini"
+    config_path.write_text(
+        "[mypy]\npython_version = 3.11\nfiles = src/utils/chord_sheet_output.py\n",
+        encoding="utf-8",
+    )
+    ci_dir = tmp_path / "mypy-advisory-ci"
+
+    def fake_run(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        if command[:2] == ["git", "rev-parse"]:
+            return subprocess.CompletedProcess(
+                command, 0, "1234567890abcdef1234567890abcdef12345678\n", ""
+            )
+        if command[-1:] == ["--version"]:
+            return subprocess.CompletedProcess(command, 0, "mypy 1.18.2 (compiled: yes)\n", "")
+        return subprocess.CompletedProcess(command, 1, "", "")
+
+    monkeypatch.setattr(runner.subprocess, "run", fake_run)
+    monkeypatch.setenv("GITHUB_REPOSITORY", "tylerdrakemusic/Music")
+    monkeypatch.setenv("MYPY_INSTALL_EXIT_CODE", "0")
+
+    runner.main(
+        [
+            "--config-path",
+            str(config_path),
+            "--local-output-dir",
+            str(tmp_path / "mypy-advisory-local"),
+            "--ci-output-dir",
+            str(ci_dir),
+            "--step-summary",
+            str(tmp_path / "step-summary.md"),
+        ]
+    )
+
+    report = json.loads((ci_dir / "summary.json").read_text(encoding="utf-8"))
+
+    assert report["finding_count"] is None
+    assert report["tool_errors"]["mypy_check"] is True
+
+
 def test_mypy_advisory_workflow_preserves_pytest_as_the_required_gate() -> None:
     workflow = yaml.safe_load(
         (ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")

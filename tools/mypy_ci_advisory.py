@@ -67,7 +67,10 @@ def _installation_exit_code() -> int | None:
 def _finding_count(stdout: str, returncode: int | None) -> int | None:
     if returncode not in (0, 1):
         return None
-    return sum(": error:" in line for line in stdout.splitlines())
+    finding_count = sum(": error:" in line for line in stdout.splitlines())
+    if returncode == 1 and finding_count == 0:
+        return None
+    return finding_count
 
 
 def _build_report(
