@@ -179,6 +179,7 @@ def test_mypy_advisory_workflow_preserves_pytest_as_the_required_gate() -> None:
     )
     upload_steps = [step for step in steps if step.get("name") == "Upload advisory mypy report"]
     assert len(upload_steps) == 1
+    assert upload_steps[0]["continue-on-error"] is True
     assert steps.index(mypy_steps[0]) < steps.index(pytest_step) < steps.index(upload_steps[0])
     assert pytest_step["run"].startswith("python tools/run_tests.py ")
     assert upload_steps[0]["if"] == "always()"

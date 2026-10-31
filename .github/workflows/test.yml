@@ -230,6 +230,7 @@ jobs:
 
       - name: Upload advisory mypy report
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: mypy-advisory-music-${{ github.run_id }}-${{ github.run_attempt }}
