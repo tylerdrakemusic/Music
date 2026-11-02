@@ -2418,4 +2418,4 @@ if __name__ == "__main__":
     host = _require_loopback_host(args.host, allow_network_bind=args.allow_network_bind)
     app.config["CAPTURE_CONTROL_ALLOWED_HOSTS"] = _capture_control_allowed_hosts(host)
     print(f"Lead Guitar Trainer -> http://{host}:{args.port}")  # nosec A02 - validated loopback display URL
-    app.run(host=host, port=args.port, debug=False)
+    app.run(host=host, port=args.port, debug=False, threaded=False)
