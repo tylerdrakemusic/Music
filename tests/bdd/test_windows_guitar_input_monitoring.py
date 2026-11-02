@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import runpy
 import sys
 from types import SimpleNamespace
 from typing import Any, Callable
 
+from flask import Flask
 import pytest
 from pytest_bdd import given, scenario, then, when
 
@@ -357,3 +359,26 @@ def assert_capture_stops_and_releases_device(
     ).get_json()
     assert stopped_state["level"] == 0
     assert stopped_state["clipping"] is False
+
+
+def test_trainer_entrypoint_starts_flask_without_request_threads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ASIO worked directly (RMS 0.0277, level 5) and with threaded=False,
+    but Flask's threaded server exited with 0xC0000005 after /start. Keep the
+    local entrypoint single-threaded; audio is never recorded by this test.
+    """
+    server_options: list[dict[str, object]] = []
+
+    def capture_run(_app: Flask, **options: object) -> None:
+        server_options.append(options)
+
+    monkeypatch.setattr(Flask, "run", capture_run)
+    monkeypatch.setattr(sys, "argv", [ui.__file__, "--port", "5055"])
+    monkeypatch.setattr(ui.Path, "mkdir", lambda *_args, **_kwargs: None)
+
+    runpy.run_path(ui.__file__, run_name="__main__")
+
+    assert server_options == [
+        {"host": "127.0.0.1", "port": 5055, "debug": False, "threaded": False}
+    ]
