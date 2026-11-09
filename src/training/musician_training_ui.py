@@ -413,16 +413,31 @@ HTML = r"""
   .family-btn{padding:6px 13px;background:#111;color:#ccc;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:background .12s,color .12s}
   .family-btn:first-child{border-right:1px solid var(--border)}
   .family-btn-active{background:var(--accent);color:#fff}
-  .guitar-input-monitor{display:grid;grid-template-columns:minmax(150px,1fr) minmax(180px,2fr) auto;align-items:center;gap:12px;margin:0 0 20px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:6px}
+  .guitar-input-monitor{display:grid;grid-template-columns:minmax(150px,1fr) minmax(180px,2fr) minmax(120px,1fr);align-items:center;gap:12px;margin:0 0 20px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:6px;min-width:0}
   .guitar-input-monitor h2{font-size:.95rem;color:#fff}
   .guitar-input-controls{display:flex;align-items:center;gap:8px;min-width:0}
   .guitar-input-controls button{padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:#111;color:#eee;cursor:pointer;white-space:nowrap}
   .guitar-input-controls button:disabled{opacity:.45;cursor:default}
-  #guitar-input-level{width:100%;min-width:40px;height:14px;accent-color:#6fdc6f}
-  .guitar-input-state{font-size:.78rem;color:#ccc;min-width:90px}
+  #guitar-input-level{width:72px;min-width:40px;height:14px;accent-color:#6fdc6f;flex:0 1 72px}
+  .guitar-input-state{font-size:.78rem;color:#ccc;min-width:0;overflow-wrap:anywhere}
   .guitar-input-state.error,#guitar-input-warning{color:#ff6868}
   #guitar-input-warning[hidden]{display:none}
-  @media(max-width:600px){.guitar-input-monitor{grid-template-columns:1fr;gap:9px}.guitar-input-controls{flex-wrap:wrap}.guitar-input-state{min-width:0}}</style>
+  .guitar-input-status-group{min-width:0}
+  .guitar-tuner{grid-column:1/-1;display:grid;grid-template-columns:minmax(90px,.7fr) minmax(120px,.8fr) minmax(180px,1.5fr) minmax(120px,.8fr);align-items:center;gap:12px;padding-top:10px;border-top:1px solid var(--border);min-width:0}
+  .guitar-tuner-readout,.guitar-tuner-meter-wrap{display:grid;gap:4px;min-width:0}
+  .guitar-tuner-label,.guitar-tuner-legend{font-size:.68rem;color:var(--muted)}
+  .guitar-tuner-note{font-size:1.45rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .guitar-tuner-value{font-size:.86rem;color:#eee;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .guitar-tuner-legend{display:flex;justify-content:space-between;gap:5px}
+  .guitar-tuner-meter{position:relative;height:14px;border:1px solid var(--border);border-radius:3px;background:#111;min-width:0}
+  .guitar-tuner-meter-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#aaa}
+  .guitar-tuner-needle{position:absolute;left:calc(50% + var(--tuner-offset,0%));top:-3px;width:3px;height:18px;background:var(--accent);transform:translateX(-50%)}
+  .guitar-tuner-feedback{font-size:.8rem;font-weight:600;color:#eee;min-width:0;overflow-wrap:anywhere}
+  .guitar-tuner-feedback.flat{color:#70c8ff}
+  .guitar-tuner-feedback.in_tune{color:#6fdc6f}
+  .guitar-tuner-feedback.sharp{color:#ffb45c}
+  @media(max-width:600px){.guitar-input-monitor{grid-template-columns:minmax(0,1fr);gap:9px}.guitar-input-controls{flex-wrap:wrap}.guitar-tuner{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.guitar-tuner-meter-wrap,.guitar-tuner-feedback{grid-column:1/-1}}
+</style>
 </style>
 </head>
 <body>
@@ -437,10 +452,30 @@ HTML = r"""
     <button type="button" id="guitar-input-stop" onclick="stopGuitarInputMonitoring()" disabled>Stop</button>
     <progress id="guitar-input-level" max="100" value="0" aria-label="Input level">0%</progress>
   </div>
-  <div>
+  <div class="guitar-input-status-group">
     <p class="guitar-input-state" id="guitar-input-status" aria-live="polite">Stopped</p>
     <p class="guitar-input-state" id="guitar-input-signal">No signal</p>
     <p class="guitar-input-state" id="guitar-input-warning" role="alert" hidden>Clipping warning</p>
+  </div>
+  <div class="guitar-tuner" id="guitar-tuner" aria-label="Chromatic guitar tuner">
+    <div>
+      <span class="guitar-tuner-label">Pitch</span>
+      <p class="guitar-tuner-note" id="guitar-tuner-note">--</p>
+    </div>
+    <div class="guitar-tuner-readout">
+      <span class="guitar-tuner-label">Frequency</span>
+      <span class="guitar-tuner-value" id="guitar-tuner-frequency">-- Hz</span>
+      <span class="guitar-tuner-label">Offset</span>
+      <span class="guitar-tuner-value" id="guitar-tuner-cents">-- cents</span>
+    </div>
+    <div class="guitar-tuner-meter-wrap">
+      <div class="guitar-tuner-legend" aria-hidden="true"><span>Flat</span><span>In tune</span><span>Sharp</span></div>
+      <div class="guitar-tuner-meter" id="guitar-tuner-meter" role="meter" aria-label="Cents from target" aria-valuemin="-50" aria-valuemax="50" aria-valuenow="0" aria-valuetext="No pitch">
+        <span class="guitar-tuner-meter-center"></span>
+        <span class="guitar-tuner-needle" id="guitar-tuner-needle"></span>
+      </div>
+    </div>
+    <p class="guitar-tuner-feedback" id="guitar-tuner-feedback" aria-live="polite">No signal</p>
   </div>
 </section>
     <p class="sub">Focused interval training — loop lead parts, control speed, build muscle memory</p>
@@ -686,6 +721,26 @@ function renderGuitarInputState(state) {
   status.classList.toggle('error', Boolean(state.error));
   document.getElementById('guitar-input-signal').textContent = state.signal_present ? 'Signal present' : 'No signal';
   document.getElementById('guitar-input-warning').hidden = !state.clipping;
+  const pitch = state.pitch || null;
+  const note = document.getElementById('guitar-tuner-note');
+  const frequency = document.getElementById('guitar-tuner-frequency');
+  const centsValue = document.getElementById('guitar-tuner-cents');
+  const meter = document.getElementById('guitar-tuner-meter');
+  const feedback = document.getElementById('guitar-tuner-feedback');
+  note.textContent = pitch ? `${pitch.note}${pitch.octave}` : '--';
+  frequency.textContent = pitch ? `${Number(pitch.frequency_hz).toFixed(2)} Hz` : '-- Hz';
+  const cents = pitch ? Number(pitch.cents) : 0;
+  centsValue.textContent = pitch ? `${cents > 0 ? '+' : ''}${cents} cents` : '-- cents';
+  meter.style.setProperty('--tuner-offset', `${Math.max(-50, Math.min(50, cents))}%`);
+  meter.setAttribute('aria-valuenow', pitch ? String(cents) : '0');
+  meter.setAttribute('aria-valuetext', pitch ? `${cents} cents` : 'No pitch');
+  const feedbackText = {flat:'Flat', in_tune:'In tune', sharp:'Sharp'};
+  feedback.textContent = pitch
+    ? feedbackText[pitch.feedback] || 'Unstable pitch'
+    : (state.clipping ? 'Clipping, no stable pitch' : (state.error ? 'Capture error, no stable pitch' : (state.signal_present ? 'Listening for a stable note' : 'No signal')));
+  feedback.classList.toggle('flat', Boolean(pitch && pitch.feedback === 'flat'));
+  feedback.classList.toggle('in_tune', Boolean(pitch && pitch.feedback === 'in_tune'));
+  feedback.classList.toggle('sharp', Boolean(pitch && pitch.feedback === 'sharp'));
   if (!state.active && _guitarInputPoll !== null) {
     clearInterval(_guitarInputPoll);
     _guitarInputPoll = null;

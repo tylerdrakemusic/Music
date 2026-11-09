@@ -19,3 +19,5 @@ PyYAML>=6.0,<7.0
 pytest-bdd>=7.3,<8.0
 Pillow>=10.0,<14.0
 sounddevice>=0.4.7,<1.0
+# Chromatic guitar pitch detection (YIN).
+librosa>=0.10.2,<0.11
