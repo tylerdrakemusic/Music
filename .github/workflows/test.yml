@@ -212,6 +212,8 @@ jobs:
       - name: Run bounded parallel and serial pytest lanes
         env:
           PLAYWRIGHT_ENABLED: "0"  # Set to "1" locally to run Playwright tests (FR-20260513-playwright-ui-gate)
+          ENABLE_EXERCISE_CARDS: "true"
+          ENABLE_SCALE_LOG: "true"
         run: python tools/run_tests.py --parallel-junitxml tmp/pytest-parallel-junit.xml --serial-junitxml tmp/pytest-serial-junit.xml --manifest tmp/pytest-ci-manifest.json
 
       - name: Upload parallel JUnit report
