@@ -63,7 +63,7 @@ def _new_monitoring_context(
         created.update(stream=stream, options=options, open_count=open_count)
         return stream
 
-    monkeypatch.setattr(capture.sys, "platform", "win32")
+    monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="win32"))
     monkeypatch.setitem(
         sys.modules,
         "sounddevice",
@@ -84,6 +84,16 @@ def _new_monitoring_context(
         monitor=monitor,
         stream_handles=created,
     )
+
+
+def test_mock_windows_capture_does_not_change_interpreter_platform(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    _new_monitoring_context(monkeypatch)
+
+    assert sys.platform == "linux"
 
 
 @pytest.mark.parametrize(
