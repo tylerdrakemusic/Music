@@ -1,9 +1,12 @@
 """Executable acceptance coverage for Windows guitar input monitoring."""
+
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import math
 import runpy
 import sys
+import time
 from types import SimpleNamespace
 from typing import Any, Callable
 
@@ -22,6 +25,7 @@ class _MonitoringContext:
     monitor: GuitarInputMonitor
     stream_handles: dict[str, object]
     response: object | None = None
+    pitch_observations: list[tuple[str, int, float, dict[str, Any]]] = field(default_factory=list)
 
 
 class _CaptureStream:
@@ -36,6 +40,9 @@ class _CaptureStream:
     def feed(self, value: float) -> None:
         self._callback([[value] for _ in range(100)], 100, None, None)
 
+    def feed_samples(self, samples: list[float]) -> None:
+        self._callback([[sample] for sample in samples], len(samples), None, None)
+
     def stop(self) -> None:
         self.stopped = True
 
@@ -47,13 +54,16 @@ def _new_monitoring_context(
     monkeypatch: pytest.MonkeyPatch,
 ) -> _MonitoringContext:
     created: dict[str, object] = {}
+    open_count = 0
 
     def open_stream(**options: Any) -> _CaptureStream:
+        nonlocal open_count
+        open_count += 1
         stream = _CaptureStream(options["callback"])
-        created.update(stream=stream, options=options)
+        created.update(stream=stream, options=options, open_count=open_count)
         return stream
 
-    monkeypatch.setattr(capture.sys, "platform", "win32")
+    monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="win32"))
     monkeypatch.setitem(
         sys.modules,
         "sounddevice",
@@ -74,6 +84,16 @@ def _new_monitoring_context(
         monitor=monitor,
         stream_handles=created,
     )
+
+
+def test_mock_windows_capture_does_not_change_interpreter_platform(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    _new_monitoring_context(monkeypatch)
+
+    assert sys.platform == "linux"
 
 
 @pytest.mark.parametrize(
@@ -358,7 +378,390 @@ def assert_capture_stops_and_releases_device(
         "/api/guitar-input/status"
     ).get_json()
     assert stopped_state["level"] == 0
+    assert stopped_state["signal_present"] is False
     assert stopped_state["clipping"] is False
+    assert stopped_state["pitch"] is None
+    assert stopped_state["level"] == 0
+
+
+@scenario(
+    "live_chromatic_guitar_tuner.feature",
+    "Tune clean notes across the guitar range",
+)
+def test_tuner_identifies_clean_notes_across_guitar_range(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pass
+
+
+@given(
+    "the Windows Focusrite channel 1 monitor is active",
+    target_fixture="monitoring_context",
+)
+def active_windows_guitar_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> _MonitoringContext:
+    context = _new_monitoring_context(monkeypatch)
+    context.response = context.client.post(
+        "/api/guitar-input/start",
+        headers={"Origin": "http://localhost"},
+    )
+    assert context.response.status_code == 200
+    return context
+
+
+def _wait_for_tuner_pitch(
+    context: _MonitoringContext,
+    note: str,
+    octave: int,
+) -> tuple[dict[str, Any], float]:
+    started_at = time.monotonic()
+    deadline = started_at + 0.5
+    payload: dict[str, Any] = {}
+    while time.monotonic() <= deadline:
+        response = context.client.get("/api/guitar-input/status")
+        payload = response.get_json()
+        if "pitch" not in payload:
+            break
+        pitch = payload["pitch"]
+        if pitch is not None and pitch["note"] == note and pitch["octave"] == octave:
+            break
+        time.sleep(0.005)
+    return payload, time.monotonic() - started_at
+
+
+def _wait_for_no_tuner_pitch(
+    context: _MonitoringContext,
+) -> tuple[dict[str, Any], float]:
+    started_at = time.monotonic()
+    deadline = started_at + 0.5
+    payload: dict[str, Any] = {}
+    while time.monotonic() <= deadline:
+        response = context.client.get("/api/guitar-input/status")
+        payload = response.get_json()
+        if "pitch" not in payload or payload["pitch"] is None:
+            break
+        time.sleep(0.005)
+    return payload, time.monotonic() - started_at
+
+
+def _clean_note_samples(frequency: float) -> list[float]:
+    sample_rate = 44100
+    frame_count = 16384
+    return [
+        0.25 * math.sin(2 * math.pi * frequency * index / sample_rate)
+        for index in range(frame_count)
+    ]
+
+
+@when("sustained clean E2, A4, and E6 notes reach the input")
+def clean_notes_reach_the_guitar_input(
+    monitoring_context: _MonitoringContext,
+) -> None:
+    stream = monitoring_context.stream_handles["stream"]
+    for note, octave, frequency in (
+        ("E", 2, 82.4069),
+        ("A", 4, 440.0),
+        ("E", 6, 1318.5102),
+    ):
+        stream.feed_samples(_clean_note_samples(frequency))
+        payload, elapsed = _wait_for_tuner_pitch(
+            monitoring_context,
+            note,
+            octave,
+        )
+        monitoring_context.pitch_observations.append((note, octave, elapsed, payload))
+        if "pitch" not in payload:
+            break
+
+
+@then("each note settles within 500 milliseconds and three cents")
+def assert_clean_notes_are_tuned(
+    monitoring_context: _MonitoringContext,
+) -> None:
+    observations = monitoring_context.pitch_observations
+    assert len(observations) == 3, "status response does not yet expose tuner pitch"
+    for note, octave, elapsed, payload in observations:
+        pitch = payload["pitch"]
+        assert elapsed <= 0.5
+        assert pitch["note"] == note
+        assert pitch["octave"] == octave
+        assert abs(pitch["cents"]) <= 3
+        assert pitch["frequency_hz"] > 0
+        assert pitch["feedback"] == "in_tune"
+
+
+@scenario(
+    "live_chromatic_guitar_tuner.feature",
+    "Include both five-cent boundaries in tune",
+)
+def test_tuner_includes_both_five_cent_boundaries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pass
+
+
+@when("A4 is five cents flat and then five cents sharp")
+def feed_five_cent_boundaries(monitoring_context: _MonitoringContext) -> None:
+    stream = monitoring_context.stream_handles["stream"]
+    for cents in (-5, 5):
+        stream.feed(0.0)
+        frequency = 440.0 * 2 ** (cents / 1200)
+        stream.feed_samples(_clean_note_samples(frequency))
+        payload, elapsed = _wait_for_tuner_pitch(monitoring_context, "A", 4)
+        monitoring_context.pitch_observations.append(("A", 4, elapsed, payload))
+        if "pitch" not in payload:
+            break
+
+
+@then("both boundary readings report in tune")
+def assert_five_cent_boundaries_are_in_tune(
+    monitoring_context: _MonitoringContext,
+) -> None:
+    observations = monitoring_context.pitch_observations
+    assert len(observations) == 2, "status response does not yet expose tuner pitch"
+    for expected_cents, (_, octave, elapsed, payload) in zip((-5, 5), observations):
+        assert "pitch" in payload
+        pitch = payload["pitch"]
+        assert octave == 4
+        assert elapsed <= 0.5
+        assert pitch["cents"] == expected_cents
+        assert pitch["feedback"] == "in_tune"
+
+
+@scenario(
+    "live_chromatic_guitar_tuner.feature",
+    "Tune a representative processed guitar tone",
+)
+def test_tuner_handles_representative_processed_tone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pass
+
+
+def _processed_e2_samples() -> list[float]:
+    sample_rate = 44100
+    frame_count = 16384
+    dry = [
+        0.16
+        * (
+            0.18 * math.sin(2 * math.pi * 82.4069 * index / sample_rate)
+            + math.sin(2 * math.pi * 2 * 82.4069 * index / sample_rate)
+            + 0.38 * math.sin(2 * math.pi * 3 * 82.4069 * index / sample_rate)
+            + 0.14 * math.sin(2 * math.pi * 4 * 82.4069 * index / sample_rate)
+        )
+        for index in range(frame_count)
+    ]
+    clipped = [math.tanh(sample * 3.0) for sample in dry]
+    delay = round(sample_rate * 0.012)
+    return [
+        sample + (0.12 * clipped[index - delay] if index >= delay else 0.0)
+        for index, sample in enumerate(clipped)
+    ]
+
+
+@when("a harmonic-rich overdrive tone with light echo reaches the input")
+def processed_tone_reaches_input(monitoring_context: _MonitoringContext) -> None:
+    monitoring_context.stream_handles["stream"].feed_samples(_processed_e2_samples())
+    monitoring_context.response, elapsed = _wait_for_tuner_pitch(
+        monitoring_context,
+        "E",
+        2,
+    )
+    monitoring_context.pitch_observations.append(("E", 2, elapsed, monitoring_context.response))
+
+
+@then("E2 settles within 500 milliseconds and five cents")
+def assert_processed_tone_is_tuned(
+    monitoring_context: _MonitoringContext,
+) -> None:
+    note, octave, elapsed, payload = monitoring_context.pitch_observations[-1]
+    assert "pitch" in payload, "status response does not yet expose tuner pitch"
+    pitch = payload["pitch"]
+    assert elapsed <= 0.5
+    assert (pitch["note"], pitch["octave"]) == (note, octave)
+    assert abs(pitch["cents"]) <= 5
+
+
+@scenario(
+    "live_chromatic_guitar_tuner.feature",
+    "Reject overlapping notes and resume automatically",
+)
+def test_tuner_rejects_overlapping_notes_and_resumes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pass
+
+
+@when("a valid E2 is replaced by simultaneous E2 and A2, then returns to E2")
+def overlapping_notes_replace_and_resume(
+    monitoring_context: _MonitoringContext,
+) -> None:
+    stream = monitoring_context.stream_handles["stream"]
+    stream.feed_samples(_clean_note_samples(82.4069))
+    tuned, _ = _wait_for_tuner_pitch(monitoring_context, "E", 2)
+    monitoring_context.pitch_observations.append(("E", 2, 0.0, tuned))
+
+    sample_rate = 44100
+    overlap = [
+        0.2
+        * (
+            math.sin(2 * math.pi * 82.4069 * index / sample_rate)
+            + math.sin(2 * math.pi * 110.0 * index / sample_rate)
+        )
+        for index in range(16384)
+    ]
+    stream.feed_samples(overlap)
+    cleared, elapsed = _wait_for_no_tuner_pitch(monitoring_context)
+    monitoring_context.pitch_observations.append(("", 0, elapsed, cleared))
+
+    stream.feed_samples(_clean_note_samples(82.4069))
+    resumed, elapsed = _wait_for_tuner_pitch(monitoring_context, "E", 2)
+    monitoring_context.pitch_observations.append(("E", 2, elapsed, resumed))
+
+
+@then("overlap clears pitch and tuning resumes within 500 milliseconds")
+def assert_overlap_is_rejected_and_tuning_resumes(
+    monitoring_context: _MonitoringContext,
+) -> None:
+    initial, cleared, resumed = monitoring_context.pitch_observations
+    assert "pitch" in initial[3] and initial[3]["pitch"] is not None
+    assert "pitch" in cleared[3], "status response does not yet expose tuner pitch"
+    assert cleared[3]["pitch"] is None
+    assert cleared[2] <= 0.5
+    assert resumed[3]["pitch"] is not None
+    assert (resumed[3]["pitch"]["note"], resumed[3]["pitch"]["octave"]) == (
+        "E",
+        2,
+    )
+    assert resumed[2] <= 0.5
+
+
+@scenario(
+    "live_chromatic_guitar_tuner.feature",
+    "Clear pitch for clipping, silence, and lost callbacks",
+)
+def test_tuner_clears_unreliable_and_lost_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pass
+
+
+@when("a valid E2 is clipped, falls silent, then callbacks stop")
+def clipping_silence_and_lost_callbacks(
+    monitoring_context: _MonitoringContext,
+) -> None:
+    stream = monitoring_context.stream_handles["stream"]
+    stream.feed_samples(_clean_note_samples(82.4069))
+    tuned, _ = _wait_for_tuner_pitch(monitoring_context, "E", 2)
+    monitoring_context.pitch_observations.append(("E", 2, 0.0, tuned))
+
+    clipped_samples = [math.sin(2 * math.pi * 82.4069 * index / 44100) for index in range(16384)]
+    stream.feed_samples(clipped_samples)
+    clipped, elapsed = _wait_for_no_tuner_pitch(monitoring_context)
+    monitoring_context.pitch_observations.append(("", 0, elapsed, clipped))
+
+    stream.feed_samples(_clean_note_samples(82.4069))
+    _wait_for_tuner_pitch(monitoring_context, "E", 2)
+    stream.feed_samples([0.0] * 16384)
+    silent, elapsed = _wait_for_no_tuner_pitch(monitoring_context)
+    monitoring_context.pitch_observations.append(("", 0, elapsed, silent))
+
+    stream.feed_samples(_clean_note_samples(82.4069))
+    _wait_for_tuner_pitch(monitoring_context, "E", 2)
+    lost, elapsed = _wait_for_no_tuner_pitch(monitoring_context)
+    monitoring_context.pitch_observations.append(("", 0, elapsed, lost))
+
+
+@then("unreliable pitch clears within 500 milliseconds and the monitor stays active")
+def assert_unreliable_pitch_is_cleared(
+    monitoring_context: _MonitoringContext,
+) -> None:
+    initial, clipped, silent, lost = monitoring_context.pitch_observations
+    assert "pitch" in initial[3] and initial[3]["pitch"] is not None
+    for _, _, elapsed, payload in (clipped, silent, lost):
+        assert "pitch" in payload, "status response does not yet expose tuner pitch"
+        assert payload["pitch"] is None
+        assert elapsed <= 0.5
+        assert payload["active"] is True
+    assert clipped[3]["clipping"] is True
+    assert silent[3]["signal_present"] is False
+
+
+@scenario(
+    "live_chromatic_guitar_tuner.feature",
+    "Render the tuner in the existing monitor location",
+)
+def test_tuner_renders_in_place_with_responsive_layout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pass
+
+
+@when("the Trainer page is opened")
+def open_trainer_page(monitoring_context: _MonitoringContext) -> None:
+    monitoring_context.response = monitoring_context.client.get("/")
+
+
+@then("the compact tuner is accessible in place with responsive layout rules")
+def assert_compact_tuner_markup(monitoring_context: _MonitoringContext) -> None:
+    assert monitoring_context.response.status_code == 200
+    page = monitoring_context.response.get_data(as_text=True)
+    for element_id in (
+        "guitar-tuner",
+        "guitar-tuner-note",
+        "guitar-tuner-frequency",
+        "guitar-tuner-cents",
+        "guitar-tuner-meter",
+        "guitar-tuner-feedback",
+        "guitar-input-start",
+        "guitar-input-stop",
+        "guitar-input-level",
+        "guitar-input-signal",
+        "guitar-input-warning",
+    ):
+        assert f'id="{element_id}"' in page
+    assert monitoring_context.client.get("/tuner").status_code == 404
+    assert "Flat" in page and "In tune" in page and "Sharp" in page
+    assert "@media(max-width:600px)" in page
+    assert "overflow-wrap:anywhere" in page
+
+
+@scenario(
+    "live_chromatic_guitar_tuner.feature",
+    "Stop and restart without duplicating capture",
+)
+def test_repeated_start_and_stop_preserve_capture_lifecycle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pass
+
+
+@when("a tuned capture is started again and then stopped")
+def restart_and_stop_capture(monitoring_context: _MonitoringContext) -> None:
+    monitoring_context.stream_handles["stream"].feed_samples(_clean_note_samples(82.4069))
+    _wait_for_tuner_pitch(monitoring_context, "E", 2)
+    monitoring_context.client.post(
+        "/api/guitar-input/start",
+        headers={"Origin": "http://localhost"},
+    )
+    monitoring_context.response = monitoring_context.client.post(
+        "/api/guitar-input/stop",
+        headers={"Origin": "http://localhost"},
+    )
+
+
+@then("pitch clears and the single capture stream is released")
+def assert_stop_clears_pitch_and_releases_stream(
+    monitoring_context: _MonitoringContext,
+) -> None:
+    payload = monitoring_context.response.get_json()
+    assert monitoring_context.stream_handles["open_count"] == 1
+    assert payload["active"] is False
+    assert "pitch" in payload, "status response does not yet expose tuner pitch"
+    assert payload["pitch"] is None
+    assert monitoring_context.stream_handles["stream"].stopped is True
+    assert monitoring_context.stream_handles["stream"].closed is True
 
 
 def test_trainer_entrypoint_starts_flask_without_request_threads(
